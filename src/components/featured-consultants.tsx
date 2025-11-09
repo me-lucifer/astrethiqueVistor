@@ -46,6 +46,7 @@ const sortOptions = {
 type SortKey = keyof typeof sortOptions;
 
 interface Filters {
+    query: string;
     specialties: string[];
     languages: string[];
     availability: string;
@@ -56,6 +57,7 @@ interface Filters {
 }
 
 const defaultFilters: Filters = {
+    query: "",
     specialties: [],
     languages: [],
     availability: "Online now",
@@ -70,7 +72,7 @@ interface SavedSearch {
     filters: Filters;
 }
 
-export function FeaturedConsultants() {
+export function FeaturedConsultants({ initialQuery }: { initialQuery?: string }) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -96,6 +98,7 @@ export function FeaturedConsultants() {
         const allFilters = { ...filters, ...newFilters };
 
         current.set("tab", "consultants");
+        if (allFilters.query) current.set('query', allFilters.query); else current.delete('query');
         if (allFilters.specialties.length > 0) current.set('spec', allFilters.specialties.join(',')); else current.delete('spec');
         if (allFilters.languages.length > 0) current.set('lang', allFilters.languages.join(',')); else current.delete('lang');
         if (allFilters.availability !== defaultFilters.availability) current.set('avail', allFilters.availability.replace(' ', '-').toLowerCase()); else current.delete('avail');
@@ -122,6 +125,9 @@ export function FeaturedConsultants() {
         }
         
         const urlFilters: Partial<Filters> = {};
+        const query = searchParams.get('query');
+        if(query) urlFilters.query = query; else if (initialQuery) urlFilters.query = initialQuery;
+
         const spec = searchParams.get('spec');
         if (spec) urlFilters.specialties = spec.split(',');
 
@@ -155,11 +161,20 @@ export function FeaturedConsultants() {
             setAllConsultants(storedConsultants);
         }
         setIsLoading(false);
-    }, [searchParams]);
+    }, [searchParams, initialQuery]);
 
     const filteredAndSortedConsultants = useMemo(() => {
         setIsLoading(true);
         let result = [...allConsultants];
+
+        if (filters.query) {
+            const lowercasedQuery = filters.query.toLowerCase();
+            result = result.filter(c => 
+                c.nameAlias.toLowerCase().includes(lowercasedQuery) ||
+                c.shortBlurb.toLowerCase().includes(lowercasedQuery) ||
+                c.specialties.some(s => s.toLowerCase().includes(lowercasedQuery))
+            );
+        }
 
         if (filters.specialties.length > 0) {
             result = result.filter(c => filters.specialties.some(s => c.specialties.includes(s as any)));
@@ -170,7 +185,6 @@ export function FeaturedConsultants() {
         if (filters.availability === "Online now") {
             result = result.filter(c => c.online);
         }
-        // "Today" and "This week" are not implemented in seed data logic, so we don't filter for them.
         if (filters.promoOnly) {
             result = result.filter(c => c.promo);
         }
@@ -191,7 +205,6 @@ export function FeaturedConsultants() {
                 break;
             case 'recommended':
             default:
-                // Simple recommendation: online, promo, high rating
                 result.sort((a, b) => {
                     const scoreA = (a.online ? 4 : 0) + (a.promo ? 2 : 0) + a.rating;
                     const scoreB = (b.online ? 4 : 0) + (b.promo ? 2 : 0) + b.rating;
@@ -448,5 +461,3 @@ export function FeaturedConsultants() {
         </>
     );
 }
-
-    
