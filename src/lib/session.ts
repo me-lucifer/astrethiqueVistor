@@ -1,3 +1,4 @@
+
 "use client";
 
 // Fallback to a mock storage object on the server
@@ -31,6 +32,15 @@ export function setSession<T>(key: string, value: T): void {
   } catch (error) {
     console.error(`Error writing to session storage for key "${key}":`, error);
   }
+}
+
+export function removeSession(key: string): void {
+    if (typeof window === "undefined") return;
+    try {
+        storage.removeItem(key);
+    } catch (error) {
+        console.error(`Error removing from session storage for key "${key}":`, error);
+    }
 }
 
 export function seedOnce(flagKey: string, seedFn: () => void): void {

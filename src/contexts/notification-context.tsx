@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
@@ -16,6 +17,7 @@ interface NotificationContextType {
   unreadCount: number;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -87,8 +89,19 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     updateNotifications(newNotifications);
   }, [notifications]);
 
+  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+    const newNotification: Notification = {
+        ...notification,
+        id: new Date().getTime().toString(),
+        timestamp: new Date().toISOString(),
+        isRead: false,
+    };
+    const newNotifications = [newNotification, ...notifications];
+    updateNotifications(newNotifications);
+  }, [notifications]);
+
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, addNotification }}>
       {children}
     </NotificationContext.Provider>
   );

@@ -9,11 +9,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
 import { DailyHoroscopeModal } from "@/components/daily-horoscope-modal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { FeaturedConsultants } from "@/components/featured-consultants";
 import { FeaturedContent } from "@/components/featured-content";
 import { UpcomingConferences } from "@/components/upcoming-conferences";
+import { DemoControlsModal } from "@/components/demo-controls-modal";
 import {
     Tooltip,
     TooltipContent,
@@ -162,8 +163,23 @@ const translations = {
 
 export default function Home() {
   const { language } = useLanguage();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHoroscopeModalOpen, setIsHoroscopeModalOpen] = useState(false);
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const t = translations[language];
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        setIsDemoModalOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-background');
 
@@ -202,7 +218,7 @@ export default function Home() {
                 variant="outline"
                 size="lg"
                 className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white transition-transform hover:scale-[1.01] w-full sm:w-auto"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => setIsHoroscopeModalOpen(true)}
               >
                 <Sparkles className="mr-2 h-5 w-5" />
                 {t.checkHoroscope}
@@ -358,7 +374,8 @@ export default function Home() {
         </div>
       </section>
 
-      <DailyHoroscopeModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} />
+      <DailyHoroscopeModal isOpen={isHoroscopeModalOpen} onOpenChange={setIsHoroscopeModalOpen} />
+      <DemoControlsModal isOpen={isDemoModalOpen} onOpenChange={setIsDemoModalOpen} />
     </TooltipProvider>
   );
 }
