@@ -7,7 +7,7 @@ import { Consultant } from '@/lib/consultants-seeder';
 import { getLocal, setLocal } from '@/lib/local';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, Heart, CheckCircle, ShieldCheck, CalendarCheck2 } from 'lucide-radix';
+import { Star, Heart, CheckCircle, ShieldCheck, CalendarCheck2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 

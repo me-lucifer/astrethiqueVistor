@@ -8,15 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
-import { ChatBubbleIcon, VideoIcon, SpeakerLoudIcon, ClockIcon } from '@radix-ui/react-icons';
+import { MessageSquare, Video, Phone, Clock } from 'lucide-react';
 import { StartNowModal } from '../start-now-modal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
 
 const communicationModes = [
-  { id: 'chat', label: 'Chat', icon: ChatBubbleIcon },
-  { id: 'audio', label: 'Audio', icon: SpeakerLoudIcon },
-  { id: 'video', label: 'Video', icon: VideoIcon },
+  { id: 'chat', label: 'Chat', icon: MessageSquare },
+  { id: 'audio', label: 'Audio', icon: Phone },
+  { id: 'video', label: 'Video', icon: Video },
 ];
 
 const durations = [15, 30, 45, 60];
@@ -101,7 +101,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
                       </Button>
                   ))}
                   <Button onClick={handleScheduleClick}>
-                      <ClockIcon className="mr-2 h-4 w-4" />
+                      <Clock className="mr-2 h-4 w-4" />
                       More times
                   </Button>
               </div>
