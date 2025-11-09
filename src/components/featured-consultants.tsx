@@ -142,13 +142,14 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 result.sort((a, b) => b.sessionsCount - a.sessionsCount);
                 break;
             case 'newest':
-                result.sort((a, b) => (b.newest ? 1 : 0) - (a.newest ? 1 : 0) || parseInt(b.id) - parseInt(a.id));
+                result.sort((a, b) => (new Date(b.lastReviewDate)).getTime() - (new Date(a.lastReviewDate)).getTime());
                 break;
             case 'recommended':
             default:
+                const maxReviews = Math.max(...result.map(c => c.sessionsCount), 1);
                 result.sort((a, b) => {
-                    const scoreA = (a.online ? 4 : 0) + (a.promo ? 2 : 0) + a.rating;
-                    const scoreB = (b.online ? 4 : 0) + (b.promo ? 2 : 0) + b.rating;
+                    const scoreA = (a.rating / 5 * 0.60) + (a.sessionsCount / maxReviews * 0.25) + (a.online ? 0.10 : 0) + (a.promo ? 0.05 : 0);
+                    const scoreB = (b.rating / 5 * 0.60) + (b.sessionsCount / maxReviews * 0.25) + (b.online ? 0.10 : 0) + (b.promo ? 0.05 : 0);
                     return scoreB - scoreA;
                 });
                 break;
@@ -356,3 +357,5 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </>
     );
 }
+
+    
