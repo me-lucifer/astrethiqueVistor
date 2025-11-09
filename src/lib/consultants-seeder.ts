@@ -40,7 +40,7 @@ const bios = [
 ];
 
 const createConsultant = (id: number): Consultant => {
-    const baseConsultant: Partial<Consultant> = {
+    const baseConsultant = {
         id: `${id}`,
         nameAlias: names[id % names.length],
         specialties: specialties.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1),
@@ -48,15 +48,21 @@ const createConsultant = (id: number): Consultant => {
         sessionsCount: Math.floor(Math.random() * 500) + 20,
         shortBlurb: blurbs[id % blurbs.length],
         bio: bios[id % bios.length],
-        newest: id > 9, // Mark last 3 as "newest"
+        newest: id > 9,
         adminApproved: true,
-        kycVerified: id % 2 === 0, // Mix it up
+        kycVerified: id % 2 === 0,
         lastReviewDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
         content: {
             articles: Math.floor(Math.random() * 5),
             podcasts: Math.floor(Math.random() * 3),
             conferences: Math.floor(Math.random() * 2),
-        }
+        },
+        // Default values that will be overridden
+        languages: [] as ("EN" | "FR")[],
+        ratePerMin: 0,
+        rating: 0,
+        online: false,
+        promo: false,
     };
 
     let specificOverrides: Partial<Consultant> = {};
@@ -107,7 +113,7 @@ const createConsultant = (id: number): Consultant => {
             specificOverrides = { languages: ["EN", "FR"], ratePerMin: 11.90, rating: 4.3, online: false, promo: false, specialties: ["Money"], sessionsCount: 5 };
             break;
     }
-    return { ...baseConsultant, ...specificOverrides } as Consultant;
+    return { ...baseConsultant, ...specificOverrides };
 };
 
 export const seedConsultants = () => {
