@@ -183,69 +183,61 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     }, [filteredAndSortedConsultants, visibleCount]);
 
     const FilterControls = () => (
-        <TooltipProvider>
-            <div className="space-y-4">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm">Specialties:</span>
-                        {specialties.map(({name, icon: Icon}) => (
-                             <Button
-                                key={name}
-                                variant={filters.specialties.includes(name) ? "secondary" : "outline"}
-                                size="sm"
-                                onClick={() => handleChipToggle('specialties', name)}
-                                className="rounded-full gap-2"
-                            >
-                                <Icon className="h-4 w-4" /> {name}
-                            </Button>
-                        ))}
+        <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 space-y-6">
+            <h3 className="font-headline text-lg font-bold">Filters</h3>
+            <TooltipProvider>
+                <div className="space-y-4">
+                    <div>
+                        <Label className="font-semibold text-sm">Specialties:</Label>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                             {specialties.map(({name, icon: Icon}) => (
+                                <Button
+                                    key={name}
+                                    variant={filters.specialties.includes(name) ? "secondary" : "outline"}
+                                    size="sm"
+                                    onClick={() => handleChipToggle('specialties', name)}
+                                    className="rounded-full gap-2"
+                                >
+                                    <Icon className="h-4 w-4" /> {name}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
-                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm">Languages:</span>
-                        {languages.map((lang) => (
-                             <Button
-                                key={lang}
-                                variant={filters.languages.includes(lang) ? "secondary" : "outline"}
-                                size="sm"
-                                onClick={() => handleChipToggle('languages', lang)}
-                                className="rounded-full gap-2"
-                            >
-                                {lang === 'EN' ? '🇬🇧' : '🇫🇷'} {lang}
-                            </Button>
-                        ))}
+                     <div>
+                        <Label className="font-semibold text-sm">Languages:</Label>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                            {languages.map((lang) => (
+                                 <Button
+                                    key={lang}
+                                    variant={filters.languages.includes(lang) ? "secondary" : "outline"}
+                                    size="sm"
+                                    onClick={() => handleChipToggle('languages', lang)}
+                                    className="rounded-full gap-2"
+                                >
+                                    {lang === 'EN' ? '🇬🇧' : '🇫🇷'} {lang}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
-                    <div className="lg:ml-auto">
-                        <Select value={filters.sort} onValueChange={(v: SortKey) => { updateFilters({ sort: v }); setVisibleCount(INITIAL_LOAD_COUNT); }}>
-                            <SelectTrigger className="w-full lg:w-[180px]">
-                                <SelectValue placeholder="Sort by..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {Object.entries(sortOptions).map(([key, value]) => (
-                                    <SelectItem key={key} value={key}>{value}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                     <div>
+                        <Label className="font-semibold text-sm">Availability:</Label>
+                        <div className="flex flex-wrap gap-2 pt-2 bg-muted p-1 rounded-lg">
+                            {availabilities.map((avail) => (
+                                <Button
+                                    key={avail}
+                                    variant={filters.availability === avail ? "background" : "ghost"}
+                                    size="sm"
+                                    onClick={() => handleAvailabilityToggle(avail)}
+                                    className="flex-1 justify-center shadow-sm"
+                                >
+                                    {avail}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
-                </div>
-                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                    <div className="flex items-center gap-2 flex-wrap bg-muted p-1 rounded-lg">
-                        <span className="font-semibold text-sm ml-2">Availability:</span>
-                        {availabilities.map((avail) => (
-                            <Button
-                                key={avail}
-                                variant={filters.availability === avail ? "background" : "ghost"}
-                                size="sm"
-                                onClick={() => handleAvailabilityToggle(avail)}
-                                className="flex-1 justify-center shadow-sm"
-                            >
-                                {avail}
-                            </Button>
-                        ))}
-                    </div>
-
-                    <div className="flex-1 lg:max-w-xs space-y-2">
+                    <div>
                         <div className="flex justify-between items-center">
-                            <Label htmlFor="price-range" className="flex items-center gap-1">
+                            <Label htmlFor="price-range" className="flex items-center gap-1 font-semibold">
                                 Max Price
                                  <Tooltip>
                                     <TooltipTrigger asChild><Info className="h-3 w-3 cursor-pointer"/></TooltipTrigger>
@@ -256,47 +248,44 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         </div>
                         <Slider id="price-range" min={0} max={12} step={0.5} value={filters.rate} onValueChange={(v) => { updateFilters({ rate: v }); setVisibleCount(INITIAL_LOAD_COUNT); }} />
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <Tooltip>
+                     <div className="flex items-center justify-between">
+                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <div className="flex items-center space-x-2">
-                                    <Switch id="promo-only" checked={filters.promoOnly} onCheckedChange={(c) => { updateFilters({promoOnly: c}); setVisibleCount(INITIAL_LOAD_COUNT); }} />
-                                    <Label htmlFor="promo-only">On promo</Label>
-                                </div>
+                                 <Label htmlFor="promo-only" className="flex items-center gap-2 font-semibold">
+                                    On promo
+                                    <Info className="h-3 w-3 cursor-pointer"/>
+                                </Label>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Discounted per-minute rate for a limited time.</p>
                             </TooltipContent>
                         </Tooltip>
+                        <Switch id="promo-only" checked={filters.promoOnly} onCheckedChange={(c) => { updateFilters({promoOnly: c}); setVisibleCount(INITIAL_LOAD_COUNT); }} />
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="rating-only" className="font-semibold">4★+ only</Label>
                         <Switch id="rating-only" checked={filters.highRatingOnly} onCheckedChange={(c) => { updateFilters({ highRatingOnly: c }); setVisibleCount(INITIAL_LOAD_COUNT); }}/>
-                        <Label htmlFor="rating-only">4★+ only</Label>
                     </div>
-                    <Button variant="link" onClick={handleResetFilters} className="p-0 h-auto">Reset all</Button>
 
-                    <div className="lg:ml-auto flex items-center gap-4">
-                         <p className="text-sm text-muted-foreground" aria-live="polite">
-                            Showing {filteredAndSortedConsultants.length} consultants
-                        </p>
+                    <div className="pt-4">
+                        <Button variant="outline" onClick={handleResetFilters} className="w-full">Reset all filters</Button>
                     </div>
                 </div>
-            </div>
-        </TooltipProvider>
+            </TooltipProvider>
+        </aside>
     );
 
     const mobileSheet = (
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-                 <Button variant="outline" className="lg:hidden gap-2 w-full">
+                 <Button variant="outline" className="lg:hidden gap-2 w-full mb-6">
                     <Filter className="h-4 w-4" />
                     Filters ({filteredAndSortedConsultants.length} results)
                 </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-lg h-[90vh] flex flex-col">
-                <SheetHeader className="text-left flex-row items-center justify-between pr-6">
+            <SheetContent side="left" className="w-[320px] flex flex-col">
+                <SheetHeader className="text-left">
                     <SheetTitle>Filters</SheetTitle>
-                    <Button variant="link" onClick={handleResetFilters}>Reset</Button>
                 </SheetHeader>
                 <div className="py-4 flex-1 overflow-y-auto">
                     <FilterControls />
@@ -310,57 +299,72 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     
     return (
         <>
-            <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 py-4 mb-6">
-                 {isDesktop ? <FilterControls /> : mobileSheet}
-            </div>
-
-            <div role="status" aria-live="polite">
-                {isLoading ? (
-                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {Array.from({ length: 8 }).map((_, i) => (
-                             <div key={i} className="space-y-3">
-                                <Skeleton className="h-[225px] w-full rounded-xl" />
-                                <div className="space-y-2">
-                                    <Skeleton className="h-4 w-[250px]" />
-                                    <Skeleton className="h-4 w-[200px]" />
+            {isDesktop ? <FilterControls /> : mobileSheet}
+            
+            <main>
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                    <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
+                        Showing {filteredAndSortedConsultants.length} consultants
+                    </p>
+                    <Select value={filters.sort} onValueChange={(v: SortKey) => { updateFilters({ sort: v }); setVisibleCount(INITIAL_LOAD_COUNT); }}>
+                        <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectValue placeholder="Sort by..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {Object.entries(sortOptions).map(([key, value]) => (
+                                <SelectItem key={key} value={key}>{value}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div role="status" aria-live="polite">
+                    {isLoading ? (
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                 <div key={i} className="space-y-3">
+                                    <Skeleton className="h-[225px] w-full rounded-xl" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-[250px]" />
+                                        <Skeleton className="h-4 w-[200px]" />
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : filteredAndSortedConsultants.length > 0 ? (
-                    <>
-                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {visibleConsultants.map((consultant) => (
-                                <ConsultantCard 
-                                    key={consultant.id}
-                                    consultant={consultant}
-                                    onStartNow={() => setIsStartNowModalOpen(true)}
-                                />
                             ))}
                         </div>
-                        {visibleCount < filteredAndSortedConsultants.length && (
-                            <div className="mt-10 text-center">
-                                <Button onClick={handleLoadMore} size="lg">Load More</Button>
+                    ) : filteredAndSortedConsultants.length > 0 ? (
+                        <>
+                            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                {visibleConsultants.map((consultant) => (
+                                    <ConsultantCard 
+                                        key={consultant.id}
+                                        consultant={consultant}
+                                        onStartNow={() => setIsStartNowModalOpen(true)}
+                                    />
+                                ))}
                             </div>
-                        )}
-                    </>
-                ) : (
-                    <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
-                        {query ? (
-                            <>
-                                <h3 className="font-headline text-2xl font-bold">No results for ‘{query}’</h3>
-                                <p className="text-muted-foreground mt-2">Try another term.</p>
-                             </>
-                        ) : (
-                            <>
-                                <h3 className="font-headline text-2xl font-bold">No matches yet</h3>
-                                <p className="text-muted-foreground mt-2 mb-4">Try clearing a filter or raising your max price.</p>
-                                <Button onClick={handleResetFilters}>Reset filters</Button>
-                            </>
-                        )}
-                    </div>
-                )}
-            </div>
+                            {visibleCount < filteredAndSortedConsultants.length && (
+                                <div className="mt-10 text-center">
+                                    <Button onClick={handleLoadMore} size="lg">Load More</Button>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
+                            {query ? (
+                                <>
+                                    <h3 className="font-headline text-2xl font-bold">No results for ‘{query}’</h3>
+                                    <p className="text-muted-foreground mt-2">Try another term.</p>
+                                 </>
+                            ) : (
+                                <>
+                                    <h3 className="font-headline text-2xl font-bold">No matches yet</h3>
+                                    <p className="text-muted-foreground mt-2 mb-4">Try clearing a filter or raising your max price.</p>
+                                    <Button onClick={handleResetFilters}>Reset filters</Button>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </main>
 
             <StartNowModal 
                 isOpen={isStartNowModalOpen}
