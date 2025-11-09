@@ -13,19 +13,11 @@ import { Slider } from "./ui/slider";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, Briefcase, HeartPulse, CircleDollarSign, List, LayoutGrid, Filter, Star, X, Info } from "lucide-react";
+import { Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Star, Info } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast";
 
 const specialties = [
@@ -67,11 +59,6 @@ const defaultFilters: Filters = {
     sort: "recommended",
 };
 
-interface SavedSearch {
-    name: string;
-    filters: Filters;
-}
-
 export function FeaturedConsultants({ initialQuery }: { initialQuery?: string }) {
     const router = useRouter();
     const pathname = usePathname();
@@ -82,10 +69,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-    const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
 
     const [filters, setFilters] = useState<Filters>(() => {
         if (typeof window === "undefined") return defaultFilters;
@@ -97,7 +81,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         const current = new URLSearchParams(Array.from(searchParams.entries()));
         const allFilters = { ...filters, ...newFilters };
 
-        current.set("tab", "consultants");
         if (allFilters.query) current.set('query', allFilters.query); else current.delete('query');
         if (allFilters.specialties.length > 0) current.set('spec', allFilters.specialties.join(',')); else current.delete('spec');
         if (allFilters.languages.length > 0) current.set('lang', allFilters.languages.join(',')); else current.delete('lang');
@@ -106,6 +89,11 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         if (allFilters.sort !== defaultFilters.sort) current.set('sort', allFilters.sort); else current.delete('sort');
         if (allFilters.promoOnly) current.set('promo', 'true'); else current.delete('promo');
         if (allFilters.highRatingOnly) current.set('stars', '4'); else current.delete('stars');
+
+        // Clean up tab parameter if it exists
+        if(current.get('tab')) {
+            current.delete('tab');
+        }
 
         return current.toString();
     }, [searchParams, filters]);
@@ -118,11 +106,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     };
     
     useEffect(() => {
-        const storedSearches = getLocal<SavedSearch[]>("discover.consultants.savedSearches");
-        if (storedSearches) {
-            setSavedSearches(storedSearches);
-        }
-        
         const urlFilters: Partial<Filters> = {};
         const query = searchParams.get('query');
         if(query) urlFilters.query = query; else if (initialQuery) urlFilters.query = initialQuery;
@@ -222,7 +205,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             query: '' // Also clear query on reset
         };
         updateFilters(clearedFilters);
-        router.push(`${pathname}?tab=consultants`, { scroll: false });
+        router.push(`${pathname}`, { scroll: false });
     };
 
     const handleChipToggle = (group: 'specialties' | 'languages', value: string) => {
@@ -230,56 +213,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         const newValues = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
         updateFilters({ [group]: newValues });
     };
-
-    const handleSaveSearch = () => {
-        const searchName = prompt("Enter a name for this search:", "My Search");
-        if (!searchName) return;
-
-        const newSavedSearch: SavedSearch = { name: searchName, filters: { ...filters } };
-        const updatedSearches = [newSavedSearch, ...savedSearches].slice(0, 5);
-        setSavedSearches(updatedSearches);
-        setLocal("discover.consultants.savedSearches", updatedSearches);
-        toast({
-            title: "Search saved",
-            description: `"${searchName}" has been saved.`,
-        });
-    };
-
-    const applySavedSearch = (search: SavedSearch) => {
-        updateFilters(search.filters);
-        setIsSheetOpen(false); // Close sheet on mobile after applying
-    };
-
-    const QuickRefiners = () => (
-        <div className="flex items-center gap-4 flex-wrap justify-end">
-             <span className="text-sm font-medium">Quick Refiners:</span>
-             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => updateFilters({ rate: [3] })}>Under €3</Button>
-             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => updateFilters({ highRatingOnly: true, availability: 'Online now' })}>4★+ online</Button>
-             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => updateFilters({ languages: ['FR'] })}>FR only</Button>
-             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => updateFilters({ promoOnly: true })}>On promo</Button>
-             
-             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={savedSearches.length === 0}>
-                        Saved
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                    <DropdownMenuLabel>Your Saved Searches</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {savedSearches.map((search, index) => (
-                        <DropdownMenuItem key={index} onSelect={() => applySavedSearch(search)}>
-                            {search.name}
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Button variant="outline" size="sm" onClick={handleSaveSearch}>
-                <Star className="mr-2 h-4 w-4" /> Save Search
-            </Button>
-        </div>
-    );
 
     const FilterControls = () => (
         <TooltipProvider>
@@ -385,20 +318,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                          <p className="text-sm text-muted-foreground" aria-live="polite">
                             Showing {filteredAndSortedConsultants.length} consultants
                         </p>
-                        <div className="flex items-center gap-1 bg-muted p-1 rounded-md">
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant={viewMode === 'list' ? 'background' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('list')}><List /></Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>List view</p></TooltipContent>
-                            </Tooltip>
-                             <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant={viewMode === 'grid' ? 'background' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')}><LayoutGrid /></Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Grid view</p></TooltipContent>
-                            </Tooltip>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -434,15 +353,9 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                  {isDesktop ? <FilterControls /> : mobileSheet}
             </div>
 
-            {isDesktop && (
-                <div className="mb-6">
-                    <QuickRefiners />
-                </div>
-            )}
-
             <div role="status" aria-live="polite">
                 {isLoading ? (
-                    <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {Array.from({ length: 8 }).map((_, i) => (
                              <div key={i} className="space-y-3">
                                 <Skeleton className="h-[225px] w-full rounded-xl" />
@@ -454,7 +367,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         ))}
                     </div>
                 ) : filteredAndSortedConsultants.length > 0 ? (
-                    <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {filteredAndSortedConsultants.map((consultant) => (
                             <ConsultantCard 
                                 key={consultant.id}
@@ -479,3 +392,5 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </>
     );
 }
+
+    
