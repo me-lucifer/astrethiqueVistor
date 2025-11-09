@@ -13,6 +13,7 @@ import { useState } from "react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { FeaturedConsultants } from "@/components/featured-consultants";
 import { FeaturedContent } from "@/components/featured-content";
+import { UpcomingConferences } from "@/components/upcoming-conferences";
 
 const translations = {
   en: {
@@ -61,6 +62,10 @@ const translations = {
     content: {
         title: "Insights from our Content Hub",
         subtitle: "Explore articles and podcasts from our experts to gain clarity and perspective.",
+    },
+    conferences: {
+      title: "Upcoming Conferences",
+      subtitle: "Join live events hosted by our experts to deepen your understanding."
     }
   },
   fr: {
@@ -109,6 +114,10 @@ const translations = {
     content: {
         title: "Aperçus de notre Centre de Contenus",
         subtitle: "Explorez les articles et podcasts de nos experts pour gagner en clarté et en perspective.",
+    },
+    conferences: {
+      title: "Conférences à venir",
+      subtitle: "Participez à des événements en direct animés par nos experts pour approfondir votre compréhension."
     }
   },
 };
@@ -235,8 +244,22 @@ export default function Home() {
             <FeaturedConsultants />
         </div>
       </section>
-
+      
       <section className="py-16 sm:py-24 bg-background/50">
+        <div className="container">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+                <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                    {t.conferences.title}
+                </h2>
+                <p className="mt-4 text-lg text-foreground/80">
+                    {t.conferences.subtitle}
+                </p>
+            </div>
+            <UpcomingConferences />
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-24 bg-background">
         <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
