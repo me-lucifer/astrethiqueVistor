@@ -1,156 +1,369 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getLocal, seedOnce } from "@/lib/local";
-import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
+import type { Consultant } from "@/lib/consultants-seeder";
+import { seedConsultants } from "@/lib/consultants-seeder";
 import { ConsultantCard } from "./consultant-card";
 import { StartNowModal } from "./start-now-modal";
 import { Button } from "./ui/button";
 import { Slider } from "./ui/slider";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Heart, Briefcase, HeartPulse, CircleDollarSign, Languages, Check, Star, X, List, LayoutGrid, Filter } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
-const specialties = ["Love", "Work", "Health", "Money"];
+const specialties = [
+    { name: "Love", icon: Heart },
+    { name: "Work", icon: Briefcase },
+    { name: "Health", icon: HeartPulse },
+    { name: "Money", icon: CircleDollarSign },
+];
 const languages = ["EN", "FR"];
-const availabilities = ["Online", "Today", "This Week"];
+const availabilities = ["Online now", "Today", "This week"];
+const sortOptions = {
+    recommended: "Recommended",
+    rating_desc: "Rating (high to low)",
+    price_asc: "Price (low to high)",
+    price_desc: "Price (high to low)",
+};
+
+type SortKey = keyof typeof sortOptions;
+
+interface Filters {
+    specialties: string[];
+    languages: string[];
+    availability: string;
+    promoOnly: boolean;
+    rate: number[];
+    highRatingOnly: boolean;
+    sort: SortKey;
+}
+
+const defaultFilters: Filters = {
+    specialties: [],
+    languages: [],
+    availability: "Online now",
+    promoOnly: false,
+    rate: [10],
+    highRatingOnly: false,
+    sort: "recommended",
+};
 
 export function FeaturedConsultants() {
-    const [consultants, setConsultants] = useState<Consultant[]>([]);
-    const [filteredConsultants, setFilteredConsultants] = useState<Consultant[]>([]);
-    const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
-    
-    // Filters
-    const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
-    const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-    const [selectedAvailability, setSelectedAvailability] = useState<string[]>([]);
-    const [promoOnly, setPromoOnly] = useState(false);
-    const [rate, setRate] = useState([10]);
-    const [highRatingOnly, setHighRatingOnly] = useState(false);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const isDesktop = useMediaQuery("(min-width: 1024px)");
 
+    const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
+    const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+    const [filters, setFilters] = useState<Filters>(() => {
+        if (typeof window === "undefined") return defaultFilters;
+        const savedFilters = sessionStorage.getItem('consultantFilters');
+        return savedFilters ? JSON.parse(savedFilters) : defaultFilters;
+    });
+
+    const createQueryString = useCallback((newFilters: Partial<Filters>) => {
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        const allFilters = { ...filters, ...newFilters };
+
+        if (allFilters.specialties.length > 0) current.set('spec', allFilters.specialties.join(',')); else current.delete('spec');
+        if (allFilters.languages.length > 0) current.set('lang', allFilters.languages.join(',')); else current.delete('lang');
+        if (allFilters.availability !== defaultFilters.availability) current.set('avail', allFilters.availability.replace(' ', '-').toLowerCase()); else current.delete('avail');
+        if (allFilters.rate[0] !== defaultFilters.rate[0]) current.set('max', allFilters.rate[0].toString()); else current.delete('max');
+        if (allFilters.sort !== defaultFilters.sort) current.set('sort', allFilters.sort); else current.delete('sort');
+        if (allFilters.promoOnly) current.set('promo', 'true'); else current.delete('promo');
+        if (allFilters.highRatingOnly) current.set('stars', '4'); else current.delete('stars');
+
+        return current.toString();
+    }, [searchParams, filters]);
+
+    const updateFilters = (newFilters: Partial<Filters>) => {
+        const updated = { ...filters, ...newFilters };
+        setFilters(updated);
+        sessionStorage.setItem('consultantFilters', JSON.stringify(updated));
+        router.push(`${pathname}?${createQueryString(newFilters)}`, { scroll: false });
+    };
+    
     useEffect(() => {
+        const urlFilters: Partial<Filters> = {};
+        const spec = searchParams.get('spec');
+        if (spec) urlFilters.specialties = spec.split(',');
+
+        const lang = searchParams.get('lang');
+        if (lang) urlFilters.languages = lang.split(',');
+        
+        const avail = searchParams.get('avail');
+        if (avail) {
+            const availMap: { [key: string]: string } = { 'online-now': 'Online now', 'today': 'Today', 'this-week': 'This week' };
+            urlFilters.availability = availMap[avail] || defaultFilters.availability;
+        }
+
+        const max = searchParams.get('max');
+        if (max) urlFilters.rate = [Number(max)];
+
+        const sort = searchParams.get('sort');
+        if (sort && Object.keys(sortOptions).includes(sort)) urlFilters.sort = sort as SortKey;
+
+        urlFilters.promoOnly = searchParams.get('promo') === 'true';
+        urlFilters.highRatingOnly = searchParams.get('stars') === '4';
+        
+        const initialState = { ...defaultFilters, ...urlFilters };
+        setFilters(initialState);
+        sessionStorage.setItem('consultantFilters', JSON.stringify(initialState));
+
         seedOnce("consultants_seeded", seedConsultants);
         const storedConsultants = getLocal<Consultant[]>("consultants");
         if (storedConsultants) {
-            setConsultants(storedConsultants);
+            setAllConsultants(storedConsultants);
         }
-    }, []);
+        setIsLoading(false);
+    }, [searchParams]);
 
-    useEffect(() => {
-        let result = [...consultants];
+    const filteredAndSortedConsultants = useMemo(() => {
+        setIsLoading(true);
+        let result = [...allConsultants];
 
-        if (selectedSpecialties.length > 0) {
-            result = result.filter(c => selectedSpecialties.some(s => c.specialties.includes(s as any)));
+        if (filters.specialties.length > 0) {
+            result = result.filter(c => filters.specialties.some(s => c.specialties.includes(s as any)));
         }
-        if (selectedLanguages.length > 0) {
-            result = result.filter(c => selectedLanguages.some(s => c.languages.includes(s as any)));
+        if (filters.languages.length > 0) {
+            result = result.filter(c => filters.languages.some(s => c.languages.includes(s as any)));
         }
-        if (selectedAvailability.includes("Online")) {
+        if (filters.availability === "Online now") {
             result = result.filter(c => c.online);
         }
-        // "Today" and "This Week" are not implemented in seed data
-        if (promoOnly) {
+        // "Today" and "This week" are not implemented in seed data logic, so we don't filter for them.
+        if (filters.promoOnly) {
             result = result.filter(c => c.promo);
         }
-        if(highRatingOnly) {
-            result = result.filter(c => c.rating >= 4.5);
+        if(filters.highRatingOnly) {
+            result = result.filter(c => c.rating >= 4.0);
         }
-        result = result.filter(c => c.ratePerMin <= rate[0]);
+        result = result.filter(c => c.ratePerMin <= filters.rate[0]);
 
-        setFilteredConsultants(result);
-    }, [consultants, selectedSpecialties, selectedLanguages, selectedAvailability, promoOnly, rate, highRatingOnly]);
-
-    const handleChipToggle = (group: string, value: string) => {
-        const setters: any = {
-            specialties: setSelectedSpecialties,
-            languages: setSelectedLanguages,
-            availability: setSelectedAvailability,
-        };
-        const states: any = {
-            specialties: selectedSpecialties,
-            languages: selectedLanguages,
-            availability: selectedAvailability,
-        };
-
-        const current = states[group];
-        const setter = setters[group];
-        
-        if (setter) {
-            if (current.includes(value)) {
-                setter(current.filter((v: string) => v !== value));
-            } else {
-                setter([...current, value]);
-            }
+        switch (filters.sort) {
+            case 'rating_desc':
+                result.sort((a, b) => b.rating - a.rating);
+                break;
+            case 'price_asc':
+                result.sort((a, b) => a.ratePerMin - b.ratePerMin);
+                break;
+            case 'price_desc':
+                result.sort((a, b) => b.ratePerMin - a.ratePerMin);
+                break;
+            case 'recommended':
+            default:
+                // Simple recommendation: online, promo, high rating
+                result.sort((a, b) => {
+                    const scoreA = (a.online ? 4 : 0) + (a.promo ? 2 : 0) + a.rating;
+                    const scoreB = (b.online ? 4 : 0) + (b.promo ? 2 : 0) + b.rating;
+                    return scoreB - scoreA;
+                });
+                break;
         }
+
+        setTimeout(() => setIsLoading(false), 300); // simulate network delay for skeleton
+        return result;
+    }, [allConsultants, filters]);
+
+    const handleResetFilters = () => {
+        updateFilters(defaultFilters);
     };
 
-    if (!consultants.length) {
-        return null; // Or a loading skeleton
-    }
+    const handleChipToggle = (group: 'specialties' | 'languages', value: string) => {
+        const current = filters[group] as string[];
+        const newValues = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
+        updateFilters({ [group]: newValues });
+    };
+
+    const FilterControls = () => (
+        <TooltipProvider>
+            <div className="space-y-4">
+                 {/* Row 1 */}
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm">Specialties:</span>
+                        {specialties.map(({name, icon: Icon}) => (
+                             <Button
+                                key={name}
+                                variant={filters.specialties.includes(name) ? "secondary" : "outline"}
+                                size="sm"
+                                onClick={() => handleChipToggle('specialties', name)}
+                                className="rounded-full gap-2"
+                            >
+                                <Icon className="h-4 w-4" /> {name}
+                            </Button>
+                        ))}
+                    </div>
+                     <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm">Languages:</span>
+                        {languages.map((lang) => (
+                             <Button
+                                key={lang}
+                                variant={filters.languages.includes(lang) ? "secondary" : "outline"}
+                                size="sm"
+                                onClick={() => handleChipToggle('languages', lang)}
+                                className="rounded-full gap-2"
+                            >
+                                {lang === 'EN' ? '🇬🇧' : '🇫🇷'} {lang}
+                            </Button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap bg-muted p-1 rounded-lg">
+                        {availabilities.map((avail) => (
+                             <Button
+                                key={avail}
+                                variant={filters.availability === avail ? "background" : "ghost"}
+                                size="sm"
+                                onClick={() => updateFilters({ availability: avail })}
+                                className="flex-1 justify-center shadow-sm"
+                            >
+                                {avail}
+                            </Button>
+                        ))}
+                    </div>
+                    <div className="lg:ml-auto">
+                        <Select value={filters.sort} onValueChange={(v: SortKey) => updateFilters({ sort: v })}>
+                            <SelectTrigger className="w-full lg:w-[180px]">
+                                <SelectValue placeholder="Sort by..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {Object.entries(sortOptions).map(([key, value]) => (
+                                    <SelectItem key={key} value={key}>{value}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                 {/* Row 2 */}
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    <div className="flex-1 lg:max-w-xs space-y-2">
+                        <div className="flex justify-between items-center">
+                            <Label htmlFor="price-range">Max Price</Label>
+                            <span className="text-primary font-bold">€{filters.rate[0].toFixed(2)}/min</span>
+                        </div>
+                        <Slider id="price-range" min={1} max={10} step={0.5} value={filters.rate} onValueChange={(v) => updateFilters({ rate: v })} />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center space-x-2">
+                                    <Switch id="promo-only" checked={filters.promoOnly} onCheckedChange={(c) => updateFilters({promoOnly: c})} />
+                                    <Label htmlFor="promo-only">On promo</Label>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Currently discounted</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Switch id="rating-only" checked={filters.highRatingOnly} onCheckedChange={(c) => updateFilters({ highRatingOnly: c })}/>
+                        <Label htmlFor="rating-only">4★+ only</Label>
+                    </div>
+                    <Button variant="link" onClick={handleResetFilters} className="p-0 h-auto">Reset all</Button>
+
+                    <div className="lg:ml-auto flex items-center gap-4">
+                         <p className="text-sm text-muted-foreground" aria-live="polite">
+                            Showing {filteredAndSortedConsultants.length} consultants
+                        </p>
+                        <div className="flex items-center gap-1 bg-muted p-1 rounded-md">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant={viewMode === 'list' ? 'background' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('list')}><List /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>List view</p></TooltipContent>
+                            </Tooltip>
+                             <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant={viewMode === 'grid' ? 'background' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')}><LayoutGrid /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Grid view</p></TooltipContent>
+                            </Tooltip>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </TooltipProvider>
+    );
+
+    const mobileSheet = (
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+                 <Button variant="outline" className="lg:hidden gap-2">
+                    <Filter className="h-4 w-4" />
+                    Filters ({filteredAndSortedConsultants.length} results)
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-lg">
+                <SheetHeader className="text-left">
+                    <SheetTitle>Filters</SheetTitle>
+                </SheetHeader>
+                <div className="py-4 max-h-[70vh] overflow-y-auto">
+                    <FilterControls />
+                </div>
+                <div className="grid grid-cols-2 gap-2 border-t pt-4">
+                    <Button variant="ghost" onClick={handleResetFilters}>Reset</Button>
+                    <Button onClick={() => setIsSheetOpen(false)}>Apply</Button>
+                </div>
+            </SheetContent>
+        </Sheet>
+    );
     
-    const Chip = ({ group, value }: { group: string, value: string }) => {
-        const states: any = {
-            specialties: selectedSpecialties,
-            languages: selectedLanguages,
-            availability: selectedAvailability,
-        };
-        const isActive = states[group].includes(value);
-        return (
-            <Button
-                variant={isActive ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => handleChipToggle(group, value)}
-                className="rounded-full"
-            >
-                {value}
-            </Button>
-        );
-    };
-
     return (
         <>
-        <div className="p-4 border rounded-lg space-y-4 mb-8">
-            <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-sm mr-2">Specialties:</span>
-                {specialties.map(s => <Chip key={s} group="specialties" value={s} />)}
+            <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 py-4 mb-8 -mx-4 px-4 border-b">
+                 {isDesktop ? <FilterControls /> : mobileSheet}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-sm mr-2">Languages:</span>
-                {languages.map(l => <Chip key={l} group="languages" value={l} />)}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-                 <span className="font-semibold text-sm mr-2">Availability:</span>
-                {availabilities.map(a => <Chip key={a} group="availability" value={a} />)}
-            </div>
-            <div className="grid sm:grid-cols-3 gap-4 pt-2">
-                 <div className="space-y-2">
-                    <Label htmlFor="price-range">Max Price: €{rate[0]}/min</Label>
-                    <Slider id="price-range" min={1} max={10} step={0.5} value={rate} onValueChange={setRate} />
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Switch id="promo-only" checked={promoOnly} onCheckedChange={setPromoOnly} />
-                    <Label htmlFor="promo-only">Promo only</Label>
-                </div>
-                 <div className="flex items-center space-x-2">
-                    <Switch id="rating-only" checked={highRatingOnly} onCheckedChange={setHighRatingOnly} />
-                    <Label htmlFor="rating-only">Rating ≥ 4.5</Label>
-                </div>
-            </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredConsultants.map((consultant) => (
-                <ConsultantCard 
-                    key={consultant.id}
-                    consultant={consultant}
-                    onStartNow={() => setIsStartNowModalOpen(true)}
-                />
-            ))}
-        </div>
-        <StartNowModal 
-            isOpen={isStartNowModalOpen}
-            onOpenChange={setIsStartNowModalOpen}
-        />
+            <div role="status" aria-live="polite">
+                {isLoading ? (
+                    <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                        {Array.from({ length: 4 }).map((_, i) => (
+                             <div key={i} className="space-y-3">
+                                <Skeleton className="h-[225px] w-full rounded-xl" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-[250px]" />
+                                    <Skeleton className="h-4 w-[200px]" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : filteredAndSortedConsultants.length > 0 ? (
+                    <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                        {filteredAndSortedConsultants.map((consultant) => (
+                            <ConsultantCard 
+                                key={consultant.id}
+                                consultant={consultant}
+                                onStartNow={() => setIsStartNowModalOpen(true)}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
+                        <h3 className="font-headline text-2xl font-bold">No matching consultants.</h3>
+                        <p className="text-muted-foreground mt-2 mb-4">Try widening your filters or clearing ‘On promo’ / ‘4★+’.</p>
+                        <Button onClick={handleResetFilters}>Clear filters</Button>
+                    </div>
+                )}
+            </div>
+
+            <StartNowModal 
+                isOpen={isStartNowModalOpen}
+                onOpenChange={setIsStartNowModalOpen}
+            />
         </>
     );
 }
