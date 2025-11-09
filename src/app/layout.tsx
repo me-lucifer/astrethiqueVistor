@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { LanguageProvider } from '@/contexts/language-context';
 import { CookieConsentBanner } from '@/components/cookie-consent-banner';
+import { NotificationProvider } from '@/contexts/notification-context';
 
 
 export const metadata: Metadata = {
@@ -27,13 +28,15 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <LanguageProvider>
-          <div className="relative flex min-h-screen flex-col bg-background">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <CookieConsentBanner />
-          </div>
-          <Toaster />
+          <NotificationProvider>
+            <div className="relative flex min-h-screen flex-col bg-background">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+              <CookieConsentBanner />
+            </div>
+            <Toaster />
+          </NotificationProvider>
         </LanguageProvider>
       </body>
     </html>
