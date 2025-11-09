@@ -2,7 +2,8 @@
 import { setLocal } from "./local";
 
 export type ContentCategory = "Love" | "Work" | "Health" | "Money";
-export type ContentType = "Article" | "Podcast";
+export type ContentType = "Article" | "Podcast" | "Video";
+export type Tag = "Love" | "Work" | "Health" | "Money" | "Astrology" | "Tarot" | "Numerology" | "Clairvoyance";
 
 export interface ContentItem {
   id: string;
@@ -11,47 +12,54 @@ export interface ContentItem {
   author: string; // "Admin" or a consultant's nameAlias
   featured: boolean;
   publishedDate: string; // ISO String
-  promotedUntil: string | null; // ISO String or null
-  category: ContentCategory;
+  language: "EN" | "FR";
+  tags: Tag[];
+  duration: number; // in minutes
 }
 
 const titles = [
-  "Unlocking Your Career Potential",
+  "Unlocking Your Career Potential with Tarot",
   "The Art of Mindful Relationships",
-  "Financial Wellness for Beginners",
-  "Navigating Life's Crossroads",
+  "Financial Wellness for Beginners: An Astrological Guide",
+  "Video: Navigating Life's Crossroads with Numerology",
   "Healthy Habits for a Vibrant Life",
   "The Power of Positive Thinking in Work",
   "Building Stronger Bonds with Loved Ones",
   "Mastering Your Personal Finances",
   "Finding Your True North: A Guide to Life Path",
   "Podcast: The Future of Work-Life Balance",
-  "Podcast: Love in the Digital Age",
-  "Podcast: Holistic Health Hacks",
+  "Podcast: Love in the Digital Age & Clairvoyance",
+  "Video: Holistic Health Hacks with Astrology",
 ];
 
-const categories: ContentCategory[] = ["Love", "Work", "Health", "Money"];
+const tags: Tag[] = ["Love", "Work", "Health", "Money", "Astrology", "Tarot", "Numerology", "Clairvoyance"];
 const authors = ["Admin", "Aeliana", "Kael", "Seraphina", "Orion"];
+const types: ContentType[] = ["Article", "Podcast", "Video"];
 
 const createContentItem = (id: number): ContentItem => {
   const now = new Date();
   const publishedDate = new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000); // within last 30 days
-  const isPromoted = Math.random() > 0.7;
-  const promotedUntil = isPromoted ? new Date(now.getTime() + Math.random() * 14 * 24 * 60 * 60 * 1000).toISOString() : null; // promoted for up to 14 days
+  
+  const title = titles[id % titles.length];
+  let type: ContentType;
+  if (title.includes("Podcast")) type = "Podcast";
+  else if (title.includes("Video")) type = "Video";
+  else type = "Article";
 
   return {
     id: `${id}`,
-    title: titles[id % titles.length],
-    type: titles[id % titles.length].includes("Podcast") ? "Podcast" : "Article",
+    title: title.replace("Video: ", "").replace("Podcast: ", ""),
+    type: type,
     author: authors[Math.floor(Math.random() * authors.length)],
-    featured: Math.random() > 0.3, // 70% chance of being featured
+    featured: id < 2, // Mark first two as featured
     publishedDate: publishedDate.toISOString(),
-    promotedUntil,
-    category: categories[Math.floor(Math.random() * categories.length)],
+    language: Math.random() > 0.3 ? "EN" : "FR",
+    tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
+    duration: Math.floor(Math.random() * 25) + 5, // 5 to 30 minutes
   };
 };
 
 export const seedContentItems = () => {
-  const contentItems: ContentItem[] = Array.from({ length: 12 }, (_, i) => createContentItem(i + 1));
+  const contentItems: ContentItem[] = Array.from({ length: 12 }, (_, i) => createContentItem(i));
   setLocal("contentItems", contentItems);
 };

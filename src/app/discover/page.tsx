@@ -47,7 +47,7 @@ export default function DiscoverPage() {
                      <FeaturedConferences />
                 </TabsContent>
                 <TabsContent value="content" className="mt-6">
-                     <FeaturedContent />
+                     <FeaturedContent displayFilters={true} />
                 </TabsContent>
             </Tabs>
         </div>
