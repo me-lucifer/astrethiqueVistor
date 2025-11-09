@@ -66,7 +66,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
     const [filters, setFilters] = useState<Filters>(() => {
         if (typeof window === "undefined") return defaultFilters;
-        const savedFilters = sessionStorage.getItem('discover.consultants.filters');
+        const savedFilters = sessionStorage.getItem('discoverFilters');
         return savedFilters ? JSON.parse(savedFilters) : defaultFilters;
     });
 
@@ -77,7 +77,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             setAllConsultants(storedConsultants);
         }
 
-        const savedFilters = sessionStorage.getItem('discover.consultants.filters');
+        const savedFilters = sessionStorage.getItem('discoverFilters');
         if (savedFilters) {
             setFilters(JSON.parse(savedFilters));
         }
@@ -89,7 +89,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         setFilters(prev => {
             const updated = { ...prev, ...newFilters };
             if (typeof window !== "undefined") {
-                sessionStorage.setItem('discover.consultants.filters', JSON.stringify(updated));
+                sessionStorage.setItem('discoverFilters', JSON.stringify(updated));
             }
             return updated;
         });
@@ -160,6 +160,9 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
     const handleResetFilters = () => {
         updateFilters(defaultFilters);
+        if (typeof window !== "undefined") {
+            sessionStorage.removeItem('discoverFilters');
+        }
     };
 
     const handleChipToggle = (group: 'specialties' | 'languages', value: string) => {
@@ -330,9 +333,18 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                     </div>
                 ) : (
                     <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
-                        <h3 className="font-headline text-2xl font-bold">No matching consultants.</h3>
-                        <p className="text-muted-foreground mt-2 mb-4">Try widening your filters.</p>
-                        <Button onClick={handleResetFilters}>Clear filters</Button>
+                        {query ? (
+                            <>
+                                <h3 className="font-headline text-2xl font-bold">No results for &lsquo;{query}&rsquo;</h3>
+                                <p className="text-muted-foreground mt-2">Try another term.</p>
+                             </>
+                        ) : (
+                            <>
+                                <h3 className="font-headline text-2xl font-bold">No matches yet</h3>
+                                <p className="text-muted-foreground mt-2 mb-4">Try clearing a filter or raising your max price.</p>
+                                <Button onClick={handleResetFilters}>Reset filters</Button>
+                            </>
+                        )}
                     </div>
                 )}
             </div>
@@ -344,5 +356,3 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </>
     );
 }
-
-    
