@@ -12,6 +12,7 @@ import { DailyHoroscopeModal } from "@/components/daily-horoscope-modal";
 import { useState } from "react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { FeaturedConsultants } from "@/components/featured-consultants";
+import { FeaturedContent } from "@/components/featured-content";
 
 const translations = {
   en: {
@@ -56,6 +57,10 @@ const translations = {
     consultants: {
         title: "Connect with a Trusted Expert",
         subtitle: "Our consultants are here to provide clarity and support, whenever you need it."
+    },
+    content: {
+        title: "Insights from our Content Hub",
+        subtitle: "Explore articles and podcasts from our experts to gain clarity and perspective.",
     }
   },
   fr: {
@@ -100,6 +105,10 @@ const translations = {
     consultants: {
         title: "Connectez-vous avec un expert de confiance",
         subtitle: "Nos consultants sont là pour vous apporter clarté et soutien, quand vous en avez besoin."
+    },
+    content: {
+        title: "Aperçus de notre Centre de Contenus",
+        subtitle: "Explorez les articles et podcasts de nos experts pour gagner en clarté et en perspective.",
     }
   },
 };
@@ -227,7 +236,23 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="py-16 sm:py-24 bg-background/50">
+        <div className="container">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+                <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                    {t.content.title}
+                </h2>
+                <p className="mt-4 text-lg text-foreground/80">
+                    {t.content.subtitle}
+                </p>
+            </div>
+            <FeaturedContent />
+        </div>
+      </section>
+
       <DailyHoroscopeModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} />
     </>
   );
 }
+
+    
