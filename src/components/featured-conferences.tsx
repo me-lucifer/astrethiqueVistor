@@ -326,7 +326,7 @@ export function FeaturedConferences() {
                                                     <div className="py-4 space-y-4">
                                                         <p>{conference.excerpt}</p>
                                                         <p className="text-sm text-muted-foreground">Capacity: {conference.capacity} spots.</p>
-                                                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi.</p>
+                                                        <p>This event provides an in-depth look at the topic, offering valuable insights and practical advice. Join our expert host for an interactive and enlightening session.</p>
                                                     </div>
                                                 </SheetContent>
                                             </Sheet>

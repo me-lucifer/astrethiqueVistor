@@ -68,7 +68,9 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         <Button size="sm" onClick={(e) => handleActionClick(e, onStartNow)}>Start now</Button>
     );
     const ScheduleButton = () => (
-        <Button variant="outline" size="sm" onClick={(e) => handleActionClick(e, () => setIsScheduleModalOpen(true))}>Schedule</Button>
+        <Button asChild variant="outline" size="sm" onClick={(e) => e.preventDefault() /* Allow link to handle nav */}>
+            <Link href={`/consultant/${consultant.slug}#availability-section`}>Schedule</Link>
+        </Button>
     );
      const NotifyButton = () => (
         <Button variant="outline" size="sm" onClick={(e) => handleActionClick(e, () => setIsNotifyModalOpen(true))}><Bell className="mr-2 h-4 w-4" /> Notify me</Button>
@@ -103,6 +105,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 variant="ghost"
                                 className="absolute top-2 right-2 rounded-full h-8 w-8 bg-black/20 text-white hover:bg-black/40 hover:text-white"
                                 onClick={toggleFavorite}
+                                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
                             >
                                 <Heart className={cn("h-5 w-5", isFavorite ? "fill-red-500 text-red-500" : "text-white")} />
                             </Button>
@@ -181,25 +184,12 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                 </Card>
             </Link>
 
-            <AlertDialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Scheduling unavailable</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Scheduling is part of the demo—available in the Conferences tab. For now, this is just a placeholder.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Close</AlertDialogCancel>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
             <AlertDialog open={isNotifyModalOpen} onOpenChange={setIsNotifyModalOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                     <AlertDialogTitle>Notification set!</AlertDialogTitle>
                     <AlertDialogDescription>
-                        We'll let you know when {consultant.nameAlias} is back online. (This is a prototype feature).
+                        We'll let you know when {consultant.nameAlias} is back online.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

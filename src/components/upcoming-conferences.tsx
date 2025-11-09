@@ -94,7 +94,7 @@ export function UpcomingConferences() {
     };
     
     if (!conferences.length) {
-        return null; // or loading skeleton
+        return <p className="text-center text-muted-foreground">No upcoming conferences at this time.</p>;
     }
 
     return (
@@ -140,7 +140,7 @@ export function UpcomingConferences() {
                                         <SheetDescription>Hosted by {conference.hostAlias} on {formatDate(conference.dateISO)}</SheetDescription>
                                     </SheetHeader>
                                     <div className="py-4">
-                                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi.</p>
+                                        <p>{conference.excerpt}</p>
                                     </div>
                                 </SheetContent>
                             </Sheet>
@@ -162,16 +162,16 @@ export function UpcomingConferences() {
                                         </div>
                                         <div className="grid gap-2">
                                             <div className="flex items-center space-x-2">
-                                                <Checkbox id="remind24h" checked={rsvpDetails?.remind24h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind24h", c as boolean)} />
-                                                <Label htmlFor="remind24h">24 hours before</Label>
+                                                <Checkbox id={`upcoming-remind-24h-${conference.id}`} checked={rsvpDetails?.remind24h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind24h", c as boolean)} />
+                                                <Label htmlFor={`upcoming-remind-24h-${conference.id}`}>24 hours before</Label>
                                             </div>
                                             <div className="flex items-center space-x-2">
-                                                <Checkbox id="remind1h" checked={rsvpDetails?.remind1h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind1h", c as boolean)}/>
-                                                <Label htmlFor="remind1h">1 hour before</Label>
+                                                <Checkbox id={`upcoming-remind-1h-${conference.id}`} checked={rsvpDetails?.remind1h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind1h", c as boolean)}/>
+                                                <Label htmlFor={`upcoming-remind-1h-${conference.id}`}>1 hour before</Label>
                                             </div>
                                             <div className="flex items-center space-x-2">
-                                                <Checkbox id="remind10m" checked={rsvpDetails?.remind10m} onCheckedChange={(c) => handleReminderChange(conference.id, "remind10m", c as boolean)}/>
-                                                <Label htmlFor="remind10m">10 minutes before</Label>
+                                                <Checkbox id={`upcoming-remind-10m-${conference.id}`} checked={rsvpDetails?.remind10m} onCheckedChange={(c) => handleReminderChange(conference.id, "remind10m", c as boolean)}/>
+                                                <Label htmlFor={`upcoming-remind-10m-${conference.id}`}>10 minutes before</Label>
                                             </div>
                                         </div>
                                     </div>

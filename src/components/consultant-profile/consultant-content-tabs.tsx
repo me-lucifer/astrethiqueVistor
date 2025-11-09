@@ -12,13 +12,13 @@ const BioContent = ({ bio }: { bio: string }) => (
 
 const ReviewsContent = () => (
     <div>
-        <PlaceholderContent message="Reviews are not available in this demo." />
+        <PlaceholderContent message="Reviews for this consultant are not available yet." />
     </div>
 );
 
 const ContentSubTabs = () => (
      <div>
-        <PlaceholderContent message="Consultant-specific content is not available in this demo." />
+        <PlaceholderContent message="This consultant has not published any content yet." />
     </div>
 );
 
