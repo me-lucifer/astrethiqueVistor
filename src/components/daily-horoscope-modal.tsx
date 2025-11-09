@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -46,22 +46,33 @@ export function DailyHoroscopeModal({
 
   const form = useForm<HoroscopeFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: () => {
-      // Prefill from session storage on mount
-      if (typeof window !== 'undefined') {
-        const savedData = getLocal<HoroscopeFormData>('horoscopeForm');
-        return {
-          email: savedData?.email || "",
-          sunSign: savedData?.sunSign || "",
-          birthDate: savedData?.birthDate || "",
-          birthTime: savedData?.birthTime || "",
-          birthPlace: savedData?.birthPlace || "",
-          consent: savedData?.consent || false,
-        };
-      }
-      return { email: "", sunSign: "", birthDate: "", birthTime: "", birthPlace: "", consent: false };
+    defaultValues: {
+      email: "",
+      sunSign: "",
+      birthDate: "",
+      birthTime: "",
+      birthPlace: "",
+      consent: false,
     },
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      const savedData = getLocal<HoroscopeFormData>('horoscopeForm');
+      if (savedData) {
+        form.reset(savedData);
+      } else {
+        form.reset({
+          email: "",
+          sunSign: "",
+          birthDate: "",
+          birthTime: "",
+          birthPlace: "",
+          consent: false,
+        });
+      }
+    }
+  }, [isOpen, form]);
 
   function onSubmit(values: HoroscopeFormData) {
     // Save form data for pre-filling
@@ -152,7 +163,7 @@ export function DailyHoroscopeModal({
                     </Tooltip>
                   </TooltipProvider>
                 </FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select your sun sign" />
