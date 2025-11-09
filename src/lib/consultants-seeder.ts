@@ -17,7 +17,7 @@ export interface Consultant {
   kycVerified: boolean;
   lastReviewDate: string;
   bio: string;
-  content: {
+  content?: {
     articles: number;
     podcasts: number;
     conferences: number;
@@ -40,7 +40,7 @@ const bios = [
 ];
 
 const createConsultant = (id: number): Consultant => {
-    let consultant: Partial<Consultant> = {
+    const baseConsultant: Partial<Consultant> = {
         id: `${id}`,
         nameAlias: names[id % names.length],
         specialties: specialties.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1),
@@ -57,55 +57,57 @@ const createConsultant = (id: number): Consultant => {
             podcasts: Math.floor(Math.random() * 3),
             conferences: Math.floor(Math.random() * 2),
         }
-    }
+    };
+
+    let specificOverrides: Partial<Consultant> = {};
 
     // Specific overrides for demo purposes
     switch(id) {
         // EN-only (3)
         case 1: 
-            consultant = { ...consultant, languages: ["EN"], ratePerMin: 4.80, rating: 4.9, online: true, promo: true, specialties: ["Love", "Life Path"], sessionsCount: 480 };
+            specificOverrides = { languages: ["EN"], ratePerMin: 4.80, rating: 4.9, online: true, promo: true, specialties: ["Love", "Life Path"], sessionsCount: 480 };
             break;
         case 2:
-            consultant = { ...consultant, languages: ["EN"], ratePerMin: 2.20, rating: 4.2, online: true, promo: false, specialties: ["Work", "Money"], sessionsCount: 150 };
+            specificOverrides = { languages: ["EN"], ratePerMin: 2.20, rating: 4.2, online: true, promo: false, specialties: ["Work", "Money"], sessionsCount: 150 };
             break;
         case 3:
-            consultant = { ...consultant, languages: ["EN"], ratePerMin: 3.80, rating: 3.8, online: false, promo: false, specialties: ["Health"], sessionsCount: 88 };
+            specificOverrides = { languages: ["EN"], ratePerMin: 3.80, rating: 3.8, online: false, promo: false, specialties: ["Health"], sessionsCount: 88 };
             break;
         
         // FR-only (3)
         case 4: 
-            consultant = { ...consultant, languages: ["FR"], ratePerMin: 4.50, rating: 4.8, online: true, promo: false, specialties: ["Love", "Health"], sessionsCount: 320 };
+            specificOverrides = { languages: ["FR"], ratePerMin: 4.50, rating: 4.8, online: true, promo: false, specialties: ["Love", "Health"], sessionsCount: 320 };
             break;
         case 5:
-            consultant = { ...consultant, languages: ["FR"], ratePerMin: 2.10, rating: 4.0, online: false, promo: true, specialties: ["Work"], sessionsCount: 210 };
+            specificOverrides = { languages: ["FR"], ratePerMin: 2.10, rating: 4.0, online: false, promo: true, specialties: ["Work"], sessionsCount: 210 };
             break;
         case 6:
-            consultant = { ...consultant, languages: ["FR"], ratePerMin: 3.90, rating: 3.5, online: false, promo: false, specialties: ["Money"], sessionsCount: 55 };
+            specificOverrides = { languages: ["FR"], ratePerMin: 3.90, rating: 3.5, online: false, promo: false, specialties: ["Money"], sessionsCount: 55 };
             break;
 
         // Bilingual (3)
         case 7:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 4.90, rating: 4.9, online: true, promo: true, specialties: ["Life Path", "Work"], sessionsCount: 600 }; 
+            specificOverrides = { languages: ["EN", "FR"], ratePerMin: 4.90, rating: 4.9, online: true, promo: true, specialties: ["Life Path", "Work"], sessionsCount: 600 }; 
             break;
         case 8:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 2.50, rating: 4.5, online: false, promo: false, specialties: ["Love"], sessionsCount: 250 };
+            specificOverrides = { languages: ["EN", "FR"], ratePerMin: 2.50, rating: 4.5, online: false, promo: false, specialties: ["Love"], sessionsCount: 250 };
             break;
         case 9:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 3.00, rating: 4.1, online: true, promo: false, specialties: ["Health", "Money"], sessionsCount: 180 };
+            specificOverrides = { languages: ["EN", "FR"], ratePerMin: 3.00, rating: 4.1, online: true, promo: false, specialties: ["Health", "Money"], sessionsCount: 180 };
             break;
 
         // Remaining mix (3) - these are "newest"
         case 10:
-            consultant = { ...consultant, languages: ["EN"], ratePerMin: 2.80, rating: 3.2, online: false, promo: false, specialties: ["Love"], sessionsCount: 25 }; 
+            specificOverrides = { languages: ["EN"], ratePerMin: 2.80, rating: 3.2, online: false, promo: false, specialties: ["Love"], sessionsCount: 25 }; 
             break;
         case 11:
-            consultant = { ...consultant, languages: ["FR"], ratePerMin: 4.70, rating: 4.6, online: true, promo: false, specialties: ["Work", "Life Path"], sessionsCount: 15 };
+            specificOverrides = { languages: ["FR"], ratePerMin: 4.70, rating: 4.6, online: true, promo: false, specialties: ["Work", "Life Path"], sessionsCount: 15 };
             break;
         case 12:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 11.90, rating: 4.3, online: false, promo: false, specialties: ["Money"], sessionsCount: 5 };
+            specificOverrides = { languages: ["EN", "FR"], ratePerMin: 11.90, rating: 4.3, online: false, promo: false, specialties: ["Money"], sessionsCount: 5 };
             break;
     }
-    return consultant as Consultant;
+    return { ...baseConsultant, ...specificOverrides } as Consultant;
 };
 
 export const seedConsultants = () => {

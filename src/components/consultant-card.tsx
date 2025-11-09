@@ -27,7 +27,7 @@ import {
 import { getLocal, setLocal } from "@/lib/local";
 import { cn } from "@/lib/utils";
 
-const specialtyMap = {
+const specialtyMap: Record<string, { icon: string }> = {
     Love: { icon: "💖" },
     Work: { icon: "💼" },
     Health: { icon: "🌿" },
