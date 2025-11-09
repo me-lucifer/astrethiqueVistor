@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeaturedConsultants } from "@/components/featured-consultants";
 import { FeaturedConferences } from "@/components/featured-conferences";
@@ -14,15 +14,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { GlobalSearch } from "@/components/global-search";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { getSession, setSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 
 export default function DiscoverPage() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
-    const tab = searchParams.get('tab') || 'consultants';
+    
+    // Default to 'consultants' if tab param is missing or invalid
+    const validTabs = ['consultants', 'conferences', 'content'];
+    const tabParam = searchParams.get('tab');
+    const activeTab = validTabs.includes(tabParam as string) ? tabParam : 'consultants';
+    
     const query = searchParams.get('query') || '';
 
     useEffect(() => {
@@ -37,6 +43,14 @@ export default function DiscoverPage() {
             setSession("discoverCoachmarkShown", true);
         }
     }, [toast]);
+
+    const handleTabChange = (value: string) => {
+        const params = new URLSearchParams(window.location.search);
+        params.set('tab', value);
+        // Reset query when changing tabs to avoid confusion
+        params.delete('query'); 
+        router.push(`?${params.toString()}`, { scroll: false });
+    };
 
     return (
         <TooltipProvider>
@@ -62,11 +76,7 @@ export default function DiscoverPage() {
                     <GlobalSearch />
                 </div>
 
-                <Tabs value={tab} className="w-full" onValueChange={(value) => {
-                    const params = new URLSearchParams(window.location.search);
-                    params.set('tab', value);
-                    window.history.pushState(null, '', `?${params.toString()}`);
-                }}>
+                <Tabs value={activeTab} className="w-full" onValueChange={handleTabChange}>
                     <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
                         <TabsTrigger value="consultants">Consultants</TabsTrigger>
                         <TabsTrigger value="conferences">Conferences</TabsTrigger>

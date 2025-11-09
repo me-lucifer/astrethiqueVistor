@@ -46,7 +46,7 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const isDesktop = useMediaQuery("(min-width: 768px)");
+    const isDesktop = useMediaQuery("(min-width: 1024px)");
 
     const [allContent, setAllContent] = useState<ContentItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -150,7 +150,7 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
 
     const FilterControls = () => (
          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="flex flex-col lg:flex-row items-center gap-4">
                 <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-sm">Type:</span>
                     {contentTypes.map(({name, icon: Icon}) => (
@@ -167,9 +167,9 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
                         </Button>
                     ))}
                 </div>
-                <div className="md:ml-auto">
+                <div className="lg:ml-auto">
                     <Select value={filters.sort} onValueChange={(v: SortKey) => updateFilters({ sort: v })}>
-                        <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectTrigger className="w-full lg:w-[180px]">
                             <SelectValue placeholder="Sort by..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -180,7 +180,7 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
                     </Select>
                 </div>
             </div>
-            <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="flex flex-col lg:flex-row items-center gap-4">
                 <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-sm">Tags:</span>
                     {tags.map((tag) => (
@@ -189,7 +189,7 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
                         </Button>
                     ))}
                 </div>
-                <Button variant="link" onClick={handleResetFilters} className="p-0 h-auto md:ml-4">Reset all</Button>
+                <Button variant="link" onClick={handleResetFilters} className="p-0 h-auto lg:ml-4">Reset all</Button>
             </div>
         </div>
     );
@@ -197,21 +197,21 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
     const mobileSheet = (
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-                 <Button variant="outline" className="md:hidden gap-2">
+                 <Button variant="outline" className="lg:hidden gap-2 w-full">
                     <Filter className="h-4 w-4" />
                     Filters ({filteredContent.length} results)
                 </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-lg">
-                <SheetHeader className="text-left">
+            <SheetContent side="bottom" className="rounded-t-lg h-[90vh] flex flex-col">
+                <SheetHeader className="text-left flex-row items-center justify-between pr-6">
                     <SheetTitle>Filters</SheetTitle>
+                    <Button variant="link" onClick={handleResetFilters}>Reset</Button>
                 </SheetHeader>
-                <div className="py-4 max-h-[70vh] overflow-y-auto">
+                <div className="py-4 flex-1 overflow-y-auto">
                     <FilterControls />
                 </div>
-                <div className="grid grid-cols-2 gap-2 border-t pt-4">
-                    <Button variant="ghost" onClick={handleResetFilters}>Reset</Button>
-                    <Button onClick={() => setIsSheetOpen(false)}>Apply</Button>
+                <div className="border-t pt-4">
+                     <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply Filters</Button>
                 </div>
             </SheetContent>
         </Sheet>
@@ -219,7 +219,7 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
 
     if (isLoading) {
         return (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
                      <div key={i} className="space-y-3">
                         <Skeleton className="h-[180px] w-full rounded-xl" />
@@ -238,14 +238,14 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
     return (
        <>
            {displayFilters && (
-               <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 py-4 mb-4 -mx-4 px-4 border-b">
+               <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 py-4 mb-6">
                    {isDesktop ? <FilterControls /> : mobileSheet}
                </div>
            )}
            
            <div role="status" aria-live="polite">
                 {filteredContent.length > 0 ? (
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredContent.map((item) => (
                             <ContentCard key={item.id} item={item} />
                         ))}

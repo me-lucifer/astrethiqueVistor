@@ -118,9 +118,9 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     };
     
     useEffect(() => {
-        const storedSearches = sessionStorage.getItem('discover.consultants.savedSearches');
+        const storedSearches = getLocal<SavedSearch[]>("discover.consultants.savedSearches");
         if (storedSearches) {
-            setSavedSearches(JSON.parse(storedSearches));
+            setSavedSearches(storedSearches);
         }
         
         const urlFilters: Partial<Filters> = {};
@@ -233,7 +233,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         const newSavedSearch: SavedSearch = { name: searchName, filters: { ...filters } };
         const updatedSearches = [newSavedSearch, ...savedSearches].slice(0, 5);
         setSavedSearches(updatedSearches);
-        sessionStorage.setItem('discover.consultants.savedSearches', JSON.stringify(updatedSearches));
+        setLocal("discover.consultants.savedSearches", updatedSearches);
         toast({
             title: "Search saved",
             description: `"${searchName}" has been saved.`,
@@ -402,21 +402,21 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     const mobileSheet = (
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-                 <Button variant="outline" className="lg:hidden gap-2">
+                 <Button variant="outline" className="lg:hidden gap-2 w-full">
                     <Filter className="h-4 w-4" />
                     Filters ({filteredAndSortedConsultants.length} results)
                 </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-lg">
-                <SheetHeader className="text-left">
+            <SheetContent side="bottom" className="rounded-t-lg h-[90vh] flex flex-col">
+                <SheetHeader className="text-left flex-row items-center justify-between pr-6">
                     <SheetTitle>Filters</SheetTitle>
+                    <Button variant="link" onClick={handleResetFilters}>Reset</Button>
                 </SheetHeader>
-                <div className="py-4 max-h-[70vh] overflow-y-auto">
+                <div className="py-4 flex-1 overflow-y-auto">
                     <FilterControls />
                 </div>
-                <div className="grid grid-cols-2 gap-2 border-t pt-4">
-                    <Button variant="ghost" onClick={handleResetFilters}>Reset</Button>
-                    <Button onClick={() => setIsSheetOpen(false)}>Apply</Button>
+                <div className="border-t pt-4">
+                    <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply Filters</Button>
                 </div>
             </SheetContent>
         </Sheet>
@@ -424,7 +424,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     
     return (
         <>
-            <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 py-4 mb-4 -mx-4 px-4 border-b">
+            <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 py-4 mb-6">
                  {isDesktop ? <FilterControls /> : mobileSheet}
             </div>
 
@@ -436,7 +436,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
             <div role="status" aria-live="polite">
                 {isLoading ? (
-                    <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                    <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
                         {Array.from({ length: 8 }).map((_, i) => (
                              <div key={i} className="space-y-3">
                                 <Skeleton className="h-[225px] w-full rounded-xl" />
@@ -448,7 +448,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         ))}
                     </div>
                 ) : filteredAndSortedConsultants.length > 0 ? (
-                    <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                    <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
                         {filteredAndSortedConsultants.map((consultant) => (
                             <ConsultantCard 
                                 key={consultant.id}
