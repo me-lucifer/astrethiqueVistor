@@ -2,6 +2,7 @@
 "use client";
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Gem } from 'lucide-react';
@@ -13,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -24,6 +26,8 @@ const navLinks = [
 ];
 
 export function Header() {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -33,11 +37,23 @@ export function Header() {
             <span className="hidden sm:inline">ASTRETHIQUE</span>
           </Link>
           <nav className="hidden lg:flex items-center gap-4 text-sm font-medium">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="text-foreground/70 hover:text-foreground transition-colors">
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link 
+                  key={link.href} 
+                  href={link.href} 
+                  className={cn(
+                    "transition-colors",
+                    isActive 
+                      ? "text-primary font-semibold" 
+                      : "text-foreground/70 hover:text-foreground"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
@@ -79,13 +95,16 @@ export function Header() {
                  </Link>
               </div>
               <nav className="flex-1 p-4 flex flex-col gap-2">
-                {navLinks.map((link) => (
-                  <Button key={link.href} variant="ghost" className="justify-start text-base" asChild>
-                    <Link href={link.href}>
-                      {link.label}
-                    </Link>
-                  </Button>
-                ))}
+                {navLinks.map((link) => {
+                   const isActive = pathname === link.href;
+                  return (
+                    <Button key={link.href} variant={isActive ? "secondary" : "ghost"} className="justify-start text-base" asChild>
+                      <Link href={link.href}>
+                        {link.label}
+                      </Link>
+                    </Button>
+                  );
+                })}
               </nav>
               <div className="p-4 border-t space-y-2">
                 <div className="grid grid-cols-2 gap-2">
