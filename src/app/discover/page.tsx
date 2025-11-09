@@ -1,9 +1,15 @@
 
 "use client";
 
+import { useEffect } from "react";
 import { FeaturedConsultants } from "@/components/featured-consultants";
+import { seedConsultants } from "@/lib/consultants-seeder";
 
 export default function DiscoverPage() {
+    useEffect(() => {
+        seedConsultants();
+    }, []);
+
     return (
         <div className="container py-8">
             <div className="flex items-center gap-2 mb-2">

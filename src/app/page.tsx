@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/tooltip"
 import { useToast } from "@/hooks/use-toast";
 import { StartNowModal } from "@/components/start-now-modal";
+import { getLocal } from "@/lib/local";
+import { getSession, setSession } from "@/lib/session";
 
 const categories = [
     { name: "Love", icon: Heart, description: "Focused guidance on relationships.", query: "Love" },
@@ -73,8 +75,8 @@ export default function Home() {
 
     // Logic to show registration banner after horoscope submission
     const registrationBannerTimer = setTimeout(() => {
-      const leadExists = localStorage.getItem("leads");
-      const userRegistered = sessionStorage.getItem("userRegistered");
+      const leadExists = getLocal("leads");
+      const userRegistered = getSession("userRegistered");
       if (leadExists && userRegistered !== 'true') {
         setShowRegistrationBanner(true);
       }

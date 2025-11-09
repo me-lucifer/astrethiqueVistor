@@ -1,0 +1,71 @@
+
+"use client";
+
+import { setSession, getSession } from "./session";
+import { Consultant } from "./consultants";
+import { addDays, addHours, format, subDays } from 'date-fns';
+
+const createConsultant = (index: number): Consultant => {
+    const now = new Date();
+    const isOnline = index % 3 === 0;
+    const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
+    const consultantName = `Consultant ${index}`;
+
+    return {
+        id: `c_${index}`,
+        slug: `consultant-${index}`,
+        name: consultantName,
+        rating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
+        pricePerMin: Math.round((1.5 + Math.random() * 3.5) * 2) / 2,
+        priceWas: index % 4 === 0 ? Math.round((3 + Math.random() * 3) * 2) / 2 : undefined,
+        promo24h: index % 5 === 0,
+        promoActive: index % 4 === 0,
+        reviewsCount: Math.floor(Math.random() * 500) + 10,
+        languages: index % 2 === 0 
+            ? [{ code: 'EN', level: 'native' }, { code: 'FR', level: 'fluent' }]
+            : [{ code: 'EN', level: 'native' }],
+        availability: {
+            online: isOnline,
+            slots: Array.from({ length: 5 }).map((_, i) => addHours(addDays(now, Math.floor(i/2)), i % 2).toISOString()),
+        },
+        specialties: specialties.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1),
+        badges: ['New', 'Top Rated', 'Rising Star', 'Promo 24h'].sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
+        contentCounts: {
+            articles: Math.floor(Math.random() * 10),
+            podcasts: Math.floor(Math.random() * 5),
+            conferences: Math.floor(Math.random() * 3),
+        },
+        cover: `https://picsum.photos/seed/${index}/400/300`,
+        kycVerified: Math.random() > 0.2,
+        adminApproved: Math.random() > 0.1,
+        lastReviewDate: format(subDays(now, Math.floor(Math.random() * 90)), 'yyyy-MM-dd'),
+        bio: `This is a short bio for ${consultantName}. They are an expert in ${specialties.join(', ')} and have been practicing for over ${Math.floor(Math.random()*10)+2} years.`,
+        reviews: [
+            { author: 'Jane D.', rating: 5, dateISO: subDays(now, 5).toISOString(), text: 'An amazing and insightful reading!'},
+            { author: 'John S.', rating: 4, dateISO: subDays(now, 10).toISOString(), text: 'Very helpful, provided a lot of clarity.'},
+        ],
+        content: {
+            articles: [{ id: 'a1', title: 'Article 1', tag: 'Love', level: 'Beginner', likes: 10 }],
+            podcasts: [{ id: 'p1', title: 'Podcast 1', duration: 15 }],
+            conferences: [{ id: 'k1', title: 'Conference 1', scheduleISO: addDays(now, 20).toISOString() }],
+        },
+        joinedAt: subDays(now, Math.floor(Math.random() * 365)).toISOString(),
+    };
+};
+
+export const seedConsultants = () => {
+  if (typeof window === 'undefined') return;
+
+  if (!getSession('discover.seed.v1')) {
+    const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
+    
+    setSession('discover.consultants.v1', consultants);
+    setSession('discover.favorites.v1', []);
+    setSession('schedule.holds.v1', []);
+    setSession('notify.me.v1', []);
+    setSession('discover.filters.v1', {});
+    setSession('discover.sort.v1', 'recommended');
+    
+    setSession('discover.seed.v1', true);
+  }
+};

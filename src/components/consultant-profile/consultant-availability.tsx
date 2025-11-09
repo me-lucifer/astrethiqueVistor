@@ -12,6 +12,7 @@ import { MessageSquare, Video, Phone, Clock } from 'lucide-react';
 import { StartNowModal } from '../start-now-modal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
+import { getSession, setSession } from '@/lib/session';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -31,7 +32,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const handleScheduleClick = () => {
     // For demo, we check if user is logged in via a simple session flag.
     // In a real app, this would be a proper auth check.
-    const isLoggedIn = sessionStorage.getItem('userRegistered') === 'true';
+    const isLoggedIn = getSession('userRegistered') === 'true';
     if (!isLoggedIn) {
         setIsStartNowModalOpen(true);
         return;
@@ -40,35 +41,33 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   };
 
   const handleSlotSelect = (slot: Date) => {
-    const appointments = JSON.parse(sessionStorage.getItem('appointments') || '[]');
+    const appointments = getSession<any[]>('schedule.holds.v1') || [];
     
     const newAppointment = {
       id: `${consultant.id}-${slot.getTime()}`,
       consultantId: consultant.id,
-      consultantName: consultant.nameAlias,
+      consultantName: consultant.name,
       slug: consultant.slug,
       mode: selectedMode,
       startIso: slot.toISOString(),
       durationMin: parseInt(selectedDuration),
-      pricePerMin: consultant.ratePerMin,
-      language: consultant.languages.join(', '),
+      pricePerMin: consultant.pricePerMin,
+      language: consultant.languages.map(l => l.code).join(', '),
       specialties: consultant.specialties.join(', '),
     };
     
-    sessionStorage.setItem('appointments', JSON.stringify([...appointments, newAppointment]));
+    setSession('schedule.holds.v1', [...appointments, newAppointment]);
     
     setIsDrawerOpen(false);
     toast({
       title: 'Session scheduled. We\'ll remind you.',
-      description: `Your ${selectedMode} session with ${consultant.nameAlias} is set for ${format(slot, 'PPP p')}.`,
+      description: `Your ${selectedMode} session with ${consultant.name} is set for ${format(slot, 'PPP p')}.`,
     });
   };
 
-  // Generate some fake availability for the demo
-  const tomorrow = add(new Date(), { days: 1 });
-  const baseTime = set(tomorrow, { hours: 9, minutes: 0, seconds: 0, milliseconds: 0 });
-  const availableSlots = Array.from({ length: 4 }, (_, i) => add(baseTime, { minutes: i * 30 }));
-  const drawerSlots = Array.from({ length: 12 }, (_, i) => add(baseTime, { minutes: i * 15 }));
+  // Use the slots from the consultant's data
+  const availableSlots = consultant.availability.slots.slice(0, 4).map(s => new Date(s));
+  const drawerSlots = consultant.availability.slots.map(s => new Date(s));
 
   return (
     <div id="availability-section" className="scroll-mt-24">
@@ -114,7 +113,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>Schedule with {consultant.nameAlias}</SheetTitle>
+            <SheetTitle>Schedule with {consultant.name}</SheetTitle>
             <SheetDescription>Select a time for your {selectedMode} session.</SheetDescription>
           </SheetHeader>
           <div className="py-4 grid grid-cols-1 gap-4">

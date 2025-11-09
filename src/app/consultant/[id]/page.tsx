@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Consultant } from '@/lib/consultants';
-import consultantsData from '@/lib/consultants.json';
+import { getSession } from '@/lib/session';
 import { PlaceholderPage } from '@/components/placeholder-page';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConsultantProfileHeader } from '@/components/consultant-profile/consultant-profile-header';
@@ -22,7 +22,6 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { ArrowUp } from 'lucide-react';
-import { getLocal } from '@/lib/local';
 
 export default function ConsultantProfilePage() {
   const params = useParams();
@@ -34,11 +33,11 @@ export default function ConsultantProfilePage() {
 
   useEffect(() => {
     if (id) {
-      // In a real app, you'd fetch this from an API. Here we use the imported JSON.
-      // The `id` from URL params might be the slug, so we find by slug.
-      const allConsultants: Consultant[] = consultantsData;
-      const foundConsultant = allConsultants.find(c => c.id === id || c.slug === id);
-      setConsultant(foundConsultant || null);
+      const allConsultants = getSession<Consultant[]>('discover.consultants.v1');
+      if (allConsultants) {
+        const foundConsultant = allConsultants.find(c => c.id === id || c.slug === id);
+        setConsultant(foundConsultant || null);
+      }
       setLoading(false);
     }
   }, [id]);

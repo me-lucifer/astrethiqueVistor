@@ -1,6 +1,8 @@
 
 "use client";
 
+// This file uses localStorage. For sessionStorage, please use `session.ts`.
+
 const storage =
   typeof window !== "undefined"
     ? window.localStorage

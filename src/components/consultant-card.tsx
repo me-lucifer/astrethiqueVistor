@@ -25,7 +25,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getLocal, setLocal } from "@/lib/local";
+import { getSession, setSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,23 +42,25 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
     const { toast } = useToast();
     const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [favorites, setFavorites] = useState<string[]>([]);
 
     useEffect(() => {
-        const favorites = getLocal<string[]>("favorites") || [];
-        setIsFavorite(favorites.includes(consultant.id));
+        const favs = getSession<string[]>("discover.favorites.v1") || [];
+        setFavorites(favs);
+        setIsFavorite(favs.includes(consultant.id));
     }, [consultant.id]);
 
     const toggleFavorite = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        const favorites = getLocal<string[]>("favorites") || [];
-        const newIsFavorite = !isFavorite;
-        if (newIsFavorite) {
-            setLocal("favorites", [...favorites, consultant.id]);
-        } else {
-            setLocal("favorites", favorites.filter(id => id !== consultant.id));
-        }
-        setIsFavorite(newIsFavorite);
+        
+        const newFavorites = isFavorite
+            ? favorites.filter(id => id !== consultant.id)
+            : [...favorites, consultant.id];
+        
+        setIsFavorite(!isFavorite);
+        setFavorites(newFavorites);
+        setSession("discover.favorites.v1", newFavorites);
     }
 
     const handleActionClick = (e: React.MouseEvent, action: () => void) => {
@@ -74,9 +76,9 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
     };
 
     const handleNotifyClick = () => {
-        const notifyList = getLocal<string[]>("notifyList") || [];
+        const notifyList = getSession<string[]>("notify.me.v1") || [];
         if (!notifyList.includes(consultant.id)) {
-            setLocal("notifyList", [...notifyList, consultant.id]);
+            setSession("notify.me.v1", [...notifyList, consultant.id]);
         }
         setIsNotifyModalOpen(true);
     };
@@ -92,6 +94,8 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
      const NotifyButton = () => (
         <Button variant="outline" size="sm" onClick={(e) => handleActionClick(e, handleNotifyClick)}><Bell className="mr-2 h-4 w-4" /> Notify me</Button>
     );
+    
+    const isOnline = consultant.availability.online;
 
     return (
         <TooltipProvider>
@@ -100,15 +104,15 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                     <CardContent className="p-0">
                         <div className="relative">
                             <Image
-                                src={consultant.photo}
-                                alt={consultant.nameAlias}
+                                src={consultant.cover}
+                                alt={consultant.name}
                                 width={400}
                                 height={300}
                                 className="w-full object-cover aspect-[4/3] group-hover:opacity-90 transition-opacity"
                                 data-ai-hint="portrait person"
                                 loading="lazy"
                             />
-                            {consultant.online && (
+                            {isOnline && (
                                 <div className="absolute top-3 left-3 flex items-center gap-2 bg-success/80 backdrop-blur-sm text-success-foreground px-3 py-1 rounded-full text-xs font-bold border border-success-foreground/20">
                                     <span className="relative flex h-2 w-2">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75 motion-reduce:animate-none"></span>
@@ -127,17 +131,17 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 <Heart className={cn("h-5 w-5", isFavorite ? "fill-red-500 text-red-500" : "text-white")} />
                             </Button>
                             <div className="absolute bottom-3 right-3 flex gap-2">
-                                {(consultant.promo || consultant.badges.promo24h) && (
+                                {consultant.promoActive && (
                                     <Badge className="bg-primary text-primary-foreground border-primary-foreground/20">PROMO</Badge>
                                 )}
-                                {consultant.badges.topRated && (
+                                {consultant.badges.includes("Top Rated") && (
                                     <Badge variant="secondary">Top Rated</Badge>
                                 )}
                             </div>
                         </div>
                         <div className="p-4">
                             <div className="flex justify-between items-start gap-2">
-                                <h3 className="font-headline text-lg font-bold truncate flex-1 group-hover:text-primary" title={consultant.nameAlias}>{consultant.nameAlias}</h3>
+                                <h3 className="font-headline text-lg font-bold truncate flex-1 group-hover:text-primary" title={consultant.name}>{consultant.name}</h3>
                                 <div className="flex items-center gap-1 text-primary shrink-0">
                                     <Star className="w-4 h-4 fill-current" />
                                     <span className="font-bold text-sm text-foreground">{consultant.rating.toFixed(1)}</span>
@@ -152,7 +156,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <div className="font-bold text-base text-primary cursor-pointer">
-                                            From {consultant.ratePerMin.toFixed(2)}€<span className="text-sm font-normal text-foreground/70">/min</span>
+                                            From {consultant.pricePerMin.toFixed(2)}€<span className="text-sm font-normal text-foreground/70">/min</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -161,13 +165,13 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 </Tooltip>
                                 <div className="flex flex-wrap gap-2">
                                     {consultant.languages.map(lang => (
-                                        <Badge key={lang} variant="outline" className="text-xs">{lang}</Badge>
+                                        <Badge key={lang.code} variant="outline" className="text-xs">{lang.code}</Badge>
                                     ))}
                                 </div>
                             </div>
 
                             <div className="mt-4 grid grid-cols-2 gap-2">
-                            {consultant.online ? (
+                            {isOnline ? (
                                     <>
                                         <StartNowButton />
                                         <ScheduleButton />
@@ -192,13 +196,11 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 ))}
                             </div>
                         )}
-                        {consultant.content && (
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground w-full">
-                                {consultant.content.articles > 0 && <div className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5"/><span>{consultant.content.articles}</span></div>}
-                                {consultant.content.podcasts > 0 && <div className="flex items-center gap-1"><Mic className="h-3.5 w-3.5"/><span>{consultant.content.podcasts}</span></div>}
-                                {consultant.content.conferences > 0 && <div className="flex items-center gap-1"><Video className="h-3.5 w-3.5"/><span>{consultant.content.conferences}</span></div>}
-                            </div>
-                        )}
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground w-full">
+                            {consultant.contentCounts.articles > 0 && <div className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5"/><span>{consultant.contentCounts.articles}</span></div>}
+                            {consultant.contentCounts.podcasts > 0 && <div className="flex items-center gap-1"><Mic className="h-3.5 w-3.5"/><span>{consultant.contentCounts.podcasts}</span></div>}
+                            {consultant.contentCounts.conferences > 0 && <div className="flex items-center gap-1"><Video className="h-3.5 w-3.5"/><span>{consultant.contentCounts.conferences}</span></div>}
+                        </div>
                     </CardFooter>
                 </Card>
             </Link>
@@ -208,7 +210,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                     <AlertDialogHeader>
                     <AlertDialogTitle>Notification set!</AlertDialogTitle>
                     <AlertDialogDescription>
-                        We'll let you know when {consultant.nameAlias} is back online.
+                        We'll let you know when {consultant.name} is back online.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

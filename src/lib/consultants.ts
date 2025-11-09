@@ -2,25 +2,43 @@
 export interface Consultant {
   id: string;
   slug: string;
-  nameAlias: string;
-  photo: string;
-  languages: ("EN" | "FR")[];
-  specialties: ("Love" | "Work" | "Health" | "Money" | "Life Path")[];
+  name: string;
   rating: number;
-  sessionsCount: number;
-  ratePerMin: number;
-  originalRatePerMin: number | null;
-  promo: boolean;
-  badges: {
-    topRated: boolean;
-    promo24h: boolean;
+  pricePerMin: number;
+  priceWas?: number;
+  promo24h?: boolean;
+  languages: {
+    code: 'EN' | 'FR';
+    level: 'basic' | 'fluent' | 'native';
+  }[];
+  availability: {
+    online: boolean;
+    slots: string[]; // ISO date strings
   };
-  online: boolean;
-  bio: string;
-  content?: {
+  specialties: ('Love' | 'Work' | 'Health' | 'Money' | 'Life Path')[];
+  badges: ('Top Rated' | 'Rising Star' | 'New' | 'Promo 24h')[];
+  contentCounts: {
     articles: number;
     podcasts: number;
     conferences: number;
   };
-  joinedAt: string;
+  cover: string;
+  kycVerified: boolean;
+  adminApproved: boolean;
+  lastReviewDate: string; // YYYY-MM-DD
+  bio: string;
+  reviews: {
+    author: string;
+    rating: number;
+    dateISO: string;
+    text: string;
+  }[];
+  content: {
+    articles: { id: string; title: string; tag: string; level: string; likes: number }[];
+    podcasts: { id: string; title: string; duration: number }[];
+    conferences: { id: string; title: string; scheduleISO: string }[];
+  };
+  joinedAt: string; // ISO date string
+  promoActive?: boolean;
+  reviewsCount: number;
 }

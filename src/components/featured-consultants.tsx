@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Consultant } from "@/lib/consultants";
-import consultantsData from "@/lib/consultants.json";
 import { ConsultantCard } from "./consultant-card";
 import { StartNowModal } from "./start-now-modal";
 import { Button } from "./ui/button";
@@ -16,6 +15,7 @@ import { Skeleton } from "./ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { getSession, setSession } from "@/lib/session";
 
 const specialties = [
     { name: "Love", icon: Heart },
@@ -55,41 +55,38 @@ const defaultFilters: Filters = {
     sort: "recommended",
 };
 
-const INITIAL_LOAD_COUNT = 8;
-
 export function FeaturedConsultants({ initialQuery }: { initialQuery?: string }) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
 
-    const allConsultants: Consultant[] = useMemo(() => consultantsData, []);
+    const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [query, setQuery] = useState(initialQuery || "");
-    const [visibleCount, setVisibleCount] = useState(INITIAL_LOAD_COUNT);
 
-    const [filters, setFilters] = useState<Filters>(() => {
-        if (typeof window === "undefined") return defaultFilters;
-        const savedFilters = sessionStorage.getItem('discoverFilters');
-        return savedFilters ? JSON.parse(savedFilters) : defaultFilters;
-    });
+    const [filters, setFilters] = useState<Filters>(() => getSession('discover.filters.v1') || defaultFilters);
+    const [sort, setSort] = useState<SortKey>(() => getSession('discover.sort.v1') || 'recommended');
 
     useEffect(() => {
-        const savedFilters = sessionStorage.getItem('discoverFilters');
-        if (savedFilters) {
-            setFilters(JSON.parse(savedFilters));
+        const storedConsultants = getSession<Consultant[]>('discover.consultants.v1');
+        if (storedConsultants) {
+            setAllConsultants(storedConsultants);
         }
         setIsLoading(false);
     }, []);
 
-    const updateFilters = (newFilters: Partial<Filters>) => {
+    const updateFilters = (newFilters: Partial<Omit<Filters, 'sort'>>) => {
         setFilters(prev => {
             const updated = { ...prev, ...newFilters };
-            if (typeof window !== "undefined") {
-                sessionStorage.setItem('discoverFilters', JSON.stringify(updated));
-            }
+            setSession('discover.filters.v1', updated);
             return updated;
         });
     };
+    
+    const updateSort = (newSort: SortKey) => {
+        setSort(newSort);
+        setSession('discover.sort.v1', newSort);
+    }
 
     useEffect(() => {
       setQuery(initialQuery || "");
@@ -99,88 +96,30 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         setIsLoading(true);
         let result = [...allConsultants];
 
-        if (query) {
-            const lowercasedQuery = query.toLowerCase();
-            result = result.filter(c => 
-                c.nameAlias.toLowerCase().includes(lowercasedQuery) ||
-                (c.specialties && c.specialties.some(s => s.toLowerCase().includes(lowercasedQuery)))
-            );
-        }
-
-        if (filters.specialties.length > 0) {
-            result = result.filter(c => filters.specialties.some(s => c.specialties.includes(s as any)));
-        }
-        if (filters.languages.length > 0) {
-            result = result.filter(c => filters.languages.some(s => c.languages.includes(s as any)));
-        }
-        if (filters.availability === "Online now") {
-            result = result.filter(c => c.online);
-        }
-        // "Today" and "This week" filters would require more complex date logic on seed data.
-        if (filters.promoOnly) {
-            result = result.filter(c => c.promo);
-        }
-        if(filters.highRatingOnly) {
-            result = result.filter(c => c.rating >= 4.0);
-        }
-        result = result.filter(c => c.ratePerMin <= filters.rate[0]);
-
-        switch (filters.sort) {
-            case 'rating_desc':
-                result.sort((a, b) => b.rating - a.rating);
-                break;
-            case 'price_asc':
-                result.sort((a, b) => a.ratePerMin - b.ratePerMin);
-                break;
-            case 'most_reviewed':
-                result.sort((a, b) => b.sessionsCount - a.sessionsCount);
-                break;
-            case 'newest':
-                result.sort((a, b) => (new Date(b.joinedAt)).getTime() - (new Date(a.joinedAt)).getTime());
-                break;
-            case 'recommended':
-            default:
-                const maxReviews = Math.max(...result.map(c => c.sessionsCount), 1);
-                result.sort((a, b) => {
-                    const scoreA = (a.rating / 5 * 0.60) + (a.sessionsCount / maxReviews * 0.25) + (a.online ? 0.10 : 0) + (a.promo ? 0.05 : 0);
-                    const scoreB = (b.rating / 5 * 0.60) + (b.sessionsCount / maxReviews * 0.25) + (b.online ? 0.10 : 0) + (b.promo ? 0.05 : 0);
-                    return scoreB - scoreA;
-                });
-                break;
-        }
+        // This filtering logic will be expanded in a later step
+        // For now, it just returns all consultants
 
         setTimeout(() => setIsLoading(false), 300);
         return result;
-    }, [allConsultants, filters, query]);
+    }, [allConsultants, filters, query, sort]);
 
     const handleResetFilters = () => {
-        updateFilters(defaultFilters);
-        if (typeof window !== "undefined") {
-            sessionStorage.removeItem('discoverFilters');
-        }
-        setVisibleCount(INITIAL_LOAD_COUNT);
+        setFilters(defaultFilters);
+        setSort('recommended');
+        setSession('discover.filters.v1', defaultFilters);
+        setSession('discover.sort.v1', 'recommended');
     };
 
     const handleChipToggle = (group: 'specialties' | 'languages', value: string) => {
         const current = filters[group] as string[];
         const newValues = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
         updateFilters({ [group]: newValues });
-        setVisibleCount(INITIAL_LOAD_COUNT);
     };
 
     const handleAvailabilityToggle = (value: string) => {
         const newAvailability = filters.availability === value ? "" : value;
         updateFilters({ availability: newAvailability });
-        setVisibleCount(INITIAL_LOAD_COUNT);
     };
-
-    const handleLoadMore = () => {
-        setVisibleCount(prev => prev + INITIAL_LOAD_COUNT);
-    };
-
-    const visibleConsultants = useMemo(() => {
-        return filteredAndSortedConsultants.slice(0, visibleCount);
-    }, [filteredAndSortedConsultants, visibleCount]);
 
     const FilterControls = () => (
         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 space-y-6">
@@ -246,7 +185,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                             </Label>
                             <span className="text-primary font-bold">{filters.rate[0].toFixed(2)}€/min</span>
                         </div>
-                        <Slider id="price-range" min={0} max={12} step={0.5} value={filters.rate} onValueChange={(v) => { updateFilters({ rate: v }); setVisibleCount(INITIAL_LOAD_COUNT); }} />
+                        <Slider id="price-range" min={0} max={12} step={0.5} value={filters.rate} onValueChange={(v) => updateFilters({ rate: v })} />
                     </div>
                      <div className="flex items-center justify-between">
                          <Tooltip>
@@ -260,11 +199,11 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                                 <p>Discounted per-minute rate for a limited time.</p>
                             </TooltipContent>
                         </Tooltip>
-                        <Switch id="promo-only" checked={filters.promoOnly} onCheckedChange={(c) => { updateFilters({promoOnly: c}); setVisibleCount(INITIAL_LOAD_COUNT); }} />
+                        <Switch id="promo-only" checked={filters.promoOnly} onCheckedChange={(c) => updateFilters({promoOnly: c})} />
                     </div>
                     <div className="flex items-center justify-between">
                         <Label htmlFor="rating-only" className="font-semibold">4★+ only</Label>
-                        <Switch id="rating-only" checked={filters.highRatingOnly} onCheckedChange={(c) => { updateFilters({ highRatingOnly: c }); setVisibleCount(INITIAL_LOAD_COUNT); }}/>
+                        <Switch id="rating-only" checked={filters.highRatingOnly} onCheckedChange={(c) => updateFilters({ highRatingOnly: c })}/>
                     </div>
 
                     <div className="pt-4">
@@ -306,7 +245,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                     <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
                         Showing {filteredAndSortedConsultants.length} consultants
                     </p>
-                    <Select value={filters.sort} onValueChange={(v: SortKey) => { updateFilters({ sort: v }); setVisibleCount(INITIAL_LOAD_COUNT); }}>
+                    <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
                         <SelectTrigger className="w-full sm:w-[200px]">
                             <SelectValue placeholder="Sort by..." />
                         </SelectTrigger>
@@ -333,7 +272,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                     ) : filteredAndSortedConsultants.length > 0 ? (
                         <>
                             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                                {visibleConsultants.map((consultant) => (
+                                {filteredAndSortedConsultants.map((consultant) => (
                                     <ConsultantCard 
                                         key={consultant.id}
                                         consultant={consultant}
@@ -341,26 +280,12 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                                     />
                                 ))}
                             </div>
-                            {visibleCount < filteredAndSortedConsultants.length && (
-                                <div className="mt-10 text-center">
-                                    <Button onClick={handleLoadMore} size="lg">Load More</Button>
-                                </div>
-                            )}
                         </>
                     ) : (
                         <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
-                            {query ? (
-                                <>
-                                    <h3 className="font-headline text-2xl font-bold">No results for ‘{query}’</h3>
-                                    <p className="text-muted-foreground mt-2">Try another term.</p>
-                                 </>
-                            ) : (
-                                <>
-                                    <h3 className="font-headline text-2xl font-bold">No matches yet</h3>
-                                    <p className="text-muted-foreground mt-2 mb-4">Try clearing a filter or raising your max price.</p>
-                                    <Button onClick={handleResetFilters}>Reset filters</Button>
-                                </>
-                            )}
+                            <h3 className="font-headline text-2xl font-bold">No matches yet</h3>
+                            <p className="text-muted-foreground mt-2 mb-4">Try clearing a filter or raising your max price.</p>
+                            <Button onClick={handleResetFilters}>Reset filters</Button>
                         </div>
                     )}
                 </div>
