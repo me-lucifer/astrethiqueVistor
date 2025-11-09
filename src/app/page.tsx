@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, Euro, Wallet, Lock, Heart, Briefcase, HeartPulse, CircleDollarSign } from "lucide-react";
+import { ArrowRight, Sparkles, Euro, Wallet, Lock, Heart, Briefcase, HeartPulse, CircleDollarSign, ShieldCheck, UserCheck } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
@@ -44,6 +44,14 @@ const translations = {
           description: "Cap monthly spend; enable one emergency top-up if needed."
         }
       ]
+    },
+    trust: {
+        items: [
+            { icon: UserCheck, text: "Admin-approved & KYC-verified consultants" },
+            { icon: Lock, text: "GDPR-compliant data" },
+            { icon: ShieldCheck, text: "Transparent pricing before you start" }
+        ],
+        learnMore: "Learn more"
     },
     categories: {
         title: "Find the Right Guidance, Faster.",
@@ -96,6 +104,14 @@ const translations = {
           description: "Plafonnez vos dépenses mensuelles ; activez une recharge d'urgence si besoin."
         }
       ]
+    },
+    trust: {
+        items: [
+            { icon: UserCheck, text: "Consultants approuvés et vérifiés (KYC)" },
+            { icon: Lock, text: "Données conformes au RGPD" },
+            { icon: ShieldCheck, text: "Tarification transparente avant de commencer" }
+        ],
+        learnMore: "En savoir plus"
     },
     categories: {
         title: "Trouvez les bons conseils, plus rapidement.",
@@ -273,9 +289,31 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="py-16 bg-background/50 border-y">
+        <div className="container">
+          <div className="grid md:grid-cols-3 gap-8 items-center text-center md:text-left">
+            {t.trust.items.map((item, index) => (
+              <div key={index} className="flex flex-col md:flex-row items-center gap-4">
+                <item.icon className="h-8 w-8 text-primary shrink-0" />
+                <p className="text-foreground/80">{item.text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Button variant="link" asChild>
+                <Link href="/how-it-works#trust">
+                    {t.trust.learnMore} <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <DailyHoroscopeModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} />
     </>
   );
 }
+
+    
 
     
