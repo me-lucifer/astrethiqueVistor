@@ -55,6 +55,8 @@ const defaultFilters: Filters = {
     sort: "recommended",
 };
 
+const INITIAL_LOAD_COUNT = 8;
+
 export function FeaturedConsultants({ initialQuery }: { initialQuery?: string }) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
 
@@ -63,6 +65,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     const [isLoading, setIsLoading] = useState(true);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [query, setQuery] = useState(initialQuery || "");
+    const [visibleCount, setVisibleCount] = useState(INITIAL_LOAD_COUNT);
 
     const [filters, setFilters] = useState<Filters>(() => {
         if (typeof window === "undefined") return defaultFilters;
@@ -155,18 +158,29 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         if (typeof window !== "undefined") {
             sessionStorage.removeItem('discoverFilters');
         }
+        setVisibleCount(INITIAL_LOAD_COUNT);
     };
 
     const handleChipToggle = (group: 'specialties' | 'languages', value: string) => {
         const current = filters[group] as string[];
         const newValues = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
         updateFilters({ [group]: newValues });
+        setVisibleCount(INITIAL_LOAD_COUNT);
     };
 
     const handleAvailabilityToggle = (value: string) => {
         const newAvailability = filters.availability === value ? "" : value;
         updateFilters({ availability: newAvailability });
+        setVisibleCount(INITIAL_LOAD_COUNT);
     };
+
+    const handleLoadMore = () => {
+        setVisibleCount(prev => prev + INITIAL_LOAD_COUNT);
+    };
+
+    const visibleConsultants = useMemo(() => {
+        return filteredAndSortedConsultants.slice(0, visibleCount);
+    }, [filteredAndSortedConsultants, visibleCount]);
 
     const FilterControls = () => (
         <TooltipProvider>
@@ -201,7 +215,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         ))}
                     </div>
                     <div className="lg:ml-auto">
-                        <Select value={filters.sort} onValueChange={(v: SortKey) => updateFilters({ sort: v })}>
+                        <Select value={filters.sort} onValueChange={(v: SortKey) => { updateFilters({ sort: v }); setVisibleCount(INITIAL_LOAD_COUNT); }}>
                             <SelectTrigger className="w-full lg:w-[180px]">
                                 <SelectValue placeholder="Sort by..." />
                             </SelectTrigger>
@@ -240,13 +254,13 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                             </Label>
                             <span className="text-primary font-bold">{filters.rate[0].toFixed(2)}€/min</span>
                         </div>
-                        <Slider id="price-range" min={0} max={12} step={0.5} value={filters.rate} onValueChange={(v) => updateFilters({ rate: v })} />
+                        <Slider id="price-range" min={0} max={12} step={0.5} value={filters.rate} onValueChange={(v) => { updateFilters({ rate: v }); setVisibleCount(INITIAL_LOAD_COUNT); }} />
                     </div>
                     <div className="flex items-center space-x-2">
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <div className="flex items-center space-x-2">
-                                    <Switch id="promo-only" checked={filters.promoOnly} onCheckedChange={(c) => updateFilters({promoOnly: c})} />
+                                    <Switch id="promo-only" checked={filters.promoOnly} onCheckedChange={(c) => { updateFilters({promoOnly: c}); setVisibleCount(INITIAL_LOAD_COUNT); }} />
                                     <Label htmlFor="promo-only">On promo</Label>
                                 </div>
                             </TooltipTrigger>
@@ -256,7 +270,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         </Tooltip>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Switch id="rating-only" checked={filters.highRatingOnly} onCheckedChange={(c) => updateFilters({ highRatingOnly: c })}/>
+                        <Switch id="rating-only" checked={filters.highRatingOnly} onCheckedChange={(c) => { updateFilters({ highRatingOnly: c }); setVisibleCount(INITIAL_LOAD_COUNT); }}/>
                         <Label htmlFor="rating-only">4★+ only</Label>
                     </div>
                     <Button variant="link" onClick={handleResetFilters} className="p-0 h-auto">Reset all</Button>
@@ -314,15 +328,22 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         ))}
                     </div>
                 ) : filteredAndSortedConsultants.length > 0 ? (
-                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {filteredAndSortedConsultants.map((consultant) => (
-                            <ConsultantCard 
-                                key={consultant.id}
-                                consultant={consultant}
-                                onStartNow={() => setIsStartNowModalOpen(true)}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {visibleConsultants.map((consultant) => (
+                                <ConsultantCard 
+                                    key={consultant.id}
+                                    consultant={consultant}
+                                    onStartNow={() => setIsStartNowModalOpen(true)}
+                                />
+                            ))}
+                        </div>
+                        {visibleCount < filteredAndSortedConsultants.length && (
+                            <div className="mt-10 text-center">
+                                <Button onClick={handleLoadMore} size="lg">Load More</Button>
+                            </div>
+                        )}
+                    </>
                 ) : (
                     <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
                         {query ? (

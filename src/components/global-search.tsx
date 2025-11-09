@@ -40,7 +40,7 @@ export function GlobalSearch() {
 
     const allConsultants: Consultant[] = consultantsData;
 
-    const debouncedQuery = useDebounce(query, 300);
+    const debouncedQuery = useDebounce(query, 250);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
