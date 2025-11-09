@@ -59,10 +59,10 @@ export function Header() {
 
         <div className="hidden lg:flex items-center gap-2">
             <Button variant="ghost" asChild>
-              <Link href="#">Login</Link>
+              <Link href="/login">Login</Link>
             </Button>
             <Button asChild>
-              <Link href="#">Register</Link>
+              <Link href="/register">Register</Link>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -109,10 +109,10 @@ export function Header() {
               <div className="p-4 border-t space-y-2">
                 <div className="grid grid-cols-2 gap-2">
                    <Button variant="ghost" asChild>
-                    <Link href="#">Login</Link>
+                    <Link href="/login">Login</Link>
                   </Button>
                   <Button asChild>
-                    <Link href="#">Register</Link>
+                    <Link href="/register">Register</Link>
                   </Button>
                 </div>
                  <Button variant="outline" disabled className="w-full">

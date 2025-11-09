@@ -13,6 +13,10 @@ export interface Consultant {
   sessionsCount: number;
   shortBlurb: string;
   newest: boolean;
+  adminApproved: boolean;
+  kycVerified: boolean;
+  lastReviewDate: string;
+  bio: string;
   content: {
     articles: number;
     podcasts: number;
@@ -30,6 +34,10 @@ const blurbs = [
     "Helping you find balance and wellness in daily life.",
     "Unlocking your hidden potential and life's purpose.",
 ]
+const bios = [
+    "<p>With over a decade of experience in spiritual guidance, Aeliana specializes in matters of the heart and personal growth. Her compassionate approach combines traditional tarot with modern coaching techniques to help you navigate life's challenges.</p><p>She believes everyone has the power to create their own destiny and is passionate about empowering her clients to find their own inner wisdom.</p>",
+    "<p>Kael is a certified astrologer and numerologist with a focus on career and financial planning. He uses planetary alignments and life path numbers to provide strategic advice that helps clients achieve their professional and monetary goals.</p><p>His sessions are practical, insightful, and geared towards tangible results.</p>",
+];
 
 const createConsultant = (id: number): Consultant => {
     let consultant: Partial<Consultant> = {
@@ -39,7 +47,11 @@ const createConsultant = (id: number): Consultant => {
         location: locations[id % locations.length],
         sessionsCount: Math.floor(Math.random() * 500) + 20,
         shortBlurb: blurbs[id % blurbs.length],
+        bio: bios[id % bios.length],
         newest: id > 9, // Mark last 3 as "newest"
+        adminApproved: true,
+        kycVerified: id % 2 === 0, // Mix it up
+        lastReviewDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
         content: {
             articles: Math.floor(Math.random() * 5),
             podcasts: Math.floor(Math.random() * 3),
@@ -73,7 +85,7 @@ const createConsultant = (id: number): Consultant => {
 
         // Bilingual (3)
         case 7:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 11.90, rating: 4.9, online: true, promo: true, specialties: ["Life Path", "Work"], sessionsCount: 600 }; 
+            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 4.90, rating: 4.9, online: true, promo: true, specialties: ["Life Path", "Work"], sessionsCount: 600 }; 
             break;
         case 8:
             consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 2.50, rating: 4.5, online: false, promo: false, specialties: ["Love"], sessionsCount: 250 };
@@ -90,7 +102,7 @@ const createConsultant = (id: number): Consultant => {
             consultant = { ...consultant, languages: ["FR"], ratePerMin: 4.70, rating: 4.6, online: true, promo: false, specialties: ["Work", "Life Path"], sessionsCount: 15 };
             break;
         case 12:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 2.40, rating: 4.3, online: false, promo: false, specialties: ["Money"], sessionsCount: 5 };
+            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 11.90, rating: 4.3, online: false, promo: false, specialties: ["Money"], sessionsCount: 5 };
             break;
     }
     return consultant as Consultant;
@@ -100,5 +112,3 @@ export const seedConsultants = () => {
   const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
   setLocal("consultants", consultants);
 };
-
-    
