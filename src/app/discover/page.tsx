@@ -3,7 +3,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeaturedConsultants } from "@/components/featured-consultants";
-import { UpcomingConferences } from "@/components/upcoming-conferences";
+import { FeaturedConferences } from "@/components/featured-conferences";
 import { FeaturedContent } from "@/components/featured-content";
 import { Info } from "lucide-react";
 import {
@@ -44,7 +44,7 @@ export default function DiscoverPage() {
                     <FeaturedConsultants />
                 </TabsContent>
                 <TabsContent value="conferences" className="mt-6">
-                     <UpcomingConferences />
+                     <FeaturedConferences />
                 </TabsContent>
                 <TabsContent value="content" className="mt-6">
                      <FeaturedContent />
