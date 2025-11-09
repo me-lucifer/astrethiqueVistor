@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeaturedConsultants } from "@/components/featured-consultants";
 import { FeaturedConferences } from "@/components/featured-conferences";
@@ -14,11 +15,28 @@ import {
 } from "@/components/ui/tooltip";
 import { GlobalSearch } from "@/components/global-search";
 import { useSearchParams } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { getSession, setSession } from "@/lib/session";
+import { Button } from "@/components/ui/button";
 
 export default function DiscoverPage() {
     const searchParams = useSearchParams();
+    const { toast } = useToast();
     const tab = searchParams.get('tab') || 'consultants';
     const query = searchParams.get('query') || '';
+
+    useEffect(() => {
+        const coachmarkShown = getSession("discoverCoachmarkShown");
+        if (!coachmarkShown) {
+            const { dismiss } = toast({
+                title: "Tip",
+                description: "Use filters to quickly narrow results. You can save searches you reuse.",
+                duration: Infinity,
+                action: <Button variant="outline" size="sm" onClick={() => dismiss()}>Got it</Button>,
+            });
+            setSession("discoverCoachmarkShown", true);
+        }
+    }, [toast]);
 
     return (
         <TooltipProvider>

@@ -13,7 +13,7 @@ import { Slider } from "./ui/slider";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, Briefcase, HeartPulse, CircleDollarSign, List, LayoutGrid, Filter, Star, X } from "lucide-react";
+import { Heart, Briefcase, HeartPulse, CircleDollarSign, List, LayoutGrid, Filter, Star, X, Info } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
@@ -118,7 +118,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     };
     
     useEffect(() => {
-        // Load saved searches from session storage
         const storedSearches = sessionStorage.getItem('discover.consultants.savedSearches');
         if (storedSearches) {
             setSavedSearches(JSON.parse(storedSearches));
@@ -213,7 +212,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 break;
         }
 
-        setTimeout(() => setIsLoading(false), 300); // simulate network delay for skeleton
+        setTimeout(() => setIsLoading(false), 300);
         return result;
     }, [allConsultants, filters]);
 
@@ -232,7 +231,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         if (!searchName) return;
 
         const newSavedSearch: SavedSearch = { name: searchName, filters: { ...filters } };
-        const updatedSearches = [newSavedSearch, ...savedSearches].slice(0, 5); // Keep max 5
+        const updatedSearches = [newSavedSearch, ...savedSearches].slice(0, 5);
         setSavedSearches(updatedSearches);
         sessionStorage.setItem('discover.consultants.savedSearches', JSON.stringify(updatedSearches));
         toast({
@@ -279,7 +278,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     const FilterControls = () => (
         <TooltipProvider>
             <div className="space-y-4">
-                 {/* Row 1 */}
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-sm">Specialties:</span>
@@ -310,17 +308,26 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         ))}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap bg-muted p-1 rounded-lg">
-                        {availabilities.map((avail) => (
-                             <Button
-                                key={avail}
-                                variant={filters.availability === avail ? "background" : "ghost"}
-                                size="sm"
-                                onClick={() => updateFilters({ availability: avail })}
-                                className="flex-1 justify-center shadow-sm"
-                            >
-                                {avail}
-                            </Button>
-                        ))}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span>
+                                    {availabilities.map((avail) => (
+                                        <Button
+                                            key={avail}
+                                            variant={filters.availability === avail ? "background" : "ghost"}
+                                            size="sm"
+                                            onClick={() => updateFilters({ availability: avail })}
+                                            className="flex-1 justify-center shadow-sm"
+                                        >
+                                            {avail}
+                                        </Button>
+                                    ))}
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Start instantly if the consultant is available.</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </div>
                     <div className="lg:ml-auto">
                         <Select value={filters.sort} onValueChange={(v: SortKey) => updateFilters({ sort: v })}>
@@ -335,11 +342,16 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         </Select>
                     </div>
                 </div>
-                 {/* Row 2 */}
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                     <div className="flex-1 lg:max-w-xs space-y-2">
                         <div className="flex justify-between items-center">
-                            <Label htmlFor="price-range">Max Price</Label>
+                            <Label htmlFor="price-range" className="flex items-center gap-1">
+                                Max Price
+                                 <Tooltip>
+                                    <TooltipTrigger asChild><Info className="h-3 w-3 cursor-pointer"/></TooltipTrigger>
+                                    <TooltipContent>Maximum rate per minute you’re comfortable paying.</TooltipContent>
+                                </Tooltip>
+                            </Label>
                             <span className="text-primary font-bold">€{filters.rate[0].toFixed(2)}/min</span>
                         </div>
                         <Slider id="price-range" min={1} max={10} step={0.5} value={filters.rate} onValueChange={(v) => updateFilters({ rate: v })} />
@@ -353,7 +365,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Currently discounted</p>
+                                <p>Discounted per-minute rate for a limited time.</p>
                             </TooltipContent>
                         </Tooltip>
                     </div>
