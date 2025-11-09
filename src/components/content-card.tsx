@@ -8,32 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Mic, BookOpen } from "lucide-react";
 import { differenceInDays, isFuture } from "date-fns";
-import { useLanguage } from "@/contexts/language-context";
-
-const translations = {
-    en: {
-        sponsored: "Sponsored",
-        worthReading: "Worth reading",
-        by: "By"
-    },
-    fr: {
-        sponsored: "Sponsorisé",
-        worthReading: "À lire",
-        by: "Par"
-    }
-}
-
 
 export function ContentCard({ item }: { item: ContentItem }) {
-    const { language } = useLanguage();
-    const t = translations[language];
 
     const getChip = () => {
         if (item.promotedUntil && isFuture(new Date(item.promotedUntil))) {
-            return <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground border-primary-foreground/20">{t.worthReading}</Badge>;
+            return <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground border-primary-foreground/20">Don't miss it</Badge>;
         }
         if (item.author === "Admin" && differenceInDays(new Date(), new Date(item.publishedDate)) < 7) {
-            return <Badge className="absolute top-3 left-3 bg-secondary text-secondary-foreground border-secondary-foreground/20">{t.sponsored}</Badge>;
+            return <Badge className="absolute top-3 left-3 bg-secondary text-secondary-foreground border-secondary-foreground/20">Sponsored</Badge>;
         }
         return null;
     };
@@ -64,7 +47,7 @@ export function ContentCard({ item }: { item: ContentItem }) {
                     <h3 className="font-headline text-lg font-bold leading-tight group-hover:text-primary transition-colors">{item.title}</h3>
                 </CardContent>
                 <CardFooter className="p-4 pt-0 text-sm text-foreground/70 flex justify-between items-center">
-                    <span>{t.by} {item.author}</span>
+                    <span>By {item.author}</span>
                     <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity motion-safe:translate-x-[-4px] motion-safe:group-hover:translate-x-0"/>
                 </CardFooter>
             </Card>

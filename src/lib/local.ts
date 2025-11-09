@@ -1,13 +1,8 @@
-
 "use client";
-
-// This file is DEPRECATED in favor of local.ts.
-// It is kept to avoid breaking existing imports but should be removed in the future.
-// All new functionality should use `localStorage` via local.ts.
 
 const storage =
   typeof window !== "undefined"
-    ? window.sessionStorage
+    ? window.localStorage
     : {
         getItem: (): string | null => null,
         setItem: (key: string, value: string): void => {},
@@ -17,42 +12,42 @@ const storage =
         key: (index: number): string | null => null,
       };
 
-export function getSession<T>(key: string): T | null {
+export function getLocal<T>(key: string): T | null {
   if (typeof window === "undefined") return null;
   try {
     const item = storage.getItem(key);
     return item ? JSON.parse(item) : null;
   } catch (error) {
-    console.error(`Error reading from session storage for key "${key}":`, error);
+    console.error(`Error reading from local storage for key "${key}":`, error);
     return null;
   }
 }
 
-export function setSession<T>(key: string, value: T): void {
+export function setLocal<T>(key: string, value: T): void {
   if (typeof window === "undefined") return;
   try {
     storage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error(`Error writing to session storage for key "${key}":`, error);
+    console.error(`Error writing to local storage for key "${key}":`, error);
   }
 }
 
-export function removeSession(key: string): void {
+export function removeLocal(key: string): void {
     if (typeof window === "undefined") return;
     try {
         storage.removeItem(key);
     } catch (error) {
-        console.error(`Error removing from session storage for key "${key}":`, error);
+        console.error(`Error removing from local storage for key "${key}":`, error);
     }
 }
 
 export function seedOnce(flagKey: string, seedFn: () => void): void {
   if (typeof window === "undefined") return;
   try {
-    const flag = getSession(flagKey);
+    const flag = getLocal(flagKey);
     if (!flag) {
       seedFn();
-      setSession(flagKey, true);
+      setLocal(flagKey, true);
     }
   } catch (error) {
     console.error(`Error during seedOnce for key "${flagKey}":`, error);

@@ -2,23 +2,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSession, seedOnce } from "@/lib/session";
+import { getLocal, seedOnce } from "@/lib/local";
 import { ContentItem, seedContentItems } from "@/lib/content-seeder";
 import { ContentCard } from "./content-card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
 
 export function FeaturedContent() {
     const [content, setContent] = useState<ContentItem[]>([]);
 
     useEffect(() => {
         seedOnce("content_seeded", seedContentItems);
-        const storedContent = getSession<ContentItem[]>("contentItems");
+        const storedContent = getLocal<ContentItem[]>("contentItems");
         if (storedContent) {
             setContent(storedContent.filter(item => item.featured).slice(0, 6));
         }
@@ -36,5 +29,3 @@ export function FeaturedContent() {
         </div>
     );
 }
-
-    

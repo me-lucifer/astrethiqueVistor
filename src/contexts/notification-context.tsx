@@ -2,14 +2,15 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { getSession, setSession, seedOnce } from "@/lib/session";
+import { getLocal, setLocal, seedOnce } from "@/lib/local";
 
 export interface Notification {
   id: string;
   title: string;
-  description: string;
-  timestamp: string;
-  isRead: boolean;
+  body: string;
+  category: 'system' | 'content' | 'session';
+  createdAt: string;
+  read: boolean;
 }
 
 interface NotificationContextType {
@@ -17,7 +18,7 @@ interface NotificationContextType {
   unreadCount: number;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void;
+  addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -28,26 +29,29 @@ const seedNotifications = () => {
     {
       id: "1",
       title: "Welcome to Astrethique!",
-      description: "We are excited to have you on board.",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 5).toISOString(),
-      isRead: false,
+      body: "We are excited to have you on board.",
+      category: 'system',
+      createdAt: new Date(now.getTime() - 1000 * 60 * 5).toISOString(),
+      read: false,
     },
     {
       id: "2",
       title: "Your profile is incomplete",
-      description: "Complete your profile to get the best experience.",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(),
-      isRead: false,
+      body: "Complete your profile to get the best experience.",
+      category: 'system',
+      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(),
+      read: false,
     },
     {
       id: "3",
       title: "New conference announced",
-      description: "Check out the new conference on 'The Future of Aesthetics'.",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(),
-      isRead: true,
+      body: "Check out the new conference on 'The Future of Aesthetics'.",
+      category: 'content',
+      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(),
+      read: true,
     },
   ];
-  setSession("notifications", initialNotifications);
+  setLocal("notifications", initialNotifications);
   return initialNotifications;
 };
 
@@ -58,43 +62,44 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     seedOnce("notifications_seeded", () => {
         const seeded = seedNotifications();
-        setNotifications(seeded);
+        setNotifications(seeded.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     });
 
-    const storedNotifications = getSession<Notification[]>("notifications");
+    const storedNotifications = getLocal<Notification[]>("notifications");
     if (storedNotifications) {
-      setNotifications(storedNotifications);
+      setNotifications(storedNotifications.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     }
   }, []);
 
   useEffect(() => {
-    const count = notifications.filter(n => !n.isRead).length;
+    const count = notifications.filter(n => !n.read).length;
     setUnreadCount(count);
   }, [notifications]);
 
   const updateNotifications = (updated: Notification[]) => {
-      setNotifications(updated);
-      setSession("notifications", updated);
+      const sorted = updated.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setNotifications(sorted);
+      setLocal("notifications", sorted);
   }
 
   const markAsRead = useCallback((id: string) => {
     const newNotifications = notifications.map(n =>
-      n.id === id ? { ...n, isRead: true } : n
+      n.id === id ? { ...n, read: true } : n
     );
     updateNotifications(newNotifications);
   }, [notifications]);
 
   const markAllAsRead = useCallback(() => {
-    const newNotifications = notifications.map(n => ({ ...n, isRead: true }));
+    const newNotifications = notifications.map(n => ({ ...n, read: true }));
     updateNotifications(newNotifications);
   }, [notifications]);
 
-  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
     const newNotification: Notification = {
         ...notification,
         id: new Date().getTime().toString(),
-        timestamp: new Date().toISOString(),
-        isRead: false,
+        createdAt: new Date().toISOString(),
+        read: false,
     };
     const newNotifications = [newNotification, ...notifications];
     updateNotifications(newNotifications);

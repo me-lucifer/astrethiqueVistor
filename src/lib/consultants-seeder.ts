@@ -1,5 +1,5 @@
 
-import { setSession } from "./session";
+import { setLocal } from "./local";
 
 export interface Consultant {
   id: string;
@@ -19,8 +19,8 @@ const createConsultant = (id: number): Consultant => ({
   id: `${id}`,
   nameAlias: names[id % names.length],
   languages: Math.random() > 0.3 ? ["EN", "FR"] : (Math.random() > 0.5 ? ["EN"] : ["FR"]),
-  ratePerMin: parseFloat((Math.random() * (5 - 1.5) + 1.5).toFixed(2)),
-  rating: parseFloat((Math.random() * (5 - 4) + 4).toFixed(1)),
+  ratePerMin: parseFloat((Math.random() * (10 - 1) + 1).toFixed(2)),
+  rating: parseFloat((Math.random() * (5 - 3.8) + 3.8).toFixed(1)),
   online: Math.random() > 0.4,
   specialties: specialties.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1),
   promo: Math.random() > 0.8,
@@ -28,5 +28,5 @@ const createConsultant = (id: number): Consultant => ({
 
 export const seedConsultants = () => {
   const consultants: Consultant[] = Array.from({ length: 8 }, (_, i) => createConsultant(i + 1));
-  setSession("consultants", consultants);
+  setLocal("consultants", consultants);
 };

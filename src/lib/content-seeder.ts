@@ -1,5 +1,5 @@
 
-import { setSession } from "./session";
+import { setLocal } from "./local";
 
 export type ContentCategory = "Love" | "Work" | "Health" | "Money";
 export type ContentType = "Article" | "Podcast";
@@ -53,7 +53,5 @@ const createContentItem = (id: number): ContentItem => {
 
 export const seedContentItems = () => {
   const contentItems: ContentItem[] = Array.from({ length: 12 }, (_, i) => createContentItem(i + 1));
-  setSession("contentItems", contentItems);
+  setLocal("contentItems", contentItems);
 };
-
-    

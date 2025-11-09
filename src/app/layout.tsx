@@ -3,7 +3,6 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
-import { LanguageProvider } from '@/contexts/language-context';
 import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { NotificationProvider } from '@/contexts/notification-context';
 
@@ -27,17 +26,15 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700;800&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <LanguageProvider>
-          <NotificationProvider>
-            <div className="relative flex min-h-screen flex-col bg-background">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-              <CookieConsentBanner />
-            </div>
-            <Toaster />
-          </NotificationProvider>
-        </LanguageProvider>
+        <NotificationProvider>
+          <div className="relative flex min-h-screen flex-col bg-background">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <CookieConsentBanner />
+          </div>
+          <Toaster />
+        </NotificationProvider>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { setSession } from "./session";
+import { setLocal } from "./local";
 import { addDays } from "date-fns";
 
 export interface Conference {
@@ -39,5 +39,5 @@ const createConference = (id: number): Conference => {
 
 export const seedConferences = () => {
   const conferences: Conference[] = Array.from({ length: 5 }, (_, i) => createConference(i + 1));
-  setSession("conferences", conferences);
+  setLocal("conferences", conferences);
 };

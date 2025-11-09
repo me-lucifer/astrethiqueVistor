@@ -3,32 +3,24 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Consultant } from "@/lib/consultants-seeder";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Phone, Calendar } from "lucide-react";
-import { useLanguage } from "@/contexts/language-context";
-import { StartNowModal } from "./start-now-modal";
+import { Star } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
-const translations = {
-    en: {
-        startNow: "Start now",
-        schedule: "Schedule",
-        online: "Online",
-    },
-    fr: {
-        startNow: "Démarrer",
-        schedule: "Planifier",
-        online: "En ligne",
-    }
-}
-
-export function ConsultantCard({ consultant }: { consultant: Consultant }) {
-    const { language } = useLanguage();
-    const t = translations[language];
-    const [isModalOpen, setIsModalOpen] = useState(false);
+export function ConsultantCard({ consultant, onStartNow }: { consultant: Consultant, onStartNow: () => void }) {
+    const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
     return (
         <>
@@ -50,7 +42,7 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75 motion-reduce:animate-none"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                 </span>
-                                {t.online}
+                                Online
                             </div>
                         )}
                         {consultant.promo && (
@@ -69,40 +61,37 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
                             {consultant.languages.map(lang => (
                                 <Badge key={lang} variant="outline" className="text-xs">{lang}</Badge>
                             ))}
-                            {consultant.specialties.slice(0, 2).map(spec => (
-                                <Badge key={spec} variant="secondary" className="text-xs bg-secondary/10 text-secondary-foreground/80">{spec}</Badge>
-                            ))}
                         </div>
                         <div className="mt-4 flex justify-between items-center">
                             <div className="font-bold text-lg text-primary">
-                                {consultant.ratePerMin.toFixed(2)}€<span className="text-sm font-normal text-foreground/70">/min</span>
+                                From {consultant.ratePerMin.toFixed(2)}€<span className="text-sm font-normal text-foreground/70">/min</span>
                             </div>
                         </div>
 
                         <div className="mt-4 grid grid-cols-2 gap-2">
-                             <Button 
-                                size="sm" 
-                                disabled={!consultant.online}
-                                onClick={() => consultant.online && setIsModalOpen(true)}
-                             >
-                                <Phone className="mr-2 h-4 w-4"/>
-                                {t.startNow}
+                            <Button size="sm" onClick={onStartNow}>
+                                Start now
                             </Button>
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={`/discover?consultant=${consultant.id}`}>
-                                    <Calendar className="mr-2 h-4 w-4"/>
-                                    {t.schedule}
-                                </Link>
-                            </Button>
+                            <AlertDialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
+                                <Button variant="outline" size="sm" onClick={() => setIsScheduleModalOpen(true)}>
+                                    Schedule
+                                </Button>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Scheduling unavailable</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Scheduling is part of the demo—available in the Conferences tab.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Close</AlertDialogCancel>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
                     </div>
                 </CardContent>
             </Card>
-            <StartNowModal 
-                isOpen={isModalOpen} 
-                onOpenChange={setIsModalOpen}
-                consultant={consultant}
-            />
         </>
     );
 }

@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Euro, Wallet, Lock, Heart, Briefcase, HeartPulse, CircleDollarSign, ShieldCheck, UserCheck, Info } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useLanguage } from "@/contexts/language-context";
 import { DailyHoroscopeModal } from "@/components/daily-horoscope-modal";
 import { useState, useEffect } from "react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -21,151 +20,46 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useToast } from "@/hooks/use-toast";
+import { StartNowModal } from "@/components/start-now-modal";
 
-const translations = {
-  en: {
-    headline: "Guidance you can feel good about.",
-    subheadline:
-      "Speak with vetted consultants by chat, audio, or video — pay per minute, budget-friendly, and GDPR-respectful.",
-    startNow: "Start Now",
-    checkHoroscope: "Check Free Daily Horoscope",
-    pricingInfo:
-      "Transparent per-minute pricing.",
-    optionalMonthly: "Optional monthly",
-    budgetLock: "Budget Lock",
-    valuePillars: {
-      title: "Clarity and Control, by Design.",
-      subtitle: "Our commitment to ethical, transparent practices empowers you to connect with confidence.",
-      pillars: [
-        {
-          icon: Euro,
-          title: "Per-Consultant Rate",
-          description: "Each expert sets a clear €/min rate shown before you start."
-        },
-        {
-          icon: Wallet,
-          title: "Prepaid Wallet & Live Meter",
-          description: "Top up once, watch your remaining minutes in real time."
-        },
-        {
-          icon: Lock,
-          title: "Optional Budget Lock",
-          description: "Cap monthly spend; enable one emergency top-up if needed."
-        }
-      ]
+const categories = [
+    { name: "Love", icon: Heart, description: "Focused guidance on relationships.", query: "Love" },
+    { name: "Work", icon: Briefcase, description: "Focused guidance on career.", query: "Work" },
+    { name: "Health", icon: HeartPulse, description: "Focused guidance on well-being.", query: "Health" },
+    { name: "Money", icon: CircleDollarSign, description: "Focused guidance on finances.", query: "Money" },
+];
+
+const trustItems = [
+    { icon: UserCheck, text: "Admin-approved & KYC-verified consultants" },
+    { icon: Lock, text: "GDPR-compliant data" },
+    { icon: ShieldCheck, text: "Transparent pricing before you start" }
+];
+
+const valuePillars = [
+    {
+      icon: Euro,
+      title: "Per-Consultant Rate",
+      description: "Each expert sets a clear €/min rate shown before you start."
     },
-    trust: {
-        items: [
-            { icon: UserCheck, text: "Admin-approved & KYC-verified consultants" },
-            { icon: Lock, text: "GDPR-compliant data" },
-            { icon: ShieldCheck, text: "Transparent pricing before you start" }
-        ],
-        learnMore: "Learn more"
+    {
+      icon: Wallet,
+      title: "Prepaid Wallet & Live Meter",
+      description: "Top up once, watch your remaining minutes in real time."
     },
-    categories: {
-        title: "Find the Right Guidance, Faster.",
-        subtitle: "Focus on what matters most to you right now. Our consultants cover a wide range of life's challenges and questions.",
-        items: [
-            { name: "Love", icon: Heart, description: "Focused guidance on relationships.", query: "Love" },
-            { name: "Work", icon: Briefcase, description: "Focused guidance on career.", query: "Work" },
-            { name: "Health", icon: HeartPulse, description: "Focused guidance on well-being.", query: "Health" },
-            { name: "Money", icon: CircleDollarSign, description: "Focused guidance on finances.", query: "Money" },
-        ]
-    },
-    consultants: {
-        title: "Connect with a Trusted Expert",
-        subtitle: "Our consultants are here to provide clarity and support, whenever you need it."
-    },
-    content: {
-        title: "Insights from our Content Hub",
-        subtitle: "Explore articles and podcasts from our experts to gain clarity and perspective.",
-    },
-    conferences: {
-      title: "Upcoming Conferences",
-      subtitle: "Join live events hosted by our experts to deepen your understanding."
-    },
-    tooltips: {
-      perMinute: "You only pay for connected minutes; the meter is visible during the session.",
-      budgetLock: "Stops top-ups after your monthly cap. You can switch it off anytime.",
-      emergencyTopUp: "One extra top-up per month (amount set by admin) for urgent needs."
-    },
-    emergencyTopUp: "Emergency Top-Up"
-  },
-  fr: {
-    headline: "Des conseils qui font du bien.",
-    subheadline:
-      "Échangez avec des consultants certifiés par chat, audio ou vidéo. Payez à la minute, respectez votre budget et vos données (RGPD).",
-    startNow: "Commencer",
-    checkHoroscope: "Voir l'horoscope du jour",
-    pricingInfo:
-      "Tarification transparente à la minute.",
-    optionalMonthly: "‘Verrouillage de budget’ mensuel en option.",
-    budgetLock: "Verrouillage de budget",
-    valuePillars: {
-      title: "Clarté et contrôle, par conception.",
-      subtitle: "Notre engagement envers des pratiques éthiques et transparentes vous permet de vous connecter en toute confiance.",
-      pillars: [
-        {
-          icon: Euro,
-          title: "Tarif par consultant",
-          description: "Chaque expert fixe un tarif clair en €/min, affiché avant de commencer."
-        },
-        {
-          icon: Wallet,
-          title: "Portefeuille prépayé & compteur en direct",
-          description: "Rechargez une fois, suivez vos minutes restantes en temps réel."
-        },
-        {
-          icon: Lock,
-          title: "Verrouillage de budget optionnel",
-          description: "Plafonnez vos dépenses mensuelles ; activez une recharge d'urgence si besoin."
-        }
-      ]
-    },
-    trust: {
-        items: [
-            { icon: UserCheck, text: "Consultants approuvés et vérifiés (KYC)" },
-            { icon: Lock, text: "Données conformes au RGPD" },
-            { icon: ShieldCheck, text: "Tarification transparente avant de commencer" }
-        ],
-        learnMore: "En savoir plus"
-    },
-    categories: {
-        title: "Trouvez les bons conseils, plus rapidement.",
-        subtitle: "Concentrez-vous sur ce qui compte le plus pour vous en ce moment. Nos consultants couvrent un large éventail de défis et de questions de la vie.",
-        items: [
-            { name: "Amour", icon: Heart, description: "Conseils ciblés sur les relations.", query: "Love" },
-            { name: "Travail", icon: Briefcase, description: "Conseils ciblés sur la carrière.", query: "Work" },
-            { name: "Santé", icon: HeartPulse, description: "Conseils ciblés sur le bien-être.", query: "Health" },
-            { name: "Argent", icon: CircleDollarSign, description: "Conseils ciblés sur les finances.", query: "Money" },
-        ]
-    },
-    consultants: {
-        title: "Connectez-vous avec un expert de confiance",
-        subtitle: "Nos consultants sont là pour vous apporter clarté et soutien, quand vous en avez besoin."
-    },
-    content: {
-        title: "Aperçus de notre Centre de Contenus",
-        subtitle: "Explorez les articles et podcasts de nos experts pour gagner en clarté et en perspective.",
-    },
-    conferences: {
-      title: "Conférences à venir",
-      subtitle: "Participez à des événements en direct animés par nos experts pour approfondir votre compréhension."
-    },
-    tooltips: {
-        perMinute: "Vous ne payez que les minutes de connexion ; le compteur est visible pendant la session.",
-        budgetLock: "Arrête les recharges après votre plafond mensuel. Vous pouvez le désactiver à tout moment.",
-        emergencyTopUp: "Une recharge supplémentaire par mois (montant défini par l'administrateur) pour les besoins urgents."
-    },
-    emergencyTopUp: "Recharge d'urgence"
-  },
-};
+    {
+      icon: Lock,
+      title: "Optional Budget Lock",
+      description: "Cap monthly spend; enable one emergency top-up if needed."
+    }
+];
 
 export default function Home() {
-  const { language } = useLanguage();
   const [isHoroscopeModalOpen, setIsHoroscopeModalOpen] = useState(false);
+  const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
-  const t = translations[language];
+  const [showRegistrationBanner, setShowRegistrationBanner] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -176,15 +70,44 @@ export default function Home() {
     };
 
     window.addEventListener('keydown', handleKeyDown);
+
+    // Logic to show registration banner after horoscope submission
+    const registrationBannerTimer = setTimeout(() => {
+      const leadExists = localStorage.getItem("leads");
+      const userRegistered = sessionStorage.getItem("userRegistered");
+      if (leadExists && userRegistered !== 'true') {
+        setShowRegistrationBanner(true);
+      }
+    }, 60000);
+
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(registrationBannerTimer);
     };
   }, []);
+  
+  const handleHoroscopeSubmit = () => {
+    setIsHoroscopeModalOpen(false);
+    toast({
+      title: "Your daily horoscope is on the way ✨",
+    });
+  }
 
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-background');
 
   return (
     <TooltipProvider>
+      {showRegistrationBanner && (
+        <div className="sticky top-0 z-50 bg-primary text-primary-foreground p-2 text-center text-sm">
+          <span>Save your reading & get reminders—create a free account.</span>
+          <Button variant="link" asChild className="text-primary-foreground font-bold">
+            <Link href="/register">Register</Link>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowRegistrationBanner(false)} className="ml-2 hover:bg-primary/80">Dismiss</Button>
+        </div>
+      )}
+
       <section className="relative h-[80vh] min-h-[500px] w-full flex items-center justify-center text-center text-white overflow-hidden">
         {heroImage && (
           <Image
@@ -202,17 +125,15 @@ export default function Home() {
         <div className="relative z-10 container py-24 sm:py-32">
           <div className="mx-auto max-w-3xl">
             <h1 className="font-headline text-4xl font-bold tracking-tight text-white sm:text-6xl drop-shadow-md">
-              {t.headline}
+              Guidance you can feel good about.
             </h1>
             <p className="mt-6 text-lg leading-8 text-white/90 drop-shadow-sm">
-              {t.subheadline}
+              Speak with vetted consultants by chat, audio, or video — pay per minute, budget-friendly, and GDPR-respectful.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild size="lg" className="transition-transform motion-safe:hover:scale-[1.01] w-full sm:w-auto">
-                <Link href="/discover">
-                  {t.startNow}
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
+              <Button size="lg" className="transition-transform motion-safe:hover:scale-[1.01] w-full sm:w-auto" onClick={() => setIsStartNowModalOpen(true)}>
+                Start Now
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button
                 variant="outline"
@@ -221,25 +142,11 @@ export default function Home() {
                 onClick={() => setIsHoroscopeModalOpen(true)}
               >
                 <Sparkles className="mr-2 h-5 w-5" />
-                {t.checkHoroscope}
+                Check Free Daily Horoscope
               </Button>
             </div>
-            <div className="mt-8 text-xs text-white/70 flex items-center justify-center gap-1.5 flex-wrap">
-                <span className="flex items-center gap-1">
-                    {t.pricingInfo}
-                    <Tooltip>
-                        <TooltipTrigger asChild><Info className="h-3 w-3 cursor-pointer" /></TooltipTrigger>
-                        <TooltipContent><p>{t.tooltips.perMinute}</p></TooltipContent>
-                    </Tooltip>
-                </span>
-                <span>{t.optionalMonthly}</span>
-                <span className="flex items-center gap-1">
-                    {t.budgetLock}.
-                    <Tooltip>
-                        <TooltipTrigger asChild><Info className="h-3 w-3 cursor-pointer" /></TooltipTrigger>
-                        <TooltipContent><p>{t.tooltips.budgetLock}</p></TooltipContent>
-                    </Tooltip>
-                </span>
+            <div className="mt-8 text-xs text-white/70">
+              <p>Transparent per-minute pricing. Optional monthly ‘Budget Lock’.</p>
             </div>
           </div>
         </div>
@@ -249,14 +156,14 @@ export default function Home() {
         <div className="container">
           <div className="text-center max-w-3xl mx-auto mb-12">
             <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              {t.valuePillars.title}
+              Clarity and Control, by Design.
             </h2>
             <p className="mt-4 text-lg text-foreground/80">
-              {t.valuePillars.subtitle}
+              Our commitment to ethical, transparent practices empowers you to connect with confidence.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {t.valuePillars.pillars.map((pillar) => (
+            {valuePillars.map((pillar) => (
               <Link href="/how-it-works" key={pillar.title} className="group">
                 <Card className="h-full transition-all duration-300 ease-in-out group-hover:border-primary group-hover:shadow-lg motion-safe:group-hover:scale-[1.01] bg-card/50 hover:bg-card">
                   <CardHeader className="flex flex-col items-center text-center gap-4">
@@ -266,16 +173,17 @@ export default function Home() {
                     <CardTitle className="font-headline text-lg">{pillar.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <p className="text-sm text-foreground/70 flex flex-col gap-2">
-                        <span>{pillar.description.split(';')[0]}.</span>
+                    <p className="text-sm text-foreground/70 flex items-center justify-center gap-1">
+                        <span>{pillar.description.split(';')[0]}</span>
                         {pillar.title === "Optional Budget Lock" && (
-                            <span className="flex items-center justify-center gap-1">
-                                {pillar.description.split(';')[1]}
-                                <Tooltip>
-                                    <TooltipTrigger asChild><Info className="h-3 w-3 cursor-pointer" /></TooltipTrigger>
-                                    <TooltipContent><p>{t.tooltips.emergencyTopUp}</p></TooltipContent>
-                                </Tooltip>
-                            </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-4 w-4 cursor-pointer" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Cap monthly spend; one emergency top-up may apply, configured by admin.</p>
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                     </p>
                   </CardContent>
@@ -290,14 +198,14 @@ export default function Home() {
         <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    {t.categories.title}
+                    Find the Right Guidance, Faster.
                 </h2>
                 <p className="mt-4 text-lg text-foreground/80">
-                    {t.categories.subtitle}
+                    Focus on what matters most to you right now. Our consultants cover a wide range of life's challenges and questions.
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {t.categories.items.map((category) => (
+                {categories.map((category) => (
                     <Link href={`/discover?category=${category.query}`} key={category.name} className="group">
                         <Card className="h-full transition-all duration-300 ease-in-out group-hover:border-primary group-hover:shadow-lg motion-safe:group-hover:scale-[1.01] bg-card/50 hover:bg-card">
                             <CardContent className="p-6 flex flex-col items-center text-center gap-4">
@@ -316,10 +224,10 @@ export default function Home() {
         <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    {t.consultants.title}
+                    Connect with a Trusted Expert
                 </h2>
                 <p className="mt-4 text-lg text-foreground/80">
-                    {t.consultants.subtitle}
+                    Our consultants are here to provide clarity and support, whenever you need it.
                 </p>
             </div>
             <FeaturedConsultants />
@@ -330,10 +238,10 @@ export default function Home() {
         <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    {t.conferences.title}
+                    Upcoming Conferences
                 </h2>
                 <p className="mt-4 text-lg text-foreground/80">
-                    {t.conferences.subtitle}
+                    Join live events hosted by our experts to deepen your understanding.
                 </p>
             </div>
             <UpcomingConferences />
@@ -344,10 +252,10 @@ export default function Home() {
         <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    {t.content.title}
+                    Insights from our Content Hub
                 </h2>
                 <p className="mt-4 text-lg text-foreground/80">
-                    {t.content.subtitle}
+                    Explore articles and podcasts from our experts to gain clarity and perspective.
                 </p>
             </div>
             <FeaturedContent />
@@ -357,7 +265,7 @@ export default function Home() {
       <section className="py-16 bg-background/50 border-y">
         <div className="container">
           <div className="grid md:grid-cols-3 gap-8 items-center text-center md:text-left">
-            {t.trust.items.map((item, index) => (
+            {trustItems.map((item, index) => (
               <div key={index} className="flex flex-col md:flex-row items-center gap-4">
                 <item.icon className="h-8 w-8 text-primary shrink-0" />
                 <p className="text-foreground/80">{item.text}</p>
@@ -367,14 +275,22 @@ export default function Home() {
           <div className="text-center mt-8">
             <Button variant="link" asChild>
                 <Link href="/how-it-works#trust">
-                    {t.trust.learnMore} <ArrowRight className="ml-2 h-4 w-4" />
+                    Learn more <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      <DailyHoroscopeModal isOpen={isHoroscopeModalOpen} onOpenChange={setIsHoroscopeModalOpen} />
+      <DailyHoroscopeModal 
+        isOpen={isHoroscopeModalOpen} 
+        onOpenChange={setIsHoroscopeModalOpen}
+        onSuccessSubmit={handleHoroscopeSubmit}
+      />
+      <StartNowModal 
+          isOpen={isStartNowModalOpen}
+          onOpenChange={setIsStartNowModalOpen}
+      />
       <DemoControlsModal isOpen={isDemoModalOpen} onOpenChange={setIsDemoModalOpen} />
     </TooltipProvider>
   );

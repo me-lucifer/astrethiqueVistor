@@ -2,64 +2,95 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Conference, seedConferences } from "@/lib/conferences-seeder";
-import { getSession, setSession, seedOnce } from "@/lib/session";
-import { useLanguage } from "@/contexts/language-context";
+import { getLocal, setLocal, seedOnce } from "@/lib/local";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Ticket, CheckCircle, Bell } from "lucide-react";
 import { format } from 'date-fns';
-import { enUS, fr } from 'date-fns/locale';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useNotifications } from "@/contexts/notification-context";
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+    SheetTrigger,
+  } from "@/components/ui/sheet"
 
-const translations = {
-    en: {
-        rsvp: "RSVP",
-        details: "Details",
-        rsvpd: "Registered",
-        reminderNote: "You’ll get reminders 24h/1h/10m before (prototype)."
-    },
-    fr: {
-        rsvp: "S'inscrire",
-        details: "Détails",
-        rsvpd: "Inscrit",
-        reminderNote: "Vous recevrez des rappels 24h/1h/10m avant (prototype)."
-    }
-};
+interface Rsvp {
+    eventId: string;
+    title: string;
+    remind24h: boolean;
+    remind1h: boolean;
+    remind10m: boolean;
+}
 
 export function UpcomingConferences() {
     const [conferences, setConferences] = useState<Conference[]>([]);
-    const [myConferences, setMyConferences] = useState<string[]>([]);
-    const { language } = useLanguage();
-    const t = translations[language];
+    const [rsvps, setRsvps] = useState<Rsvp[]>([]);
+    const { addNotification } = useNotifications();
 
     useEffect(() => {
         seedOnce("conferences_seeded", seedConferences);
-        const storedConferences = getSession<Conference[]>("conferences");
+        const storedConferences = getLocal<Conference[]>("conferences");
         if (storedConferences) {
             const sortedConferences = storedConferences.sort((a, b) => new Date(a.dateISO).getTime() - new Date(b.dateISO).getTime());
             setConferences(sortedConferences.slice(0, 3));
         }
 
-        const storedMyConferences = getSession<string[]>("myConferences");
-        if (storedMyConferences) {
-            setMyConferences(storedMyConferences);
+        const storedRsvps = getLocal<Rsvp[]>("rsvps");
+        if (storedRsvps) {
+            setRsvps(storedRsvps);
         }
     }, []);
 
-    const handleRsvp = (id: string) => {
-        const newMyConferences = [...myConferences, id];
-        setMyConferences(newMyConferences);
-        setSession("myConferences", newMyConferences);
+    const handleRsvp = (conf: Conference) => {
+        let updatedRsvps;
+        if (isRsvpd(conf.id)) {
+             updatedRsvps = rsvps.filter(r => r.eventId !== conf.id);
+        } else {
+            updatedRsvps = [...rsvps, { eventId: conf.id, title: conf.title, remind24h: false, remind1h: false, remind10m: false }];
+        }
+        setRsvps(updatedRsvps);
+        setLocal("rsvps", updatedRsvps);
     };
 
-    const isRsvpd = (id: string) => myConferences.includes(id);
+    const handleReminderChange = (eventId: string, reminder: 'remind24h' | 'remind1h' | 'remind10m', checked: boolean) => {
+        const updatedRsvps = rsvps.map(r => r.eventId === eventId ? {...r, [reminder]: checked} : r);
+        setRsvps(updatedRsvps);
+        setLocal("rsvps", updatedRsvps);
+
+        if(checked) {
+            const conference = conferences.find(c => c.id === eventId);
+            if (conference) {
+                const reminderText = {
+                    remind24h: "24 hours",
+                    remind1h: "1 hour",
+                    remind10m: "10 minutes"
+                }
+                addNotification({
+                    title: `Reminder set for "${conference.title}"`,
+                    body: `We'll remind you ${reminderText[reminder]} before the event.`,
+                    category: 'session',
+                })
+            }
+        }
+    }
+
+    const isRsvpd = (id: string) => rsvps.some(r => r.eventId === id);
+    const getRsvp = (id: string) => rsvps.find(r => r.eventId === id);
 
     const formatDate = (dateISO: string) => {
-        const date = new Date(dateISO);
-        const locale = language === 'fr' ? fr : enUS;
-        return format(date, "PPP p", { locale });
+        return format(new Date(dateISO), "PPP p");
     };
     
     if (!conferences.length) {
@@ -68,8 +99,10 @@ export function UpcomingConferences() {
 
     return (
         <div className="space-y-6">
-            {conferences.map((conference) => (
-                 <Card key={conference.id} className="transition-all duration-300 ease-in-out hover:shadow-lg motion-safe:hover:scale-[1.01] bg-card/50 hover:bg-card">
+            {conferences.map((conference) => {
+                 const rsvpDetails = getRsvp(conference.id);
+                 return (
+                 <Card key={conference.id} className="transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
                     <CardHeader>
                         <CardTitle className="font-headline text-xl">{conference.title}</CardTitle>
                     </CardHeader>
@@ -93,26 +126,62 @@ export function UpcomingConferences() {
                     </CardContent>
                     <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
                         <div className="flex gap-2">
-                             <Button size="sm" onClick={() => handleRsvp(conference.id)} disabled={isRsvpd(conference.id)}>
+                             <Button size="sm" onClick={() => handleRsvp(conference)} variant={isRsvpd(conference.id) ? "secondary" : "default"}>
                                 {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
-                                {isRsvpd(conference.id) ? t.rsvpd : t.rsvp}
+                                {isRsvpd(conference.id) ? "Going" : "RSVP"}
                             </Button>
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={`/conferences?id=${conference.id}`}>
-                                    {t.details}
-                                </Link>
-                            </Button>
+                            <Sheet>
+                                <SheetTrigger asChild>
+                                    <Button variant="outline" size="sm">Details</Button>
+                                </SheetTrigger>
+                                <SheetContent>
+                                    <SheetHeader>
+                                        <SheetTitle>{conference.title}</SheetTitle>
+                                        <SheetDescription>Hosted by {conference.hostAlias} on {formatDate(conference.dateISO)}</SheetDescription>
+                                    </SheetHeader>
+                                    <div className="py-4">
+                                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi.</p>
+                                    </div>
+                                </SheetContent>
+                            </Sheet>
+
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" size="sm" disabled={!isRsvpd(conference.id)}>
+                                        <Bell className="mr-2 h-4 w-4" />
+                                        Remind me
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-60">
+                                    <div className="grid gap-4">
+                                        <div className="space-y-2">
+                                            <h4 className="font-medium leading-none">Reminders</h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                Set reminders for this event.
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="remind24h" checked={rsvpDetails?.remind24h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind24h", c as boolean)} />
+                                                <Label htmlFor="remind24h">24 hours before</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="remind1h" checked={rsvpDetails?.remind1h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind1h", c as boolean)}/>
+                                                <Label htmlFor="remind1h">1 hour before</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="remind10m" checked={rsvpDetails?.remind10m} onCheckedChange={(c) => handleReminderChange(conference.id, "remind10m", c as boolean)}/>
+                                                <Label htmlFor="remind10m">10 minutes before</Label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+
                         </div>
-                         {isRsvpd(conference.id) && (
-                            <div className="flex items-center gap-2 text-xs text-success animate-in fade-in motion-reduce:animate-none">
-                                <Bell className="h-4 w-4" />
-                               <span>{t.reminderNote}</span>
-                            </div>
-                        )}
                     </CardFooter>
                  </Card>
-            ))}
+            )})}
         </div>
     );
 }
-

@@ -1,9 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { getSession, setSession } from "@/lib/session";
+import { getLocal, setLocal } from "@/lib/local";
 
-export type Language = "en" | "fr";
+type Language = "en" | "fr";
 
 interface LanguageContextType {
   language: Language;
@@ -14,24 +14,22 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguageState] = useState<Language>('en'); // Default to 'en' to avoid SSR/client mismatch before effect runs
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [language, setLanguageState] = useState<Language>("en");
 
   useEffect(() => {
-    const storedLang = getSession<Language>("lang");
+    const storedLang = getLocal<Language>("lang");
     if (storedLang) {
       setLanguageState(storedLang);
     } else {
-      const browserLang = navigator.language.startsWith("fr") ? "fr" : "en";
-      setLanguageState(browserLang);
-      setSession("lang", browserLang);
+      const browserLang = navigator.language.startsWith('fr') ? 'fr' : 'en';
+      setLanguageState(browserLang as Language);
+      setLocal("lang", browserLang);
     }
-    setIsInitialized(true);
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    setSession("lang", lang);
+    setLocal("lang", lang);
   };
 
   const toggleLanguage = () => {
@@ -39,10 +37,9 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     setLanguage(newLang);
   };
 
-  // Render children only after language has been initialized to prevent hydration mismatches
   return (
     <LanguageContext.Provider value={{ language, toggleLanguage, setLanguage }}>
-      {isInitialized ? children : null}
+      {children}
     </LanguageContext.Provider>
   );
 };
