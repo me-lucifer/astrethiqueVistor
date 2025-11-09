@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { getLocal, seedOnce } from "@/lib/local";
+import { getLocal, seedOnce, setLocal } from "@/lib/local";
 import type { Consultant } from "@/lib/consultants-seeder";
 import { seedConsultants } from "@/lib/consultants-seeder";
 import { ConsultantCard } from "./consultant-card";
@@ -13,11 +13,20 @@ import { Slider } from "./ui/slider";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, Briefcase, HeartPulse, CircleDollarSign, Languages, Check, Star, X, List, LayoutGrid, Filter } from "lucide-react";
+import { Heart, Briefcase, HeartPulse, CircleDollarSign, List, LayoutGrid, Filter, Star, X } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useToast } from "@/hooks/use-toast";
 
 const specialties = [
     { name: "Love", icon: Heart },
@@ -56,11 +65,17 @@ const defaultFilters: Filters = {
     sort: "recommended",
 };
 
+interface SavedSearch {
+    name: string;
+    filters: Filters;
+}
+
 export function FeaturedConsultants() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const isDesktop = useMediaQuery("(min-width: 1024px)");
+    const { toast } = useToast();
 
     const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
@@ -68,9 +83,11 @@ export function FeaturedConsultants() {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+    const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+
     const [filters, setFilters] = useState<Filters>(() => {
         if (typeof window === "undefined") return defaultFilters;
-        const savedFilters = sessionStorage.getItem('consultantFilters');
+        const savedFilters = sessionStorage.getItem('discover.consultants.filters');
         return savedFilters ? JSON.parse(savedFilters) : defaultFilters;
     });
 
@@ -78,6 +95,7 @@ export function FeaturedConsultants() {
         const current = new URLSearchParams(Array.from(searchParams.entries()));
         const allFilters = { ...filters, ...newFilters };
 
+        current.set("tab", "consultants");
         if (allFilters.specialties.length > 0) current.set('spec', allFilters.specialties.join(',')); else current.delete('spec');
         if (allFilters.languages.length > 0) current.set('lang', allFilters.languages.join(',')); else current.delete('lang');
         if (allFilters.availability !== defaultFilters.availability) current.set('avail', allFilters.availability.replace(' ', '-').toLowerCase()); else current.delete('avail');
@@ -92,11 +110,17 @@ export function FeaturedConsultants() {
     const updateFilters = (newFilters: Partial<Filters>) => {
         const updated = { ...filters, ...newFilters };
         setFilters(updated);
-        sessionStorage.setItem('consultantFilters', JSON.stringify(updated));
+        sessionStorage.setItem('discover.consultants.filters', JSON.stringify(updated));
         router.push(`${pathname}?${createQueryString(newFilters)}`, { scroll: false });
     };
     
     useEffect(() => {
+        // Load saved searches from session storage
+        const storedSearches = sessionStorage.getItem('discover.consultants.savedSearches');
+        if (storedSearches) {
+            setSavedSearches(JSON.parse(storedSearches));
+        }
+        
         const urlFilters: Partial<Filters> = {};
         const spec = searchParams.get('spec');
         if (spec) urlFilters.specialties = spec.split(',');
@@ -119,9 +143,11 @@ export function FeaturedConsultants() {
         urlFilters.promoOnly = searchParams.get('promo') === 'true';
         urlFilters.highRatingOnly = searchParams.get('stars') === '4';
         
-        const initialState = { ...defaultFilters, ...urlFilters };
+        const sessionState = sessionStorage.getItem('discover.consultants.filters');
+        const initialState = { ...defaultFilters, ...(sessionState ? JSON.parse(sessionState) : {}), ...urlFilters };
+
         setFilters(initialState);
-        sessionStorage.setItem('consultantFilters', JSON.stringify(initialState));
+        sessionStorage.setItem('discover.consultants.filters', JSON.stringify(initialState));
 
         seedOnce("consultants_seeded", seedConsultants);
         const storedConsultants = getLocal<Consultant[]>("consultants");
@@ -187,6 +213,55 @@ export function FeaturedConsultants() {
         const newValues = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
         updateFilters({ [group]: newValues });
     };
+
+    const handleSaveSearch = () => {
+        const searchName = prompt("Enter a name for this search:", "My Search");
+        if (!searchName) return;
+
+        const newSavedSearch: SavedSearch = { name: searchName, filters: { ...filters } };
+        const updatedSearches = [newSavedSearch, ...savedSearches].slice(0, 5); // Keep max 5
+        setSavedSearches(updatedSearches);
+        sessionStorage.setItem('discover.consultants.savedSearches', JSON.stringify(updatedSearches));
+        toast({
+            title: "Search saved",
+            description: `"${searchName}" has been saved.`,
+        });
+    };
+
+    const applySavedSearch = (search: SavedSearch) => {
+        updateFilters(search.filters);
+    };
+
+    const QuickRefiners = () => (
+        <div className="flex items-center gap-4 flex-wrap justify-end">
+             <span className="text-sm font-medium">Quick Refiners:</span>
+             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => updateFilters({ rate: [3] })}>Under €3</Button>
+             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => updateFilters({ highRatingOnly: true, availability: 'Online now' })}>4★+ online</Button>
+             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => updateFilters({ languages: ['FR'] })}>FR only</Button>
+             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => updateFilters({ promoOnly: true })}>On promo</Button>
+             
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={savedSearches.length === 0}>
+                        Saved
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuLabel>Your Saved Searches</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {savedSearches.map((search, index) => (
+                        <DropdownMenuItem key={index} onSelect={() => applySavedSearch(search)}>
+                            {search.name}
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button variant="outline" size="sm" onClick={handleSaveSearch}>
+                <Star className="mr-2 h-4 w-4" /> Save Search
+            </Button>
+        </div>
+    );
 
     const FilterControls = () => (
         <TooltipProvider>
@@ -324,14 +399,20 @@ export function FeaturedConsultants() {
     
     return (
         <>
-            <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 py-4 mb-8 -mx-4 px-4 border-b">
+            <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 py-4 mb-4 -mx-4 px-4 border-b">
                  {isDesktop ? <FilterControls /> : mobileSheet}
             </div>
+
+            {isDesktop && (
+                <div className="mb-6">
+                    <QuickRefiners />
+                </div>
+            )}
 
             <div role="status" aria-live="polite">
                 {isLoading ? (
                     <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
-                        {Array.from({ length: 4 }).map((_, i) => (
+                        {Array.from({ length: 8 }).map((_, i) => (
                              <div key={i} className="space-y-3">
                                 <Skeleton className="h-[225px] w-full rounded-xl" />
                                 <div className="space-y-2">
@@ -367,3 +448,5 @@ export function FeaturedConsultants() {
         </>
     );
 }
+
+    
