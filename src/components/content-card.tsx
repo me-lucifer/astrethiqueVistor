@@ -38,7 +38,7 @@ export function ContentCard({ item }: { item: ContentItem }) {
                 <CardContent className="p-4 flex-1">
                     <div className="flex items-center gap-2 mb-2">
                         <TypeIcon className="w-4 h-4 text-primary" />
-                        <Badge variant="outline" className="text-xs">{item.tags[0]}</Badge>
+                        {item.tags && item.tags.length > 0 && <Badge variant="outline" className="text-xs">{item.tags[0]}</Badge>}
                         <Badge variant="outline" className="text-xs">{item.language}</Badge>
                     </div>
                     <h3 className="font-headline text-lg font-bold leading-tight group-hover:text-primary transition-colors">{item.title}</h3>
