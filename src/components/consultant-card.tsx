@@ -159,9 +159,9 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                         ))}
                     </div>
                      <div className="flex items-center gap-4 text-xs text-muted-foreground w-full">
-                        {consultant.content.articles > 0 && <div className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5"/><span>{consultant.content.articles}</span></div>}
-                        {consultant.content.podcasts > 0 && <div className="flex items-center gap-1"><Mic className="h-3.5 w-3.5"/><span>{consultant.content.podcasts}</span></div>}
-                        {consultant.content.conferences > 0 && <div className="flex items-center gap-1"><Video className="h-3.5 w-3.5"/><span>{consultant.content.conferences}</span></div>}
+                        {consultant.content && consultant.content.articles > 0 && <div className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5"/><span>{consultant.content.articles}</span></div>}
+                        {consultant.content && consultant.content.podcasts > 0 && <div className="flex items-center gap-1"><Mic className="h-3.5 w-3.5"/><span>{consultant.content.podcasts}</span></div>}
+                        {consultant.content && consultant.content.conferences > 0 && <div className="flex items-center gap-1"><Video className="h-3.5 w-3.5"/><span>{consultant.content.conferences}</span></div>}
                     </div>
                 </CardFooter>
             </Card>
