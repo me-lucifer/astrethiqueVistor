@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Gem } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import {
@@ -88,12 +88,13 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[340px] flex flex-col">
-              <div className="p-4 border-b">
+              <SheetHeader className="border-b p-4">
+                <SheetTitle className="sr-only">Main Menu</SheetTitle>
                  <Link href="/" className="flex items-center gap-2 font-headline text-lg font-bold text-primary">
                     <Gem className="h-6 w-6" />
                     <span>ASTRETHIQUE</span>
                  </Link>
-              </div>
+              </SheetHeader>
               <nav className="flex-1 p-4 flex flex-col gap-2">
                 {navLinks.map((link) => {
                    const isActive = pathname === link.href;
