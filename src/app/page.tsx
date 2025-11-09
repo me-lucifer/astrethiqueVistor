@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, Euro, Wallet, Lock, Heart, Briefcase, HeartPulse, CircleDollarSign, ShieldCheck, UserCheck } from "lucide-react";
+import { ArrowRight, Sparkles, Euro, Wallet, Lock, Heart, Briefcase, HeartPulse, CircleDollarSign, ShieldCheck, UserCheck, Info } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
@@ -14,6 +14,12 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { FeaturedConsultants } from "@/components/featured-consultants";
 import { FeaturedContent } from "@/components/featured-content";
 import { UpcomingConferences } from "@/components/upcoming-conferences";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 const translations = {
   en: {
@@ -23,7 +29,9 @@ const translations = {
     startNow: "Start Now",
     checkHoroscope: "Check Free Daily Horoscope",
     pricingInfo:
-      "Transparent per-minute pricing. Optional monthly ‘Budget Lock’.",
+      "Transparent per-minute pricing.",
+    optionalMonthly: "Optional monthly",
+    budgetLock: "Budget Lock",
     valuePillars: {
       title: "Clarity and Control, by Design.",
       subtitle: "Our commitment to ethical, transparent practices empowers you to connect with confidence.",
@@ -74,7 +82,13 @@ const translations = {
     conferences: {
       title: "Upcoming Conferences",
       subtitle: "Join live events hosted by our experts to deepen your understanding."
-    }
+    },
+    tooltips: {
+      perMinute: "You only pay for connected minutes; the meter is visible during the session.",
+      budgetLock: "Stops top-ups after your monthly cap. You can switch it off anytime.",
+      emergencyTopUp: "One extra top-up per month (amount set by admin) for urgent needs."
+    },
+    emergencyTopUp: "Emergency Top-Up"
   },
   fr: {
     headline: "Des conseils qui font du bien.",
@@ -83,7 +97,9 @@ const translations = {
     startNow: "Commencer",
     checkHoroscope: "Voir l'horoscope du jour",
     pricingInfo:
-      "Tarification transparente à la minute. ‘Verrouillage de budget’ mensuel en option.",
+      "Tarification transparente à la minute.",
+    optionalMonthly: "‘Verrouillage de budget’ mensuel en option.",
+    budgetLock: "Verrouillage de budget",
     valuePillars: {
       title: "Clarté et contrôle, par conception.",
       subtitle: "Notre engagement envers des pratiques éthiques et transparentes vous permet de vous connecter en toute confiance.",
@@ -134,7 +150,13 @@ const translations = {
     conferences: {
       title: "Conférences à venir",
       subtitle: "Participez à des événements en direct animés par nos experts pour approfondir votre compréhension."
-    }
+    },
+    tooltips: {
+        perMinute: "Vous ne payez que les minutes de connexion ; le compteur est visible pendant la session.",
+        budgetLock: "Arrête les recharges après votre plafond mensuel. Vous pouvez le désactiver à tout moment.",
+        emergencyTopUp: "Une recharge supplémentaire par mois (montant défini par l'administrateur) pour les besoins urgents."
+    },
+    emergencyTopUp: "Recharge d'urgence"
   },
 };
 
@@ -146,7 +168,7 @@ export default function Home() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-background');
 
   return (
-    <>
+    <TooltipProvider>
       <section className="relative h-[80vh] min-h-[500px] w-full flex items-center justify-center text-center text-white overflow-hidden">
         {heroImage && (
           <Image
@@ -186,7 +208,23 @@ export default function Home() {
                 {t.checkHoroscope}
               </Button>
             </div>
-            <p className="mt-8 text-xs text-white/70">{t.pricingInfo}</p>
+            <div className="mt-8 text-xs text-white/70 flex items-center justify-center gap-1.5 flex-wrap">
+                <span className="flex items-center gap-1">
+                    {t.pricingInfo}
+                    <Tooltip>
+                        <TooltipTrigger asChild><Info className="h-3 w-3 cursor-pointer" /></TooltipTrigger>
+                        <TooltipContent><p>{t.tooltips.perMinute}</p></TooltipContent>
+                    </Tooltip>
+                </span>
+                <span>{t.optionalMonthly}</span>
+                <span className="flex items-center gap-1">
+                    {t.budgetLock}.
+                    <Tooltip>
+                        <TooltipTrigger asChild><Info className="h-3 w-3 cursor-pointer" /></TooltipTrigger>
+                        <TooltipContent><p>{t.tooltips.budgetLock}</p></TooltipContent>
+                    </Tooltip>
+                </span>
+            </div>
           </div>
         </div>
       </section>
@@ -212,7 +250,18 @@ export default function Home() {
                     <CardTitle className="font-headline text-lg">{pillar.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <p className="text-sm text-foreground/70">{pillar.description}</p>
+                    <p className="text-sm text-foreground/70 flex flex-col gap-2">
+                        <span>{pillar.description.split(';')[0]}.</span>
+                        {pillar.title === "Optional Budget Lock" && (
+                            <span className="flex items-center justify-center gap-1">
+                                {pillar.description.split(';')[1]}
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Info className="h-3 w-3 cursor-pointer" /></TooltipTrigger>
+                                    <TooltipContent><p>{t.tooltips.emergencyTopUp}</p></TooltipContent>
+                                </Tooltip>
+                            </span>
+                        )}
+                    </p>
                   </CardContent>
                 </Card>
               </Link>
@@ -310,9 +359,11 @@ export default function Home() {
       </section>
 
       <DailyHoroscopeModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} />
-    </>
+    </TooltipProvider>
   );
 }
+
+    
 
     
 
