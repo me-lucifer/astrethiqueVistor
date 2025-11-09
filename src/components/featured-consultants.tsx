@@ -217,7 +217,12 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     }, [allConsultants, filters]);
 
     const handleResetFilters = () => {
-        updateFilters(defaultFilters);
+        const clearedFilters = {
+            ...defaultFilters,
+            query: '' // Also clear query on reset
+        };
+        updateFilters(clearedFilters);
+        router.push(`${pathname}?tab=consultants`, { scroll: false });
     };
 
     const handleChipToggle = (group: 'specialties' | 'languages', value: string) => {
@@ -242,6 +247,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
     const applySavedSearch = (search: SavedSearch) => {
         updateFilters(search.filters);
+        setIsSheetOpen(false); // Close sheet on mobile after applying
     };
 
     const QuickRefiners = () => (

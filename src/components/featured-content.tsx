@@ -113,7 +113,12 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
         updateFilters({ [group]: newValues });
     };
 
-    const handleResetFilters = () => updateFilters(defaultFilters);
+    const handleResetFilters = () => {
+        updateFilters(defaultFilters);
+        if (displayFilters) {
+            router.push(`${pathname}?tab=content`, { scroll: false });
+        }
+    };
     
     const filteredContent = useMemo(() => {
         setIsLoading(true);
@@ -202,7 +207,7 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
                     Filters ({filteredContent.length} results)
                 </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-lg h-[90vh] flex flex-col">
+            <SheetContent side="bottom" className="rounded-t-lg h-auto flex flex-col">
                 <SheetHeader className="text-left flex-row items-center justify-between pr-6">
                     <SheetTitle>Filters</SheetTitle>
                     <Button variant="link" onClick={handleResetFilters}>Reset</Button>

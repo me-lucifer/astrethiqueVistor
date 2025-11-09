@@ -25,10 +25,10 @@ const titles = [
   "Healthy Habits for a Vibrant Life",
   "The Power of Positive Thinking in Work",
   "Building Stronger Bonds with Loved Ones",
-  "Mastering Your Personal Finances",
-  "Finding Your True North: A Guide to Life Path",
+  "Mastering Your Personal Finances with Astrology",
+  "Finding Your True North: A Guide to Clairvoyance",
   "Podcast: The Future of Work-Life Balance",
-  "Podcast: Love in the Digital Age & Clairvoyance",
+  "Podcast: Love in the Digital Age & Tarot",
   "Video: Holistic Health Hacks with Astrology",
 ];
 
@@ -53,7 +53,7 @@ const createContentItem = (id: number): ContentItem => {
     author: authors[Math.floor(Math.random() * authors.length)],
     featured: id < 2, // Mark first two as featured
     publishedDate: publishedDate.toISOString(),
-    language: Math.random() > 0.3 ? "EN" : "FR",
+    language: (id % 4 === 0) ? "FR" : "EN",
     tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
     duration: Math.floor(Math.random() * 25) + 5, // 5 to 30 minutes
   };

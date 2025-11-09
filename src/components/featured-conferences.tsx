@@ -130,7 +130,10 @@ export function FeaturedConferences() {
         updateFilters({ [group]: newValues });
     };
     
-    const handleResetFilters = () => updateFilters(defaultFilters);
+    const handleResetFilters = () => {
+        updateFilters(defaultFilters);
+        router.push(`${pathname}?tab=conferences`, { scroll: false });
+    }
 
     const filteredConferences = useMemo(() => {
         setIsLoading(true);
@@ -244,7 +247,7 @@ export function FeaturedConferences() {
                     Filters ({filteredConferences.length} results)
                 </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-lg h-[90vh] flex flex-col">
+            <SheetContent side="bottom" className="rounded-t-lg h-auto flex flex-col">
                  <SheetHeader className="text-left flex-row items-center justify-between pr-6">
                     <SheetTitle>Filters</SheetTitle>
                     <Button variant="link" onClick={handleResetFilters}>Reset</Button>
@@ -301,7 +304,7 @@ export function FeaturedConferences() {
                                         <p className="text-sm text-foreground/70">{conference.excerpt}</p>
                                         <div className="flex flex-wrap gap-2">
                                             <Badge variant="outline">{conference.language}</Badge>
-                                            {!conference.isFree && <Badge variant="outline">Paid</Badge>}
+                                            {conference.isFree ? <Badge variant="outline">Free</Badge> : <Badge variant="outline">Paid</Badge>}
                                             {conference.tags.map(tag => (
                                                 <Badge key={tag} variant="secondary" className="bg-secondary/10 text-secondary-foreground/80">{tag}</Badge>
                                             ))}
