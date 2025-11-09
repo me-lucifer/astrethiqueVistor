@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/tooltip";
 import { getLocal, setLocal } from "@/lib/local";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const specialtyMap: Record<string, { icon: string }> = {
     Love: { icon: "💖" },
@@ -38,6 +39,7 @@ const specialtyMap: Record<string, { icon: string }> = {
 
 export function ConsultantCard({ consultant, onStartNow }: { consultant: Consultant, onStartNow: () => void }) {
     const router = useRouter();
+    const { toast } = useToast();
     const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
 
@@ -71,6 +73,14 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         router.push(`/consultant/${consultant.slug}#availability-section`);
     };
 
+    const handleNotifyClick = () => {
+        const notifyList = getLocal<string[]>("notifyList") || [];
+        if (!notifyList.includes(consultant.id)) {
+            setLocal("notifyList", [...notifyList, consultant.id]);
+        }
+        setIsNotifyModalOpen(true);
+    };
+
     const StartNowButton = () => (
         <Button size="sm" onClick={(e) => handleActionClick(e, onStartNow)}>Start now</Button>
     );
@@ -80,7 +90,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         </Button>
     );
      const NotifyButton = () => (
-        <Button variant="outline" size="sm" onClick={(e) => handleActionClick(e, () => setIsNotifyModalOpen(true))}><Bell className="mr-2 h-4 w-4" /> Notify me</Button>
+        <Button variant="outline" size="sm" onClick={(e) => handleActionClick(e, handleNotifyClick)}><Bell className="mr-2 h-4 w-4" /> Notify me</Button>
     );
 
     return (
@@ -172,14 +182,16 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                         </div>
                     </CardContent>
                     <CardFooter className="p-4 pt-0 mt-auto flex flex-col gap-3">
-                        <div className="flex flex-wrap gap-1 w-full">
-                            {consultant.specialties.slice(0, 3).map(spec => (
-                                <Badge key={spec} variant="outline" className="text-xs font-normal gap-1.5 bg-background">
-                                    {specialtyMap[spec]?.icon}
-                                    {spec}
-                                </Badge>
-                            ))}
-                        </div>
+                         {consultant.specialties && consultant.specialties.length > 0 && (
+                            <div className="flex flex-wrap gap-1 w-full">
+                                {consultant.specialties.slice(0, 3).map(spec => (
+                                    <Badge key={spec} variant="outline" className="text-xs font-normal gap-1.5 bg-background">
+                                        {specialtyMap[spec]?.icon}
+                                        {spec}
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
                         {consultant.content && (
                             <div className="flex items-center gap-4 text-xs text-muted-foreground w-full">
                                 {consultant.content.articles > 0 && <div className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5"/><span>{consultant.content.articles}</span></div>}
