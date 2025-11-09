@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Consultant } from "@/lib/consultants";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +37,7 @@ const specialtyMap: Record<string, { icon: string }> = {
 }
 
 export function ConsultantCard({ consultant, onStartNow }: { consultant: Consultant, onStartNow: () => void }) {
-    const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const router = useRouter();
     const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
 
@@ -63,13 +64,19 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         e.stopPropagation();
         action();
     }
+    
+    const handleScheduleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        router.push(`/consultant/${consultant.slug}#availability-section`);
+    };
 
     const StartNowButton = () => (
         <Button size="sm" onClick={(e) => handleActionClick(e, onStartNow)}>Start now</Button>
     );
     const ScheduleButton = () => (
-        <Button asChild variant="outline" size="sm">
-            <a href={`/consultant/${consultant.slug}#availability-section`} onClick={(e) => e.stopPropagation()}>Schedule</a>
+        <Button variant="outline" size="sm" onClick={handleScheduleClick}>
+            Schedule
         </Button>
     );
      const NotifyButton = () => (
@@ -199,3 +206,4 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
             </AlertDialog>
         </TooltipProvider>
     );
+}
