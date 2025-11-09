@@ -59,7 +59,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                             loading="lazy"
                         />
                         {consultant.online && (
-                            <div className="absolute top-3 right-3 flex items-center gap-2 bg-success/80 backdrop-blur-sm text-success-foreground px-3 py-1 rounded-full text-xs font-bold border border-success-foreground/20">
+                             <div className="absolute top-3 left-3 flex items-center gap-2 bg-success/80 backdrop-blur-sm text-success-foreground px-3 py-1 rounded-full text-xs font-bold border border-success-foreground/20">
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75 motion-reduce:animate-none"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
@@ -68,17 +68,21 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                             </div>
                         )}
                         {consultant.promo && (
-                            <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground border-primary-foreground/20">PROMO</Badge>
+                            <Badge className="absolute top-3 right-3 bg-primary text-primary-foreground border-primary-foreground/20">PROMO</Badge>
                         )}
                     </div>
                     <div className="p-4">
                         <div className="flex justify-between items-start gap-2">
-                            <h3 className="font-headline text-lg font-bold truncate flex-1">{consultant.nameAlias}</h3>
+                            <h3 className="font-headline text-lg font-bold truncate flex-1" title={consultant.nameAlias}>{consultant.nameAlias}</h3>
                             <div className="flex items-center gap-1 text-primary shrink-0">
                                 <Star className="w-4 h-4 fill-current" />
                                 <span className="font-bold text-sm text-foreground">{consultant.rating.toFixed(1)}</span>
                             </div>
                         </div>
+                        
+                        <p className="text-sm text-muted-foreground mt-1 truncate" title={consultant.shortBlurb}>
+                          {consultant.shortBlurb}
+                        </p>
 
                          <div className="mt-2 flex items-center justify-between">
                              <Tooltip>
