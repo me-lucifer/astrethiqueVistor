@@ -13,6 +13,11 @@ export interface Consultant {
   sessionsCount: number;
   shortBlurb: string;
   newest: boolean;
+  content: {
+    articles: number;
+    podcasts: number;
+    conferences: number;
+  };
 }
 
 const names = ["Aeliana", "Elara", "Kael", "Seraphina", "Orion", "Lyra", "Caspian", "Thorne", "Astrid", "Rylan", "Mira", "Jax"];
@@ -35,6 +40,11 @@ const createConsultant = (id: number): Consultant => {
         sessionsCount: Math.floor(Math.random() * 500) + 20,
         shortBlurb: blurbs[id % blurbs.length],
         newest: id > 9, // Mark last 3 as "newest"
+        content: {
+            articles: Math.floor(Math.random() * 5),
+            podcasts: Math.floor(Math.random() * 3),
+            conferences: Math.floor(Math.random() * 2),
+        }
     }
 
     // Specific overrides for demo purposes
@@ -47,7 +57,7 @@ const createConsultant = (id: number): Consultant => {
             consultant = { ...consultant, languages: ["EN"], ratePerMin: 2.20, rating: 4.2, online: true, promo: false, specialties: ["Work", "Money"], sessionsCount: 150 };
             break;
         case 3:
-            consultant = { ...consultant, languages: ["EN"], ratePerMin: 3.50, rating: 3.8, online: false, promo: false, specialties: ["Health"], sessionsCount: 88 };
+            consultant = { ...consultant, languages: ["EN"], ratePerMin: 3.80, rating: 3.8, online: false, promo: false, specialties: ["Health"], sessionsCount: 88 };
             break;
         
         // FR-only (3)

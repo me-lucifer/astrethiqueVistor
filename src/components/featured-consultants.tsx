@@ -142,7 +142,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 result.sort((a, b) => b.sessionsCount - a.sessionsCount);
                 break;
             case 'newest':
-                result.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+                result.sort((a, b) => (b.newest ? 1 : 0) - (a.newest ? 1 : 0) || parseInt(b.id) - parseInt(a.id));
                 break;
             case 'recommended':
             default:
@@ -243,7 +243,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                                     <TooltipContent>Maximum rate per minute you’re comfortable paying.</TooltipContent>
                                 </Tooltip>
                             </Label>
-                            <span className="text-primary font-bold">€{filters.rate[0].toFixed(2)}/min</span>
+                            <span className="text-primary font-bold">{filters.rate[0].toFixed(2)}€/min</span>
                         </div>
                         <Slider id="price-range" min={0} max={12} step={0.5} value={filters.rate} onValueChange={(v) => updateFilters({ rate: v })} />
                     </div>
