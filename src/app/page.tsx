@@ -3,7 +3,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Sparkles, Euro, Wallet, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Sparkles, Euro, Wallet, Lock, Heart, Briefcase, HeartPulse, CircleDollarSign } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
@@ -40,6 +41,16 @@ const translations = {
           description: "Cap monthly spend; enable one emergency top-up if needed."
         }
       ]
+    },
+    categories: {
+        title: "Find the Right Guidance, Faster.",
+        subtitle: "Focus on what matters most to you right now. Our consultants cover a wide range of life's challenges and questions.",
+        items: [
+            { name: "Love", icon: Heart, description: "Focused guidance on relationships.", query: "Love" },
+            { name: "Work", icon: Briefcase, description: "Focused guidance on career.", query: "Work" },
+            { name: "Health", icon: HeartPulse, description: "Focused guidance on well-being.", query: "Health" },
+            { name: "Money", icon: CircleDollarSign, description: "Focused guidance on finances.", query: "Money" },
+        ]
     }
   },
   fr: {
@@ -70,6 +81,16 @@ const translations = {
           description: "Plafonnez vos dépenses mensuelles ; activez une recharge d'urgence si besoin."
         }
       ]
+    },
+    categories: {
+        title: "Trouvez les bons conseils, plus rapidement.",
+        subtitle: "Concentrez-vous sur ce qui compte le plus pour vous en ce moment. Nos consultants couvrent un large éventail de défis et de questions de la vie.",
+        items: [
+            { name: "Amour", icon: Heart, description: "Conseils ciblés sur les relations.", query: "Love" },
+            { name: "Travail", icon: Briefcase, description: "Conseils ciblés sur la carrière.", query: "Work" },
+            { name: "Santé", icon: HeartPulse, description: "Conseils ciblés sur le bien-être.", query: "Health" },
+            { name: "Argent", icon: CircleDollarSign, description: "Conseils ciblés sur les finances.", query: "Money" },
+        ]
     }
   },
 };
@@ -154,6 +175,32 @@ export default function Home() {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-24 bg-background/50">
+        <div className="container">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+                <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                    {t.categories.title}
+                </h2>
+                <p className="mt-4 text-lg text-foreground/80">
+                    {t.categories.subtitle}
+                </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {t.categories.items.map((category) => (
+                    <Link href={`/discover?category=${category.query}`} key={category.name} className="group">
+                        <Card className="h-full transition-all duration-300 ease-in-out group-hover:border-primary group-hover:shadow-lg group-hover:scale-[1.01] bg-card/50 hover:bg-card">
+                            <CardContent className="p-6 flex flex-col items-center text-center gap-4">
+                                <category.icon className="h-10 w-10 text-primary" />
+                                <Badge variant="secondary" className="bg-secondary/20 text-secondary-foreground/80">{category.name}</Badge>
+                                <p className="text-sm text-foreground/70">{category.description}</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                ))}
+            </div>
         </div>
       </section>
 
