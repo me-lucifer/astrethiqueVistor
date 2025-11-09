@@ -1,7 +1,9 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight, Sparkles, Euro, Wallet, Lock } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
@@ -18,6 +20,27 @@ const translations = {
     checkHoroscope: "Check Free Daily Horoscope",
     pricingInfo:
       "Transparent per-minute pricing. Optional monthly ‘Budget Lock’.",
+    valuePillars: {
+      title: "Clarity and Control, by Design.",
+      subtitle: "Our commitment to ethical, transparent practices empowers you to connect with confidence.",
+      pillars: [
+        {
+          icon: Euro,
+          title: "Per-Consultant Rate",
+          description: "Each expert sets a clear €/min rate shown before you start."
+        },
+        {
+          icon: Wallet,
+          title: "Prepaid Wallet & Live Meter",
+          description: "Top up once, watch your remaining minutes in real time."
+        },
+        {
+          icon: Lock,
+          title: "Optional Budget Lock",
+          description: "Cap monthly spend; enable one emergency top-up if needed."
+        }
+      ]
+    }
   },
   fr: {
     headline: "Des conseils qui font du bien.",
@@ -27,6 +50,27 @@ const translations = {
     checkHoroscope: "Voir l'horoscope du jour",
     pricingInfo:
       "Tarification transparente à la minute. ‘Verrouillage de budget’ mensuel en option.",
+    valuePillars: {
+      title: "Clarté et contrôle, par conception.",
+      subtitle: "Notre engagement envers des pratiques éthiques et transparentes vous permet de vous connecter en toute confiance.",
+      pillars: [
+        {
+          icon: Euro,
+          title: "Tarif par consultant",
+          description: "Chaque expert fixe un tarif clair en €/min, affiché avant de commencer."
+        },
+        {
+          icon: Wallet,
+          title: "Portefeuille prépayé & compteur en direct",
+          description: "Rechargez une fois, suivez vos minutes restantes en temps réel."
+        },
+        {
+          icon: Lock,
+          title: "Verrouillage de budget optionnel",
+          description: "Plafonnez vos dépenses mensuelles ; activez une recharge d'urgence si besoin."
+        }
+      ]
+    }
   },
 };
 
@@ -79,6 +123,36 @@ export default function Home() {
               </Button>
             </div>
             <p className="mt-8 text-xs text-white/70">{t.pricingInfo}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-24 bg-background">
+        <div className="container">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              {t.valuePillars.title}
+            </h2>
+            <p className="mt-4 text-lg text-foreground/80">
+              {t.valuePillars.subtitle}
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {t.valuePillars.pillars.map((pillar) => (
+              <Link href="/how-it-works" key={pillar.title} className="group">
+                <Card className="h-full transition-all duration-300 ease-in-out group-hover:border-primary group-hover:shadow-lg group-hover:scale-[1.01] bg-card/50 hover:bg-card">
+                  <CardHeader className="flex flex-col items-center text-center gap-4">
+                    <div className="bg-primary/10 p-3 rounded-full border border-primary/20">
+                      <pillar.icon className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="font-headline text-lg">{pillar.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <p className="text-sm text-foreground/70">{pillar.description}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
