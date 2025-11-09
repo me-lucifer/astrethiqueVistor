@@ -2,10 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { getLocal, seedOnce, setLocal } from "@/lib/local";
-import type { Consultant } from "@/lib/consultants-seeder";
-import { seedConsultants } from "@/lib/consultants-seeder";
+import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
+import { getLocal, setLocal, seedOnce } from "@/lib/local";
 import { ConsultantCard } from "./consultant-card";
 import { StartNowModal } from "./start-now-modal";
 import { Button } from "./ui/button";
@@ -13,12 +11,11 @@ import { Slider } from "./ui/slider";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Star, Info } from "lucide-react";
+import { Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Info } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useToast } from "@/hooks/use-toast";
 
 const specialties = [
     { name: "Love", icon: Heart },
@@ -30,15 +27,15 @@ const languages = ["EN", "FR"];
 const availabilities = ["Online now", "Today", "This week"];
 const sortOptions = {
     recommended: "Recommended",
-    rating_desc: "Rating (high to low)",
     price_asc: "Price (low to high)",
-    price_desc: "Price (high to low)",
+    rating_desc: "Rating (high to low)",
+    most_reviewed: "Most reviewed",
+    newest: "Newest",
 };
 
 type SortKey = keyof typeof sortOptions;
 
 interface Filters {
-    query: string;
     specialties: string[];
     languages: string[];
     availability: string;
@@ -49,27 +46,23 @@ interface Filters {
 }
 
 const defaultFilters: Filters = {
-    query: "",
     specialties: [],
     languages: [],
-    availability: "Online now",
+    availability: "",
     promoOnly: false,
-    rate: [10],
+    rate: [12],
     highRatingOnly: false,
     sort: "recommended",
 };
 
 export function FeaturedConsultants({ initialQuery }: { initialQuery?: string }) {
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
     const isDesktop = useMediaQuery("(min-width: 1024px)");
-    const { toast } = useToast();
 
     const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [query, setQuery] = useState(initialQuery || "");
 
     const [filters, setFilters] = useState<Filters>(() => {
         if (typeof window === "undefined") return defaultFilters;
@@ -77,80 +70,41 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         return savedFilters ? JSON.parse(savedFilters) : defaultFilters;
     });
 
-    const createQueryString = useCallback((newFilters: Partial<Filters>) => {
-        const current = new URLSearchParams(Array.from(searchParams.entries()));
-        const allFilters = { ...filters, ...newFilters };
-
-        if (allFilters.query) current.set('query', allFilters.query); else current.delete('query');
-        if (allFilters.specialties.length > 0) current.set('spec', allFilters.specialties.join(',')); else current.delete('spec');
-        if (allFilters.languages.length > 0) current.set('lang', allFilters.languages.join(',')); else current.delete('lang');
-        if (allFilters.availability !== defaultFilters.availability) current.set('avail', allFilters.availability.replace(' ', '-').toLowerCase()); else current.delete('avail');
-        if (allFilters.rate[0] !== defaultFilters.rate[0]) current.set('max', allFilters.rate[0].toString()); else current.delete('max');
-        if (allFilters.sort !== defaultFilters.sort) current.set('sort', allFilters.sort); else current.delete('sort');
-        if (allFilters.promoOnly) current.set('promo', 'true'); else current.delete('promo');
-        if (allFilters.highRatingOnly) current.set('stars', '4'); else current.delete('stars');
-
-        // Clean up tab parameter if it exists
-        if(current.get('tab')) {
-            current.delete('tab');
-        }
-
-        return current.toString();
-    }, [searchParams, filters]);
-
-    const updateFilters = (newFilters: Partial<Filters>) => {
-        const updated = { ...filters, ...newFilters };
-        setFilters(updated);
-        sessionStorage.setItem('discover.consultants.filters', JSON.stringify(updated));
-        router.push(`${pathname}?${createQueryString(newFilters)}`, { scroll: false });
-    };
-    
     useEffect(() => {
-        const urlFilters: Partial<Filters> = {};
-        const query = searchParams.get('query');
-        if(query) urlFilters.query = query; else if (initialQuery) urlFilters.query = initialQuery;
-
-        const spec = searchParams.get('spec');
-        if (spec) urlFilters.specialties = spec.split(',');
-
-        const lang = searchParams.get('lang');
-        if (lang) urlFilters.languages = lang.split(',');
-        
-        const avail = searchParams.get('avail');
-        if (avail) {
-            const availMap: { [key: string]: string } = { 'online-now': 'Online now', 'today': 'Today', 'this-week': 'This week' };
-            urlFilters.availability = availMap[avail] || defaultFilters.availability;
-        }
-
-        const max = searchParams.get('max');
-        if (max) urlFilters.rate = [Number(max)];
-
-        const sort = searchParams.get('sort');
-        if (sort && Object.keys(sortOptions).includes(sort)) urlFilters.sort = sort as SortKey;
-
-        urlFilters.promoOnly = searchParams.get('promo') === 'true';
-        urlFilters.highRatingOnly = searchParams.get('stars') === '4';
-        
-        const sessionState = sessionStorage.getItem('discover.consultants.filters');
-        const initialState = { ...defaultFilters, ...(sessionState ? JSON.parse(sessionState) : {}), ...urlFilters };
-
-        setFilters(initialState);
-        sessionStorage.setItem('discover.consultants.filters', JSON.stringify(initialState));
-
         seedOnce("consultants_seeded", seedConsultants);
         const storedConsultants = getLocal<Consultant[]>("consultants");
         if (storedConsultants) {
             setAllConsultants(storedConsultants);
         }
+
+        const savedFilters = sessionStorage.getItem('discover.consultants.filters');
+        if (savedFilters) {
+            setFilters(JSON.parse(savedFilters));
+        }
+
         setIsLoading(false);
-    }, [searchParams, initialQuery]);
+    }, []);
+
+    const updateFilters = (newFilters: Partial<Filters>) => {
+        setFilters(prev => {
+            const updated = { ...prev, ...newFilters };
+            if (typeof window !== "undefined") {
+                sessionStorage.setItem('discover.consultants.filters', JSON.stringify(updated));
+            }
+            return updated;
+        });
+    };
+
+    useEffect(() => {
+      setQuery(initialQuery || "");
+    }, [initialQuery]);
 
     const filteredAndSortedConsultants = useMemo(() => {
         setIsLoading(true);
         let result = [...allConsultants];
 
-        if (filters.query) {
-            const lowercasedQuery = filters.query.toLowerCase();
+        if (query) {
+            const lowercasedQuery = query.toLowerCase();
             result = result.filter(c => 
                 c.nameAlias.toLowerCase().includes(lowercasedQuery) ||
                 c.shortBlurb.toLowerCase().includes(lowercasedQuery) ||
@@ -167,6 +121,8 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         if (filters.availability === "Online now") {
             result = result.filter(c => c.online);
         }
+        // "Today" and "This week" filters would require more complex date logic on seed data.
+        // For this prototype, we'll just filter for "Online now".
         if (filters.promoOnly) {
             result = result.filter(c => c.promo);
         }
@@ -182,8 +138,11 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             case 'price_asc':
                 result.sort((a, b) => a.ratePerMin - b.ratePerMin);
                 break;
-            case 'price_desc':
-                result.sort((a, b) => b.ratePerMin - a.ratePerMin);
+            case 'most_reviewed':
+                result.sort((a, b) => b.sessionsCount - a.sessionsCount);
+                break;
+            case 'newest':
+                result.sort((a, b) => parseInt(b.id) - parseInt(a.id));
                 break;
             case 'recommended':
             default:
@@ -197,21 +156,21 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
         setTimeout(() => setIsLoading(false), 300);
         return result;
-    }, [allConsultants, filters]);
+    }, [allConsultants, filters, query]);
 
     const handleResetFilters = () => {
-        const clearedFilters = {
-            ...defaultFilters,
-            query: '' // Also clear query on reset
-        };
-        updateFilters(clearedFilters);
-        router.push(`${pathname}`, { scroll: false });
+        updateFilters(defaultFilters);
     };
 
     const handleChipToggle = (group: 'specialties' | 'languages', value: string) => {
         const current = filters[group] as string[];
         const newValues = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
         updateFilters({ [group]: newValues });
+    };
+
+    const handleAvailabilityToggle = (value: string) => {
+        const newAvailability = filters.availability === value ? "" : value;
+        updateFilters({ availability: newAvailability });
     };
 
     const FilterControls = () => (
@@ -246,28 +205,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                             </Button>
                         ))}
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap bg-muted p-1 rounded-lg">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <span>
-                                    {availabilities.map((avail) => (
-                                        <Button
-                                            key={avail}
-                                            variant={filters.availability === avail ? "background" : "ghost"}
-                                            size="sm"
-                                            onClick={() => updateFilters({ availability: avail })}
-                                            className="flex-1 justify-center shadow-sm"
-                                        >
-                                            {avail}
-                                        </Button>
-                                    ))}
-                                </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Start instantly if the consultant is available.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
                     <div className="lg:ml-auto">
                         <Select value={filters.sort} onValueChange={(v: SortKey) => updateFilters({ sort: v })}>
                             <SelectTrigger className="w-full lg:w-[180px]">
@@ -282,6 +219,21 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                     </div>
                 </div>
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    <div className="flex items-center gap-2 flex-wrap bg-muted p-1 rounded-lg">
+                        <span className="font-semibold text-sm ml-2">Availability:</span>
+                        {availabilities.map((avail) => (
+                            <Button
+                                key={avail}
+                                variant={filters.availability === avail ? "background" : "ghost"}
+                                size="sm"
+                                onClick={() => handleAvailabilityToggle(avail)}
+                                className="flex-1 justify-center shadow-sm"
+                            >
+                                {avail}
+                            </Button>
+                        ))}
+                    </div>
+
                     <div className="flex-1 lg:max-w-xs space-y-2">
                         <div className="flex justify-between items-center">
                             <Label htmlFor="price-range" className="flex items-center gap-1">
@@ -293,7 +245,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                             </Label>
                             <span className="text-primary font-bold">€{filters.rate[0].toFixed(2)}/min</span>
                         </div>
-                        <Slider id="price-range" min={1} max={10} step={0.5} value={filters.rate} onValueChange={(v) => updateFilters({ rate: v })} />
+                        <Slider id="price-range" min={0} max={12} step={0.5} value={filters.rate} onValueChange={(v) => updateFilters({ rate: v })} />
                     </div>
                     <div className="flex items-center space-x-2">
                         <Tooltip>
@@ -379,7 +331,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 ) : (
                     <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
                         <h3 className="font-headline text-2xl font-bold">No matching consultants.</h3>
-                        <p className="text-muted-foreground mt-2 mb-4">Try widening your filters or clearing ‘On promo’ / ‘4★+’.</p>
+                        <p className="text-muted-foreground mt-2 mb-4">Try widening your filters.</p>
                         <Button onClick={handleResetFilters}>Clear filters</Button>
                     </div>
                 )}

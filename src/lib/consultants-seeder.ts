@@ -12,6 +12,7 @@ export interface Consultant {
   location: string;
   sessionsCount: number;
   shortBlurb: string;
+  newest: boolean;
 }
 
 const names = ["Aeliana", "Elara", "Kael", "Seraphina", "Orion", "Lyra", "Caspian", "Thorne", "Astrid", "Rylan", "Mira", "Jax"];
@@ -33,63 +34,54 @@ const createConsultant = (id: number): Consultant => {
         location: locations[id % locations.length],
         sessionsCount: Math.floor(Math.random() * 500) + 20,
         shortBlurb: blurbs[id % blurbs.length],
+        newest: id > 9, // Mark last 3 as "newest"
     }
 
     // Specific overrides for demo purposes
     switch(id) {
         // EN-only (3)
         case 1: 
-            consultant = { ...consultant, languages: ["EN"], ratePerMin: 4.80, rating: 4.9, online: true, promo: true, specialties: ["Love", "Life Path"] }; // Online, Promo, high rating
+            consultant = { ...consultant, languages: ["EN"], ratePerMin: 4.80, rating: 4.9, online: true, promo: true, specialties: ["Love", "Life Path"], sessionsCount: 480 };
             break;
         case 2:
-            consultant = { ...consultant, languages: ["EN"], ratePerMin: 2.20, rating: 4.2, online: true, promo: false, specialties: ["Work", "Money"] };
+            consultant = { ...consultant, languages: ["EN"], ratePerMin: 2.20, rating: 4.2, online: true, promo: false, specialties: ["Work", "Money"], sessionsCount: 150 };
             break;
         case 3:
-            consultant = { ...consultant, languages: ["EN"], ratePerMin: 3.50, rating: 3.8, online: false, promo: false, specialties: ["Health"] };
+            consultant = { ...consultant, languages: ["EN"], ratePerMin: 3.50, rating: 3.8, online: false, promo: false, specialties: ["Health"], sessionsCount: 88 };
             break;
         
         // FR-only (3)
         case 4: 
-            consultant = { ...consultant, languages: ["FR"], ratePerMin: 4.50, rating: 4.8, online: true, promo: false, specialties: ["Love", "Health"] };
+            consultant = { ...consultant, languages: ["FR"], ratePerMin: 4.50, rating: 4.8, online: true, promo: false, specialties: ["Love", "Health"], sessionsCount: 320 };
             break;
         case 5:
-            consultant = { ...consultant, languages: ["FR"], ratePerMin: 2.10, rating: 4.0, online: false, promo: true, specialties: ["Work"] };
+            consultant = { ...consultant, languages: ["FR"], ratePerMin: 2.10, rating: 4.0, online: false, promo: true, specialties: ["Work"], sessionsCount: 210 };
             break;
         case 6:
-            consultant = { ...consultant, languages: ["FR"], ratePerMin: 3.90, rating: 3.5, online: false, promo: false, specialties: ["Money"] };
+            consultant = { ...consultant, languages: ["FR"], ratePerMin: 3.90, rating: 3.5, online: false, promo: false, specialties: ["Money"], sessionsCount: 55 };
             break;
 
         // Bilingual (3)
         case 7:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 4.90, rating: 4.9, online: true, promo: true, specialties: ["Life Path", "Work"] }; // Online, promo, high price/rating
+            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 11.90, rating: 4.9, online: true, promo: true, specialties: ["Life Path", "Work"], sessionsCount: 600 }; 
             break;
         case 8:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 2.50, rating: 4.5, online: false, promo: false, specialties: ["Love"] };
+            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 2.50, rating: 4.5, online: false, promo: false, specialties: ["Love"], sessionsCount: 250 };
             break;
         case 9:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 3.00, rating: 4.1, online: true, promo: false, specialties: ["Health", "Money"] };
+            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 3.00, rating: 4.1, online: true, promo: false, specialties: ["Health", "Money"], sessionsCount: 180 };
             break;
 
-        // Remaining mix (3)
+        // Remaining mix (3) - these are "newest"
         case 10:
-            consultant = { ...consultant, languages: ["EN"], ratePerMin: 2.80, rating: 3.2, online: false, promo: false, specialties: ["Love"] }; // Low rating
+            consultant = { ...consultant, languages: ["EN"], ratePerMin: 2.80, rating: 3.2, online: false, promo: false, specialties: ["Love"], sessionsCount: 25 }; 
             break;
         case 11:
-            consultant = { ...consultant, languages: ["FR"], ratePerMin: 4.70, rating: 4.6, online: true, promo: false, specialties: ["Work", "Life Path"] };
+            consultant = { ...consultant, languages: ["FR"], ratePerMin: 4.70, rating: 4.6, online: true, promo: false, specialties: ["Work", "Life Path"], sessionsCount: 15 };
             break;
         case 12:
-            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 2.40, rating: 4.3, online: false, promo: false, specialties: ["Money"] };
+            consultant = { ...consultant, languages: ["EN", "FR"], ratePerMin: 2.40, rating: 4.3, online: false, promo: false, specialties: ["Money"], sessionsCount: 5 };
             break;
-
-        default: // Should not happen with length 12
-             consultant = {
-                ...consultant,
-                languages: Math.random() > 0.3 ? ["EN", "FR"] : (Math.random() > 0.5 ? ["EN"] : ["FR"]),
-                ratePerMin: parseFloat((Math.random() * (4.9 - 2.1) + 2.1).toFixed(2)),
-                rating: parseFloat((Math.random() * (4.9 - 3.2) + 3.2).toFixed(1)),
-                online: Math.random() > 0.5,
-                promo: Math.random() > 0.7,
-            }
     }
     return consultant as Consultant;
 };
@@ -98,3 +90,5 @@ export const seedConsultants = () => {
   const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
   setLocal("consultants", consultants);
 };
+
+    
