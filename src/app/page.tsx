@@ -11,6 +11,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { DailyHoroscopeModal } from "@/components/daily-horoscope-modal";
 import { useState } from "react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { FeaturedConsultants } from "@/components/featured-consultants";
 
 const translations = {
   en: {
@@ -51,6 +52,10 @@ const translations = {
             { name: "Health", icon: HeartPulse, description: "Focused guidance on well-being.", query: "Health" },
             { name: "Money", icon: CircleDollarSign, description: "Focused guidance on finances.", query: "Money" },
         ]
+    },
+    consultants: {
+        title: "Connect with a Trusted Expert",
+        subtitle: "Our consultants are here to provide clarity and support, whenever you need it."
     }
   },
   fr: {
@@ -91,6 +96,10 @@ const translations = {
             { name: "Santé", icon: HeartPulse, description: "Conseils ciblés sur le bien-être.", query: "Health" },
             { name: "Argent", icon: CircleDollarSign, description: "Conseils ciblés sur les finances.", query: "Money" },
         ]
+    },
+    consultants: {
+        title: "Connectez-vous avec un expert de confiance",
+        subtitle: "Nos consultants sont là pour vous apporter clarté et soutien, quand vous en avez besoin."
     }
   },
 };
@@ -201,6 +210,20 @@ export default function Home() {
                     </Link>
                 ))}
             </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-24 bg-background">
+        <div className="container">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+                <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                    {t.consultants.title}
+                </h2>
+                <p className="mt-4 text-lg text-foreground/80">
+                    {t.consultants.subtitle}
+                </p>
+            </div>
+            <FeaturedConsultants />
         </div>
       </section>
 
