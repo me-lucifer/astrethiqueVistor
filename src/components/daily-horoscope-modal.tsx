@@ -142,7 +142,7 @@ export function DailyHoroscopeModal({
           <>
             <DialogHeader className="text-center">
               <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mx-auto mb-4">
-                <BrainCircuit className="h-6 w-6 text-primary animate-pulse" />
+                <BrainCircuit className="h-6 w-6 text-primary animate-pulse motion-reduce:animate-none" />
               </div>
               <DialogTitle>{t.analysis.title}</DialogTitle>
               <DialogDescription>{t.analysis.description}</DialogDescription>

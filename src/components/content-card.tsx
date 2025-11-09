@@ -42,7 +42,7 @@ export function ContentCard({ item }: { item: ContentItem }) {
     
     return (
         <Link href={`/content-hub?item=${item.id}`} className="group">
-            <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01] bg-card/50 hover:bg-card flex flex-col">
+            <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg motion-safe:hover:scale-[1.01] bg-card/50 hover:bg-card flex flex-col">
                 <CardHeader className="p-0">
                     <div className="relative aspect-video">
                         <Image
@@ -51,6 +51,7 @@ export function ContentCard({ item }: { item: ContentItem }) {
                             fill
                             className="object-cover"
                             data-ai-hint="abstract texture"
+                            loading="lazy"
                         />
                         {chip}
                     </div>
@@ -64,7 +65,7 @@ export function ContentCard({ item }: { item: ContentItem }) {
                 </CardContent>
                 <CardFooter className="p-4 pt-0 text-sm text-foreground/70 flex justify-between items-center">
                     <span>{t.by} {item.author}</span>
-                    <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-4px] group-hover:translate-x-0"/>
+                    <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity motion-safe:translate-x-[-4px] motion-safe:group-hover:translate-x-0"/>
                 </CardFooter>
             </Card>
         </Link>

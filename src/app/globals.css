@@ -13,7 +13,7 @@
     --popover: 40 8% 5%;
     --popover-foreground: 43 56% 92%;
     
-    --primary: 40 68% 55%; /* #D9A441 */
+    --primary: 40 68% 60%; /* #E0AA52 */
     --primary-foreground: 40 8% 5%;
     
     --secondary: 34 38% 60%; /* #C69C6D */
@@ -33,7 +33,7 @@
     
     --border: 40 8% 15%;
     --input: 40 8% 15%;
-    --ring: 40 68% 55%;
+    --ring: 40 68% 60%;
     
     --radius: 1rem;
   }
@@ -48,7 +48,7 @@
     --popover: 40 8% 5%;
     --popover-foreground: 43 56% 92%;
     
-    --primary: 40 68% 55%; /* #D9A441 */
+    --primary: 40 68% 60%; /* #E0AA52 */
     --primary-foreground: 40 8% 5%;
     
     --secondary: 34 38% 60%; /* #C69C6D */
@@ -68,7 +68,7 @@
     
     --border: 40 8% 15%;
     --input: 40 8% 15%;
-    --ring: 40 68% 55%;
+    --ring: 40 68% 60%;
     
     --radius: 1rem;
   }
@@ -80,5 +80,18 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-delay: -1ms !important;
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      background-attachment: initial !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
+    }
   }
 }

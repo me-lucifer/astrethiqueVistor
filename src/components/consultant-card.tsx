@@ -32,7 +32,7 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
 
     return (
         <>
-            <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01] bg-card/50 hover:bg-card group">
+            <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg group motion-safe:hover:scale-[1.01] bg-card/50 hover:bg-card">
                 <CardContent className="p-0">
                     <div className="relative">
                         <Image
@@ -42,11 +42,12 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
                             height={300}
                             className="w-full object-cover aspect-[4/3] group-hover:opacity-90 transition-opacity"
                             data-ai-hint="portrait person"
+                            loading="lazy"
                         />
                         {consultant.online && (
                             <div className="absolute top-3 right-3 flex items-center gap-2 bg-success/80 backdrop-blur-sm text-success-foreground px-3 py-1 rounded-full text-xs font-bold border border-success-foreground/20">
                                 <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75 motion-reduce:animate-none"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                 </span>
                                 {t.online}

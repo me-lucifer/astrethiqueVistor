@@ -69,7 +69,7 @@ export function UpcomingConferences() {
     return (
         <div className="space-y-6">
             {conferences.map((conference) => (
-                 <Card key={conference.id} className="transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01] bg-card/50 hover:bg-card">
+                 <Card key={conference.id} className="transition-all duration-300 ease-in-out hover:shadow-lg motion-safe:hover:scale-[1.01] bg-card/50 hover:bg-card">
                     <CardHeader>
                         <CardTitle className="font-headline text-xl">{conference.title}</CardTitle>
                     </CardHeader>
@@ -104,7 +104,7 @@ export function UpcomingConferences() {
                             </Button>
                         </div>
                          {isRsvpd(conference.id) && (
-                            <div className="flex items-center gap-2 text-xs text-success animate-in fade-in">
+                            <div className="flex items-center gap-2 text-xs text-success animate-in fade-in motion-reduce:animate-none">
                                 <Bell className="h-4 w-4" />
                                <span>{t.reminderNote}</span>
                             </div>

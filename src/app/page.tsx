@@ -208,7 +208,7 @@ export default function Home() {
               {t.subheadline}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild size="lg" className="transition-transform hover:scale-[1.01] w-full sm:w-auto">
+              <Button asChild size="lg" className="transition-transform motion-safe:hover:scale-[1.01] w-full sm:w-auto">
                 <Link href="/discover">
                   {t.startNow}
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -217,7 +217,7 @@ export default function Home() {
               <Button
                 variant="outline"
                 size="lg"
-                className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white transition-transform hover:scale-[1.01] w-full sm:w-auto"
+                className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white transition-transform motion-safe:hover:scale-[1.01] w-full sm:w-auto"
                 onClick={() => setIsHoroscopeModalOpen(true)}
               >
                 <Sparkles className="mr-2 h-5 w-5" />
@@ -258,7 +258,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-6">
             {t.valuePillars.pillars.map((pillar) => (
               <Link href="/how-it-works" key={pillar.title} className="group">
-                <Card className="h-full transition-all duration-300 ease-in-out group-hover:border-primary group-hover:shadow-lg group-hover:scale-[1.01] bg-card/50 hover:bg-card">
+                <Card className="h-full transition-all duration-300 ease-in-out group-hover:border-primary group-hover:shadow-lg motion-safe:group-hover:scale-[1.01] bg-card/50 hover:bg-card">
                   <CardHeader className="flex flex-col items-center text-center gap-4">
                     <div className="bg-primary/10 p-3 rounded-full border border-primary/20">
                       <pillar.icon className="h-8 w-8 text-primary" />
@@ -299,7 +299,7 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {t.categories.items.map((category) => (
                     <Link href={`/discover?category=${category.query}`} key={category.name} className="group">
-                        <Card className="h-full transition-all duration-300 ease-in-out group-hover:border-primary group-hover:shadow-lg group-hover:scale-[1.01] bg-card/50 hover:bg-card">
+                        <Card className="h-full transition-all duration-300 ease-in-out group-hover:border-primary group-hover:shadow-lg motion-safe:group-hover:scale-[1.01] bg-card/50 hover:bg-card">
                             <CardContent className="p-6 flex flex-col items-center text-center gap-4">
                                 <category.icon className="h-10 w-10 text-primary" />
                                 <Badge variant="secondary" className="bg-secondary/20 text-secondary-foreground/80">{category.name}</Badge>
