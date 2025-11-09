@@ -68,8 +68,8 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         <Button size="sm" onClick={(e) => handleActionClick(e, onStartNow)}>Start now</Button>
     );
     const ScheduleButton = () => (
-        <Button asChild variant="outline" size="sm" onClick={(e) => e.preventDefault() /* Allow link to handle nav */}>
-            <Link href={`/consultant/${consultant.slug}#availability-section`}>Schedule</Link>
+        <Button asChild variant="outline" size="sm">
+            <a href={`/consultant/${consultant.slug}#availability-section`} onClick={(e) => e.stopPropagation()}>Schedule</a>
         </Button>
     );
      const NotifyButton = () => (
@@ -199,4 +199,3 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
             </AlertDialog>
         </TooltipProvider>
     );
-}
