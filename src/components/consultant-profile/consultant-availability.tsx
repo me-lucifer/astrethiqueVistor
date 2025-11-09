@@ -59,8 +59,8 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     
     setIsDrawerOpen(false);
     toast({
-      title: 'Session scheduled.',
-      description: `We'll remind you. Your ${selectedMode} session with ${consultant.nameAlias} is set for ${format(slot, 'PPP p')}.`,
+      title: 'Session scheduled. We\'ll remind you.',
+      description: `Your ${selectedMode} session with ${consultant.nameAlias} is set for ${format(slot, 'PPP p')}.`,
     });
   };
 
