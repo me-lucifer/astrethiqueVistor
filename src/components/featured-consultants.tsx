@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
-import { getLocal, setLocal, seedOnce } from "@/lib/local";
+import { Consultant } from "@/lib/consultants";
+import consultantsData from "@/lib/consultants.json";
 import { ConsultantCard } from "./consultant-card";
 import { StartNowModal } from "./start-now-modal";
 import { Button } from "./ui/button";
@@ -58,7 +58,7 @@ const defaultFilters: Filters = {
 export function FeaturedConsultants({ initialQuery }: { initialQuery?: string }) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
 
-    const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
+    const allConsultants: Consultant[] = useMemo(() => consultantsData, []);
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -71,17 +71,10 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     });
 
     useEffect(() => {
-        seedOnce("consultants_seeded", seedConsultants);
-        const storedConsultants = getLocal<Consultant[]>("consultants");
-        if (storedConsultants) {
-            setAllConsultants(storedConsultants);
-        }
-
         const savedFilters = sessionStorage.getItem('discoverFilters');
         if (savedFilters) {
             setFilters(JSON.parse(savedFilters));
         }
-
         setIsLoading(false);
     }, []);
 
@@ -107,8 +100,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             const lowercasedQuery = query.toLowerCase();
             result = result.filter(c => 
                 c.nameAlias.toLowerCase().includes(lowercasedQuery) ||
-                c.shortBlurb.toLowerCase().includes(lowercasedQuery) ||
-                c.specialties.some(s => s.toLowerCase().includes(lowercasedQuery))
+                (c.specialties && c.specialties.some(s => s.toLowerCase().includes(lowercasedQuery)))
             );
         }
 
@@ -122,7 +114,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             result = result.filter(c => c.online);
         }
         // "Today" and "This week" filters would require more complex date logic on seed data.
-        // For this prototype, we'll just filter for "Online now".
         if (filters.promoOnly) {
             result = result.filter(c => c.promo);
         }
@@ -142,7 +133,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 result.sort((a, b) => b.sessionsCount - a.sessionsCount);
                 break;
             case 'newest':
-                result.sort((a, b) => (new Date(b.lastReviewDate)).getTime() - (new Date(a.lastReviewDate)).getTime());
+                result.sort((a, b) => (new Date(b.joinedAt)).getTime() - (new Date(a.joinedAt)).getTime());
                 break;
             case 'recommended':
             default:
@@ -336,7 +327,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                     <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
                         {query ? (
                             <>
-                                <h3 className="font-headline text-2xl font-bold">No results for &lsquo;{query}&rsquo;</h3>
+                                <h3 className="font-headline text-2xl font-bold">No results for ‘{query}’</h3>
                                 <p className="text-muted-foreground mt-2">Try another term.</p>
                              </>
                         ) : (
@@ -357,5 +348,3 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </>
     );
 }
-
-    

@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Consultant } from "@/lib/consultants-seeder";
+import { Consultant } from "@/lib/consultants";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,12 +76,12 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
 
     return (
         <TooltipProvider>
-            <Link href={`/consultant/${consultant.id}`} className="group">
+            <Link href={`/consultant/${consultant.slug}`} className="group">
                 <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
                     <CardContent className="p-0">
                         <div className="relative">
                             <Image
-                                src={`https://picsum.photos/seed/${consultant.id}/400/300`}
+                                src={consultant.photo}
                                 alt={consultant.nameAlias}
                                 width={400}
                                 height={300}
@@ -107,10 +107,10 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 <Heart className={cn("h-5 w-5", isFavorite ? "fill-red-500 text-red-500" : "text-white")} />
                             </Button>
                             <div className="absolute bottom-3 right-3 flex gap-2">
-                                {consultant.promo && (
+                                {(consultant.promo || consultant.badges.promo24h) && (
                                     <Badge className="bg-primary text-primary-foreground border-primary-foreground/20">PROMO</Badge>
                                 )}
-                                {consultant.rating >= 4.8 && (
+                                {consultant.badges.topRated && (
                                     <Badge variant="secondary">Top Rated</Badge>
                                 )}
                             </div>
@@ -124,8 +124,8 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 </div>
                             </div>
                             
-                            <p className="text-sm text-muted-foreground mt-1 truncate" title={consultant.shortBlurb}>
-                            {consultant.shortBlurb}
+                            <p className="text-sm text-muted-foreground mt-1 truncate" title={consultant.specialties.join(', ')}>
+                                {consultant.specialties.join(', ')}
                             </p>
 
                             <div className="mt-2 flex items-center justify-between">
@@ -170,11 +170,13 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 </Badge>
                             ))}
                         </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground w-full">
-                            {consultant.content && consultant.content.articles > 0 && <div className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5"/><span>{consultant.content.articles}</span></div>}
-                            {consultant.content && consultant.content.podcasts > 0 && <div className="flex items-center gap-1"><Mic className="h-3.5 w-3.5"/><span>{consultant.content.podcasts}</span></div>}
-                            {consultant.content && consultant.content.conferences > 0 && <div className="flex items-center gap-1"><Video className="h-3.5 w-3.5"/><span>{consultant.content.conferences}</span></div>}
-                        </div>
+                        {consultant.content && (
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground w-full">
+                                {consultant.content.articles > 0 && <div className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5"/><span>{consultant.content.articles}</span></div>}
+                                {consultant.content.podcasts > 0 && <div className="flex items-center gap-1"><Mic className="h-3.5 w-3.5"/><span>{consultant.content.podcasts}</span></div>}
+                                {consultant.content.conferences > 0 && <div className="flex items-center gap-1"><Video className="h-3.5 w-3.5"/><span>{consultant.content.conferences}</span></div>}
+                            </div>
+                        )}
                     </CardFooter>
                 </Card>
             </Link>

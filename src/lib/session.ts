@@ -1,9 +1,7 @@
 
 "use client";
 
-// This file is DEPRECATED in favor of local.ts.
-// It is kept to avoid breaking existing imports but should be removed in the future.
-// All new functionality should use `localStorage` via local.ts.
+// This file uses sessionStorage. For localStorage, please use `local.ts`.
 
 const storage =
   typeof window !== "undefined"
@@ -44,17 +42,4 @@ export function removeSession(key: string): void {
     } catch (error) {
         console.error(`Error removing from session storage for key "${key}":`, error);
     }
-}
-
-export function seedOnce(flagKey: string, seedFn: () => void): void {
-  if (typeof window === "undefined") return;
-  try {
-    const flag = getSession(flagKey);
-    if (!flag) {
-      seedFn();
-      setSession(flagKey, true);
-    }
-  } catch (error) {
-    console.error(`Error during seedOnce for key "${flagKey}":`, error);
-  }
 }

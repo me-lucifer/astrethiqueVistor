@@ -3,8 +3,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Consultant, seedConsultants } from '@/lib/consultants-seeder';
-import { getLocal, seedOnce } from '@/lib/local';
+import { Consultant } from '@/lib/consultants';
+import consultantsData from '@/lib/consultants.json';
 import { PlaceholderPage } from '@/components/placeholder-page';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConsultantProfileHeader } from '@/components/consultant-profile/consultant-profile-header';
@@ -22,6 +22,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { ArrowUp } from 'lucide-react';
+import { getLocal } from '@/lib/local';
 
 export default function ConsultantProfilePage() {
   const params = useParams();
@@ -32,10 +33,11 @@ export default function ConsultantProfilePage() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
-    seedOnce("consultants_seeded", seedConsultants);
     if (id) {
-      const allConsultants = getLocal<Consultant[]>('consultants');
-      const foundConsultant = allConsultants?.find(c => c.id === id);
+      // In a real app, you'd fetch this from an API. Here we use the imported JSON.
+      // The `id` from URL params might be the slug, so we find by slug.
+      const allConsultants: Consultant[] = consultantsData;
+      const foundConsultant = allConsultants.find(c => c.id === id || c.slug === id);
       setConsultant(foundConsultant || null);
       setLoading(false);
     }

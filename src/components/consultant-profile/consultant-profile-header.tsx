@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Consultant } from '@/lib/consultants-seeder';
+import { Consultant } from '@/lib/consultants';
 import { getLocal, setLocal } from '@/lib/local';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,13 +30,11 @@ export function ConsultantProfileHeader({ consultant }: { consultant: Consultant
         setIsFavorite(newIsFavorite);
     }
     
-    const promoPrice = consultant.ratePerMin * 0.8;
-
     return (
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
             <div className="relative shrink-0">
                 <Image
-                    src={`https://picsum.photos/seed/${consultant.id}/200/200`}
+                    src={consultant.photo}
                     alt={consultant.nameAlias}
                     width={150}
                     height={150}
@@ -87,8 +85,10 @@ export function ConsultantProfileHeader({ consultant }: { consultant: Consultant
                      <div className="flex items-baseline gap-2">
                         {consultant.promo ? (
                             <>
-                                <span className="text-3xl font-bold text-primary">{promoPrice.toFixed(2)}€/min</span>
-                                <span className="text-xl font-medium text-muted-foreground line-through">{consultant.ratePerMin.toFixed(2)}€/min</span>
+                                <span className="text-3xl font-bold text-primary">{consultant.ratePerMin.toFixed(2)}€/min</span>
+                                {consultant.originalRatePerMin && (
+                                  <span className="text-xl font-medium text-muted-foreground line-through">{consultant.originalRatePerMin.toFixed(2)}€/min</span>
+                                )}
                             </>
                         ) : (
                             <span className="text-3xl font-bold text-primary">{consultant.ratePerMin.toFixed(2)}€/min</span>
@@ -97,13 +97,8 @@ export function ConsultantProfileHeader({ consultant }: { consultant: Consultant
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    {consultant.adminApproved && (
-                        <div className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-success" /> Admin approved</div>
-                    )}
-                    {consultant.kycVerified && (
-                        <div className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-success" /> KYC/ID verified</div>
-                    )}
-                    <div className="flex items-center gap-1.5"><CalendarCheck2 className="h-3.5 w-3.5" /> Last review: {format(new Date(consultant.lastReviewDate), "PPP")}</div>
+                    <div className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-success" /> Admin approved</div>
+                    <div className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-success" /> KYC/ID verified</div>
                 </div>
 
             </div>

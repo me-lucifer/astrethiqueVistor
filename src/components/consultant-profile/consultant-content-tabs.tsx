@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Consultant } from '@/lib/consultants-seeder';
+import { Consultant } from '@/lib/consultants';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlaceholderContent } from './placeholder-content';
 import { ReactNode } from 'react';

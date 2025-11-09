@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { add, format, set } from 'date-fns';
-import { Consultant } from '@/lib/consultants-seeder';
+import { Consultant } from '@/lib/consultants';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -46,7 +46,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
       id: `${consultant.id}-${slot.getTime()}`,
       consultantId: consultant.id,
       consultantName: consultant.nameAlias,
-      slug: consultant.id, // Assuming slug is the id
+      slug: consultant.slug,
       mode: selectedMode,
       startIso: slot.toISOString(),
       durationMin: parseInt(selectedDuration),

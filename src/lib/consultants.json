@@ -1,0 +1,179 @@
+
+[
+  {
+    "id": "1",
+    "slug": "aeliana-voyance",
+    "nameAlias": "Aeliana",
+    "photo": "https://picsum.photos/seed/1/400/300",
+    "languages": ["EN", "FR"],
+    "specialties": ["Love", "Life Path"],
+    "rating": 4.9,
+    "sessionsCount": 480,
+    "ratePerMin": 1.99,
+    "originalRatePerMin": 2.50,
+    "promo": true,
+    "badges": {"topRated": true, "promo24h": true},
+    "online": true,
+    "bio": "<p>With over a decade of experience in spiritual guidance, Aeliana specializes in matters of the heart and personal growth. Her compassionate approach combines traditional tarot with modern coaching techniques to help you navigate life's challenges.</p><p>She believes everyone has the power to create their own destiny and is passionate about empowering her clients to find their own inner wisdom.</p>",
+    "content": {
+      "articles": 3,
+      "podcasts": 1,
+      "conferences": 2
+    },
+    "joinedAt": "2024-01-15T10:00:00Z"
+  },
+  {
+    "id": "2",
+    "slug": "kael-astrology",
+    "nameAlias": "Kael",
+    "photo": "https://picsum.photos/seed/2/400/300",
+    "languages": ["EN"],
+    "specialties": ["Work", "Money"],
+    "rating": 4.2,
+    "sessionsCount": 150,
+    "ratePerMin": 2.20,
+    "originalRatePerMin": null,
+    "promo": false,
+    "badges": {"topRated": false, "promo24h": false},
+    "online": true,
+    "bio": "<p>Kael is a certified astrologer and numerologist with a focus on career and financial planning. He uses planetary alignments and life path numbers to provide strategic advice that helps clients achieve their professional and monetary goals.</p><p>His sessions are practical, insightful, and geared towards tangible results.</p>",
+    "content": {
+      "articles": 5,
+      "podcasts": 0,
+      "conferences": 1
+    },
+    "joinedAt": "2024-05-20T14:30:00Z"
+  },
+  {
+    "id": "3",
+    "slug": "seraphina-tarot",
+    "nameAlias": "Seraphina",
+    "photo": "https://picsum.photos/seed/3/400/300",
+    "languages": ["EN"],
+    "specialties": ["Health"],
+    "rating": 3.8,
+    "sessionsCount": 88,
+    "ratePerMin": 3.80,
+    "originalRatePerMin": null,
+    "promo": false,
+    "badges": {"topRated": false, "promo24h": false},
+    "online": false,
+    "bio": "<p>Seraphina offers guidance on well-being and health through the lens of medical astrology and herbal wisdom. She provides a holistic view of your life's energies.</p>",
+    "content": {
+      "articles": 2,
+      "podcasts": 2,
+      "conferences": 0
+    },
+    "joinedAt": "2024-06-10T11:00:00Z"
+  },
+  {
+    "id": "4",
+    "slug": "orion-guidance",
+    "nameAlias": "Orion",
+    "photo": "https://picsum.photos/seed/4/400/300",
+    "languages": ["FR"],
+    "specialties": ["Love", "Health"],
+    "rating": 4.8,
+    "sessionsCount": 320,
+    "ratePerMin": 4.50,
+    "originalRatePerMin": null,
+    "promo": false,
+    "badges": {"topRated": true, "promo24h": false},
+    "online": true,
+    "bio": "<p>Orion est un guide spirituel spécialisé dans les relations amoureuses et le bien-être. Sa pratique est ancrée dans l'écoute et l'empathie, aidant ses clients à trouver l'harmonie.</p>",
+    "content": {
+      "articles": 1,
+      "podcasts": 3,
+      "conferences": 1
+    },
+    "joinedAt": "2023-12-01T09:00:00Z"
+  },
+  {
+    "id": "5",
+    "slug": "elara-insights",
+    "nameAlias": "Elara",
+    "photo": "https://picsum.photos/seed/5/400/300",
+    "languages": ["FR"],
+    "specialties": ["Work"],
+    "rating": 4.0,
+    "sessionsCount": 210,
+    "ratePerMin": 1.80,
+    "originalRatePerMin": 2.10,
+    "promo": true,
+    "badges": {"topRated": false, "promo24h": true},
+    "online": false,
+    "bio": "<p>Elara se concentre sur les questions de carrière, utilisant le tarot et la numérologie pour éclairer les chemins professionnels de ses clients et révéler leur potentiel caché.</p>",
+    "content": {
+      "articles": 4,
+      "podcasts": 0,
+      "conferences": 3
+    },
+    "joinedAt": "2024-03-01T18:00:00Z"
+  },
+  {
+    "id": "6",
+    "slug": "lyra-medium",
+    "nameAlias": "Lyra",
+    "photo": "https://picsum.photos/seed/6/400/300",
+    "languages": ["FR"],
+    "specialties": ["Money"],
+    "rating": 3.5,
+    "sessionsCount": 55,
+    "ratePerMin": 3.90,
+    "originalRatePerMin": null,
+    "promo": false,
+    "badges": {"topRated": false, "promo24h": false},
+    "online": false,
+    "bio": "<p>Lyra aide à démystifier les finances personnelles à travers l'astrologie financière, offrant des stratégies pour l'abondance et la sécurité matérielle.</p>",
+    "content": {
+      "articles": 0,
+      "podcasts": 1,
+      "conferences": 1
+    },
+    "joinedAt": "2024-07-02T12:00:00Z"
+  },
+  {
+    "id": "7",
+    "slug": "caspian-clairvoyance",
+    "nameAlias": "Caspian",
+    "photo": "https://picsum.photos/seed/7/400/300",
+    "languages": ["EN", "FR"],
+    "specialties": ["Life Path", "Work"],
+    "rating": 4.9,
+    "sessionsCount": 600,
+    "ratePerMin": 4.90,
+    "originalRatePerMin": 5.50,
+    "promo": true,
+    "badges": {"topRated": true, "promo24h": false},
+    "online": true,
+    "bio": "<p>Caspian is a master numerologist and clairvoyant who guides souls to their true life purpose. His sessions are profound, transformative, and deeply personal.</p>",
+    "content": {
+      "articles": 6,
+      "podcasts": 4,
+      "conferences": 4
+    },
+    "joinedAt": "2023-09-15T08:00:00Z"
+  },
+  {
+    "id": "8",
+    "slug": "astrid-stars",
+    "nameAlias": "Astrid",
+    "photo": "https://picsum.photos/seed/8/400/300",
+    "languages": ["EN"],
+    "specialties": ["Love"],
+    "rating": 4.5,
+    "sessionsCount": 250,
+    "ratePerMin": 2.50,
+    "originalRatePerMin": null,
+    "promo": false,
+    "badges": {"topRated": false, "promo24h": false},
+    "online": false,
+    "bio": "<p>Astrid specializes in synastry and composite charts, helping couples understand their unique energetic blueprint for a more harmonious partnership.</p>",
+    "content": {
+      "articles": 3,
+      "podcasts": 2,
+      "conferences": 0
+    },
+    "joinedAt": "2024-02-14T17:00:00Z"
+  }
+]

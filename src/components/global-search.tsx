@@ -5,9 +5,8 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Search, User, ArrowRight } from "lucide-react";
-import { getLocal, seedOnce } from "@/lib/local";
-import type { Consultant } from "@/lib/consultants-seeder";
-import { seedConsultants } from "@/lib/consultants-seeder";
+import type { Consultant } from "@/lib/consultants";
+import consultantsData from "@/lib/consultants.json";
 import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
 
@@ -39,14 +38,9 @@ export function GlobalSearch() {
     const [isLoading, setIsLoading] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
 
-    const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
+    const allConsultants: Consultant[] = consultantsData;
 
     const debouncedQuery = useDebounce(query, 300);
-
-    useEffect(() => {
-        seedOnce("consultants_seeded", seedConsultants);
-        setAllConsultants(getLocal<Consultant[]>("consultants") || []);
-    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -72,13 +66,12 @@ export function GlobalSearch() {
         const filteredConsultants = allConsultants
             .filter(c => 
                 c.nameAlias.toLowerCase().includes(lowercasedQuery) || 
-                c.shortBlurb.toLowerCase().includes(lowercasedQuery) ||
                 c.specialties.some(s => s.toLowerCase().includes(lowercasedQuery))
             )
             .map(c => ({ 
                 id: c.id, 
                 title: c.nameAlias, 
-                description: c.shortBlurb, 
+                description: c.specialties.join(", "), 
                 url: `/discover?query=${encodeURIComponent(debouncedQuery)}` 
             } as SearchResult))
             .slice(0, 5);

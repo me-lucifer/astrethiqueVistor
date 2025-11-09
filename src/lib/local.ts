@@ -1,3 +1,4 @@
+
 "use client";
 
 const storage =
@@ -41,15 +42,11 @@ export function removeLocal(key: string): void {
     }
 }
 
-export function seedOnce(flagKey: string, seedFn: () => void): void {
-  if (typeof window === "undefined") return;
-  try {
-    const flag = getLocal(flagKey);
-    if (!flag) {
-      seedFn();
-      setLocal(flagKey, true);
-    }
-  } catch (error) {
-    console.error(`Error during seedOnce for key "${flagKey}":`, error);
+export function seedOnce(key: string, seeder: () => void): void {
+  if (typeof window === 'undefined') return;
+  const hasBeenSeeded = getLocal(key);
+  if (!hasBeenSeeded) {
+    seeder();
+    setLocal(key, true);
   }
 }

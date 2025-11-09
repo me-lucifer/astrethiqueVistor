@@ -13,10 +13,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/contexts/notification-context";
 import { getLocal, setLocal } from "@/lib/local";
-import { seedConsultants } from "@/lib/consultants-seeder";
 import { seedContentItems } from "@/lib/content-seeder";
 import { seedConferences } from "@/lib/conferences-seeder";
 import { Terminal, Database, Trash2, BellPlus, CheckCircle, RefreshCw } from "lucide-react";
+import consultantsData from "@/lib/consultants.json";
 
 export function DemoControlsModal({
   isOpen,
@@ -31,7 +31,7 @@ export function DemoControlsModal({
 
   const updateCounts = useCallback(() => {
     setCounts({
-      consultants: getLocal<any[]>("consultants")?.length || 0,
+      consultants: consultantsData.length || 0,
       contentItems: getLocal<any[]>("contentItems")?.length || 0,
       conferences: getLocal<any[]>("conferences")?.length || 0,
       guestEmails: getLocal<any[]>("leads")?.length || 0,
@@ -46,10 +46,9 @@ export function DemoControlsModal({
   }, [isOpen, updateCounts]);
 
   const handleSeedData = () => {
-    localStorage.removeItem("consultants_seeded");
     localStorage.removeItem("content_seeded");
     localStorage.removeItem("conferences_seeded");
-    seedConsultants();
+    // Consultants are now from JSON, so no seeding needed for them.
     seedContentItems();
     seedConferences();
     updateCounts();
