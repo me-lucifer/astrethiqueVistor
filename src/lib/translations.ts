@@ -1,3 +1,4 @@
+
 export const translations = {
     en: {
         // Header
@@ -255,6 +256,29 @@ export const translations = {
             reporting: {
                 title: "Reporting",
                 content: "If you see content or behavior that violates these guidelines, please report it to our support team immediately by emailing"
+            }
+        },
+        
+        // Safety & Reporting Page
+        safetyAndReporting: {
+            title: "Safety & Reporting",
+            lastUpdated: "Last updated",
+            toc: "On this page",
+            emergencyDisclaimer: {
+                title: "Emergency Disclaimer",
+                content: "If you or someone else is in immediate danger, please contact your local emergency services immediately. Our platform is not equipped to handle crisis situations."
+            },
+            howToReport: {
+                title: "How to Report an Issue",
+                content: "To report inappropriate content, a concern about a consultant, or a technical issue, please email our support team with a link to the relevant page and a description of the problem."
+            },
+            blockingAndMuting: {
+                title: "Blocking and Muting",
+                content: "You can block or mute users or consultants to prevent them from contacting you. This can be done from their profile page. (Note: This feature is a placeholder for the prototype)."
+            },
+            lawEnforcement: {
+                title: "Law Enforcement Inquiries",
+                content: "Official requests from law enforcement agencies should be directed to our legal team. Please include the legal basis for your request."
             }
         }
     },
@@ -514,6 +538,29 @@ export const translations = {
             reporting: {
                 title: "Signalement",
                 content: "Si vous voyez un contenu ou un comportement qui enfreint ces directives, veuillez le signaler immédiatement à notre équipe de support en envoyant un e-mail à"
+            }
+        },
+        
+        // Safety & Reporting Page
+        safetyAndReporting: {
+            title: "Sécurité & Signalement",
+            lastUpdated: "Dernière mise à jour",
+            toc: "Sur cette page",
+            emergencyDisclaimer: {
+                title: "Avis d'Urgence",
+                content: "Si vous ou quelqu'un d'autre êtes en danger immédiat, veuillez contacter immédiatement vos services d'urgence locaux. Notre plateforme n'est pas équipée pour gérer les situations de crise."
+            },
+            howToReport: {
+                title: "Comment Signaler un Problème",
+                content: "Pour signaler un contenu inapproprié, une préoccupation concernant un consultant ou un problème technique, veuillez envoyer un e-mail à notre équipe de support avec un lien vers la page pertinente et une description du problème."
+            },
+            blockingAndMuting: {
+                title: "Blocage et Masquage",
+                content: "Vous pouvez bloquer ou masquer des utilisateurs ou des consultants pour les empêcher de vous contacter. Cela peut être fait depuis leur page de profil. (Remarque : cette fonctionnalité est un placeholder pour le prototype)."
+            },
+            lawEnforcement: {
+                title: "Demandes des Forces de l'Ordre",
+                content: "Les demandes officielles des forces de l'ordre doivent être adressées à notre équipe juridique. Veuillez inclure la base juridique de votre demande."
             }
         }
     }
