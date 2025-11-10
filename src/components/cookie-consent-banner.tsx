@@ -20,8 +20,10 @@ import { Switch } from "@/components/ui/switch";
 export function CookieConsentBanner() {
   const [showBanner, setShowBanner] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const consent = getLocal("cookieConsent");
     if (!consent) {
       setShowBanner(true);
@@ -43,6 +45,10 @@ export function CookieConsentBanner() {
     setShowBanner(false);
     setIsManageModalOpen(true);
   };
+
+  if (!isClient) {
+    return null;
+  }
 
   if (!showBanner && !isManageModalOpen) {
     return (
