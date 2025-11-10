@@ -1,4 +1,5 @@
 
+
 export interface Consultant {
   id: string;
   slug: string;
@@ -11,10 +12,7 @@ export interface Consultant {
     code: 'EN' | 'FR';
     level: 'basic' | 'fluent' | 'native';
   }[];
-  availability: 'online' | 'busy' | 'offline' | {
-    online: boolean;
-    slots: string[];
-  };
+  availability: 'online' | 'busy' | 'offline';
   specialties: ('Love' | 'Work' | 'Health' | 'Money' | 'Life Path')[];
   badges: ('Top Rated' | 'Rising Star' | 'New' | 'Promo 24h')[];
   contentCounts: {
@@ -40,5 +38,7 @@ export interface Consultant {
   };
   joinedAt: string; // ISO date string
 }
+
+    
 
     

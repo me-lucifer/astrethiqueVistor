@@ -20,7 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "./ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { getSession, setSession } from "@/lib/session";
-import { isWithinInterval, addDays, startOfDay, endOfDay, isFuture } from 'date-fns';
+import { isWithinInterval, addDays, startOfDay, endOfDay, isFuture, parseISO } from 'date-fns';
 
 const specialties = [
     { id: "Love", name: "Love", icon: Heart },
@@ -154,18 +154,12 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     const filteredAndSortedConsultants = useMemo(() => {
         setIsLoading(true);
         const favorites = getSession<string[]>("discover.favorites.v1") || [];
+        const langLevels = { basic: 1, fluent: 2, native: 3 };
 
         let result = allConsultants.filter(c => {
-            // My Favorites
+            // Favorites
             if (filters.myFavorites && !favorites.includes(c.id)) return false;
             
-            // This is a temp fix until the availability property is updated in the seeder.
-            const availability = typeof c.availability === 'string' ? c.availability : c.availability === 'online' ? 'online' : 'offline';
-            const isOnline = availability === 'online';
-            const isBusy = availability === 'busy';
-            const isOffline = availability === 'offline';
-            
-
             // Specialties
             if (filters.specialties.length > 0 && !filters.specialties.some(s => c.specialties.includes(s as any))) return false;
             
@@ -179,34 +173,44 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             if (filters.badges.length > 0 && !filters.badges.every(b => c.badges && c.badges.includes(b as any))) return false;
 
             // Languages
-            const langLevels = { basic: 1, fluent: 2, native: 3 };
-            if (filters.languages.EN && (!c.languages.some(l => l.code === 'EN') || langLevels[c.languages.find(l => l.code === 'EN')!.level] < langLevels[filters.languages.EN])) return false;
-            if (filters.languages.FR && (!c.languages.some(l => l.code === 'FR') || langLevels[c.languages.find(l => l.code === 'FR')!.level] < langLevels[filters.languages.FR])) return false;
+            for (const [langCode, minLevel] of Object.entries(filters.languages)) {
+                const consultantLang = c.languages.find(l => l.code === langCode);
+                if (!consultantLang || langLevels[consultantLang.level] < langLevels[minLevel]) {
+                    return false;
+                }
+            }
 
             // Availability
-            if(filters.availability.length > 0) {
-                 const availChecks = filters.availability.map(a => {
-                    if (a === 'Online now') return isOnline;
-                    if (a === 'Busy') return isBusy;
-                    if (a === 'Offline') return isOffline;
+            if (filters.availability.length > 0) {
+                const isOnline = c.availability === 'online';
+                const isBusy = c.availability === 'busy';
+                const isOffline = c.availability === 'offline';
+                
+                const checks = {
+                    'Online now': isOnline,
+                    'Busy': isBusy,
+                    'Offline': isOffline,
+                };
+                
+                if (!filters.availability.some(filterKey => checks[filterKey as keyof typeof checks])) {
                     return false;
-                });
-                if(!availChecks.some(check => check)) return false;
+                }
             }
-
 
             // Content
-            if(filters.content.length > 0) {
-                const contentChecks = filters.content.map(filter => {
-                    if(filter === 'hasArticles') return c.contentCounts.articles > 0;
-                    if(filter === 'hasPodcasts') return c.contentCounts.podcasts > 0;
-                    if(filter === 'hasUpcomingConference') return c.contentCounts.conferences > 0;
+            if (filters.content.length > 0) {
+                const checks = {
+                    hasArticles: c.contentCounts.articles > 0,
+                    hasPodcasts: c.contentCounts.podcasts > 0,
+                    hasUpcomingConference: c.contentCounts.conferences > 0,
+                };
+                if (!filters.content.every(filterKey => checks[filterKey as keyof typeof checks])) {
                     return false;
-                })
-                if(!contentChecks.every(check => check)) return false;
+                }
             }
 
-            // Admin
+            // Admin Filters
+            if (filters.frOnlyVisibility && !c.languages.some(l => l.code === 'FR')) return false;
             if (filters.aPlusPlusOnly && c.rating < 4.8) return false;
             if (filters.onPromo && !c.promo24h) return false;
 
@@ -214,23 +218,26 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         });
 
         result.sort((a, b) => {
+            const availabilityOrder = { 'online': 1, 'busy': 2, 'offline': 3 };
+            const aAvail = typeof a.availability === 'string' ? a.availability : 'offline';
+            const bAvail = typeof b.availability === 'string' ? b.availability : 'offline';
+
             switch (sort) {
                 case 'price_asc':
-                    return a.pricePerMin - b.pricePerMin;
+                    return a.pricePerMin - b.pricePerMin || b.rating - a.rating;
                 case 'price_desc':
-                    return b.pricePerMin - a.pricePerMin;
+                    return b.pricePerMin - a.pricePerMin || b.rating - a.rating;
                 case 'rating_desc':
-                    return b.rating - a.rating;
+                    return b.rating - a.rating || a.pricePerMin - b.pricePerMin;
                 case 'newest':
-                    return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+                    return parseISO(b.lastReviewDate).getTime() - parseISO(a.lastReviewDate).getTime();
                 case 'online_first':
-                     const aOnline = a.availability === 'online';
-                     const bOnline = b.availability === 'online';
-                    return (bOnline ? 1 : 0) - (aOnline ? 1 : 0);
+                    return availabilityOrder[aAvail] - availabilityOrder[bAvail] || b.rating - a.rating;
                 case 'recommended':
                 default:
-                    // Simple recommended sort for now
-                    return b.rating - a.rating;
+                    const scoreA = (availabilityOrder[aAvail] === 1 ? 1000 : 0) + (a.rating * 100) - a.pricePerMin;
+                    const scoreB = (availabilityOrder[bAvail] === 1 ? 1000 : 0) + (b.rating * 100) - b.pricePerMin;
+                    return scoreB - scoreA;
             }
         });
         
@@ -488,10 +495,5 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </>
     );
 }
-
-    
-
-    
-
 
     
