@@ -13,7 +13,6 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { FeaturedConsultants } from "@/components/featured-consultants";
 import { FeaturedContent } from "@/components/featured-content";
 import { UpcomingConferences } from "@/components/upcoming-conferences";
-import { DemoControlsModal } from "@/components/demo-controls-modal";
 import {
     Tooltip,
     TooltipContent,
@@ -59,20 +58,10 @@ const valuePillars = [
 export default function Home() {
   const [isHoroscopeModalOpen, setIsHoroscopeModalOpen] = useState(false);
   const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
-  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [showRegistrationBanner, setShowRegistrationBanner] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault();
-        setIsDemoModalOpen(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
     // Logic to show registration banner after horoscope submission
     const registrationBannerTimer = setTimeout(() => {
       const leadExists = getLocal("leads");
@@ -84,7 +73,6 @@ export default function Home() {
 
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
       clearTimeout(registrationBannerTimer);
     };
   }, []);
@@ -293,7 +281,6 @@ export default function Home() {
           isOpen={isStartNowModalOpen}
           onOpenChange={setIsStartNowModalOpen}
       />
-      <DemoControlsModal isOpen={isDemoModalOpen} onOpenChange={setIsDemoModalOpen} />
     </TooltipProvider>
   );
 }
