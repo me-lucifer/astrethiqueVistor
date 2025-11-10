@@ -39,7 +39,7 @@ export function Header() {
           </Link>
           <nav className="hidden xl:flex items-center gap-4 text-sm font-medium">
             {navLinks.map((link) => {
-              const isActive = pathname === link.href;
+              const isActive = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
               return (
                 <Link 
                   key={link.href} 
