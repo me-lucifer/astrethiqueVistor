@@ -22,6 +22,7 @@ const navLinks = [
   { href: '/conferences', label: 'Conferences' },
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/content-hub', label: 'Content Hub' },
+  { href: '/appointments', label: 'My Appointments' },
   { href: '/support', label: 'Support' },
 ];
 

@@ -59,21 +59,21 @@ export default function AppointmentsPage() {
     }
     
     if (loading) {
-        return <PlaceholderPage title="Rendez-vous" description="Chargement de vos rendez-vous..." />
+        return <PlaceholderPage title="Appointments" description="Loading your appointments..." />
     }
 
     if (appointments.length === 0) {
-        return <PlaceholderPage title="Rendez-vous" description="Vous n'avez aucun rendez-vous à venir." />;
+        return <PlaceholderPage title="Appointments" description="You have no upcoming appointments." />;
     }
 
     return (
         <div className="container py-12">
             <div className="flex flex-col items-start gap-4 mb-8">
                 <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Vos Rendez-vous
+                Your Appointments
                 </h1>
                 <p className="text-lg text-foreground/80 max-w-2xl">
-                Voici vos prochaines sessions planifiées. Nous vous enverrons un rappel avant le début.
+                Here are your upcoming scheduled sessions. We'll send you a reminder before they start.
                 </p>
             </div>
             <div className="space-y-6">
@@ -83,23 +83,23 @@ export default function AppointmentsPage() {
                         <Card key={apt.id}>
                             <CardHeader>
                                 <CardTitle className="flex justify-between items-center">
-                                    <span>Session avec {apt.consultantName}</span>
-                                    <Link href={`/consultant/${apt.slug}`}>
-                                        <Button variant="outline" size="sm">Voir le profil</Button>
+                                    <span>Session with {apt.consultantName}</span>
+                                    <Link href={`/discover/consultant/${apt.slug}`}>
+                                        <Button variant="outline" size="sm">View Profile</Button>
                                     </Link>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <p><strong>Date:</strong> {format(new Date(apt.startIso), 'PPP p')}</p>
                                 <p className="flex items-center gap-2"><strong>Mode:</strong> <ModeIcon className="w-4 h-4" /> <span className="capitalize">{apt.mode}</span></p>
-                                <p><strong>Durée:</strong> {apt.durationMin} minutes</p>
-                                <p><strong>Tarif:</strong> {apt.pricePerMin.toFixed(2)}€/min</p>
+                                <p><strong>Duration:</strong> {apt.durationMin} minutes</p>
+                                <p><strong>Rate:</strong> €{apt.pricePerMin.toFixed(2)}/min</p>
                             </CardContent>
                              <CardFooter className="flex justify-end">
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <Button variant="destructive" size="sm">
-                                            <Trash2 className="mr-2 h-4 w-4" /> Annuler
+                                            <Trash2 className="mr-2 h-4 w-4" /> Cancel
                                         </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>

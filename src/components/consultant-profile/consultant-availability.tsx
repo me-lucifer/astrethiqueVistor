@@ -42,8 +42,6 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   };
 
   const handleScheduleClick = () => {
-    // For demo, we check if user is logged in via a simple session flag.
-    // In a real app, this would be a proper auth check.
     const isLoggedIn = getSession('userRegistered') === 'true';
     if (!isLoggedIn) {
         setIsStartNowModalOpen(true);
@@ -68,7 +66,6 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     
     setSession('schedule.holds.v1', [...appointments, newAppointment]);
 
-    // Remove from notify list if they exist
     const notifyList = getSession<string[]>("notify.me.v1") || [];
     if (notifyList.includes(consultant.id)) {
         const newNotifyList = notifyList.filter(id => id !== consultant.id);
@@ -82,7 +79,6 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     });
   };
 
-  // Use the slots from the consultant's data
   const availableSlots = consultant.availability.slots.slice(0, 4).map(s => new Date(s));
   const drawerSlots = consultant.availability.slots.map(s => new Date(s));
 
