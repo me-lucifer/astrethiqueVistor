@@ -15,6 +15,7 @@ export interface ContentItem {
   language: "EN" | "FR";
   tags: Tag[];
   duration: number; // in minutes
+  cover: string;
 }
 
 const titles = [
@@ -56,6 +57,7 @@ const createContentItem = (id: number): ContentItem => {
     language: (id % 4 === 0) ? "FR" : "EN",
     tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
     duration: Math.floor(Math.random() * 25) + 5, // 5 to 30 minutes
+    cover: `https://picsum.photos/seed/content-${id}/480/320`,
   };
 };
 

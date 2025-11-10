@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Mic, BookOpen, Video, Heart } from "lucide-react";
 
-type ContentType = 'Article' | 'Podcast' | 'Conference';
+type ContentType = 'Article' | 'Podcast' | 'Conference' | 'Video';
 
 interface ContentCardProps {
     item: {
@@ -17,7 +17,7 @@ interface ContentCardProps {
         cover: string;
         tags?: string[];
         likes?: number;
-        duration?: string;
+        duration?: string | number;
         date?: string;
         time?: string;
     };
@@ -27,6 +27,7 @@ const typeInfo = {
     Article: { icon: BookOpen, cta: 'Read More' },
     Podcast: { icon: Mic, cta: 'Listen Now' },
     Conference: { icon: Video, cta: 'View Details' },
+    Video: { icon: Video, cta: 'Watch Now' },
 };
 
 export function ContentCard({ item }: ContentCardProps) {
@@ -39,14 +40,16 @@ export function ContentCard({ item }: ContentCardProps) {
             <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg motion-safe:hover:scale-[1.01] bg-card/50 hover:bg-card flex flex-col">
                 <CardContent className="p-0">
                     <div className="relative aspect-[3/2]">
-                        <Image
-                            src={item.cover}
-                            alt={item.title}
-                            fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            data-ai-hint="abstract spiritual"
-                            loading="lazy"
-                        />
+                        {item.cover && (
+                            <Image
+                                src={item.cover}
+                                alt={item.title}
+                                fill
+                                className="object-cover transition-transform group-hover:scale-105"
+                                data-ai-hint="abstract spiritual"
+                                loading="lazy"
+                            />
+                        )}
                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                          <div className="absolute bottom-3 left-3 flex items-center gap-2">
                              <div className="flex items-center gap-1 text-white text-xs font-medium bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
@@ -75,7 +78,7 @@ export function ContentCard({ item }: ContentCardProps) {
                         )}
                          {item.duration && (
                             <div className="flex items-center gap-1.5">
-                                <span>{item.duration}</span>
+                                <span>{typeof item.duration === 'number' ? `${item.duration} min` : item.duration}</span>
                             </div>
                         )}
                         {item.date && (
