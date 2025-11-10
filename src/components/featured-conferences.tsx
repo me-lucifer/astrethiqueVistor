@@ -483,7 +483,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const mobileSheet = (
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-                 <Button variant="outline" className="lg:hidden gap-2 w-full">
+                 <Button variant="outline" className="lg:hidden gap-2 w-full" aria-label="Open filters">
                     <Filter className="h-4 w-4" />
                     Filters ({filteredConferences.length} results)
                 </Button>
@@ -526,7 +526,19 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                             {!isDesktop && mobileSheet}
                             <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
                                 <Globe className="h-4 w-4" />
-                                <span>{timeZone.replace(/_/g, ' ')}</span>
+                                <Select onValueChange={setTimeZone} value={timeZone}>
+                                    <SelectTrigger className="w-auto border-none h-auto p-0 focus:ring-0 text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
+                                            {Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' ')}
+                                        </SelectItem>
+                                        <SelectItem value="Europe/London">London (GMT+1)</SelectItem>
+                                        <SelectItem value="America/New_York">New York (EST)</SelectItem>
+                                        <SelectItem value="America/Los_Angeles">Los Angeles (PST)</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                              <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
                                 <SelectTrigger className="w-full sm:w-[180px]" aria-label="Sort by">
@@ -542,7 +554,20 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                     </div>
                      <div className="flex sm:hidden items-center justify-center gap-2 text-xs text-muted-foreground mb-4">
                         <Globe className="h-4 w-4" />
-                        <span>All times shown in: {timeZone.replace(/_/g, ' ')}</span>
+                        <span>All times in:</span>
+                        <Select onValueChange={setTimeZone} value={timeZone}>
+                            <SelectTrigger className="w-auto border-none h-auto p-0 focus:ring-0 text-xs font-semibold">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
+                                    {Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' ')}
+                                </SelectItem>
+                                <SelectItem value="Europe/London">London (GMT+1)</SelectItem>
+                                <SelectItem value="America/New_York">New York (EST)</SelectItem>
+                                <SelectItem value="America/Los_Angeles">Los Angeles (PST)</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div role="status" aria-live="polite">
@@ -564,7 +589,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                     return (
                                     <Card key={conference.id} className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
                                         <CardContent className="p-0">
-                                            <Link href={`/conferences/${conference.slug}`} className="block group">
+                                            <Link href={`/conferences/${conference.slug}`} className="block group" aria-label={`View details for ${conference.title}`}>
                                                 <div className="relative">
                                                     <Image
                                                         src={`https://picsum.photos/seed/${conference.id}/400/225`}
@@ -606,12 +631,12 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                             </Link>
                                         </CardContent>
                                         <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center">
-                                            <div className="font-bold text-lg text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</div>
+                                            <div className="font-bold text-lg text-primary">{conference.price === 0 ? 'Free' : `€${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(conference.price).replace('€', '')}`}</div>
                                             <div className="flex items-center gap-2">
                                                 
                                                 <Popover>
                                                     <PopoverTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!userIsRsvpd}>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!userIsRsvpd} aria-label={`Set reminders for ${conference.title}`}>
                                                             <Bell className="h-4 w-4" />
                                                         </Button>
                                                     </PopoverTrigger>
@@ -642,7 +667,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                 </Popover>
                                                 
                                                 {eventIsLive && userIsRsvpd ? (
-                                                    <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700">
+                                                    <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700" aria-label={`Join live event: ${conference.title}`}>
                                                         <Tv className="mr-2 h-4 w-4" /> Join Live
                                                     </Button>
                                                 ) : (
@@ -657,6 +682,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                         }}
                                                         variant={userIsRsvpd ? "outline" : "default"} 
                                                         disabled={!hasSeats && userOnWaitlist}
+                                                        aria-label={userIsRsvpd ? `Cancel RSVP for ${conference.title}` : (hasSeats ? `RSVP for ${conference.title}` : (userOnWaitlist ? `You are on the waitlist for ${conference.title}` : `Join the waitlist for ${conference.title}`))}
                                                     >
                                                         {userIsRsvpd ? <><CheckCircle className="mr-2 h-4 w-4" /> Going</> : (
                                                             hasSeats ? <><Ticket className="mr-2 h-4 w-4" /> RSVP</> : (

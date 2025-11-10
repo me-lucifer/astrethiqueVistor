@@ -125,7 +125,7 @@ export function UpcomingConferences() {
     const getRsvp = (id: string) => rsvps.find(r => r.eventId === id);
 
     const formatDate = (dateISO: string) => {
-        return format(new Date(dateISO), "PPP p");
+        return new Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'short' }).format(new Date(dateISO));
     };
     
     if (!conferences.length) {
@@ -162,19 +162,16 @@ export function UpcomingConferences() {
                                 </div>
                             </CardContent>
                             <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
-                                <p className="font-bold text-lg text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</p>
+                                <p className="font-bold text-lg text-primary">{conference.price === 0 ? 'Free' : `€${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(conference.price).replace('€','')}`}</p>
                                 <div className="flex gap-2">
-                                    <Button size="sm" onClick={(e) => handleRsvpClick(e, conference)} variant={isRsvpd(conference.id) ? "secondary" : "default"}>
+                                    <Button size="sm" onClick={(e) => handleRsvpClick(e, conference)} variant={isRsvpd(conference.id) ? "secondary" : "default"} aria-label={isRsvpd(conference.id) ? `Cancel RSVP for ${conference.title}` : `RSVP for ${conference.title}`}>
                                         {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
                                         {isRsvpd(conference.id) ? "Going" : "RSVP"}
-                                    </Button>
-                                    <Button variant="outline" size="sm" asChild onClick={(e) => e.stopPropagation()}>
-                                        <Link href={`/conferences/${conference.slug}`}>Details <ExternalLink className="ml-2"/></Link>
                                     </Button>
 
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <Button variant="outline" size="icon" className="h-9 w-9" disabled={!isRsvpd(conference.id)} onClick={(e) => e.preventDefault()}>
+                                            <Button variant="outline" size="icon" className="h-9 w-9" disabled={!isRsvpd(conference.id)} onClick={(e) => e.preventDefault()} aria-label={`Set reminders for ${conference.title}`}>
                                                 <Bell className="h-4 w-4" />
                                             </Button>
                                         </PopoverTrigger>

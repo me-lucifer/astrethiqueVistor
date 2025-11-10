@@ -55,6 +55,7 @@ function ConferencesContent() {
                         className="pl-10 h-12 text-base sm:text-sm w-full"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
+                        aria-label="Search for conferences"
                     />
                 </div>
             </form>

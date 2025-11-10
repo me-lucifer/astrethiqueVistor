@@ -31,7 +31,7 @@ export function RsvpConfirmationModal({
 
   const date = new Date(conference.dateISO);
   const endDate = new Date(date.getTime() + conference.durationMin * 60000);
-  const timeString = `${format(date, 'p')} - ${format(endDate, 'p')} (${Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' ')})`;
+  const timeString = `${new Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format(date)} - ${new Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format(endDate)} (${Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' ')})`;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -48,9 +48,9 @@ export function RsvpConfirmationModal({
         
         <div className="py-4 space-y-2 text-sm text-center">
             <p className="font-bold text-base">{conference.title}</p>
-            <p className="text-muted-foreground">{format(date, 'EEEE, MMMM d, yyyy')}</p>
+            <p className="text-muted-foreground">{new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(date)}</p>
             <p className="text-muted-foreground">{timeString}</p>
-            <p className="font-semibold pt-2">Price: {conference.price === 0 ? 'Free' : `€${conference.price}`}</p>
+            <p className="font-semibold pt-2">Price: {conference.price === 0 ? 'Free' : `€${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(conference.price).replace('€','')}`}</p>
         </div>
 
         <p className="text-xs text-muted-foreground text-center">

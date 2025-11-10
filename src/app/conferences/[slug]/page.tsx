@@ -195,8 +195,8 @@ export default function ConferenceDetailPage() {
                         </div>
                         <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight">{conference.title}</h1>
                         <div className="text-lg text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2">
-                            <div className="flex items-center gap-2"><Calendar className="w-5 h-5 text-primary" /> <span>{format(date, 'EEEE, MMMM d, yyyy')}</span></div>
-                            <div className="flex items-center gap-2"><Clock className="w-5 h-5 text-primary" /> <span>{`${format(date, 'p')} - ${format(endDate, 'p')} (${Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' ')})`}</span></div>
+                            <div className="flex items-center gap-2"><Calendar className="w-5 h-5 text-primary" /> <span>{new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(date)}</span></div>
+                            <div className="flex items-center gap-2"><Clock className="w-5 h-5 text-primary" /> <span>{`${new Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format(date)} - ${new Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format(endDate)} (${Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' ')})`}</span></div>
                         </div>
                          <div className="flex items-center gap-2 text-muted-foreground"><Video className="w-5 h-5 text-primary" /> <span>Duration: {conference.durationMin} minutes</span></div>
                     </div>
@@ -265,9 +265,9 @@ export default function ConferenceDetailPage() {
                 <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
                      <Card>
                         <CardContent className="p-6 space-y-4">
-                           <div className="text-3xl font-bold text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</div>
+                           <div className="text-3xl font-bold text-primary">{conference.price === 0 ? 'Free' : `€${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(conference.price).replace('€','')}`}</div>
                            <div className="space-y-2">
-                                <Button size="lg" className="w-full" onClick={handleRsvpClick} variant={isRsvpd ? "outline" : "default"} disabled={!hasSeats && !isRsvpd}>
+                                <Button size="lg" className="w-full" onClick={handleRsvpClick} variant={isRsvpd ? "outline" : "default"} disabled={!hasSeats && !isRsvpd} aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: `RSVP for ${conference.title}`}>
                                     {isRsvpd ? <CheckCircle className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
                                     {isRsvpd ? 'Going / Cancel' : (hasSeats ? 'RSVP Now' : 'Sold Out')}
                                 </Button>
@@ -276,7 +276,7 @@ export default function ConferenceDetailPage() {
                            <div className="flex gap-2">
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full" disabled={!isRsvpd}>
+                                        <Button variant="outline" className="w-full" disabled={!isRsvpd} aria-label="Set reminders">
                                             <Bell className="mr-2 h-4 w-4" />
                                             Reminders
                                         </Button>
@@ -306,13 +306,13 @@ export default function ConferenceDetailPage() {
                                         </div>
                                     </PopoverContent>
                                 </Popover>
-                               <Button variant="ghost" className="w-full">
+                               <Button variant="ghost" className="w-full" aria-label="Add to calendar">
                                    <CalendarPlus className="mr-2 h-4 w-4" />
                                    Add to Calendar
                                </Button>
                            </div>
                             {!hasSeats && !isRsvpd && (
-                                <Button variant="secondary" className="w-full" onClick={handleNotify}>
+                                <Button variant="secondary" className="w-full" onClick={handleNotify} aria-label="Notify me if a spot opens">
                                     <AlertTriangle className="mr-2 h-4 w-4"/>
                                     Notify Me If a Spot Opens
                                 </Button>
@@ -341,7 +341,7 @@ export default function ConferenceDetailPage() {
                                                 <Image src={`https://picsum.photos/seed/${item.id}/400/225`} alt={item.title} width={400} height={225} className="w-full object-cover aspect-video group-hover:opacity-90" />
                                                 <div className="p-4">
                                                     <h3 className="font-bold font-headline group-hover:text-primary line-clamp-2">{item.title}</h3>
-                                                    <p className="text-sm text-muted-foreground mt-1">{format(new Date(item.dateISO), 'MMM d, p')}</p>
+                                                    <p className="text-sm text-muted-foreground mt-1">{new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date(item.dateISO))}</p>
                                                 </div>
                                             </CardContent>
                                         </Card>
@@ -349,8 +349,8 @@ export default function ConferenceDetailPage() {
                                 </CarouselItem>
                             ))}
                         </CarouselContent>
-                        <CarouselPrevious className="-left-4" />
-                        <CarouselNext className="-right-4" />
+                        <CarouselPrevious aria-label="Previous related conference" />
+                        <CarouselNext aria-label="Next related conference" />
                     </Carousel>
                 </div>
             )}
