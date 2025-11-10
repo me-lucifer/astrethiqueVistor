@@ -80,7 +80,7 @@ const types: Conference['type'][] = ["Workshop", "Group Reading", "Webinar", "Q&
 const createConference = (id: number): Conference => {
     const now = new Date();
     let date: Date;
-    const price = 0;
+    const price = 0; // All events are free
     const title = conferenceTitles[(id-1) % conferenceTitles.length];
 
     switch(id) {
@@ -126,8 +126,8 @@ const createConference = (id: number): Conference => {
         languages: languages,
         tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
         type: types[id % types.length],
-        price,
-        isFree: price === 0,
+        price: 0,
+        isFree: true,
         excerpt: excerpts[(id-1) % excerpts.length],
         description: `<h4>Overview</h4><p>${excerpts[(id-1) % excerpts.length]} This session is designed for both beginners and intermediate students of astrology, offering fresh perspectives and practical applications.</p><h4>What You'll Learn</h4><ul><li>Key principles of the topic at hand.</li><li>How to apply this knowledge to your own life for immediate insight.</li><li>Advanced techniques for deeper understanding.</li></ul><p>Join us for an enlightening experience that will empower you to take control of your destiny.</p>`,
         agenda: [
@@ -152,5 +152,7 @@ export const seedConferences = () => {
   setLocal("conferences", conferences);
   setLocal("waitlist", []);
 };
+
+    
 
     
