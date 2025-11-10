@@ -1,7 +1,8 @@
 
 "use client";
 
-import { getLocal, setLocal, removeSession, getSession } from "./local";
+import { getLocal, setLocal } from "./local";
+import { removeSession, getSession } from "./session";
 import { getUser, AuthUser } from "./auth";
 
 const COMMENTS_KEY = "astrethique_comments_v1";
