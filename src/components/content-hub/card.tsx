@@ -15,12 +15,15 @@ import { formatDistanceToNowStrict } from 'date-fns';
 
 type CardProps = {
     item: ContentHubItem;
-    onAuthorClick: (authorName: string) => void;
-    onToggleLike: (itemId: string) => void;
-    onToggleBookmark: (itemId: string) => void;
+    onAuthorClick?: (authorName: string) => void;
+    onToggleLike?: (itemId: string) => void;
+    onToggleBookmark?: (itemId: string) => void;
 };
 
 function formatViews(views: number): string {
+    if (views === undefined || views === null) {
+        return '0';
+    }
     if (views >= 1000) {
         return (views / 1000).toFixed(1) + 'k';
     }
@@ -41,19 +44,21 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
     const handleAuthorClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        onAuthorClick(item.author.name);
+        if (onAuthorClick) {
+            onAuthorClick(item.author.name);
+        }
     }
     
     const handleLikeClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        onToggleLike(item.id);
+        if(onToggleLike) onToggleLike(item.id);
     }
 
     const handleBookmarkClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        onToggleBookmark(item.id);
+        if(onToggleBookmark) onToggleBookmark(item.id);
     }
 
     const handleDetailClick = (e: React.MouseEvent) => {
