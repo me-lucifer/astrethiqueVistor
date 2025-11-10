@@ -74,6 +74,11 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
         e.stopPropagation();
         if(onToggleBookmark) onToggleBookmark(item.id);
     }
+    
+    const handleCTAClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        router.push(detailUrl);
+    };
 
     const isPromotedAndActive = item.promotedUntil && new Date(item.promotedUntil) > new Date();
     
@@ -155,19 +160,14 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                     </div>
                     <div>
                         {isArticle ? (
-                             <Button variant="outline" size="sm" asChild>
-                                <Link href={detailUrl}>
+                             <Button variant="outline" size="sm" onClick={handleCTAClick}>
                                 Read more
-                                </Link>
                              </Button>
                         ) : (
                             <>
-                                <Button variant="secondary" size="sm" asChild>
-                                    <Link href={detailUrl}>
-                                        <Play className="mr-2 h-4 w-4" /> Open
-                                    </Link>
+                                <Button variant="secondary" size="sm" onClick={handleCTAClick}>
+                                    <Play className="mr-2 h-4 w-4" /> Open
                                 </Button>
-                                {/* This is a cosmetic button for the prototype */}
                                 <Button variant="outline" size="sm" className="ml-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
                                     <Youtube className="mr-2 h-4 w-4" /> YouTube
                                 </Button>
