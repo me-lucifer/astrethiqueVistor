@@ -104,7 +104,7 @@ const defaultFilters: Filters = {
     onPromo: false,
 };
 
-const INITIAL_VISIBLE_COUNT = 8;
+const INITIAL_VISIBLE_COUNT = 9;
 
 export function FeaturedConsultants({ initialQuery, showFilters = false }: { initialQuery?: string, showFilters?: boolean }) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -321,7 +321,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     };
 
     const handleLoadMore = () => {
-        const newCount = visibleCount + 8;
+        const newCount = visibleCount + 9;
         setVisibleCount(newCount);
         setSession('discover.pageSize.v1', newCount);
     }
@@ -546,7 +546,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                 <div role="status" aria-live="polite">
                     {isLoading || allConsultants.length === 0 ? (
                         <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-                            {Array.from({ length: showFilters ? 8 : 4 }).map((_, i) => (
+                            {Array.from({ length: showFilters ? 9 : 4 }).map((_, i) => (
                                  <div key={i} className="space-y-3">
                                     <Skeleton className="h-[225px] w-full rounded-xl" />
                                     <div className="space-y-2">
