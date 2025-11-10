@@ -40,13 +40,13 @@ const badges = [
 const contentFilters = [
     { id: "hasArticles", name: "Has Articles", icon: BookOpen },
     { id: "hasPodcasts", name: "Has Podcasts", icon: Mic },
-    { id: "hasUpcomingConference", name: "Has Upcoming Conference", icon: Video },
+    { id: "hasUpcomingConference", name: "Has UpcomingConference", icon: Video },
 ];
 
 const availabilityFilters = [
-    { id: 'online', name: 'Online now' },
-    { id: 'busy', name: 'Busy' },
-    { id: 'offline', name: 'Offline' }
+    { id: 'Online now', name: 'Online now' },
+    { id: 'Today', name: 'Today' },
+    { id: 'This week', name: 'This week' }
 ];
 
 const ratingFilters = [
@@ -111,10 +111,14 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [query, setQuery] = useState(initialQuery || "");
 
-    const [filters, setFilters] = useState<Filters>(() => getSession('discover.filters.v1') || defaultFilters);
+    const [filters, setFilters] = useState<Filters>(() => {
+        const sessionState = getSession('discover.filters.v1');
+        return { ...defaultFilters, ...(sessionState || {}) };
+    });
     const [sort, setSort] = useState<SortKey>(() => getSession('discover.sort.v1') || 'recommended');
     const [priceBounds, setPriceBounds] = useState<[number, number]>([0, 10]);
     const [favorites, setFavorites] = useState<string[]>([]);
+    const [visibleCount, setVisibleCount] = useState(8);
 
     useEffect(() => {
         const storedConsultants = getSession<Consultant[]>('discover.consultants.v1');
@@ -125,7 +129,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             const max = Math.ceil(Math.max(...prices));
             setPriceBounds([min, max]);
 
-            // Initialize price filter based on bounds
             const savedFilters = getSession('discover.filters.v1');
             if (!savedFilters || !savedFilters.price) {
                 updateFilters({ price: [min, max], minPrice: String(min), maxPrice: String(max) });
@@ -233,9 +236,10 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     }, [allConsultants, filters, sort, favorites]);
 
     const handleResetFilters = () => {
-        setFilters({...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])});
+        const newFilters = {...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])};
+        setFilters(newFilters);
         setSort('recommended');
-        setSession('discover.filters.v1', {...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])});
+        setSession('discover.filters.v1', newFilters);
         setSession('discover.sort.v1', 'recommended');
     };
 
@@ -329,7 +333,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                                 {['EN', 'FR'].map(langCode => (
                                     <div key={langCode}>
                                         <Label className="font-semibold">{langCode}</Label>
-                                        <RadioGroup value={filters.languages[langCode as 'EN' | 'FR']} onValueChange={(v) => updateFilters({ languages: { ...filters.languages, [langCode]: v } })}>
+                                        <RadioGroup value={filters.languages[langCode as 'EN' | 'FR']} onValueChange={(v) => updateFilters({ languages: { ...filters.languages, [langCode]: v as any } })}>
                                             {['basic', 'fluent', 'native'].map(level => (
                                                 <div key={level} className="flex items-center space-x-2">
                                                     <RadioGroupItem value={level} id={`lang-${langCode}-${level}`} />
@@ -425,7 +429,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             <main>
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
-                        Showing {filteredAndSortedConsultants.length} of {allConsultants.length} consultants
+                        Showing {Math.min(visibleCount, filteredAndSortedConsultants.length)} of {filteredAndSortedConsultants.length} consultants
                     </p>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
@@ -455,15 +459,22 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                             ))}
                         </div>
                     ) : filteredAndSortedConsultants.length > 0 ? (
-                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                            {filteredAndSortedConsultants.map((consultant) => (
-                                <ConsultantCard 
-                                    key={consultant.id}
-                                    consultant={consultant}
-                                    onStartNow={() => setIsStartNowModalOpen(true)}
-                                />
-                            ))}
-                        </div>
+                        <>
+                            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                {filteredAndSortedConsultants.slice(0, visibleCount).map((consultant) => (
+                                    <ConsultantCard 
+                                        key={consultant.id}
+                                        consultant={consultant}
+                                        onStartNow={() => setIsStartNowModalOpen(true)}
+                                    />
+                                ))}
+                            </div>
+                            {visibleCount < filteredAndSortedConsultants.length && (
+                                <div className="mt-8 text-center">
+                                    <Button onClick={() => setVisibleCount(prev => prev + 8)}>Load more</Button>
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
                             <h3 className="font-headline text-2xl font-bold">No matches yet</h3>
