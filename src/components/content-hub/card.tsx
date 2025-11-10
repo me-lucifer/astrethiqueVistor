@@ -119,6 +119,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                         alt={item.title}
                         width={600}
                         height={400}
+                        loading="lazy"
                         className="aspect-video object-cover w-full group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-3 left-3 flex gap-2">
@@ -184,6 +185,33 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                         </Button>
                     </div>
                     <div className="flex items-center gap-2">
+                        <div className="sm:hidden">
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">More options</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={handleBookmarkClick}>
+                                        <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
+                                        <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleShare}>
+                                        <Share2 className="mr-2 h-4 w-4" />
+                                        <span>Share</span>
+                                    </DropdownMenuItem>
+                                    {!isArticle && (
+                                        <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
+                                            <Youtube className="mr-2 h-4 w-4" />
+                                            <span>Play on YouTube</span>
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+
                         {isArticle ? (
                              <Button variant="outline" size="sm" onClick={handleCTAClick}>
                                 Read more
@@ -193,35 +221,35 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                                 <Play className="mr-2 h-4 w-4" /> Open
                             </Button>
                         )}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">More options</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={handleBookmarkClick}>
-                                    <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
-                                    <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleShare}>
-                                    <Share2 className="mr-2 h-4 w-4" />
-                                    <span>Share</span>
-                                </DropdownMenuItem>
-                                {!isArticle && (
-                                     <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
-                                        <Youtube className="mr-2 h-4 w-4" />
-                                        <span>Play on YouTube</span>
+                        <div className="hidden sm:flex items-center gap-2">
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">More options</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={handleBookmarkClick}>
+                                        <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
+                                        <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
                                     </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                    <DropdownMenuItem onClick={handleShare}>
+                                        <Share2 className="mr-2 h-4 w-4" />
+                                        <span>Share</span>
+                                    </DropdownMenuItem>
+                                    {!isArticle && (
+                                        <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
+                                            <Youtube className="mr-2 h-4 w-4" />
+                                            <span>Play on YouTube</span>
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
                 </div>
             </Link>
         </Card>
     );
 }
-
-    
