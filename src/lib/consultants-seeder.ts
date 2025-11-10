@@ -13,12 +13,10 @@ const names = [
 
 const createConsultant = (index: number): Consultant => {
     const now = new Date();
-    const isOnline = index % 4 === 0; // Better distribution for online status
+    const isOnline = index % 4 === 0;
     const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
     const consultantName = names[(index - 1) % names.length];
     
-    // Create a version of availability compatible with the card and list views.
-    // The profile page will add more complex availability data.
     const simpleAvailability = ['online', 'busy', 'offline', 'online'][index % 4] as 'online' | 'busy' | 'offline';
 
     const reviews = [
@@ -29,30 +27,29 @@ const createConsultant = (index: number): Consultant => {
         reviews.push({ author: 'Emily R.', rating: 5, dateISO: subDays(now, 2).toISOString(), text: 'Truly gifted and compassionate. Highly recommend!'});
     }
 
-
     return {
         id: `c${index}`,
         slug: consultantName.toLowerCase().replace(/\s+/g, '-'),
         name: consultantName,
-        rating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
+        rating: Math.round((4.2 + Math.random() * 0.8) * 10) / 10,
         pricePerMin: Math.round((1.5 + Math.random() * 3.5) * 2) / 2,
         priceWas: index % 4 === 0 ? Math.round((3 + Math.random() * 3) * 2) / 2 : undefined,
         promo24h: index % 5 === 0,
         languages: index % 2 === 0 
             ? [{ code: 'EN', level: 'native' }, { code: 'FR', level: 'fluent' }]
             : [{ code: 'EN', level: 'native' }],
-        availability: { // This will be overwritten on the profile page for demo purposes
+        availability: {
             online: simpleAvailability === 'online',
-            slots: [], // Empty for list view, profile page will generate them.
+            slots: [],
         },
         specialties: specialties.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1),
-        badges: ['New', 'Top Rated', 'Rising Star', 'Promo 24h'].sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
+        badges: ['New', 'Top Rated', 'Rising Star', 'Promo 24h'].sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2)),
         contentCounts: {
             articles: Math.floor(Math.random() * 10),
             podcasts: Math.floor(Math.random() * 5),
             conferences: Math.floor(Math.random() * 3),
         },
-        cover: `https://picsum.photos/seed/consultant${index}/400/300`,
+        cover: `https://picsum.photos/seed/${consultantName.replace(' ','-')}/400/300`,
         kycVerified: Math.random() > 0.2,
         adminApproved: Math.random() > 0.1,
         lastReviewDate: subDays(now, Math.floor(Math.random() * 90)).toISOString(),
@@ -63,15 +60,17 @@ const createConsultant = (index: number): Consultant => {
             podcasts: [{ id: 'p1', title: 'Podcast 1', duration: 15 }],
             conferences: [{ id: 'k1', title: 'Conference 1', scheduleISO: addDays(now, 20).toISOString() }],
         },
-        joinedAt: subDays(now, Math.floor(Math.random() * 365)).toISOString(),
+        joinedAt: subDays(now, Math.floor(Math.random() * 365) + 30).toISOString(),
     };
 };
 
 export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
-  const seeded = getSession('discover.seeded.v1');
-  if (!seeded) {
+  const seededVersion = getSession('discover.seeded.version');
+  const currentVersion = 'v2'; // Increment this version to force re-seeding
+
+  if (seededVersion !== currentVersion) {
     const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
     
     setSession('discover.seed.v1', consultants);
@@ -81,6 +80,6 @@ export const seedConsultants = () => {
     setSession('discover.filters.v1', {});
     setSession('discover.sort.v1', 'recommended');
 
-    setSession('discover.seeded.v1', true);
+    setSession('discover.seeded.version', currentVersion);
   }
 };
