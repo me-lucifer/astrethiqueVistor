@@ -53,11 +53,11 @@ export default function HowItWorksPage() {
   ];
 
   const quickLinks = [
-    { icon: Search, label: "Discover consultants", href: "/discover" },
-    { icon: CalendarClock, label: "Start instantly", href: "/discover" },
-    { icon: Heart, label: "Favorites & notes", href: "/discover?myFavorites=true" },
-    { icon: Tv, label: "Free Conferences", href: "/conferences" },
-    { icon: HelpCircle, label: "Help Desk", href: "/support" },
+    { label: "Discover consultants", href: "/discover", icon: Search },
+    { label: "Start instantly", href: "/discover", icon: CalendarClock },
+    { label: "Favorites & notes", href: "/discover?myFavorites=true", icon: Heart },
+    { label: "Free Conferences", href: "/conferences", icon: Tv },
+    { label: "Help Desk", href: "/support", icon: HelpCircle },
   ];
 
   const trustItems = [
@@ -66,6 +66,41 @@ export default function HowItWorksPage() {
     { icon: Wallet, label: "Transparent pricing" },
     { icon: Languages, label: "Language & region smart" },
     { icon: Search, label: "Moderated content" },
+  ];
+  
+  const faqs = [
+    {
+      question: "Can I cancel or reschedule a session?",
+      answer: "Yes, you can typically cancel or reschedule up to 24 hours before your scheduled session time directly from your appointments page. Please check the specific consultant's policy, as some may differ."
+    },
+    {
+      question: "How does per-minute billing work?",
+      answer: "You only pay for the time you are connected with a consultant in a live session (chat, audio, or video). The charge is deducted from your prepaid wallet balance, and a live meter is always visible."
+    },
+    {
+      question: "What happens if my wallet runs out mid-session?",
+      answer: "The session will automatically end when your wallet balance reaches zero, ensuring you never pay more than you've budgeted. You can easily top up your wallet to continue the session if you wish."
+    },
+    {
+      question: "What is Budget Lock & emergency top-up?",
+      answer: "Budget Lock is an optional feature that prevents you from spending over a set monthly amount. If enabled, one pre-approved emergency top-up may be allowed per month for critical situations."
+    },
+    {
+      question: "Are timezones and languages handled automatically?",
+      answer: "Yes, all scheduling and availability are automatically converted to your local timezone. You can also filter consultants by the languages they speak to ensure clear communication."
+    },
+    {
+      question: "Can I record my session?",
+      answer: "For privacy and safety reasons, we do not permit session recordings by either party. This ensures a confidential and secure space for both you and the consultant."
+    },
+    {
+      question: "Are live conferences free to attend?",
+      answer: "Yes, all live conferences listed on our platform are free to attend. Simply RSVP to reserve your spot and receive reminders."
+    },
+    {
+      question: "How do I get invoices and receipts?",
+      answer: "After every paid session, a detailed invoice is automatically sent to your registered email address. You can also view your full session history and invoices in your account dashboard."
+    }
   ];
 
   const VisitorContent = () => (
@@ -145,6 +180,23 @@ export default function HowItWorksPage() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+        </div>
+      </div>
+      
+      <div className="mt-16">
+         <h3 className="font-headline text-2xl font-bold mb-6 text-center">Frequently Asked Questions</h3>
+         <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto">
+            {faqs.map((faq, index) => (
+                <AccordionItem key={index} value={`item-${index}`}>
+                    <AccordionTrigger>{faq.question}</AccordionTrigger>
+                    <AccordionContent>{faq.answer}</AccordionContent>
+                </AccordionItem>
+            ))}
+        </Accordion>
+        <div className="text-center mt-6">
+            <Button asChild variant="outline">
+                <Link href="/support">Read all FAQs</Link>
+            </Button>
         </div>
       </div>
 
