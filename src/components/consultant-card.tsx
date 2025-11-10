@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -74,12 +73,16 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         e.stopPropagation();
         
         const favs = getSession<string[]>("discover.favorites.v1") || [];
-        const newFavorites = isFavorite
-            ? favs.filter(id => id !== consultant.id)
-            : [...favs, consultant.id];
+        const newFavorites = !isFavorite
+            ? [...favs, consultant.id]
+            : favs.filter(id => id !== consultant.id);
         
         setIsFavorite(!isFavorite);
         setSession("discover.favorites.v1", newFavorites);
+
+        toast({
+            title: !isFavorite ? "Added to your favorites" : "Removed from your favorites",
+        });
     }
 
     const handleActionClick = (e: React.MouseEvent, action: () => void) => {
@@ -95,22 +98,19 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
     };
 
     const handleNotifyClick = () => {
-        const notifyList = getSession<string[]>("notify.me.v1") || [];
-        const newNotifyList = isNotifying
-            ? notifyList.filter(id => id !== consultant.id)
-            : [...notifyList, consultant.id];
-        
-        setIsNotifying(!isNotifying);
-        setSession("notify.me.v1", newNotifyList);
-
-        if (!isNotifying) {
-            setIsNotifyModalOpen(true);
-        } else {
-             toast({
-                title: "Notification removed",
-                description: `You will no longer be notified when ${consultant.name} is online.`,
+        if (isNotifying) {
+            toast({
+                title: `You are already set to be notified when ${consultant.name} is online.`,
             });
+            return;
         }
+
+        const notifyList = getSession<string[]>("notify.me.v1") || [];
+        const newNotifyList = [...notifyList, consultant.id];
+        
+        setIsNotifying(true);
+        setSession("notify.me.v1", newNotifyList);
+        setIsNotifyModalOpen(true);
     };
 
     const StartNowButton = () => (
@@ -126,7 +126,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
             variant={isNotifying ? "secondary" : "outline"} 
             size="sm" 
             onClick={(e) => handleActionClick(e, handleNotifyClick)}
-            aria-label={isNotifying ? `Stop notifications for ${consultant.name}`: `Notify me when ${consultant.name} is online`}
+            aria-label={isNotifying ? `You'll be notified when ${consultant.name} is online` : `Notify me when ${consultant.name} is online`}
         >
             {isNotifying ? <CheckCircle className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
             {isNotifying ? "Notifying" : "Notify me"}

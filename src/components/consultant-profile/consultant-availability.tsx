@@ -74,22 +74,18 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   }
   
   const handleNotifyClick = () => {
-    const notifyList = getSession<string[]>("notify.me.v1") || [];
-    const newNotifyList = isNotifying
-        ? notifyList.filter(id => id !== consultant.id)
-        : [...notifyList, consultant.id];
-    
-    setIsNotifying(!isNotifying);
-    setSession("notify.me.v1", newNotifyList);
-
-    if (!isNotifying) {
-        setIsNotifyModalOpen(true);
-    } else {
-         toast({
-            title: "Notification removed",
-            description: `You will no longer be notified when ${consultant.name} is online.`,
+    if (isNotifying) {
+        toast({
+            title: `You are already set to be notified when ${consultant.name} is online.`,
         });
+        return;
     }
+    const notifyList = getSession<string[]>("notify.me.v1") || [];
+    const newNotifyList = [...notifyList, consultant.id];
+    
+    setIsNotifying(true);
+    setSession("notify.me.v1", newNotifyList);
+    setIsNotifyModalOpen(true);
   };
 
   const handleSlotSelect = (slot: Date) => {
@@ -162,12 +158,13 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
                 ) : (
                     <>
                          <Button 
-                            variant="outline" 
+                            variant={isNotifying ? 'secondary' : 'outline'}
                             size="lg" 
                             onClick={handleNotifyClick}
+                            aria-label={isNotifying ? `You'll be notified when ${consultant.name} is online` : `Notify me when ${consultant.name} is online`}
                         >
                             {isNotifying ? <CheckCircle className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
-                            {isNotifying ? "I'll be notified" : "Notify me"}
+                            {isNotifying ? "Notifying" : "Notify me"}
                         </Button>
                         <Button onClick={handleScheduleClick} size="lg" id="schedule-button">
                             <Clock className="mr-2 h-4 w-4" />

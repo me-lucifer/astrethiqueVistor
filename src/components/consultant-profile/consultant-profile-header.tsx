@@ -11,10 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Star, Heart, CheckCircle, ShieldCheck, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
 
 export function ConsultantProfileHeader({ consultant: initialConsultant }: { consultant: ConsultantProfile }) {
     const [consultant, setConsultant] = useState(initialConsultant);
     const [isFavorite, setIsFavorite] = useState(consultant.favorite);
+    const { toast } = useToast();
     
     useEffect(() => {
         setConsultant(initialConsultant);
@@ -34,8 +36,14 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
             if (!favorites.includes(consultant.id)) {
                 favorites.push(consultant.id);
             }
+            toast({
+                title: "Added to your favorites",
+            });
         } else {
             favorites = favorites.filter(id => id !== consultant.id);
+            toast({
+                title: "Removed from your favorites",
+            });
         }
         setSession("consultantFavorites", favorites);
     }
