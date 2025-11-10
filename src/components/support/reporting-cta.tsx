@@ -12,14 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { CheckCircle } from "lucide-react";
 
 const reportSchema = z.object({
     url: z.string().url("Please enter a valid URL."),
     reason: z.string().min(1, "Please select a reason."),
     details: z.string().min(10, "Please provide at least 10 characters.").max(500),
-    email: z.string().email().optional().or(z.literal('')),
+    email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
 });
 
 type ReportFormData = z.infer<typeof reportSchema>;
@@ -43,13 +41,12 @@ const ReportModal = ({ type, isOpen, onOpenChange }: ReportModalProps) => {
 
     const onSubmit = (data: ReportFormData) => {
         const adminEmail = "support@astrethique.com";
-        const mailtoSubject = `[AST Support] Report: ${type === 'content' ? 'Content' : 'Consultant'} - ${data.reason}`;
+        const mailtoSubject = `[AST Report] ${type === 'content' ? 'Content' : 'Consultant'}`;
         const mailtoBody = `
 URL: ${data.url}
 Reason: ${data.reason}
 Details: ${data.details}
-Email: ${data.email || 'Anonymous'}
-Priority: Urgent
+Reporting Email: ${data.email || 'Anonymous'}
         `;
 
         const mailtoLink = `mailto:${adminEmail}?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
@@ -59,16 +56,23 @@ Priority: Urgent
         onOpenChange(false);
         form.reset();
     };
+    
+    const onInvalid = () => {
+        toast({
+            variant: "destructive",
+            title: "Please fix the form errors before submitting.",
+        })
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Report {type === 'content' ? 'Content' : 'a Consultant'}</DialogTitle>
-                    <DialogDescription>Your report is anonymous. Please provide as much detail as possible.</DialogDescription>
+                    <DialogDescription>Your report is anonymous unless you provide your email. Please provide as much detail as possible.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-4">
                         <FormField control={form.control} name="url" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{type === 'content' ? 'Content URL' : 'Consultant Profile URL'}</FormLabel>
