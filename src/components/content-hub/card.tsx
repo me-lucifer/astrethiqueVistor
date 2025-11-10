@@ -8,10 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Bookmark, Mic, BookOpen, Clock, Eye, Calendar, Play, Youtube } from "lucide-react";
+import { Heart, Bookmark, Mic, BookOpen, Clock, Eye, Calendar, Play, Youtube, MoreHorizontal, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 type CardProps = {
     item: ContentHubItem;
@@ -53,6 +55,7 @@ function formatLength(item: ContentHubItem): string {
 
 export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike, onToggleBookmark }: CardProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const isArticle = item.type === 'article';
     const detailUrl = `/content-hub/${item.type}/${item.id}`;
 
@@ -73,7 +76,12 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
     const handleBookmarkClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if(onToggleBookmark) onToggleBookmark(item.id);
+        if(onToggleBookmark) {
+            onToggleBookmark(item.id);
+            toast({
+                title: item.bookmarked ? "Bookmark removed" : "Bookmarked!",
+            });
+        }
     }
 
     const handleTopicClick = (e: React.MouseEvent, topic: string) => {
@@ -87,6 +95,15 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
     const handleCTAClick = (e: React.MouseEvent) => {
         e.preventDefault();
         router.push(detailUrl);
+    };
+
+    const handleShare = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigator.clipboard.writeText(`${window.location.origin}${detailUrl}`);
+        toast({
+            title: 'Link copied to clipboard!',
+        });
     };
 
     const isPromotedAndActive = item.promotedUntil && new Date(item.promotedUntil) > new Date();
@@ -138,7 +155,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                         
                         <div className="mt-3 flex flex-wrap gap-1">
                             {item.tags && item.tags.slice(0,3).map(topic => (
-                                <button key={topic} onClick={(e) => handleTopicClick(e, topic)} aria-label={`Filter by topic: ${topic}`}>
+                                <button key={topic} onClick={(e) => handleTopicClick(e, topic)} aria-label={`Filter by topic: ${topic}`} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full">
                                     <Badge variant="outline" className="font-normal hover:bg-accent/50 cursor-pointer">{topic}</Badge>
                                 </button>
                             ))}
@@ -149,7 +166,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                     </div>
                     
                     <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                        <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground" aria-label={`Filter by author: ${item.author.name}`}>
+                        <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md" aria-label={`Filter by author: ${item.author.name}`}>
                             <Avatar className="h-6 w-6">
                                 <AvatarImage src={item.author.avatar} alt={item.author.name} />
                                 <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
@@ -165,28 +182,46 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                             <Heart className={cn("h-4 w-4", item.liked && "fill-current")} />
                             {item.likes}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmarkClick} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark this item'}>
-                             <Bookmark className={cn("h-4 w-4", item.bookmarked && "fill-current text-primary")} />
-                        </Button>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-2">
                         {isArticle ? (
                              <Button variant="outline" size="sm" onClick={handleCTAClick}>
                                 Read more
                              </Button>
                         ) : (
-                            <>
-                                <Button variant="secondary" size="sm" onClick={handleCTAClick}>
-                                    <Play className="mr-2 h-4 w-4" /> Open
-                                </Button>
-                                <Button variant="outline" size="sm" className="ml-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
-                                    <Youtube className="mr-2 h-4 w-4" /> YouTube
-                                </Button>
-                            </>
+                            <Button variant="secondary" size="sm" onClick={handleCTAClick}>
+                                <Play className="mr-2 h-4 w-4" /> Open
+                            </Button>
                         )}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">More options</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleBookmarkClick}>
+                                    <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
+                                    <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleShare}>
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    <span>Share</span>
+                                </DropdownMenuItem>
+                                {!isArticle && (
+                                     <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
+                                        <Youtube className="mr-2 h-4 w-4" />
+                                        <span>Play on YouTube</span>
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
             </Link>
         </Card>
     );
 }
+
+    

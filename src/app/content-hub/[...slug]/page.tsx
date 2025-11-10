@@ -139,6 +139,7 @@ export default function ContentDetailPage() {
     const updateItemInSession = useCallback((updatedItem: ContentHubItem) => {
         const updatedItems = allItems.map(i => i.id === updatedItem.id ? updatedItem : i);
         setAllItems(updatedItems);
+        setItem(updatedItem); // also update the local state for the detail page
         setSession('ch_items', updatedItems);
     }, [allItems]);
 
@@ -147,19 +148,26 @@ export default function ContentDetailPage() {
         const newLiked = !item.liked;
         const newLikes = newLiked ? item.likes + 1 : item.likes - 1;
         const updatedItem = { ...item, liked: newLiked, likes: newLikes };
-        setItem(updatedItem);
         updateItemInSession(updatedItem);
     }, [item, updateItemInSession]);
 
     const handleToggleBookmark = useCallback(() => {
         if (!item) return;
+        
+        // Update session for ch_items
         const updatedItem = { ...item, bookmarked: !item.bookmarked };
-        setItem(updatedItem);
         updateItemInSession(updatedItem);
+
+        // Also update savedContentIds
+        const savedIds = getSession<string[]>("savedContentIds") || [];
+        const isBookmarked = savedIds.includes(item.id);
+        const newSavedIds = isBookmarked ? savedIds.filter(id => id !== item.id) : [...savedIds, item.id];
+        setSession("savedContentIds", newSavedIds);
+
         toast({
             title: updatedItem.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
         });
-    }, [item, updateItemInSession]);
+    }, [item, updateItemInSession, toast]);
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -375,3 +383,5 @@ export default function ContentDetailPage() {
         </div>
     );
 }
+
+    
