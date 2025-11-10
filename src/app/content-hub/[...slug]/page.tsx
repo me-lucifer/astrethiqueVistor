@@ -49,25 +49,37 @@ const YouTubePlayer = ({ item }: { item: ContentHubItem }) => {
     if (!item.youtubeUrl) return null;
     
     // Extract video ID from URL
-    let videoId = '';
-    try {
-        const url = new URL(item.youtubeUrl);
-        if (url.hostname === 'youtu.be') {
-            videoId = url.pathname.substring(1);
-        } else if (url.hostname === 'www.youtube.com' || url.hostname === 'youtube.com') {
-             if (url.pathname === '/watch') {
-                videoId = url.searchParams.get('v') || '';
-            } else if (url.pathname.startsWith('/embed/')) {
-                videoId = url.pathname.substring(7);
+    const extractYouTubeId = (url: string): string | null => {
+        if (!url) return null;
+        let videoId = '';
+        try {
+            const urlObj = new URL(url);
+            if (urlObj.hostname === 'youtu.be') {
+                videoId = urlObj.pathname.substring(1);
+            } else if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
+                if (urlObj.pathname === '/watch') {
+                    videoId = urlObj.searchParams.get('v') || '';
+                } else if (urlObj.pathname.startsWith('/embed/')) {
+                    videoId = urlObj.pathname.substring(7);
+                }
             }
+            // Handle URLs with list parameters
+            const listParamIndex = videoId.indexOf('&');
+            if (listParamIndex !== -1) {
+                videoId = videoId.substring(0, listParamIndex);
+            }
+            return videoId;
+        } catch (e) {
+            console.error("Invalid YouTube URL", url);
+            return null;
         }
-    } catch (e) {
-        console.error("Invalid YouTube URL", item.youtubeUrl);
     }
     
-    if (!videoId) return <p>Could not load video.</p>;
+    const videoId = extractYouTubeId(item.youtubeUrl);
 
-    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    if (!videoId) return <p className="text-destructive">Could not load video. Invalid YouTube URL provided.</p>;
+
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0`;
 
     return (
         <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden border">
@@ -232,7 +244,7 @@ export default function ContentDetailPage() {
             i.id !== item.id &&
             !i.deleted &&
             i.language === item.language &&
-            item.tags.some(t => item.tags.includes(t))
+            i.tags.some(t => item.tags.includes(t))
         ).slice(0, 4);
     }, [item, allItems]);
 
