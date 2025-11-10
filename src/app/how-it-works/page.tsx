@@ -102,7 +102,7 @@ export default function HowItWorksPage() {
           <h3 className="font-headline text-2xl font-bold mb-6">Quick Links</h3>
           <div className="space-y-3">
             {quickLinks.map(link => (
-              <Link key={link.href} href={link.href}>
+              <Link key={link.label} href={link.href}>
                 <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors">
                   <link.icon className="h-5 w-5 text-primary" />
                   <span className="font-medium">{link.label}</span>
