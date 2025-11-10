@@ -66,12 +66,12 @@ export default function HowItWorksPage() {
     {
       icon: Briefcase,
       title: "Set your business rules",
-      description: "Set a per-minute rate (changes once/month), and use promos (1 free 24h/week, 1 paid/month).",
+      description: "Set your per-minute rate, manage promotions, and control your schedule.",
     },
     {
       icon: Wallet,
       title: "Start consulting & get paid",
-      description: "Chat/audio/video sessions, monthly invoices, wallet payouts, and performance bonuses.",
+      description: "Engage in chat, audio, or video sessions and receive payouts through your wallet.",
     },
   ];
 
@@ -111,8 +111,8 @@ export default function HowItWorksPage() {
       answer: "The session will automatically end when your wallet balance reaches zero, ensuring you never pay more than you've budgeted. You can easily top up your wallet to continue the session if you wish."
     },
     {
-      question: "What is Budget Lock & emergency top-up?",
-      answer: "Budget Lock is an optional feature that prevents you from spending over a set monthly amount. If enabled, one pre-approved emergency top-up may be allowed per month for critical situations."
+      question: "What is Budget Lock?",
+      answer: "Budget Lock is an optional feature that helps you manage your spending by preventing you from exceeding a monthly amount that you set."
     },
     {
       question: "Are timezones and languages handled automatically?",
@@ -135,11 +135,11 @@ export default function HowItWorksPage() {
     const consultantFaqs = [
     {
       question: "How do promotions work (limits & visibility)?",
-      answer: "You can run one free 24-hour promotion per week and one paid promotion per month. Both give your profile enhanced visibility on the Discover page. You cannot run more than one promo per week."
+      answer: "You can run promotions to give your profile enhanced visibility on the Discover page. Limits and rules are set by the platform to ensure fair exposure for all consultants."
     },
     {
       question: "When can I change my rate?",
-      answer: "You can adjust your per-minute rate once every 30 days. This policy ensures pricing stability for clients while giving you the flexibility to adapt to your business needs."
+      answer: "You can adjust your per-minute rate periodically. This policy ensures pricing stability for clients while giving you the flexibility to adapt to your business needs."
     },
     {
       question: "Why is my profile hidden in some countries (language gating)?",
@@ -147,10 +147,10 @@ export default function HowItWorksPage() {
     },
     {
       question: "When are monthly invoices generated and paid (acceptance flow)?",
-      answer: "Invoices for the previous month's earnings are generated on the 1st of each month. You must review and accept the invoice in your dashboard, after which funds are transferred to your wallet for payout."
+      answer: "Invoices for the previous month's earnings are generated automatically. You must review and accept the invoice in your dashboard, after which funds are transferred to your wallet for payout."
     },
     {
-      question: "How does content publishing & approval work?",
+      question: "Content publishing & approval (articles/podcasts/conferences).",
       answer: "You can submit articles, podcasts, or conference ideas through your dashboard. All content is reviewed by our admin team for quality and adherence to guidelines before it is published on the platform."
     }
   ];

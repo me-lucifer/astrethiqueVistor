@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
@@ -21,9 +22,11 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     if (storedLang) {
       setLanguageState(storedLang);
     } else {
-      const browserLang = navigator.language.startsWith('fr') ? 'fr' : 'en';
-      setLanguageState(browserLang as Language);
-      setLocal("lang", browserLang);
+      // Default to browser language, fallback to 'en'
+      const browserLang = navigator.language.split('-')[0];
+      const defaultLang = browserLang === 'fr' ? 'fr' : 'en';
+      setLanguageState(defaultLang);
+      setLocal("lang", defaultLang);
     }
   }, []);
 

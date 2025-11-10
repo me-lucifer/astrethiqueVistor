@@ -45,7 +45,7 @@ function ConferencesContent() {
                 Learn live with our experts.
             </h1>
             <p className="text-lg text-foreground/80 max-w-2xl">
-                Join live workshops, group readings, and Q&A sessions—shown in your timezone.
+                Join live workshops, group readings, and Q&A sessions. All event times shown auto-convert to your local timezone.
             </p>
             <form onSubmit={handleSearchSubmit} className="w-full">
                 <div className="relative">

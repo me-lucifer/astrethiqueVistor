@@ -73,7 +73,7 @@ export default function SchedulePage() {
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">Request a Booking</CardTitle>
-          <CardDescription>Select your preferred time and details for the session.</CardDescription>
+          <CardDescription>Select your preferred time and details for the session. Times are shown in your local timezone.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* 1. Select a Date */}
@@ -132,14 +132,14 @@ export default function SchedulePage() {
                 <SelectValue placeholder="Select timezone" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={timeZone}>{timeZone} (Auto-detected)</SelectItem>
+                <SelectItem value={timeZone}>{timeZone.replace(/_/g, " ")} (Auto-detected)</SelectItem>
                  <SelectItem value="Europe/London">Europe/London (GMT+1)</SelectItem>
                 <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
                 <SelectItem value="America/Los_Angeles">America/Los_Angeles (PST)</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-                All times are displayed in {timeZone}.
+                All appointment times automatically convert to your selected timezone.
             </p>
           </div>
 
