@@ -7,22 +7,10 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Mic, BookOpen, Video, Heart } from "lucide-react";
 import { format } from "date-fns";
+import { BaseContentItem } from '@/lib/consultant-profile';
 
-type ContentType = 'Article' | 'Podcast' | 'Conference' | 'Video';
-
-interface ContentCardProps {
-    item: {
-        id: string;
-        title: string;
-        type: ContentType;
-        cover: string;
-        tags?: string[];
-        likes?: number;
-        duration?: string | number;
-        date?: string;
-        dateISO?: string;
-        time?: string;
-    };
+type ContentCardProps = {
+    item: BaseContentItem;
 }
 
 const typeInfo = {
@@ -35,7 +23,8 @@ const typeInfo = {
 export function ContentCard({ item }: ContentCardProps) {
     const { icon: TypeIcon, cta } = typeInfo[item.type];
 
-    const displayDate = item.dateISO ? format(new Date(item.dateISO), "PPP") : item.date;
+    const displayDate = 'dateISO' in item && item.dateISO ? format(new Date(item.dateISO), "PPP") : ('date' in item ? item.date : undefined);
+    const duration = 'duration' in item ? item.duration : undefined;
 
     return (
         // In a real app, this would open a modal or navigate to a content page
@@ -43,7 +32,7 @@ export function ContentCard({ item }: ContentCardProps) {
         <Link href={`/content-hub?item=${item.id}`} className="group">
             <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg motion-safe:hover:scale-[1.01] bg-card/50 hover:bg-card flex flex-col">
                 <CardContent className="p-0">
-                    <div className="relative aspect-[3/2]">
+                    <div className="relative aspect-video">
                         {item.cover && (
                             <Image
                                 src={item.cover}
@@ -74,15 +63,15 @@ export function ContentCard({ item }: ContentCardProps) {
 
                 <CardFooter className="p-4 pt-0 mt-auto text-sm text-foreground/70 flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                        {item.likes !== undefined && (
+                        {'likes' in item && item.likes !== undefined && (
                             <div className="flex items-center gap-1.5">
                                 <Heart className="w-3.5 h-3.5" />
                                 <span>{item.likes}</span>
                             </div>
                         )}
-                         {item.duration && (
+                         {duration && (
                             <div className="flex items-center gap-1.5">
-                                <span>{typeof item.duration === 'number' ? `${item.duration} min` : item.duration}</span>
+                                <span>{typeof duration === 'number' ? `${duration} min` : duration}</span>
                             </div>
                         )}
                         {displayDate && (

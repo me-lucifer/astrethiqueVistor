@@ -136,9 +136,16 @@ const ContentSubTabs = ({ content }: { content: ConsultantProfile['content'] }) 
     if (!hasContent) {
         return <PlaceholderContent message="This consultant has not published any content yet." />;
     }
+    
+    const getDefaultTab = () => {
+        if(content.articles && content.articles.length > 0) return 'articles';
+        if(content.podcasts && content.podcasts.length > 0) return 'podcasts';
+        if(content.conferences && content.conferences.length > 0) return 'conferences';
+        return 'articles';
+    }
 
     return (
-        <Tabs defaultValue="articles" className="w-full">
+        <Tabs defaultValue={getDefaultTab()} className="w-full">
             <TabsList>
                 {content.articles?.length > 0 && <TabsTrigger value="articles">Articles ({content.articles.length})</TabsTrigger>}
                 {content.podcasts?.length > 0 && <TabsTrigger value="podcasts">Podcasts ({content.podcasts.length})</TabsTrigger>}

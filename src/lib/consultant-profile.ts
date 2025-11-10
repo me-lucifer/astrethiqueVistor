@@ -10,6 +10,7 @@ export interface BaseContentItem {
 export interface ContentItem extends BaseContentItem {
   likes?: number;
   type: 'Article' | 'Podcast' | 'Video';
+  duration?: string | number;
 }
 
 export interface Podcast extends ContentItem {
@@ -17,9 +18,9 @@ export interface Podcast extends ContentItem {
 }
 
 export interface Conference extends BaseContentItem {
-  date: string;
-  time: string;
-  dateISO: string;
+  date?: string;
+  time?: string;
+  dateISO?: string;
   type: 'Conference';
 }
 
@@ -60,4 +61,5 @@ export interface ConsultantProfile {
   favorite: boolean;
   yearsExperience: number;
   country: string;
+  aboutHtml: string;
 }
