@@ -104,7 +104,7 @@ const defaultFilters: Filters = {
     onPromo: false,
 };
 
-const INITIAL_VISIBLE_COUNT = 12;
+const INITIAL_VISIBLE_COUNT = 8;
 
 export function FeaturedConsultants({ initialQuery, showFilters = false }: { initialQuery?: string, showFilters?: boolean }) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -114,7 +114,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [query, setQuery] = useState(initialQuery || "");
-    const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+    const [visibleCount, setVisibleCount] = useState(() => getSession<number>('discover.pageSize.v1') || INITIAL_VISIBLE_COUNT);
 
     const [isPending, startTransition] = useTransition();
     const isLoading = isPending;
@@ -176,6 +176,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                 return updated;
             });
             setVisibleCount(INITIAL_VISIBLE_COUNT);
+            setSession('discover.pageSize.v1', INITIAL_VISIBLE_COUNT);
         });
     };
     
@@ -184,8 +185,17 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             setSort(newSort);
             setSession('discover.sort.v1', newSort);
             setVisibleCount(INITIAL_VISIBLE_COUNT);
+            setSession('discover.pageSize.v1', INITIAL_VISIBLE_COUNT);
         });
     }
+
+    useEffect(() => {
+        startTransition(() => {
+            setQuery(initialQuery || "");
+            setVisibleCount(INITIAL_VISIBLE_COUNT);
+            setSession('discover.pageSize.v1', INITIAL_VISIBLE_COUNT);
+        })
+    }, [initialQuery])
 
     const filteredAndSortedConsultants = useMemo(() => {
         const favorites = getSession<string[]>("discover.favorites.v1") || [];
@@ -313,6 +323,23 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             maxPrice: String(newPrice[1])
         });
     };
+
+    const handleLoadMore = () => {
+        const newCount = visibleCount + 8;
+        setVisibleCount(newCount);
+        setSession('discover.pageSize.v1', newCount);
+    }
+    
+    const handleApplyFilters = () => {
+        setIsSheetOpen(false);
+        setVisibleCount(INITIAL_VISIBLE_COUNT);
+        setSession('discover.pageSize.v1', INITIAL_VISIBLE_COUNT);
+    }
+    
+    const handleClearAndApply = () => {
+        handleResetFilters();
+        setIsSheetOpen(false);
+    }
 
     const FilterControls = () => (
         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 -mr-4 lg:mr-0">
@@ -469,10 +496,6 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
-                <div className="pt-4 space-y-2 lg:hidden">
-                    <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply filters</Button>
-                    <Button variant="outline" onClick={handleResetFilters} className="w-full">Clear all</Button>
-                </div>
             </div>
         </aside>
     );
@@ -480,9 +503,9 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     const mobileSheet = (
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-                 <Button variant="outline" className="lg:hidden gap-2 w-full mb-6" aria-label="Open filters">
+                 <Button variant="outline" className="lg:hidden gap-2" aria-label="Open filters">
                     <Filter className="h-4 w-4" />
-                    Filters ({filteredAndSortedConsultants.length} results)
+                    Filters
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[320px] flex flex-col p-0">
@@ -493,8 +516,8 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                     <FilterControls />
                 </div>
                 <SheetFooter className="p-4 border-t gap-2">
-                    <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply filters</Button>
-                    <Button variant="outline" onClick={handleResetFilters} className="w-full">Clear all</Button>
+                    <Button onClick={handleApplyFilters} className="w-full">Apply filters</Button>
+                    <Button variant="outline" onClick={handleClearAndApply} className="w-full">Clear all</Button>
                 </SheetFooter>
             </SheetContent>
         </Sheet>
@@ -502,7 +525,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     
     return (
         <TooltipProvider>
-            {showFilters && (isDesktop ? <FilterControls /> : mobileSheet)}
+            {showFilters && (isDesktop ? <FilterControls /> : null)}
             
             <main className={!showFilters ? 'w-full' : ''}>
                 {showFilters && (
@@ -511,6 +534,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                             Showing {filteredAndSortedConsultants.length} consultants
                         </p>
                         <div className="flex gap-2 w-full sm:w-auto">
+                            {!isDesktop && mobileSheet}
                             <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
                                 <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort by">
                                     <SelectValue placeholder="Sort by..." />
@@ -527,7 +551,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                 )}
                 <div role="status" aria-live="polite">
                     {isLoading || allConsultants.length === 0 ? (
-                        <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
                             {Array.from({ length: showFilters ? 8 : 4 }).map((_, i) => (
                                  <div key={i} className="space-y-3">
                                     <Skeleton className="h-[225px] w-full rounded-xl" />
@@ -540,7 +564,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                         </div>
                     ) : filteredAndSortedConsultants.length > 0 ? (
                         <>
-                            <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
                                 {filteredAndSortedConsultants.slice(0, visibleCount).map((consultant) => (
                                     <ConsultantCard 
                                         key={consultant.id}
@@ -551,7 +575,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                             </div>
                              {visibleCount < filteredAndSortedConsultants.length && (
                                 <div className="text-center mt-8">
-                                    <Button onClick={() => setVisibleCount(c => c + 12)}>Load more</Button>
+                                    <Button onClick={handleLoadMore}>Load more</Button>
                                 </div>
                             )}
                         </>
@@ -572,7 +596,3 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         </TooltipProvider>
     );
 }
-
-    
-
-    

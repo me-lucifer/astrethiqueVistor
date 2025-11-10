@@ -37,6 +37,7 @@ function DiscoverContent() {
     useEffect(() => {
         setSession('discover.search.v1', debouncedQuery);
         // This is a bit of a hack to trigger the shared component to update
+        // We need a more robust state management solution for this to be clean
         window.dispatchEvent(new Event('storage'));
     }, [debouncedQuery]);
 
@@ -65,7 +66,7 @@ function DiscoverContent() {
                 </form>
             </div>
             
-            <div className="lg:grid lg:grid-cols-[320px_1fr] lg:gap-8">
+            <div className="grid lg:grid-cols-[320px_1fr] lg:gap-8">
                 <Suspense fallback={<div>Loading filters...</div>}>
                     <FeaturedConsultants initialQuery={debouncedQuery} showFilters={true} />
                 </Suspense>
@@ -83,5 +84,3 @@ export default function DiscoverPage() {
         </Suspense>
     );
 }
-
-    
