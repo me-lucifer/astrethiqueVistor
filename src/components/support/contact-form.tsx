@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
 import { addTicket, ticketSchema, type TicketFormData } from "@/lib/support";
+import { useToast } from "@/hooks/use-toast";
 
 const topicOptions = [
   "Bookings", "Billing", "Account/Login", "Technical issue", "Content/Comments", "Conferences", "Safety/Report"
@@ -29,6 +30,7 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [ticketId, setTicketId] = useState("");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const { toast } = useToast();
 
   const form = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
@@ -49,17 +51,24 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
     form.setValue("userType", activeTab);
   }, [activeTab, form]);
 
-  const onSubmit = (data: TicketFormData) => {
+  const onValidSubmit = (data: TicketFormData) => {
     const newTicket = addTicket(data);
     setTicketId(newTicket.id);
     setIsSuccessModalOpen(true);
     onTicketSubmitted(); // Notify parent
     form.reset({
-      ...data,
+      ...form.getValues(),
       subject: '',
       description: '',
       referenceId: '',
       attachmentUrl: '',
+    });
+  };
+
+  const onInvalidSubmit = () => {
+    toast({
+      variant: "destructive",
+      title: "Please fix the highlighted fields.",
     });
   };
   
@@ -95,7 +104,7 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
         <Card>
           <CardContent className="p-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="userType"
@@ -282,9 +291,9 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
                 <div className="flex items-center justify-center h-12 w-12 rounded-full bg-success/10 mx-auto mb-4">
                     <CheckCircle className="h-6 w-6 text-success" />
                 </div>
-                <DialogTitle className="text-center">Request Received!</DialogTitle>
+                <DialogTitle className="text-center">Thanks, we've received your request.</DialogTitle>
                 <DialogDescription className="text-center">
-                    Thank you for contacting us. Our team will review your request and get back to you as soon as possible.
+                    Our team will review your request and get back to you as soon as possible.
                 </DialogDescription>
             </DialogHeader>
             <div className="text-center bg-muted/50 p-3 rounded-md">
