@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getSession, removeSession } from "@/lib/session";
-import { format }s from "date-fns";
+import { getSession, removeSession, setSession } from "@/lib/session";
+import { format } from "date-fns";
 import { Video, Phone, MessageSquare, Trash2 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -55,10 +55,7 @@ export default function AppointmentsPage() {
         const updatedAppointments = appointments.filter(apt => apt.id !== appointmentId);
         setAppointments(updatedAppointments);
         // This is a session-only prototype, so we just update the session storage
-        removeSession('schedule.holds.v1');
-        if (updatedAppointments.length > 0) {
-            getSession('schedule.holds.v1'); // re-set with the filtered list
-        }
+        setSession('schedule.holds.v1', updatedAppointments);
     }
     
     if (loading) {

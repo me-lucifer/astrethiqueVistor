@@ -10,11 +10,10 @@ const createConsultant = (index: number): Consultant => {
     const isOnline = index % 3 === 0;
     const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
     const consultantName = `Consultant ${index}`;
-    const availabilityStatus = ['online', 'busy', 'offline'][index % 3] as 'online' | 'busy' | 'offline';
     
     // Create a version of availability compatible with the card and list views.
     // The profile page will add more complex availability data.
-    const simpleAvailability: 'online' | 'busy' | 'offline' = ['online', 'busy', 'offline'][index % 3] as 'online' | 'busy' | 'offline';
+    const simpleAvailability = ['online', 'busy', 'offline'][index % 3] as 'online' | 'busy' | 'offline';
 
     const reviews = [
         { author: 'Jane D.', rating: 5, dateISO: subDays(now, 5).toISOString(), text: 'An amazing and insightful reading!'},
@@ -26,7 +25,7 @@ const createConsultant = (index: number): Consultant => {
 
 
     return {
-        id: `c_${index}`,
+        id: `c${index}`,
         slug: `consultant-${index}`,
         name: consultantName,
         rating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
@@ -65,16 +64,15 @@ const createConsultant = (index: number): Consultant => {
 export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
-  if (!getSession('discover.seed.v1')) {
+  const seeded = getSession('discover.seed.v1');
+  if (!seeded) {
     const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
     
-    setSession('discover.consultants.v1', consultants);
+    setSession('discover.seed.v1', consultants);
     setSession('discover.favorites.v1', []);
     setSession('schedule.holds.v1', []);
     setSession('notify.me.v1', []);
     setSession('discover.filters.v1', {});
     setSession('discover.sort.v1', 'recommended');
-    
-    setSession('discover.seed.v1', true);
   }
 };

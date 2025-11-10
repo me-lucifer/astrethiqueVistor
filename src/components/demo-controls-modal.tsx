@@ -16,7 +16,7 @@ import { getLocal, setLocal } from "@/lib/local";
 import { seedContentItems } from "@/lib/content-seeder";
 import { seedConferences } from "@/lib/conferences-seeder";
 import { Terminal, Database, Trash2, BellPlus, CheckCircle, RefreshCw, LogIn } from "lucide-react";
-import consultantsData from "@/lib/consultants.json";
+import { getSession, setSession } from "@/lib/session";
 import { Consultant } from "@/lib/consultants";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -36,12 +36,12 @@ export function DemoControlsModal({
 
   const updateCounts = useCallback(() => {
     setCounts({
-      consultants: consultantsData.length || 0,
+      consultants: getSession<any[]>('discover.seed.v1')?.length || 0,
       contentItems: getLocal<any[]>("contentItems")?.length || 0,
       conferences: getLocal<any[]>("conferences")?.length || 0,
       guestEmails: getLocal<any[]>("leads")?.length || 0,
       rsvps: getLocal<any[]>("rsvps")?.length || 0,
-      notifyList: getLocal<string[]>("notifyList")?.length || 0,
+      notifyList: getSession<string[]>("notify.me.v1")?.length || 0,
     });
   }, []);
 
@@ -54,6 +54,7 @@ export function DemoControlsModal({
   const handleSeedData = () => {
     localStorage.removeItem("content_seeded");
     localStorage.removeItem("conferences_seeded");
+    sessionStorage.removeItem("discover.seed.v1");
     seedContentItems();
     seedConferences();
     updateCounts();
@@ -85,7 +86,7 @@ export function DemoControlsModal({
   }
 
   const handleSimulateOnline = () => {
-    const notifyList = getLocal<string[]>("notifyList") || [];
+    const notifyList = getSession<string[]>("notify.me.v1") || [];
     if (notifyList.length === 0) {
       toast({
         title: "Notify List Empty",
@@ -95,11 +96,18 @@ export function DemoControlsModal({
     }
 
     const consultantIdToBringOnline = notifyList[0];
-    const consultant = consultantsData.find(c => c.id === consultantIdToBringOnline);
-
+    const consultants = getSession<Consultant[]>("discover.seed.v1") || [];
+    const consultant = consultants.find(c => c.id === consultantIdToBringOnline);
+    
     if (consultant) {
+        // "Bring online" by modifying the session data
+        const updatedConsultants = consultants.map(c => 
+            c.id === consultantIdToBringOnline ? { ...c, availability: { ...c.availability, online: true } } : c
+        );
+        setSession("discover.seed.v1", updatedConsultants);
+
         toast({
-            title: `${consultant.nameAlias} is online!`,
+            title: `${consultant.name} is online!`,
             description: "They are now available for a session.",
             action: (
                 <Button asChild size="sm">
@@ -108,8 +116,11 @@ export function DemoControlsModal({
             )
         });
         const updatedNotifyList = notifyList.filter(id => id !== consultantIdToBringOnline);
-        setLocal("notifyList", updatedNotifyList);
+        setSession("notify.me.v1", updatedNotifyList);
         updateCounts();
+        
+        // This is a bit of a hack to force a re-render of the discover page if it's open
+        window.dispatchEvent(new Event('storage'));
     }
   }
 
@@ -133,7 +144,7 @@ export function DemoControlsModal({
           <Button variant="outline" className="col-span-2" onClick={handleAcceptCookies}><CheckCircle /> Mark Cookies Accepted</Button>
         </div>
         <DialogFooter className="!flex-col gap-2 border-t pt-4">
-            <h3 className="font-semibold text-center text-sm text-foreground">Local Storage Counts</h3>
+            <h3 className="font-semibold text-center text-sm text-foreground">Session/Local Storage Counts</h3>
             <div className="flex justify-around text-xs text-muted-foreground text-center flex-wrap gap-2">
                 <div>
                     <p className="font-bold text-lg text-primary">{counts.consultants}</p>

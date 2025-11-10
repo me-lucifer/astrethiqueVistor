@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useTransition } from "react";
 import { Consultant } from "@/lib/consultants";
 import { ConsultantCard } from "./consultant-card";
 import { StartNowModal } from "./start-now-modal";
@@ -20,7 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "./ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { getSession, setSession } from "@/lib/session";
-import { isWithinInterval, addDays, startOfDay, endOfDay, isFuture, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 
 const specialties = [
     { id: "Love", name: "Love", icon: Heart },
@@ -41,12 +41,6 @@ const contentFilters = [
     { id: "hasArticles", name: "Has Articles", icon: BookOpen },
     { id: "hasPodcasts", name: "Has Podcasts", icon: Mic },
     { id: "hasUpcomingConference", name: "Has UpcomingConference", icon: Video },
-];
-
-const availabilityFilters = [
-    { id: 'Online now', name: 'Online now' },
-    { id: 'Today', name: 'Today' },
-    { id: 'This week', name: 'This week' }
 ];
 
 const ratingFilters = [
@@ -108,9 +102,12 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
     const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [query, setQuery] = useState(initialQuery || "");
+    const [visibleCount, setVisibleCount] = useState(8);
+
+    const [isPending, startTransition] = useTransition();
+    const isLoading = isPending;
 
     const [filters, setFilters] = useState<Filters>(() => {
         const sessionState = getSession('discover.filters.v1');
@@ -119,24 +116,36 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     const [sort, setSort] = useState<SortKey>(() => getSession('discover.sort.v1') || 'recommended');
     const [priceBounds, setPriceBounds] = useState<[number, number]>([0, 10]);
 
-    useEffect(() => {
-        const storedConsultants = getSession<Consultant[]>('discover.consultants.v1');
+    const loadState = useCallback(() => {
+        const storedConsultants = getSession<Consultant[]>('discover.seed.v1');
         if (storedConsultants) {
             setAllConsultants(storedConsultants);
             const prices = storedConsultants.map(c => c.pricePerMin);
-            const min = Math.floor(Math.min(...prices));
-            const max = Math.ceil(Math.max(...prices));
+            const min = Math.floor(Math.min(...prices, 0));
+            const max = Math.ceil(Math.max(...prices, 10));
             setPriceBounds([min, max]);
 
             const savedFilters = getSession<Filters>('discover.filters.v1');
             if (!savedFilters || !savedFilters.price) {
-                updateFilters({ price: [min, max], minPrice: String(min), maxPrice: String(max) });
+                 const initialPrice = [min, max];
+                 updateFilters({ price: initialPrice, minPrice: String(initialPrice[0]), maxPrice: String(initialPrice[1]) });
             } else {
                  setFilters({ ...defaultFilters, ...savedFilters });
             }
         }
-        setIsLoading(false);
     }, []);
+
+    useEffect(() => {
+        loadState();
+        
+        const handleStorageChange = () => {
+            loadState();
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [loadState]);
+
 
     const updateFilters = (newFilters: Partial<Filters>) => {
         setFilters(prev => {
@@ -152,7 +161,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     }
 
     const filteredAndSortedConsultants = useMemo(() => {
-        setIsLoading(true);
         const favorites = getSession<string[]>("discover.favorites.v1") || [];
         const langLevels = { basic: 1, fluent: 2, native: 3 };
 
@@ -182,13 +190,8 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
             // Availability
             if (filters.availability.length > 0) {
-                const availabilityString = c.availability.online ? 'online' : (getSession<string[]>('busyConsultants')?.includes(c.id) ? 'busy' : 'offline');
-                const checks = {
-                    'Online now': availabilityString === 'online',
-                    'Busy': availabilityString === 'busy',
-                    'Offline': availabilityString === 'offline',
-                };
-                if (!filters.availability.some(filterKey => checks[filterKey as keyof typeof checks])) {
+                const availabilityString = c.availability.online ? 'Online now' : (getSession<string[]>('busyConsultants')?.includes(c.id) ? 'Busy' : 'Offline');
+                if (!filters.availability.includes(availabilityString)) {
                      return false;
                 }
             }
@@ -228,16 +231,15 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 case 'newest':
                     return parseISO(b.joinedAt).getTime() - parseISO(a.joinedAt).getTime();
                 case 'online_first':
-                    return availabilityOrder[aAvail] - availabilityOrder[bAvail] || b.rating - a.rating;
+                    return availabilityOrder[aAvail as keyof typeof availabilityOrder] - availabilityOrder[bAvail as keyof typeof availabilityOrder] || b.rating - a.rating;
                 case 'recommended':
                 default:
-                    const scoreA = (availabilityOrder[aAvail] === 1 ? 1000 : 0) + (a.rating * 100) - a.pricePerMin;
-                    const scoreB = (availabilityOrder[bAvail] === 1 ? 1000 : 0) + (b.rating * 100) - b.pricePerMin;
+                    const scoreA = (a.availability.online ? 1000 : 0) + (a.rating * 100) - a.pricePerMin;
+                    const scoreB = (b.availability.online ? 1000 : 0) + (b.rating * 100) - b.pricePerMin;
                     return scoreB - scoreA;
             }
         });
         
-        setTimeout(() => setIsLoading(false), 300);
         return result;
     }, [allConsultants, filters, sort]);
 
@@ -429,7 +431,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     );
     
     return (
-        <>
+        <TooltipProvider>
             {isDesktop ? <FilterControls /> : mobileSheet}
             
             <main>
@@ -452,8 +454,8 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                     </div>
                 </div>
                 <div role="status" aria-live="polite">
-                    {isLoading ? (
-                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    {isLoading || allConsultants.length === 0 ? (
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {Array.from({ length: 8 }).map((_, i) => (
                                  <div key={i} className="space-y-3">
                                     <Skeleton className="h-[225px] w-full rounded-xl" />
@@ -465,15 +467,22 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                             ))}
                         </div>
                     ) : filteredAndSortedConsultants.length > 0 ? (
-                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                            {filteredAndSortedConsultants.map((consultant) => (
-                                <ConsultantCard 
-                                    key={consultant.id}
-                                    consultant={consultant}
-                                    onStartNow={() => setIsStartNowModalOpen(true)}
-                                />
-                            ))}
-                        </div>
+                        <>
+                            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {filteredAndSortedConsultants.slice(0, visibleCount).map((consultant) => (
+                                    <ConsultantCard 
+                                        key={consultant.id}
+                                        consultant={consultant}
+                                        onStartNow={() => setIsStartNowModalOpen(true)}
+                                    />
+                                ))}
+                            </div>
+                             {visibleCount < filteredAndSortedConsultants.length && (
+                                <div className="text-center mt-8">
+                                    <Button onClick={() => setVisibleCount(c => c + 8)}>Load more</Button>
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
                             <h3 className="font-headline text-2xl font-bold">No matches yet</h3>
@@ -488,6 +497,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 isOpen={isStartNowModalOpen}
                 onOpenChange={setIsStartNowModalOpen}
             />
-        </>
+        </TooltipProvider>
     );
 }

@@ -33,14 +33,14 @@ export default function ConsultantProfilePage() {
 
   useEffect(() => {
     if (id) {
-      const allConsultants = getSession<Consultant[]>('discover.consultants.v1');
+      const allConsultants = getSession<Consultant[]>('discover.seed.v1');
       if (allConsultants) {
         // The `createConsultant` function in the seeder does not create availability slots, so we add them here for the demo.
         const foundConsultant = allConsultants.find(c => c.id === id || c.slug === id);
         if(foundConsultant) {
             const now = new Date();
             foundConsultant.availability = {
-                online: foundConsultant.availability === 'online',
+                online: foundConsultant.availability.online,
                 slots: Array.from({length: 12}, (_, i) => {
                     return new Date(now.getTime() + (i * 30 + (i > 5 ? 1440 : 120) ) * 60000).toISOString()
                 })
