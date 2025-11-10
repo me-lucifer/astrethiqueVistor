@@ -16,18 +16,18 @@ import {
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/discover', label: 'Discover' },
-  { href: '/conferences', label: 'Conferences' },
-  { href: '/how-it-works', label: 'How It Works' },
-  { href: '/content-hub', label: 'Content Hub' },
-  { href: '/appointments', label: 'My Appointments' },
-  { href: '/support', label: 'Support' },
-];
-
 export function Header() {
   const pathname = usePathname();
+
+  const navLinks = [
+    { href: '/', label: 'Home' },
+    { href: '/discover', label: 'Discover' },
+    { href: '/conferences', label: 'Conferences' },
+    { href: '/how-it-works', label: 'How It Works' },
+    { href: '/content-hub', label: 'Content Hub' },
+    { href: '/appointments', label: 'My Appointments' },
+    { href: '/support', label: 'Support' },
+  ];
 
   const isDiscoverActive = (path: string) => {
     return path.startsWith('/discover') || path.startsWith('/consultant/');
