@@ -328,6 +328,31 @@ export const translations = {
                 ],
                 note: "We will update this list before engaging any new sub-processor."
             }
+        },
+        copyrightAndTakedown: {
+            title: "Copyright & Takedown Policy",
+            lastUpdated: "Last updated",
+            toc: "On this page",
+            submitComplaint: {
+                title: "How to Submit a Copyright Complaint",
+                content: "If you believe your copyrighted work has been infringed upon, please send a detailed notice to our legal team at"
+            },
+            requiredInfo: {
+                title: "Required Information",
+                intro: "Your complaint must include the following information:",
+                list: [
+                    "A physical or electronic signature of the copyright owner or a person authorized to act on their behalf.",
+                    "Identification of the copyrighted work claimed to have been infringed.",
+                    "Identification of the material that is claimed to be infringing and where it is located on our platform.",
+                    "Your contact information, including your address, telephone number, and an email address.",
+                    "A statement that you have a good faith belief that use of the material in the manner complained of is not authorized by the copyright owner, its agent, or the law.",
+                    "A statement that the information in the notification is accurate, and, under penalty of perjury, that you are authorized to act on behalf of the copyright owner."
+                ]
+            },
+            counterNotice: {
+                title: "Counter-Notice Procedure",
+                content: "If you believe your content was removed by mistake, you may send a counter-notice to our legal team. We may reinstate the content upon receipt of a valid counter-notice, unless we receive notice from the complaining party that they have filed a legal action."
+            }
         }
     },
     fr: {
@@ -657,6 +682,31 @@ export const translations = {
                     { category: "Vérification ID", name: "Veriff", region: "USA/EU", purpose: "Vérifications KYC/ID des consultants" }
                 ],
                 note: "Nous mettrons à jour cette liste avant d'engager tout nouveau sous-traitant."
+            }
+        },
+        copyrightAndTakedown: {
+            title: "Politique de Droit d'Auteur et de Retrait",
+            lastUpdated: "Dernière mise à jour",
+            toc: "Sur cette page",
+            submitComplaint: {
+                title: "Comment Soumettre une Plainte pour Violation de Droit d'Auteur",
+                content: "Placeholder FR: If you believe your copyrighted work has been infringed upon, please send a detailed notice to our legal team at"
+            },
+            requiredInfo: {
+                title: "Informations Requises",
+                intro: "Placeholder FR: Your complaint must include the following information:",
+                list: [
+                    "Placeholder FR: A physical or electronic signature of the copyright owner or a person authorized to act on their behalf.",
+                    "Placeholder FR: Identification of the copyrighted work claimed to have been infringed.",
+                    "Placeholder FR: Identification of the material that is claimed to be infringing and where it is located on our platform.",
+                    "Placeholder FR: Your contact information, including your address, telephone number, and an email address.",
+                    "Placeholder FR: A statement that you have a good faith belief that use of the material in the manner complained of is not authorized by the copyright owner, its agent, or the law.",
+                    "Placeholder FR: A statement that the information in the notification is accurate, and, under penalty of perjury, that you are authorized to act on behalf of the copyright owner."
+                ]
+            },
+            counterNotice: {
+                title: "Procédure de Contre-Notification",
+                content: "Placeholder FR: If you believe your content was removed by mistake, you may send a counter-notice to our legal team. We may reinstate the content upon receipt of a valid counter-notice, unless we receive notice from the complaining party that they have filed a legal action."
             }
         }
     }

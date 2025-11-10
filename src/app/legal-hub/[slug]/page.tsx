@@ -1222,6 +1222,114 @@ const DataProcessingContent = () => {
     )
 }
 
+const CopyrightAndTakedownContent = () => {
+    const { language } = useLanguage();
+    const t = translations[language].copyrightAndTakedown;
+
+    const sections = [
+        { id: "submit-complaint", title: t.submitComplaint.title, icon: Mail },
+        { id: "required-info", title: t.requiredInfo.title, icon: FileText },
+        { id: "counter-notice", title: t.counterNotice.title, icon: Shield },
+    ];
+    
+    const [activeSection, setActiveSection] = useState(sections[0].id);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setActiveSection(entry.target.id);
+                }
+            });
+        }, { rootMargin: "-50% 0px -50% 0px" });
+
+        sections.forEach(section => {
+            const el = document.getElementById(section.id);
+            if (el) observer.observe(el);
+        });
+
+        return () => {
+            sections.forEach(section => {
+                const el = document.getElementById(section.id);
+                if (el) observer.unobserve(el);
+            });
+        };
+    }, [sections]);
+
+    const lastUpdated = new Date("2024-07-26T10:00:00Z");
+
+    return (
+        <div className="container py-12">
+            <div className="flex justify-between items-start mb-6 gap-4">
+                <div>
+                    <Button asChild variant="ghost" className="-ml-4">
+                        <Link href="/legal-hub">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            {translations[language].legalHub}
+                        </Link>
+                    </Button>
+                    <h1 className="font-headline text-3xl md:text-4xl font-bold mt-2">{t.title}</h1>
+                    <div className="flex items-center gap-4 mt-2">
+                        <p className="text-sm text-muted-foreground">
+                            {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="grid lg:grid-cols-[1fr_280px] gap-12 items-start">
+                <div className="prose prose-invert max-w-none text-foreground/80 prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+                    <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
+                        
+                        <AccordionItem value="submit-complaint" id="submit-complaint">
+                            <AccordionTrigger className="text-xl font-headline">{t.submitComplaint.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.submitComplaint.content} <a href="mailto:legal@astrethique.com">legal@astrethique.com</a>.</p>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem value="required-info" id="required-info">
+                            <AccordionTrigger className="text-xl font-headline">{t.requiredInfo.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.requiredInfo.intro}</p>
+                                <ul>
+                                    {t.requiredInfo.list.map((item: string, i: number) => <li key={i}>{item}</li>)}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="counter-notice" id="counter-notice">
+                            <AccordionTrigger className="text-xl font-headline">{t.counterNotice.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.counterNotice.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                    </Accordion>
+                </div>
+                <aside className="hidden lg:block sticky top-24 self-start">
+                    <h3 className="font-semibold mb-4">{t.toc}</h3>
+                    <nav>
+                        <ul className="space-y-2">
+                            {sections.map(section => (
+                                <li key={section.id}>
+                                    <a 
+                                        href={`#${section.id}`}
+                                        className={`flex items-center gap-2 p-2 rounded-md text-sm transition-colors ${activeSection === section.id ? 'bg-muted font-semibold' : 'text-muted-foreground hover:bg-muted/50'}`}
+                                    >
+                                        <section.icon className="h-4 w-4" />
+                                        {section.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                </aside>
+            </div>
+        </div>
+    )
+}
+
 
 export default function LegalDetailPage() {
     const params = useParams();
@@ -1261,6 +1369,10 @@ export default function LegalDetailPage() {
     
     if (slug === 'data-processing') {
         return <DataProcessingContent />;
+    }
+
+    if (slug === 'copyright-and-takedown') {
+        return <CopyrightAndTakedownContent />;
     }
 
 
