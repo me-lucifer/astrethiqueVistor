@@ -27,15 +27,6 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
         const newIsFavorite = !isFavorite;
         setIsFavorite(newIsFavorite);
         
-        const updatedConsultant = { ...consultant, favorite: newIsFavorite };
-        setConsultant(updatedConsultant);
-        // This is a session-only prototype, so we just update the session storage
-        const allConsultants = getSession<any[]>("discover.seed.v1") || [];
-        const updatedConsultants = allConsultants.map(c => 
-            c.id === consultant.id ? { ...c, favorite: newIsFavorite } : c
-        );
-        setSession("discover.seed.v1", updatedConsultants);
-
         let favorites = getSession<string[]>("consultantFavorites") || [];
         if (newIsFavorite) {
             if (!favorites.includes(consultant.id)) {
@@ -84,6 +75,7 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                                     variant="ghost"
                                     className="rounded-full h-8 w-8 shrink-0 transition-transform motion-safe:hover:scale-110 active:scale-95"
                                     onClick={toggleFavorite}
+                                    aria-pressed={isFavorite}
                                     aria-label={isFavorite ? `Remove ${consultant.name} from favorites` : `Add ${consultant.name} to favorites`}
                                 >
                                     <Heart className={cn("h-5 w-5 transition-all", isFavorite ? "fill-destructive text-destructive" : "text-muted-foreground")} />
