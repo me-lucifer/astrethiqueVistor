@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, Bookmark, Mic, BookOpen, Clock, Eye, Calendar, Play, Youtube, MoreHorizontal, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { format } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,7 +23,7 @@ type CardProps = {
     onToggleBookmark?: (itemId: string) => void;
 };
 
-function formatViews(views: number): string {
+function formatViews(views?: number): string {
     if (views === undefined || views === null || isNaN(views)) {
         return '0';
     }
@@ -36,7 +36,7 @@ function formatViews(views: number): string {
     return views.toString();
 }
 
-function formatDate(date: string): string {
+function formatDate(date?: string): string {
     if (!date || isNaN(new Date(date).getTime())) {
         return '';
     }
@@ -79,7 +79,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
         if(onToggleBookmark) {
             onToggleBookmark(item.id);
             toast({
-                title: item.bookmarked ? "Bookmark removed" : "Bookmarked!",
+                title: !item.bookmarked ? "Bookmarked!" : "Bookmark removed",
             });
         }
     }
@@ -112,8 +112,8 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
 
     return (
         <Card className="group overflow-hidden flex flex-col h-full bg-card/50 hover:bg-card transition-shadow duration-300">
-            <Link href={detailUrl} className="flex flex-col h-full">
-                <div className="relative">
+            <div className="relative">
+                <Link href={detailUrl} aria-hidden="true" tabIndex={-1}>
                     <Image
                         src={item.heroImage || 'https://placehold.co/600x400/15120E/F6EBD2?text=Image'}
                         alt={item.title}
@@ -122,134 +122,138 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                         loading="lazy"
                         className="aspect-video object-cover w-full group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute top-3 left-3 flex gap-2">
-                        <Badge variant="secondary" className="gap-1.5">
-                            {isArticle ? <BookOpen className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                            {item.type}
-                        </Badge>
-                    </div>
-                     <div className="absolute top-3 right-3 flex gap-2">
-                        {item.featured && <Badge variant="default">Featured</Badge>}
-                        {isPromotedAndActive && <Badge variant="outline" className="bg-background/80">Worth Reading</Badge>}
-                    </div>
+                </Link>
+                <div className="absolute top-3 left-3 flex gap-2">
+                    <Badge variant="secondary" className="gap-1.5">
+                        {isArticle ? <BookOpen className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                        {item.type}
+                    </Badge>
                 </div>
+                    <div className="absolute top-3 right-3 flex gap-2">
+                    {item.featured && <Badge variant="default">Featured</Badge>}
+                    {isPromotedAndActive && <Badge variant="outline" className="bg-background/80">Worth Reading</Badge>}
+                </div>
+            </div>
 
-                <CardContent className="p-4 flex-1 flex flex-col">
-                    <div className="flex-1">
-                        <h3 className="font-headline text-lg font-bold leading-tight line-clamp-2 h-[56px] group-hover:text-primary">
+            <CardContent className="p-4 flex-1 flex flex-col">
+                <div className="flex-1">
+                    <h3 className="font-headline text-lg font-bold leading-tight line-clamp-2 h-[56px]">
+                        <Link href={detailUrl} className="hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm">
                             {item.title}
-                        </h3>
-                        
-                        <div 
-                            role="group"
-                            aria-label={metaAriaLabel}
-                            className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
-                        >
-                            <span className="flex items-center gap-1.5" title={`${item.views} views`}><Eye className="h-3.5 w-3.5" /> {formatViews(item.views)}</span>
-                            <span className="flex items-center gap-1.5" title={new Date(item.publishedAt).toLocaleDateString()}><Calendar className="h-3.5 w-3.5" /> {formatDate(item.publishedAt)}</span>
-                            <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {formatLength(item)}</span>
-                        </div>
+                        </Link>
+                    </h3>
+                    
+                    <div 
+                        role="group"
+                        aria-label={metaAriaLabel}
+                        className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                    >
+                        <span className="flex items-center gap-1.5" title={`${item.views} views`}><Eye className="h-3.5 w-3.5" /> {formatViews(item.views)}</span>
+                        <span className="flex items-center gap-1.5" title={new Date(item.publishedAt).toLocaleDateString()}><Calendar className="h-3.5 w-3.5" /> {formatDate(item.publishedAt)}</span>
+                        <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {formatLength(item)}</span>
+                    </div>
 
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2 h-[40px]">
-                            {item.excerpt}
-                        </p>
-                        
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2 h-[40px]">
+                        {item.excerpt}
+                    </p>
+                    
+                    {item.tags && item.tags.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-1">
-                            {item.tags && item.tags.slice(0,3).map(topic => (
+                            {item.tags.slice(0,3).map(topic => (
                                 <button key={topic} onClick={(e) => handleTopicClick(e, topic)} aria-label={`Filter by topic: ${topic}`} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full">
                                     <Badge variant="outline" className="font-normal hover:bg-accent/50 cursor-pointer">{topic}</Badge>
                                 </button>
                             ))}
-                            {item.tags && item.tags.length > 3 && (
+                            {item.tags.length > 3 && (
                                 <Badge variant="outline" className="font-normal">+{item.tags.length - 3}</Badge>
                             )}
                         </div>
-                    </div>
-                    
-                    <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                        <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md" aria-label={`Filter by author: ${item.author.name}`}>
-                            <Avatar className="h-6 w-6">
-                                <AvatarImage src={item.author.avatar} alt={item.author.name} />
-                                <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span>{item.author.name}</span>
-                        </button>
-                    </div>
-                </CardContent>
+                    )}
+                </div>
+                
+                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                    <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md" aria-label={`Filter by author: ${item.author.name}`}>
+                        <Avatar className="h-6 w-6">
+                            <AvatarImage src={item.author.avatar} alt={item.author.name} />
+                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span>{item.author.name}</span>
+                    </button>
+                </div>
+            </CardContent>
 
-                <div className="p-4 pt-0 mt-auto border-t flex justify-between items-center">
-                    <div className="flex items-center">
-                        <Button variant="ghost" size="sm" onClick={handleLikeClick} className={cn("gap-2", item.liked && "text-destructive")} aria-label={item.liked ? `Unlike this item. It has ${item.likes} likes.` : `Like this item. It has ${item.likes} likes.`}>
-                            <Heart className={cn("h-4 w-4", item.liked && "fill-current")} />
-                            {item.likes}
-                        </Button>
+            <div className="p-4 pt-0 mt-auto border-t flex justify-between items-center">
+                <div className="flex items-center">
+                    <Button variant="ghost" size="sm" onClick={handleLikeClick} className={cn("gap-2", item.liked && "text-destructive")} aria-label={item.liked ? `Unlike this item. It has ${item.likes} likes.` : `Like this item. It has ${item.likes} likes.`}>
+                        <Heart className={cn("h-4 w-4", item.liked && "fill-current")} />
+                        {item.likes}
+                    </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="sm:hidden">
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">More options</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleBookmarkClick}>
+                                    <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
+                                    <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleShare}>
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    <span>Share</span>
+                                </DropdownMenuItem>
+                                {!isArticle && (
+                                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
+                                        <Youtube className="mr-2 h-4 w-4" />
+                                        <span>Play on YouTube</span>
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="sm:hidden">
-                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">More options</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleBookmarkClick}>
-                                        <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
-                                        <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleShare}>
-                                        <Share2 className="mr-2 h-4 w-4" />
-                                        <span>Share</span>
-                                    </DropdownMenuItem>
-                                    {!isArticle && (
-                                        <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
-                                            <Youtube className="mr-2 h-4 w-4" />
-                                            <span>Play on YouTube</span>
-                                        </DropdownMenuItem>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
 
-                        {isArticle ? (
-                             <Button variant="outline" size="sm" onClick={handleCTAClick}>
-                                Read more
-                             </Button>
-                        ) : (
-                            <Button variant="secondary" size="sm" onClick={handleCTAClick}>
-                                <Play className="mr-2 h-4 w-4" /> Open
+                    {isArticle ? (
+                            <Button variant="outline" size="sm" onClick={handleCTAClick}>
+                            Read more
                             </Button>
-                        )}
-                        <div className="hidden sm:flex items-center gap-2">
-                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">More options</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleBookmarkClick}>
-                                        <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
-                                        <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
+                    ) : (
+                        <Button variant="secondary" size="sm" onClick={handleCTAClick}>
+                            <Play className="mr-2 h-4 w-4" /> Open
+                        </Button>
+                    )}
+                    <div className="hidden sm:flex items-center gap-2">
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">More options</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleBookmarkClick}>
+                                    <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
+                                    <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleShare}>
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    <span>Share</span>
+                                </DropdownMenuItem>
+                                {!isArticle && (
+                                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
+                                        <Youtube className="mr-2 h-4 w-4" />
+                                        <span>Play on YouTube</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleShare}>
-                                        <Share2 className="mr-2 h-4 w-4" />
-                                        <span>Share</span>
-                                    </DropdownMenuItem>
-                                    {!isArticle && (
-                                        <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
-                                            <Youtube className="mr-2 h-4 w-4" />
-                                            <span>Play on YouTube</span>
-                                        </DropdownMenuItem>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
-            </Link>
+            </div>
         </Card>
     );
 }
