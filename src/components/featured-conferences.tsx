@@ -611,7 +611,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                     </div>
 
                                                     <div className="flex items-center gap-3 pt-2">
-                                                        <Image src={`https://i.pravatar.cc/40?u=${conference.hostAlias}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
+                                                        <Image src={`https://i.pravatar.cc/40?u=${encodeURIComponent(conference.hostAlias)}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
                                                         <div>
                                                             <Link href={`/discover/consultant/${conference.hostId}`} className="font-semibold hover:underline">{conference.hostAlias}</Link>
                                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">

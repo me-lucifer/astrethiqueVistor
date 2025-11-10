@@ -227,7 +227,7 @@ export default function ConferenceDetailPage() {
                         <TabsContent value="host" className="py-6 space-y-6">
                            <Card className="bg-card/50">
                                <CardContent className="p-6 flex items-start gap-6">
-                                   <Image src={`https://i.pravatar.cc/80?u=${conference.hostAlias}`} alt={conference.hostAlias} width={80} height={80} className="rounded-full" />
+                                   <Image src={`https://i.pravatar.cc/80?u=${encodeURIComponent(conference.hostAlias)}`} alt={conference.hostAlias} width={80} height={80} className="rounded-full" />
                                    <div className="space-y-2">
                                        <h4 className="text-xl font-bold">{conference.hostAlias}</h4>
                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
