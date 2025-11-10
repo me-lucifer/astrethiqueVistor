@@ -66,7 +66,7 @@ export default function Page() {
                     languages: foundConsultant.languages.map(l => l.code),
                     pricePerMin: foundConsultant.pricePerMin,
                     prevPricePerMin: foundConsultant.priceWas,
-                    summary: foundConsultant.bio,
+                    summary: foundConsultant.bio.replace(/<[^>]*>?/gm, '').substring(0, 140),
                     specialties: foundConsultant.specialties,
                     verifications: {
                         adminApproved: foundConsultant.adminApproved,
