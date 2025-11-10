@@ -127,6 +127,10 @@ export function UpcomingConferences() {
     const formatDate = (dateISO: string) => {
         return new Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'short' }).format(new Date(dateISO));
     };
+
+    const getAriaLabelDate = (dateISO: string) => {
+        return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(dateISO));
+    }
     
     if (!conferences.length) {
         return <p className="text-center text-muted-foreground">No upcoming conferences at this time.</p>;
@@ -137,6 +141,7 @@ export function UpcomingConferences() {
             <div className="space-y-6">
                 {conferences.map((conference) => {
                     const rsvpDetails = getRsvp(conference.id);
+                    const ariaDate = getAriaLabelDate(conference.dateISO);
                     return (
                     <Link key={conference.id} href={`/conferences/${conference.slug}`} className="group block">
                          <Card className="transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
@@ -164,7 +169,7 @@ export function UpcomingConferences() {
                             </CardContent>
                             <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-end gap-4">
                                 <div className="flex gap-2">
-                                    <Button size="sm" onClick={(e) => handleRsvpClick(e, conference)} variant={isRsvpd(conference.id) ? "secondary" : "default"} aria-label={isRsvpd(conference.id) ? `Cancel RSVP for ${conference.title}` : `RSVP for ${conference.title}, a free event`}>
+                                    <Button size="sm" onClick={(e) => handleRsvpClick(e, conference)} variant={isRsvpd(conference.id) ? "secondary" : "default"} aria-label={isRsvpd(conference.id) ? `Cancel RSVP for ${conference.title} on ${ariaDate}` : `RSVP for ${conference.title} on ${ariaDate}`}>
                                         {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
                                         {isRsvpd(conference.id) ? "Going" : "RSVP"}
                                     </Button>

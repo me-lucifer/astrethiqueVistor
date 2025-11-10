@@ -323,6 +323,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         return `${datePart} - ${endTimePart} • ${durationMin} min`;
     };
 
+    const getAriaLabelDate = (dateISO: string) => {
+        return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(dateISO));
+    }
+
     const FilterControls = () => (
          <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 -mr-4 lg:mr-0">
             <div className="space-y-6 p-4 lg:p-0">
@@ -514,10 +518,11 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                     const rsvpDetails = rsvps.find(r => r.eventId === conference.id);
                                     const eventIsLive = isLive(conference);
                                     const userIsRsvpd = isRsvpd(conference.id);
+                                    const ariaDate = getAriaLabelDate(conference.dateISO);
 
                                     return (
                                     <Card key={conference.id} className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
-                                        <div className="flex-1 flex flex-col p-0">
+                                        <div className="p-0 flex flex-col flex-1">
                                             <Link href={`/conferences/${conference.slug}`} className="block group flex-1 flex flex-col" aria-label={`View details for ${conference.title}`}>
                                                 <CardContent className="p-0">
                                                     <div className="relative">
@@ -622,7 +627,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                     size="sm" 
                                                     onClick={() => handleRsvpClick(conference)}
                                                     variant={userIsRsvpd ? "outline" : "default"} 
-                                                    aria-label={userIsRsvpd ? `Cancel RSVP for ${conference.title}` : `RSVP for ${conference.title}, a free event`}
+                                                    aria-label={userIsRsvpd ? `Cancel RSVP for ${conference.title} on ${ariaDate}` : `RSVP for ${conference.title} on ${ariaDate}`}
                                                 >
                                                     {userIsRsvpd ? <><CheckCircle className="mr-2 h-4 w-4" /> Going</> : <><Ticket className="mr-2 h-4 w-4" /> RSVP</>}
                                                 </Button>

@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Conference, seedConferences } from '@/lib/conferences-seeder';
 import { getLocal, setLocal, seedOnce } from '@/lib/local';
+import { getSession } from '@/lib/session';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, Clock, Video, Users, Star, Languages, PlusCircle, CheckCircle, Bell, ExternalLink, CalendarPlus, AlertTriangle } from 'lucide-react';
@@ -20,7 +21,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { ContentCard } from '@/components/content-card';
 import { useToast } from '@/hooks/use-toast';
-import { getSession } from '@/lib/session';
 import { StartNowModal } from '@/components/start-now-modal';
 import { RsvpConfirmationModal } from '@/components/rsvp-confirmation-modal';
 import { useNotifications } from '@/contexts/notification-context';
@@ -173,6 +173,7 @@ export default function ConferenceDetailPage() {
     const date = new Date(conference.dateISO);
     const endDate = new Date(date.getTime() + conference.durationMin * 60000);
     const rsvpDetails = rsvps.find(r => r.eventId === conference.id);
+    const ariaDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 
     return (
         <div className="container py-12">
@@ -267,7 +268,7 @@ export default function ConferenceDetailPage() {
                                     className="w-full" 
                                     onClick={handleRsvpClick} 
                                     variant={isRsvpd ? "outline" : "default"}
-                                    aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: `RSVP for ${conference.title}, a free event`}
+                                    aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: `RSVP for ${conference.title} on ${ariaDate}`}
                                 >
                                     {isRsvpd ? <CheckCircle className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
                                     {isRsvpd ? 'Going / Cancel' : 'RSVP'}
