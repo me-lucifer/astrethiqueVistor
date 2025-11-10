@@ -6,9 +6,9 @@ import { useParams, useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getSession, setSession } from '@/lib/session';
-import { ContentHubItem } from '@/lib/content-hub-seeder';
+import { ContentHubItem, Comment } from '@/lib/content-hub-seeder';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock, PlayCircle, PauseCircle, Rewind, FastForward } from 'lucide-react';
+import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContentHubCard } from '@/components/content-hub/card';
-import { Progress } from '@/components/ui/progress';
+import { CommentsSection } from '@/components/content-hub/comments-section';
 
 const Placeholder = () => (
     <div className="container py-12">
@@ -45,66 +45,47 @@ const Placeholder = () => (
 );
 
 
-const PodcastPlayer = ({ item }: { item: ContentHubItem }) => {
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [progress, setProgress] = useState(0);
-
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if(isPlaying) {
-            interval = setInterval(() => {
-                setProgress(prev => {
-                    if (prev >= 100) {
-                        setIsPlaying(false);
-                        return 100;
-                    }
-                    return prev + 1;
-                })
-            }, ((item.durationMinutes || 10) * 60 * 1000) / 100);
+const YouTubePlayer = ({ item }: { item: ContentHubItem }) => {
+    if (!item.youtubeUrl) return null;
+    
+    // Extract video ID from URL
+    let videoId = '';
+    try {
+        const url = new URL(item.youtubeUrl);
+        if (url.hostname === 'youtu.be') {
+            videoId = url.pathname.substring(1);
+        } else if (url.hostname === 'www.youtube.com' || url.hostname === 'youtube.com') {
+             if (url.pathname === '/watch') {
+                videoId = url.searchParams.get('v') || '';
+            } else if (url.pathname.startsWith('/embed/')) {
+                videoId = url.pathname.substring(7);
+            }
         }
-        return () => clearInterval(interval);
-    }, [isPlaying, item.durationMinutes])
+    } catch (e) {
+        console.error("Invalid YouTube URL", item.youtubeUrl);
+    }
+    
+    if (!videoId) return <p>Could not load video.</p>;
 
-    const formatTime = (percentage: number) => {
-        if (!item.durationMinutes) return "00:00";
-        const totalSeconds = item.durationMinutes * 60;
-        const currentSeconds = Math.floor((totalSeconds * percentage) / 100);
-        const minutes = Math.floor(currentSeconds / 60);
-        const seconds = currentSeconds % 60;
-        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    };
+    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
 
     return (
-        <div className="rounded-lg border bg-card/50 p-6 flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-1/3">
-                 <Image src={item.heroImage} alt={item.title} width={300} height={300} className="w-full aspect-square object-cover rounded-md" />
-            </div>
-            <div className="w-full md:w-2/3 flex flex-col justify-center">
-                <h2 className="font-headline text-2xl font-bold">{item.title}</h2>
-                <button onClick={() => {}} className="text-sm text-muted-foreground hover:text-primary text-left mt-1">{item.author.name}</button>
-                <div className="mt-6 space-y-3">
-                    <Progress value={progress} className="w-full h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>{formatTime(progress)}</span>
-                        <span>{formatTime(100)}</span>
-                    </div>
-                </div>
-                 <div className="mt-4 flex items-center justify-center gap-4">
-                    <Button variant="ghost" size="icon" aria-label="Rewind 10 seconds"><Rewind /></Button>
-                    <Button variant="ghost" size="icon" className="h-16 w-16" onClick={() => setIsPlaying(!isPlaying)} aria-label={isPlaying ? "Pause" : "Play"}>
-                        {isPlaying ? <PauseCircle className="h-12 w-12" /> : <PlayCircle className="h-12 w-12" />}
-                    </Button>
-                    <Button variant="ghost" size="icon" aria-label="Fast-forward 10 seconds"><FastForward /></Button>
-                </div>
-            </div>
+        <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden border">
+            <iframe
+                className="absolute top-0 left-0 w-full h-full"
+                src={embedUrl}
+                title={item.title}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+            ></iframe>
         </div>
-    )
+    );
 }
 
 export default function ContentDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const pathname = usePathname();
     const { toast } = useToast();
     
     const [item, setItem] = useState<ContentHubItem | null>(null);
@@ -154,11 +135,9 @@ export default function ContentDetailPage() {
     const handleToggleBookmark = useCallback(() => {
         if (!item) return;
         
-        // Update session for ch_items
         const updatedItem = { ...item, bookmarked: !item.bookmarked };
         updateItemInSession(updatedItem);
 
-        // Also update savedContentIds
         const savedIds = getSession<string[]>("savedContentIds") || [];
         const isBookmarked = savedIds.includes(item.id);
         const newSavedIds = isBookmarked ? savedIds.filter(id => id !== item.id) : [...savedIds, item.id];
@@ -168,6 +147,21 @@ export default function ContentDetailPage() {
             title: updatedItem.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
         });
     }, [item, updateItemInSession, toast]);
+
+    const handleAddComment = useCallback((commentText: string) => {
+        if (!item) return;
+
+        const newComment: Comment = {
+            id: `comment-${Date.now()}`,
+            authorName: "Current User", // Replace with actual user data
+            authorAvatar: "https://i.pravatar.cc/40?u=current-user",
+            timestamp: new Date().toISOString(),
+            text: commentText,
+        };
+        
+        const updatedItem = { ...item, comments: [newComment, ...item.comments] };
+        updateItemInSession(updatedItem);
+    }, [item, updateItemInSession]);
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -183,7 +177,6 @@ export default function ContentDetailPage() {
         });
     };
     
-    // Key-based navigation
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (!item) return;
@@ -192,9 +185,9 @@ export default function ContentDetailPage() {
             if (currentIndex === -1) return;
 
             let nextIndex = -1;
-            if (event.key === 'j') { // Next
+            if (event.key === 'j') {
                 nextIndex = allItems.findIndex((i, idx) => idx > currentIndex && !i.deleted);
-            } else if (event.key === 'k') { // Previous
+            } else if (event.key === 'k') { 
                 for (let i = currentIndex - 1; i >= 0; i--) {
                     if (!allItems[i].deleted) {
                         nextIndex = i;
@@ -306,21 +299,17 @@ export default function ContentDetailPage() {
                             </div>
                         </header>
                         
-                        {item.type === 'article' && (
-                             <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden">
-                                <Image src={item.heroImage} alt={item.title} fill className="object-cover" />
-                            </div>
-                        )}
-                        
                         {isPromotedAndActive && (
                             <div className="mb-8 p-2 text-center text-sm bg-accent/10 text-accent-foreground border-l-4 border-accent rounded">
                                 Promoted Content
                             </div>
                         )}
 
-                        {item.type === 'podcast' && (
-                            <div className="mb-8">
-                                <PodcastPlayer item={item} />
+                        {item.type === 'podcast' ? (
+                            <YouTubePlayer item={item} />
+                        ) : (
+                             <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden">
+                                <Image src={item.heroImage} alt={item.title} fill className="object-cover" />
                             </div>
                         )}
 
@@ -329,6 +318,10 @@ export default function ContentDetailPage() {
                             dangerouslySetInnerHTML={{ __html: item.body }} 
                         />
                     </article>
+
+                    <Separator className="my-12" />
+
+                    <CommentsSection comments={item.comments} onAddComment={handleAddComment} />
 
                     {moreFromAuthor.length > 0 && (
                         <section className="mt-16">
@@ -383,5 +376,3 @@ export default function ContentDetailPage() {
         </div>
     );
 }
-
-    

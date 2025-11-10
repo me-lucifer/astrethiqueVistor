@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, Bookmark, Mic, BookOpen, Clock, Eye, Calendar, Play, Youtube, MoreHorizontal, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { format, formatDistanceToNowStrict } from 'date-fns';
+import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,7 +24,7 @@ type CardProps = {
 };
 
 function formatViews(views?: number): string {
-    if (views === undefined || views === null || isNaN(views)) {
+    if (!views || isNaN(views)) {
         return '0';
     }
     if (views >= 100000) {
@@ -207,8 +207,8 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Share</span>
                                 </DropdownMenuItem>
-                                {!isArticle && (
-                                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
+                                {item.youtubeUrl && (
+                                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(item.youtubeUrl, '_blank')}}>
                                         <Youtube className="mr-2 h-4 w-4" />
                                         <span>Play on YouTube</span>
                                     </DropdownMenuItem>
@@ -243,8 +243,8 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                                     <Share2 className="mr-2 h-4 w-4" />
                                     <span>Share</span>
                                 </DropdownMenuItem>
-                                {!isArticle && (
-                                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
+                                {item.youtubeUrl && (
+                                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(item.youtubeUrl, '_blank')}}>
                                         <Youtube className="mr-2 h-4 w-4" />
                                         <span>Play on YouTube</span>
                                     </DropdownMenuItem>

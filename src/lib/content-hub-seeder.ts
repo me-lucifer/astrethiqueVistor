@@ -3,6 +3,14 @@
 
 import { getSession, setSession, removeSession } from "./session";
 
+export type Comment = {
+  id: string;
+  authorName: string;
+  authorAvatar: string;
+  timestamp: string; // ISO string
+  text: string;
+};
+
 export type ContentHubItem = {
   id: string;
   type: "article" | "podcast";
@@ -28,6 +36,8 @@ export type ContentHubItem = {
   liked: boolean;
   bookmarked: boolean;
   deleted: boolean;
+  youtubeUrl?: string;
+  comments: Comment[];
 };
 
 
@@ -61,13 +71,29 @@ const createItem = (index: number): ContentHubItem => {
     const isPodcast = sampleTitles[index % sampleTitles.length].toLowerCase().includes('podcast');
     const author = authors[index % authors.length];
     
-    // Set a date in the last 12 months
     const publishedAt = new Date(now.getTime() - (index * 30 * 24 * 60 * 60 * 1000) - (Math.random() * 30 * 24 * 60 * 60 * 1000));
     
     let promotedUntil: string | undefined;
     if (index === 2 || index === 3) {
         promotedUntil = new Date(now.getTime() + (Math.floor(Math.random() * 7) + 1) * 24 * 60 * 60 * 1000).toISOString();
     }
+
+    const comments: Comment[] = [
+        {
+            id: 'comment-1',
+            authorName: 'Alex Doe',
+            authorAvatar: 'https://i.pravatar.cc/40?u=alex-doe',
+            timestamp: new Date(publishedAt.getTime() + 1000 * 60 * 60 * 24).toISOString(),
+            text: 'This was incredibly insightful, thank you for sharing!'
+        },
+        {
+            id: 'comment-2',
+            authorName: 'Jordan Smith',
+            authorAvatar: 'https://i.pravatar.cc/40?u=jordan-smith',
+            timestamp: new Date(publishedAt.getTime() + 1000 * 60 * 60 * 48).toISOString(),
+            text: 'I never thought about it that way before. This really changed my perspective.'
+        }
+    ];
 
     return {
         id: `ch-item-${index + 1}`,
@@ -89,7 +115,9 @@ const createItem = (index: number): ContentHubItem => {
         liked: false,
         bookmarked: false,
         publishedAt: publishedAt.toISOString(),
-        deleted: index === 9, // Mark the 10th item as "deleted"
+        deleted: index === 9,
+        youtubeUrl: isPodcast ? 'https://www.youtube.com/embed/dQw4w9WgXcQ' : undefined,
+        comments: comments,
     };
 };
 
