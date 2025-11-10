@@ -20,9 +20,9 @@ export function Footer() {
 
   const footerLinks = [
     { href: "/legal-hub", label: t.legalHub },
-    { href: "/pricing", label: t.pricing },
-    { href: "/privacy", label: t.privacy },
-    { href: "/terms", label: t.terms },
+    { href: "/legal-hub/pricing-and-fees", label: t.pricing },
+    { href: "/legal-hub/privacy-policy", label: t.privacy },
+    { href: "/legal-hub/terms-of-service", label: t.terms },
     { href: "/support", label: t.support },
   ];
 

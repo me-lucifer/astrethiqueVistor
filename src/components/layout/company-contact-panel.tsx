@@ -12,9 +12,9 @@ export function CompanyContactPanel() {
     const t = translations[language];
 
     const legalLinks = [
-        { href: "/privacy", label: t.privacy },
-        { href: "/terms", label: t.terms },
-        { href: "/pricing", label: t.pricing },
+        { href: "/legal-hub/privacy-policy", label: t.privacy },
+        { href: "/legal-hub/terms-of-service", label: t.terms },
+        { href: "/legal-hub/pricing-and-fees", label: t.pricing },
     ];
 
     return (

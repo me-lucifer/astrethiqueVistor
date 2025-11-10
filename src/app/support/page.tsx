@@ -41,9 +41,9 @@ const visitorQuickLinks = [
     { label: "Discover consultants", href: "/discover"},
     { label: "Free conferences", href: "/conferences"},
     { label: "How it works", href: "/how-it-works"},
-    { label: "Pricing", href: "/pricing"},
-    { label: "Privacy (GDPR)", href: "/privacy"},
-    { label: "Terms", href: "/terms"},
+    { label: "Pricing", href: "/legal-hub/pricing-and-fees"},
+    { label: "Privacy (GDPR)", href: "/legal-hub/privacy-policy"},
+    { label: "Terms", href: "/legal-hub/terms-of-service"},
     { label: "Email support", href: "mailto:support@astrethique.com" },
 ];
 
@@ -52,9 +52,9 @@ const consultantQuickLinks = [
     { label: "Create a promotion", href: "/consultant/dashboard/promotions"},
     { label: "Download invoices", href: "/consultant/dashboard/payouts"},
     { label: "How it works (Consultants)", href: "/how-it-works"},
-    { label: "Pricing", href: "/pricing"},
-    { label: "Privacy (GDPR)", href: "/privacy"},
-    { label: "Terms", href: "/terms"},
+    { label: "Pricing", href: "/legal-hub/pricing-and-fees"},
+    { label: "Privacy (GDPR)", href: "/legal-hub/privacy-policy"},
+    { label: "Terms", href: "/legal-hub/terms-of-service"},
     { label: "Email support", href: "mailto:support@astrethique.com" },
 ];
 
