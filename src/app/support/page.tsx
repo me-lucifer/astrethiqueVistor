@@ -16,6 +16,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { SupportContactForm } from "@/components/support/contact-form";
 
 const visitorTopics = [
     { id: "faq-bookings", href: "#faq-bookings", title: "Bookings & Sessions", description: "Help with scheduling, session types, and cancellations.", icon: CalendarClock },
@@ -135,7 +136,7 @@ const faqData = {
             title: "Promotions & Visibility", 
             questions: [
                 { q: "How do promotions affect Discover sorting?", a: "Running a promotion gives your profile a temporary boost in our 'Recommended' sort order on the Discover page, increasing your visibility to potential clients." },
-                { q: "Why is my profile hidden in some regions?", a: "Our platform uses 'language gating.' Your profile is only shown to users in regions that speak the languages you have listed in your profile. This ensures clients can connect with consultants they can understand." }
+                { q: "Why is my profile is hidden in some regions?", a: "Our platform uses 'language gating.' Your profile is only shown to users in regions that speak the languages you have listed in your profile. This ensures clients can connect with consultants they can understand." }
             ] 
         },
         {
@@ -159,7 +160,7 @@ const faqData = {
 
 
 export default function SupportPage() {
-  const [activeTab, setActiveTab] = useState("visitor");
+  const [activeTab, setActiveTab] = useState<"visitor" | "consultant">("visitor");
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -253,22 +254,24 @@ export default function SupportPage() {
       
        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {topics.map((topic) => (
-            <Card key={topic.title} className="group hover:shadow-lg hover:shadow-primary/10 transition-shadow bg-card/50 flex flex-col">
-              <CardHeader className="flex-row items-start gap-4">
-                  <div className="bg-primary/10 p-3 rounded-full border border-primary/20 mt-1">
-                      <topic.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <CardTitle className="font-headline text-base">{topic.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <p className="text-sm text-foreground/70">{topic.description}</p>
-              </CardContent>
-              <CardFooter>
-                 <Button variant="link" asChild className="p-0 text-sm">
-                     <Link href={topic.href}>Browse FAQs</Link>
-                 </Button>
-              </CardFooter>
-            </Card>
+            <a key={topic.id} href={topic.href} className="block">
+              <Card className="group h-full hover:shadow-lg hover:shadow-primary/10 transition-shadow bg-card/50 flex flex-col">
+                <CardHeader className="flex-row items-start gap-4">
+                    <div className="bg-primary/10 p-3 rounded-full border border-primary/20 mt-1">
+                        <topic.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <CardTitle className="font-headline text-base">{topic.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <p className="text-sm text-foreground/70">{topic.description}</p>
+                </CardContent>
+                <CardFooter>
+                  <span className="text-sm font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    Browse FAQs
+                  </span>
+                </CardFooter>
+              </Card>
+            </a>
           ))}
         </div>
         
@@ -314,6 +317,16 @@ export default function SupportPage() {
                 <p className="text-muted-foreground">No results for "{searchQuery}"—try different keywords.</p>
             </div>
         )}
+        
+        <div className="mt-24 pt-16 border-t">
+             <h2 className="text-center font-headline text-3xl font-bold mb-4">
+                Still need help?
+            </h2>
+            <p className="text-center text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
+                If you couldn't find your answer in the FAQs, please submit a ticket and our support team will get back to you.
+            </p>
+            <SupportContactForm activeTab={activeTab} />
+        </div>
 
     </div>
   );
