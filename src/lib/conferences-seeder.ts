@@ -8,16 +8,17 @@ export interface Conference {
   id: string;
   title: string;
   dateISO: string;
+  durationMin: number;
   hostAlias: string;
   hostRating: number;
+  languages: ("EN" | "FR")[];
   tags: ("Love" | "Work" | "Health" | "Money" | "Life Path")[];
   type: "Workshop" | "Group Reading" | "Webinar" | "Q&A";
-  language: "EN" | "FR";
   price: number;
   isFree: boolean; // Derived from price
   excerpt: string;
   capacity: number;
-  seatsAvailable: boolean;
+  seatsLeft?: number; // Optional
   recordingAvailable: boolean;
 }
 
@@ -83,21 +84,25 @@ const createConference = (id: number): Conference => {
         default:
              date = addDays(now, Math.floor(Math.random() * 28) + 1);
     }
+    
+    const capacity = Math.floor(Math.random() * 40) + 10;
+    const seatsLeft = id % 4 === 0 ? 0 : Math.floor(Math.random() * capacity);
 
     return {
         id: `${id}`,
         title: conferenceTitles[(id-1) % conferenceTitles.length],
         dateISO: date.toISOString(),
+        durationMin: [30, 45, 60, 90][id % 4],
         hostAlias: hosts[(id-1) % hosts.length],
         hostRating: Math.round((4.0 + Math.random()) * 10) / 10,
+        languages: (id % 3 === 0) ? ["FR"] : (id % 4 === 0 ? ["EN", "FR"] : ["EN"]),
         tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
         type: types[id % types.length],
-        language: (id % 3 === 0) ? "FR" : "EN",
         price,
         isFree: price === 0,
         excerpt: excerpts[(id-1) % excerpts.length],
-        capacity: Math.floor(Math.random() * 50) + 10,
-        seatsAvailable: Math.random() > 0.3,
+        capacity: capacity,
+        seatsLeft: seatsLeft,
         recordingAvailable: Math.random() > 0.5,
     }
 };
