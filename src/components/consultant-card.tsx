@@ -37,6 +37,22 @@ const specialtyMap: Record<string, { icon: string }> = {
     "Life Path": { icon: "🗺️" }
 }
 
+const zodiacIconMap: Record<string, string> = {
+    Aries: "♈",
+    Taurus: "♉",
+    Gemini: "♊",
+    Cancer: "♋",
+    Leo: "♌",
+    Virgo: "♍",
+    Libra: "♎",
+    Scorpio: "♏",
+    Sagittarius: "♐",
+    Capricorn: "♑",
+    Aquarius: "♒",
+    Pisces: "♓",
+};
+
+
 export function ConsultantCard({ consultant, onStartNow }: { consultant: Consultant, onStartNow: () => void }) {
     const router = useRouter();
     const { toast } = useToast();
@@ -227,6 +243,29 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 )}
                             </div>
                         )}
+                        <div className="flex flex-wrap gap-1 w-full">
+                            {consultant.types?.[0] && (
+                                <Badge variant="outline" className="text-xs font-normal bg-background" aria-label={`Reading type: ${consultant.types[0]}`}>
+                                    {consultant.types[0]}
+                                </Badge>
+                            )}
+                            {consultant.types && consultant.types.length > 1 && (
+                                 <Badge variant="outline" className="text-xs font-normal bg-background">
+                                    +{consultant.types.length - 1}
+                                </Badge>
+                            )}
+                             {consultant.specializesInSigns?.[0] && (
+                                <Badge variant="outline" className="text-xs font-normal gap-1.5 bg-background" aria-label={`Specializes in: ${consultant.specializesInSigns[0]}`}>
+                                    {zodiacIconMap[consultant.specializesInSigns[0]]}
+                                    {consultant.specializesInSigns[0]}
+                                </Badge>
+                            )}
+                             {consultant.specializesInSigns && consultant.specializesInSigns.length > 1 && (
+                                <Badge variant="outline" className="text-xs font-normal bg-background">
+                                    +{consultant.specializesInSigns.length - 1}
+                                </Badge>
+                            )}
+                        </div>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground w-full">
                             {consultant.contentCounts.articles > 0 && <div className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5"/><span>{consultant.contentCounts.articles}</span></div>}
                             {consultant.contentCounts.podcasts > 0 && <div className="flex items-center gap-1"><Mic className="h-3.5 w-3.5"/><span>{consultant.contentCounts.podcasts}</span></div>}
@@ -252,3 +291,5 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         </TooltipProvider>
     );
 }
+
+    
