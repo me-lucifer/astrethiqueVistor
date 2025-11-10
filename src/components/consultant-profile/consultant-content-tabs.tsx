@@ -69,7 +69,7 @@ const ReviewsContent = ({ reviews }: { reviews: ConsultantProfile['reviews'] }) 
 
 
 const ContentSubTabs = ({ content }: { content: ConsultantProfile['content'] }) => {
-    const hasContent = content.articles.length > 0 || content.podcasts.length > 0 || content.conferences.length > 0;
+    const hasContent = content && (content.articles?.length > 0 || content.podcasts?.length > 0 || content.conferences?.length > 0);
     if (!hasContent) {
         return <PlaceholderContent message="This consultant has not published any content yet." />;
     }
@@ -77,9 +77,9 @@ const ContentSubTabs = ({ content }: { content: ConsultantProfile['content'] }) 
     return (
         <Tabs defaultValue="articles" className="w-full">
             <TabsList>
-                {content.articles.length > 0 && <TabsTrigger value="articles">Articles ({content.articles.length})</TabsTrigger>}
-                {content.podcasts.length > 0 && <TabsTrigger value="podcasts">Podcasts ({content.podcasts.length})</TabsTrigger>}
-                {content.conferences.length > 0 && <TabsTrigger value="conferences">Conferences ({content.conferences.length})</TabsTrigger>}
+                {content.articles?.length > 0 && <TabsTrigger value="articles">Articles ({content.articles.length})</TabsTrigger>}
+                {content.podcasts?.length > 0 && <TabsTrigger value="podcasts">Podcasts ({content.podcasts.length})</TabsTrigger>}
+                {content.conferences?.length > 0 && <TabsTrigger value="conferences">Conferences ({content.conferences.length})</TabsTrigger>}
             </TabsList>
             <TabsContent value="articles" className="py-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -107,18 +107,14 @@ const ContentSubTabs = ({ content }: { content: ConsultantProfile['content'] }) 
 };
 
 
-export function ConsultantContentTabs({ consultant }: { consultant: {
-    content: ConsultantProfile['content'],
-    reviews: ConsultantProfile['reviews'],
-    summary: string
-} }) {
-  const bioHtml = `<p>${consultant.summary}</p><p>With over 15 years of experience, Elena offers deep insights into life's most pressing questions. Her guidance is practical, compassionate, and tailored to your unique journey.</p>`;
+export function ConsultantContentTabs({ consultant }: { consultant: ConsultantProfile }) {
+  const bioHtml = `<p>${consultant.summary}</p>`;
     
   return (
     <Tabs defaultValue="about" className="w-full">
       <TabsList className="grid w-full grid-cols-3 sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <TabsTrigger value="about">About</TabsTrigger>
-        <TabsTrigger value="reviews">Reviews ({consultant.reviews.length})</TabsTrigger>
+        <TabsTrigger value="reviews">Reviews ({consultant.reviews?.length || 0})</TabsTrigger>
         <TabsTrigger value="content">Content</TabsTrigger>
       </TabsList>
       <TabsContent value="about" className="py-6">
