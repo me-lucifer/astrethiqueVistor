@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +10,7 @@ import { getUser, AuthUser, logoutUser } from '@/lib/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { formatDistanceToNow } from 'date-fns';
 import { AuthModal } from '../auth-modal';
 
@@ -33,6 +32,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
   const checkUser = () => {
     const storedUser = getUser();
@@ -162,6 +162,11 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
           )}
         </div>
       </section>
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onOpenChange={setIsAuthModalOpen}
+        onLoginSuccess={checkUser}
+      />
     </>
   );
 }

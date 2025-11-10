@@ -199,7 +199,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                     {isArticle ? (
                         <Button variant="outline" size="sm" onClick={handleCTAClick}>Read more</Button>
                     ) : (
-                        <Button variant="secondary" size="sm" onClick={handleCTAClick}>
+                        <Button variant="secondary" size="sm" onClick={handleCTAClick} aria-label={`Open podcast: ${item.title}`}>
                             <Play className="mr-2 h-4 w-4" /> Open
                         </Button>
                     )}

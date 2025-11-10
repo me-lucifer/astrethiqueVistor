@@ -1,33 +1,37 @@
 
+"use client";
+
 import { ContentHubItem } from "@/lib/content-hub-seeder";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
-import Link from "next/link";
 import { Button } from "../ui/button";
 
 export const YouTubePlayer = ({ item }: { item: ContentHubItem }) => {
     // Extract video ID from URL
     const extractYouTubeId = (url?: string): string | null => {
         if (!url) return null;
-        let videoId = '';
+        let videoId: string | null = null;
         try {
             const urlObj = new URL(url);
             if (urlObj.hostname === 'youtu.be') {
                 videoId = urlObj.pathname.substring(1);
-            } else if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
+            } else if (urlObj.hostname.includes('youtube.com')) {
                 if (urlObj.pathname === '/watch') {
-                    videoId = urlObj.searchParams.get('v') || '';
+                    videoId = urlObj.searchParams.get('v');
                 } else if (urlObj.pathname.startsWith('/embed/')) {
                     videoId = urlObj.pathname.substring(7);
                 }
             }
-            // Handle URLs with list parameters
-            const listParamIndex = videoId.indexOf('&');
-            if (listParamIndex !== -1) {
-                videoId = videoId.substring(0, listParamIndex);
+            
+            if (videoId) {
+                // Handle URLs with list parameters by removing them
+                const ampersandIndex = videoId.indexOf('&');
+                if (ampersandIndex !== -1) {
+                    videoId = videoId.substring(0, ampersandIndex);
+                }
             }
             return videoId;
         } catch (e) {
-            console.error("Invalid YouTube URL", url);
+            console.error("Invalid YouTube URL provided:", url, e);
             return null;
         }
     }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { getLocal, setLocal } from "./local";
@@ -25,14 +24,14 @@ export type CommentsStore = {
 
 // One-time migration from sessionStorage
 function migrateIfNeeded(): void {
+    if (typeof window === "undefined") return;
     const oldKey = "contentHub_comments_v1";
     const oldSessionData = getSession<{[key: string]: any[]}>(oldKey);
     const newLocalData = getLocal<CommentsStore>(COMMENTS_KEY);
 
     if (oldSessionData && !newLocalData) {
         const migratedStore: CommentsStore = {};
-        const guestUser = { id: 'guest', name: 'Guest' };
-
+        
         for (const contentId in oldSessionData) {
             migratedStore[contentId] = oldSessionData[contentId].map((oldComment: any) => ({
                 id: oldComment.id,
@@ -52,9 +51,7 @@ function migrateIfNeeded(): void {
 }
 
 // Run migration on module load
-if (typeof window !== "undefined") {
-    migrateIfNeeded();
-}
+migrateIfNeeded();
 
 
 /**

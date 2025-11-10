@@ -81,6 +81,7 @@ function formatLength(item: ContentHubItem): string {
 export default function ContentDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const pathname = usePathname();
     const { toast } = useToast();
     
     const [item, setItem] = useState<ContentHubItem | null>(null);
@@ -395,5 +396,3 @@ export default function ContentDetailPage() {
         </div>
     );
 }
-
-    

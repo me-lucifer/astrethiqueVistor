@@ -70,8 +70,8 @@ export function Header() {
 
   const AuthButtons = () => (
     <>
-      <Button variant="ghost" onClick={() => setIsAuthModalOpen(true)}>Login</Button>
-      <Button onClick={() => setIsAuthModalOpen(true)}>Register</Button>
+      <Button variant="ghost" onClick={() => setIsAuthModalOpen(true)} aria-label="Login to your account">Login</Button>
+      <Button onClick={() => setIsAuthModalOpen(true)} aria-label="Create a new account">Register</Button>
     </>
   );
 

@@ -62,6 +62,7 @@ export function removeLocal(key: string): void {
 }
 
 export function seedOnce(key: string, seeder: () => void): void {
+  if (typeof window === "undefined") return;
   const hasBeenSeeded = getLocal(key);
   if (!hasBeenSeeded) {
     seeder();

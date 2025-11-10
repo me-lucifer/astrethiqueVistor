@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { seedContentHub, ContentHubItem } from '@/lib/content-hub-seeder';
-import { getSession, setSession } from '@/lib/session';
+import { getLocal, setLocal } from '@/lib/local';
 import { ContentHubCard } from '@/components/content-hub/card';
 import { ContentHubFilters } from '@/components/content-hub/filters';
 import { EmptyState } from '@/components/content-hub/empty-state';
@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
+import { getSession } from '@/lib/session';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -40,7 +41,7 @@ export default function ContentHubPage() {
 
     useEffect(() => {
         seedContentHub();
-        const items = getSession<ContentHubItem[]>('ch_items') || [];
+        const items = getLocal<ContentHubItem[]>('ch_items') || [];
         setAllItems(items);
 
         // Check for daily mood for personalization
@@ -155,7 +156,7 @@ export default function ContentHubPage() {
             return item;
         });
         setAllItems(updatedItems);
-        setSession('ch_items', updatedItems);
+        setLocal('ch_items', updatedItems);
     }
 
     const handleToggleBookmark = (itemId: string) => {
