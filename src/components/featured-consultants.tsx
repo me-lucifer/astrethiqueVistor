@@ -191,6 +191,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             result = result.filter(c => 
                 c.name.toLowerCase().includes(lowerCaseQuery) ||
                 c.specialties.some(s => s.toLowerCase().includes(lowerCaseQuery)) ||
+                (c.types && c.types.some(t => t.toLowerCase().includes(lowerCaseQuery))) ||
                 c.bio.toLowerCase().includes(lowerCaseQuery)
             );
         }
@@ -564,5 +565,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         </TooltipProvider>
     );
 }
+
+    
 
     
