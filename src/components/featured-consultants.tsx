@@ -104,16 +104,16 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [query, setQuery] = useState(initialQuery || "");
-    const [visibleCount, setVisibleCount] = useState(8);
+    const [visibleCount, setVisibleCount] = useState(12);
 
     const [isPending, startTransition] = useTransition();
     const isLoading = isPending;
 
     const [filters, setFilters] = useState<Filters>(() => {
-        const sessionState = getSession('discover.filters.v1');
+        const sessionState = getSession<Filters>('discover.filters.v1');
         return { ...defaultFilters, ...(sessionState || {}) };
     });
-    const [sort, setSort] = useState<SortKey>(() => getSession('discover.sort.v1') || 'recommended');
+    const [sort, setSort] = useState<SortKey>(() => getSession<SortKey>('discover.sort.v1') || 'recommended');
     const [priceBounds, setPriceBounds] = useState<[number, number]>([0, 10]);
 
     const loadState = useCallback(() => {
@@ -126,12 +126,15 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             setPriceBounds([min, max]);
 
             const savedFilters = getSession<Filters>('discover.filters.v1');
+            const mergedFilters = { ...defaultFilters, ...savedFilters };
+            
             if (!savedFilters || !savedFilters.price) {
                  const initialPrice = [min, max];
-                 updateFilters({ price: initialPrice, minPrice: String(initialPrice[0]), maxPrice: String(initialPrice[1]) });
-            } else {
-                 setFilters({ ...defaultFilters, ...savedFilters });
+                 mergedFilters.price = initialPrice;
+                 mergedFilters.minPrice = String(initialPrice[0]);
+                 mergedFilters.maxPrice = String(initialPrice[1]);
             }
+            updateFilters(mergedFilters);
         }
     }, []);
 
@@ -165,30 +168,24 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         const langLevels = { basic: 1, fluent: 2, native: 3 };
 
         let result = allConsultants.filter(c => {
-            // Favorites
             if (filters.myFavorites && !favorites.includes(c.id)) return false;
             
-            // Specialties
             if (filters.specialties.length > 0 && !filters.specialties.some(s => c.specialties.includes(s as any))) return false;
             
-            // Price
             if (c.pricePerMin < filters.price[0] || c.pricePerMin > filters.price[1]) return false;
 
-            // Rating
             if (parseFloat(filters.rating) > 0 && c.rating < parseFloat(filters.rating)) return false;
 
-            // Badges
             if (filters.badges.length > 0 && !filters.badges.every(b => c.badges && c.badges.includes(b as any))) return false;
 
-            // Languages
             for (const [langCode, minLevel] of Object.entries(filters.languages)) {
+                if (!minLevel) continue;
                 const consultantLang = c.languages.find(l => l.code === langCode);
                 if (!consultantLang || langLevels[consultantLang.level] < langLevels[minLevel]) {
                     return false;
                 }
             }
 
-            // Availability
             if (filters.availability.length > 0) {
                 const availabilityString = c.availability.online ? 'Online now' : (getSession<string[]>('busyConsultants')?.includes(c.id) ? 'Busy' : 'Offline');
                 if (!filters.availability.includes(availabilityString)) {
@@ -196,7 +193,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 }
             }
 
-            // Content
             if (filters.content.length > 0) {
                 const checks = {
                     hasArticles: c.contentCounts.articles > 0,
@@ -208,7 +204,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 }
             }
 
-            // Admin Filters
             if (filters.frOnlyVisibility && !c.languages.some(l => l.code === 'FR')) return false;
             if (filters.aPlusPlusOnly && c.rating < 4.8) return false;
             if (filters.onPromo && !c.promo24h) return false;
@@ -217,9 +212,9 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         });
 
         result.sort((a, b) => {
-            const availabilityOrder = { 'online': 1, 'busy': 2, 'offline': 3 };
-            const aAvail = a.availability.online ? 'online' : 'offline';
-            const bAvail = b.availability.online ? 'online' : 'offline';
+            const availabilityOrder = { 'Online now': 1, 'Busy': 2, 'Offline': 3 };
+            const aAvailString = a.availability.online ? 'Online now' : (getSession<string[]>('busyConsultants')?.includes(a.id) ? 'Busy' : 'Offline');
+            const bAvailString = b.availability.online ? 'Online now' : (getSession<string[]>('busyConsultants')?.includes(b.id) ? 'Busy' : 'Offline');
 
             switch (sort) {
                 case 'price_asc':
@@ -231,7 +226,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 case 'newest':
                     return parseISO(b.joinedAt).getTime() - parseISO(a.joinedAt).getTime();
                 case 'online_first':
-                    return availabilityOrder[aAvail as keyof typeof availabilityOrder] - availabilityOrder[bAvail as keyof typeof availabilityOrder] || b.rating - a.rating;
+                    return availabilityOrder[aAvailString as keyof typeof availabilityOrder] - availabilityOrder[bAvailString as keyof typeof availabilityOrder] || b.rating - a.rating;
                 case 'recommended':
                 default:
                     const scoreA = (a.availability.online ? 1000 : 0) + (a.rating * 100) - a.pricePerMin;
@@ -338,11 +333,11 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         <AccordionTrigger className="font-semibold text-sm">Languages & fluency</AccordionTrigger>
                         <AccordionContent>
                             <div className="space-y-2">
-                                {['EN', 'FR'].map(langCode => (
+                                {(['EN', 'FR'] as const).map(langCode => (
                                     <div key={langCode}>
                                         <Label className="font-semibold">{langCode}</Label>
-                                        <RadioGroup value={filters.languages[langCode as 'EN' | 'FR']} onValueChange={(v) => updateFilters({ languages: { ...filters.languages, [langCode]: v as any } })}>
-                                            {['basic', 'fluent', 'native'].map(level => (
+                                        <RadioGroup value={filters.languages[langCode]} onValueChange={(v) => updateFilters({ languages: { ...filters.languages, [langCode]: v as any } })}>
+                                            {(['basic', 'fluent', 'native'] as const).map(level => (
                                                 <div key={level} className="flex items-center space-x-2">
                                                     <RadioGroupItem value={level} id={`lang-${langCode}-${level}`} />
                                                     <Label htmlFor={`lang-${langCode}-${level}`} className="capitalize font-normal text-foreground/80">{level}</Label>
@@ -351,7 +346,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                                         </RadioGroup>
                                         <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => {
                                             const newLangs = {...filters.languages};
-                                            delete newLangs[langCode as 'EN' | 'FR'];
+                                            delete newLangs[langCode];
                                             updateFilters({languages: newLangs});
                                         }}>Clear</Button>
                                     </div>
@@ -410,7 +405,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     const mobileSheet = (
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-                 <Button variant="outline" className="lg:hidden gap-2 w-full mb-6">
+                 <Button variant="outline" className="lg:hidden gap-2 w-full mb-6" aria-label="Open filters">
                     <Filter className="h-4 w-4" />
                     Filters ({filteredAndSortedConsultants.length} results)
                 </Button>
@@ -422,7 +417,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 <div className="flex-1 overflow-y-auto">
                     <FilterControls />
                 </div>
-                <SheetFooter className="p-4 border-t">
+                <SheetFooter className="p-4 border-t gap-2">
                     <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply filters</Button>
                     <Button variant="outline" onClick={handleResetFilters} className="w-full">Clear all</Button>
                 </SheetFooter>
@@ -468,7 +463,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                         </div>
                     ) : filteredAndSortedConsultants.length > 0 ? (
                         <>
-                            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {filteredAndSortedConsultants.slice(0, visibleCount).map((consultant) => (
                                     <ConsultantCard 
                                         key={consultant.id}
@@ -479,7 +474,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                             </div>
                              {visibleCount < filteredAndSortedConsultants.length && (
                                 <div className="text-center mt-8">
-                                    <Button onClick={() => setVisibleCount(c => c + 8)}>Load more</Button>
+                                    <Button onClick={() => setVisibleCount(c => c + 12)}>Load more</Button>
                                 </div>
                             )}
                         </>
@@ -500,3 +495,5 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </TooltipProvider>
     );
 }
+
+    

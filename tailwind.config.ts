@@ -16,6 +16,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        'xs': '480px',
+      },
       fontFamily: {
         body: ['Poppins', 'sans-serif'],
         headline: ['Raleway', 'sans-serif'],
@@ -91,3 +94,5 @@ export default {
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
+
+    
