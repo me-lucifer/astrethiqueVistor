@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 import { translations } from "@/lib/translations";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, FileText, Shield, User, Database, Globe, Scale, CircleUser, Info, Calendar, Gavel, AlertTriangle, Wallet, Copyright, UserX, Power, Mail } from "lucide-react";
+import { ArrowLeft, Printer, FileText, Shield, User, Database, Globe, Scale, CircleUser, Info, Calendar, Gavel, AlertTriangle, Wallet, Copyright, UserX, Power, Mail, Euro } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -357,6 +357,148 @@ const TermsOfServiceContent = () => {
     )
 }
 
+const PricingAndFeesContent = () => {
+    const { language } = useLanguage();
+    const t = translations[language].pricingAndFees;
+
+    const sections = [
+        { id: "model", title: t.model.title, icon: Euro },
+        { id: "wallet", title: t.wallet.title, icon: Wallet },
+        { id: "fees", title: t.fees.title, icon: Info },
+        { id: "example", title: t.example.title, icon: Calendar },
+    ];
+    
+    const [activeSection, setActiveSection] = useState("model");
+
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setActiveSection(entry.target.id);
+                }
+            });
+        }, { rootMargin: "-50% 0px -50% 0px" });
+
+        sections.forEach(section => {
+            const el = document.getElementById(section.id);
+            if (el) observer.observe(el);
+        });
+
+        return () => {
+            sections.forEach(section => {
+                const el = document.getElementById(section.id);
+                if (el) observer.unobserve(el);
+            });
+        };
+    }, [sections]);
+
+    const lastUpdated = new Date("2024-07-26T10:00:00Z");
+
+    const exampleSessions = [
+        { duration: 10, rate: 2.50 },
+        { duration: 25, rate: 4.00 },
+        { duration: 45, rate: 1.99 },
+    ];
+
+    return (
+        <div className="container py-12">
+            <div className="flex justify-between items-start mb-6 gap-4">
+                <div>
+                    <Button asChild variant="ghost" className="-ml-4">
+                        <Link href="/legal-hub">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            {translations[language].legalHub}
+                        </Link>
+                    </Button>
+                    <h1 className="font-headline text-3xl md:text-4xl font-bold mt-2">{t.title}</h1>
+                    <div className="flex items-center gap-4 mt-2">
+                        <p className="text-sm text-muted-foreground">
+                            {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="grid lg:grid-cols-[1fr_280px] gap-12 items-start">
+                <div className="prose prose-invert max-w-none text-foreground/80 prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+                    <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
+                        
+                        <AccordionItem value="model" id="model">
+                            <AccordionTrigger className="text-xl font-headline">{t.model.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.model.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="wallet" id="wallet">
+                            <AccordionTrigger className="text-xl font-headline">{t.wallet.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.wallet.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="fees" id="fees">
+                            <AccordionTrigger className="text-xl font-headline">{t.fees.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.fees.content[0]}</p>
+                                <p>{t.fees.content[1]}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="example" id="example">
+                            <AccordionTrigger className="text-xl font-headline">{t.example.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.example.intro}</p>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>{t.example.table.duration}</TableHead>
+                                            <TableHead>{t.example.table.rate}</TableHead>
+                                            <TableHead className="text-right">{t.example.table.cost}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {exampleSessions.map((session, i) => (
+                                            <TableRow key={i}>
+                                                <TableCell>{session.duration} min</TableCell>
+                                                <TableCell>€{session.rate.toFixed(2)}/min</TableCell>
+                                                <TableCell className="text-right">€{(session.duration * session.rate).toFixed(2)}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                                <p className="text-xs mt-2">{t.example.note}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                    </Accordion>
+                     <div className="mt-8 text-sm">
+                        <p>{t.footer.text} <Link href="/legal-hub/terms-of-service">{t.footer.link1}</Link> {language === 'en' ? 'and' : 'et'} <Link href="/legal-hub/refunds-and-cancellations">{t.footer.link2}</Link>.</p>
+                    </div>
+                </div>
+                <aside className="hidden lg:block sticky top-24 self-start">
+                    <h3 className="font-semibold mb-4">{t.toc}</h3>
+                    <nav>
+                        <ul className="space-y-2">
+                            {sections.map(section => (
+                                <li key={section.id}>
+                                    <a 
+                                        href={`#${section.id}`}
+                                        className={`flex items-center gap-2 p-2 rounded-md text-sm transition-colors ${activeSection === section.id ? 'bg-muted font-semibold' : 'text-muted-foreground hover:bg-muted/50'}`}
+                                    >
+                                        <section.icon className="h-4 w-4" />
+                                        {section.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                </aside>
+            </div>
+        </div>
+    )
+}
+
 
 export default function LegalDetailPage() {
     const params = useParams();
@@ -368,6 +510,10 @@ export default function LegalDetailPage() {
     
     if (slug === 'terms-of-service') {
         return <TermsOfServiceContent />;
+    }
+
+    if (slug === 'pricing-and-fees') {
+        return <PricingAndFeesContent />;
     }
 
 

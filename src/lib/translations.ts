@@ -147,6 +147,31 @@ export const translations = {
             termination: { title: "Suspension & Termination", content: "We reserve the right to suspend or terminate accounts that violate these terms." },
             governingLaw: { title: "Governing Law", content: "These terms are governed by the laws of the United Kingdom." },
             contact: { title: "Contact", content: "For questions about these terms, contact us at" }
+        },
+
+        // Pricing & Fees Page
+        pricingAndFees: {
+            title: "Pricing & Fees",
+            lastUpdated: "Last updated",
+            toc: "On this page",
+            model: { title: "Per-Minute Rate", content: "Each consultant sets their own per-minute rate, which is clearly displayed on their profile and before you start a session. You only pay for the time you are connected." },
+            wallet: { title: "Wallet & Top-Ups", content: "Our platform operates on a prepaid wallet system. You top up your wallet with funds (e.g., in EUR, USD), and session costs are deducted in real-time. An invoice is sent to your email after every session." },
+            fees: { title: "Platform & Processing Fees", content: ["A small fee is included in the consultant's rate to cover payment processing and maintain our platform.", "Any applicable taxes like VAT or GST will be clearly indicated during the top-up process."] },
+            example: { 
+                title: "Example Cost Calculation",
+                intro: "Here are a few examples of how session costs are calculated:",
+                table: {
+                    duration: "Session Duration",
+                    rate: "Consultant Rate",
+                    cost: "Total Cost"
+                },
+                note: "Billing is calculated to the second and rounded to the nearest cent."
+            },
+            footer: {
+                text: "For more details, please see our",
+                link1: "Terms of Service",
+                link2: "Refunds and Cancellations Policy"
+            }
         }
     },
     fr: {
@@ -296,6 +321,31 @@ export const translations = {
             termination: { title: "Suspension et Résiliation", content: "Nous nous réservons le droit de suspendre ou de résilier les comptes qui enfreignent ces conditions." },
             governingLaw: { title: "Droit Applicable", content: "Ces conditions sont régies par le droit du Royaume-Uni." },
             contact: { title: "Contact", content: "Pour toute question sur ces conditions, contactez-nous à" }
+        },
+
+        // Pricing & Fees Page
+        pricingAndFees: {
+            title: "Tarifs & Frais",
+            lastUpdated: "Dernière mise à jour",
+            toc: "Sur cette page",
+            model: { title: "Taux à la minute", content: "Chaque consultant fixe son propre tarif à la minute, qui est clairement affiché sur son profil et avant que vous ne commenciez une session. Vous ne payez que pour le temps de connexion." },
+            wallet: { title: "Portefeuille & Recharges", content: "Notre plateforme fonctionne avec un système de portefeuille prépayé. Vous approvisionnez votre portefeuille avec des fonds (par exemple, en EUR, USD), et les coûts des sessions sont déduits en temps réel. Une facture est envoyée à votre email après chaque session." },
+            fees: { title: "Frais de Plateforme & de Traitement", content: ["Des frais modiques sont inclus dans le tarif du consultant pour couvrir le traitement des paiements et la maintenance de notre plateforme.", "Toute taxe applicable comme la TVA sera clairement indiquée lors du processus de recharge."] },
+            example: { 
+                title: "Exemple de Calcul de Coût",
+                intro: "Voici quelques exemples de calcul des coûts de session :",
+                table: {
+                    duration: "Durée de la session",
+                    rate: "Tarif du consultant",
+                    cost: "Coût total"
+                },
+                note: "La facturation est calculée à la seconde et arrondie au centime le plus proche."
+            },
+            footer: {
+                text: "Pour plus de détails, veuillez consulter nos",
+                link1: "Conditions d'Utilisation",
+                link2: "Politique de Remboursements et d'Annulations"
+            }
         }
     }
 };
