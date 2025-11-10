@@ -76,7 +76,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const handleNotifyClick = () => {
     if (isNotifying) {
         toast({
-            title: `You are already set to be notified when ${consultant.name} is online.`,
+            title: `You'll be notified when ${consultant.name} is online.`,
         });
         return;
     }
@@ -85,7 +85,10 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     
     setIsNotifying(true);
     setSession("notify.me.v1", newNotifyList);
-    setIsNotifyModalOpen(true);
+
+    toast({
+        title: `We'll notify you when ${consultant.name} is online.`,
+    });
   };
 
   const handleSlotSelect = (slot: Date) => {
@@ -158,9 +161,10 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
                 ) : (
                     <>
                          <Button 
-                            variant={isNotifying ? 'secondary' : 'outline'}
+                            variant='outline'
                             size="lg" 
                             onClick={handleNotifyClick}
+                            disabled={isNotifying}
                             aria-label={isNotifying ? `You'll be notified when ${consultant.name} is online` : `Notify me when ${consultant.name} is online`}
                         >
                             {isNotifying ? <CheckCircle className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
@@ -219,7 +223,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
             <AlertDialogHeader>
             <AlertDialogTitle>Notification set!</AlertDialogTitle>
             <AlertDialogDescription>
-                We'll let you know when ${consultant.name} is back online.
+                We'll notify you when ${consultant.name} is back online.
             </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -230,3 +234,5 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     </div>
   );
 }
+
+    
