@@ -146,4 +146,5 @@ const createConference = (id: number): Conference => {
 export const seedConferences = () => {
   const conferences: Conference[] = Array.from({ length: 12 }, (_, i) => createConference(i + 1));
   setLocal("conferences", conferences);
+  setLocal("waitlist", []);
 };

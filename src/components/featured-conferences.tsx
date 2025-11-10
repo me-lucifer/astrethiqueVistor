@@ -6,12 +6,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Conference, seedConferences } from "@/lib/conferences-seeder";
 import { getLocal, setLocal, seedOnce } from "@/lib/local";
 import { getSession } from "@/lib/session";
-import { isWithinInterval, addDays, startOfDay, endOfDay, endOfWeek, endOfMonth, isFuture, differenceInMinutes } from 'date-fns';
+import { isWithinInterval, addDays, startOfDay, endOfDay, endOfWeek, endOfMonth, isFuture, differenceInMinutes, addMinutes } from 'date-fns';
 import { format, toDate } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Ticket, CheckCircle, Bell, X, Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Star, Clock, Video, Users, Globe } from "lucide-react";
+import { Calendar, Ticket, CheckCircle, Bell, X, Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Star, Clock, Video, Users, Globe, Tv } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,6 +43,10 @@ interface Rsvp {
     remind24h: boolean;
     remind1h: boolean;
     remind10m: boolean;
+}
+
+interface WaitlistEntry {
+    eventId: string;
 }
 
 interface Filters {
@@ -104,6 +108,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
 
     const [allConferences, setAllConferences] = useState<Conference[]>([]);
     const [rsvps, setRsvps] = useState<Rsvp[]>([]);
+    const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const isLoading = isPending;
@@ -132,7 +137,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     });
 
      useEffect(() => {
-        seedOnce("conferences_seeded_v2", seedConferences); // Use a new seed key to ensure data update
+        seedOnce("conferences_seeded_v3", seedConferences); // Use a new seed key to ensure data update
         const storedConferences = getLocal<Conference[]>("conferences");
         if (storedConferences) {
             setAllConferences(storedConferences);
@@ -143,9 +148,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         }
 
         const storedRsvps = getLocal<Rsvp[]>("rsvps");
-        if (storedRsvps) {
-            setRsvps(storedRsvps);
-        }
+        if (storedRsvps) setRsvps(storedRsvps);
+
+        const storedWaitlist = getLocal<WaitlistEntry[]>("waitlist");
+        if(storedWaitlist) setWaitlist(storedWaitlist);
 
         // Set initial filters from URL params or session storage
         const urlFilters: Partial<Filters> = {}; // You can extend this to parse more filters from URL
@@ -300,6 +306,13 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         setSelectedConference(null);
     };
 
+    const handleWaitlistClick = (conf: Conference) => {
+        const newWaitlist = [...waitlist, { eventId: conf.id }];
+        setWaitlist(newWaitlist);
+        setLocal("waitlist", newWaitlist);
+        toast({ title: "You're on the waitlist!", description: `We'll notify you if a spot opens up for "${conf.title}".` });
+    }
+
     const handleReminderChange = (eventId: string, reminder: 'remind24h' | 'remind1h' | 'remind10m', checked: boolean) => {
         const updatedRsvps = rsvps.map(r => r.eventId === eventId ? {...r, [reminder]: checked} : r);
         setRsvps(updatedRsvps);
@@ -323,6 +336,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     }
     
     const isRsvpd = (id: string) => rsvps.some(r => r.eventId === id);
+    const isOnWaitlist = (id: string) => waitlist.some(w => w.eventId === id);
     
     const formatDate = (dateISO: string, durationMin: number) => {
         const date = new Date(dateISO);
@@ -487,7 +501,15 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
 
     const isStartingSoon = (dateISO: string) => {
         const diff = differenceInMinutes(new Date(dateISO), new Date());
-        return diff > 0 && diff <= 60;
+        return diff > 0 && diff <= 10; // Updated to 10 minutes for Join Live
+    }
+    
+    const isLive = (conference: Conference) => {
+        const now = new Date();
+        const startTime = new Date(conference.dateISO);
+        const endTime = addMinutes(startTime, conference.durationMin);
+        // Event is live from 10 minutes before start time until the end time
+        return now >= addMinutes(startTime, -10) && now <= endTime;
     }
 
     return (
@@ -535,6 +557,9 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                 {filteredConferences.map((conference) => {
                                     const rsvpDetails = rsvps.find(r => r.eventId === conference.id);
                                     const hasSeats = conference.seatsLeft === undefined || conference.seatsLeft > 0;
+                                    const eventIsLive = isLive(conference);
+                                    const userIsRsvpd = isRsvpd(conference.id);
+                                    const userOnWaitlist = isOnWaitlist(conference.id);
 
                                     return (
                                     <Card key={conference.id} className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
@@ -586,7 +611,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                 
                                                 <Popover>
                                                     <PopoverTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isRsvpd(conference.id)}>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!userIsRsvpd}>
                                                             <Bell className="h-4 w-4" />
                                                         </Button>
                                                     </PopoverTrigger>
@@ -616,20 +641,40 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                     </PopoverContent>
                                                 </Popover>
                                                 
-                                                <Button size="sm" onClick={() => handleRsvpClick(conference)} variant={isRsvpd(conference.id) ? "outline" : "default"} disabled={!hasSeats && !isRsvpd(conference.id)}>
-                                                    {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
-                                                    {isRsvpd(conference.id) ? "Going" : (hasSeats ? "RSVP" : "Waitlist")}
-                                                </Button>
+                                                {eventIsLive && userIsRsvpd ? (
+                                                    <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700">
+                                                        <Tv className="mr-2 h-4 w-4" /> Join Live
+                                                    </Button>
+                                                ) : (
+                                                    <Button 
+                                                        size="sm" 
+                                                        onClick={() => {
+                                                            if (hasSeats) {
+                                                                handleRsvpClick(conference);
+                                                            } else if (!userOnWaitlist) {
+                                                                handleWaitlistClick(conference);
+                                                            }
+                                                        }}
+                                                        variant={userIsRsvpd ? "outline" : "default"} 
+                                                        disabled={!hasSeats && userOnWaitlist}
+                                                    >
+                                                        {userIsRsvpd ? <><CheckCircle className="mr-2 h-4 w-4" /> Going</> : (
+                                                            hasSeats ? <><Ticket className="mr-2 h-4 w-4" /> RSVP</> : (
+                                                                userOnWaitlist ? "On waitlist" : "Waitlist"
+                                                            )
+                                                        )}
+                                                    </Button>
+                                                )}
                                             </div>
                                         </CardFooter>
                                     </Card>
                                 )})}
                             </div>
                         ) : (
-                            <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
-                                <h3 className="font-headline text-2xl font-bold">No matching conferences.</h3>
-                                <p className="text-muted-foreground mt-2 mb-4">Try widening your filters.</p>
-                                <Button onClick={handleResetFilters}>Clear filters</Button>
+                             <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
+                                <h3 className="font-headline text-2xl font-bold">No conferences match your filters.</h3>
+                                <p className="text-muted-foreground mt-2 mb-4">Try clearing filters or changing dates.</p>
+                                <Button onClick={handleResetFilters}>Clear Filters</Button>
                             </div>
                         )}
                     </div>
