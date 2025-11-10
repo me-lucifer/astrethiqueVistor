@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { StartNowModal } from "@/components/start-now-modal";
 import { getLocal } from "@/lib/local";
 import { getSession, setSession } from "@/lib/session";
+import { seedConsultants } from "@/lib/consultants-seeder";
 
 const categories = [
     { name: "Love", icon: Heart, description: "Focused guidance on relationships.", query: "Love" },
@@ -62,6 +63,9 @@ export default function Home() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Seed consultant data if it doesn't exist
+    seedConsultants();
+
     // Logic to show registration banner after horoscope submission
     const registrationBannerTimer = setTimeout(() => {
       const leadExists = getLocal("leads");
@@ -284,5 +288,3 @@ export default function Home() {
     </TooltipProvider>
   );
 }
-
-    
