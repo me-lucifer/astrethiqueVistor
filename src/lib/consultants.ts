@@ -16,7 +16,7 @@ export interface Consultant {
   specialties: ('Love' | 'Work' | 'Health' | 'Money' | 'Life Path')[];
   types: string[]; // Reading types like Astrology, Tarot, etc.
   specializesInSigns: string[]; // Zodiac signs
-  badges: ('Top Rated' | 'Rising Star' | 'New' | 'Promo 24h')[];
+  badges?: ('Top Rated' | 'Rising Star' | 'New' | 'Promo 24h')[];
   contentCounts: {
     articles: number;
     podcasts: number;

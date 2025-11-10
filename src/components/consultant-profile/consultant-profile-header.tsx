@@ -95,11 +95,6 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                                     <span className="font-bold text-base text-foreground">{consultant.rating.toFixed(1)}</span>
                                     <span className="text-sm text-muted-foreground ml-1">({consultant.reviewsCount} reviews)</span>
                                 </div>
-                                <div className="flex gap-2">
-                                    {consultant.languages.map(lang => (
-                                        <Badge key={lang} variant="outline" className="rounded-md text-xs" aria-label={`Language: ${lang}`}>{lang}</Badge>
-                                    ))}
-                                </div>
                             </div>
                         </div>
                         <div className="text-left sm:text-right shrink-0">
@@ -111,6 +106,18 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                     </div>
                     
                     <p className="mt-4 text-foreground/80 max-w-prose text-sm">{consultant.summary}...</p>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+                        {consultant.specialties?.length > 0 && consultant.specialties.map(specialty => (
+                            <Badge key={specialty} variant="default" className="text-xs">{specialty}</Badge>
+                        ))}
+                        {consultant.types?.length > 0 && consultant.types.map(type => (
+                             <Badge key={type} variant="outline" className="text-xs">{type}</Badge>
+                        ))}
+                         {consultant.languages?.length > 0 && consultant.languages.map(lang => (
+                             <Badge key={lang} variant="secondary" className="bg-muted text-muted-foreground text-xs">{lang}</Badge>
+                        ))}
+                    </div>
                     
                     <div className="mt-4 border-t border-border/50 pt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
                         <Tooltip>

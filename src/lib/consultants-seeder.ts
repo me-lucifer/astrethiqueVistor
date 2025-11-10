@@ -100,7 +100,7 @@ export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
   const seededVersion = getSession('discover.seeded.version');
-  const currentVersion = 'v8'; // Increment this version to force re-seeding
+  const currentVersion = 'v9'; // Increment this version to force re-seeding
 
   if (seededVersion !== currentVersion) {
     const baseConsultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
