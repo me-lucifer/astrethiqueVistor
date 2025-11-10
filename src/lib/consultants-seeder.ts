@@ -32,7 +32,7 @@ const createConsultant = (index: number): Consultant => {
 
     return {
         id: `c${index}`,
-        slug: `consultant-${index}`,
+        slug: consultantName.toLowerCase().replace(/\s+/g, '-'),
         name: consultantName,
         rating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
         pricePerMin: Math.round((1.5 + Math.random() * 3.5) * 2) / 2,
