@@ -41,8 +41,6 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
       description: "",
       email: "",
       displayName: "",
-      referenceId: "",
-      attachmentUrl: "",
       priority: "normal",
     },
   });
@@ -60,8 +58,6 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
       ...form.getValues(),
       subject: '',
       description: '',
-      referenceId: '',
-      attachmentUrl: '',
     });
   };
 
@@ -215,36 +211,8 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
                     )}
                   />
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="referenceId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Booking or Conference ID (optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., BOOK-12345" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
                 
                  <FormField
-                  control={form.control}
-                  name="attachmentUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Attachment Link (optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://..." {...field} />
-                      </FormControl>
-                      <p className="text-xs text-muted-foreground">Paste a link to a screenshot if needed.</p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
                   control={form.control}
                   name="priority"
                   render={({ field }) => (

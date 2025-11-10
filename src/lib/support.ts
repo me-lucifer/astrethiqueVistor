@@ -8,10 +8,8 @@ export const ticketSchema = z.object({
   topic: z.string().min(1, "Please select a topic."),
   subject: z.string().min(5, "Subject must be at least 5 characters."),
   description: z.string().min(20, "Description must be at least 20 characters.").max(600, "Description cannot exceed 600 characters."),
-  email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
+  email: z.string().email("Please enter a valid email address."),
   displayName: z.string().optional(),
-  referenceId: z.string().optional(),
-  attachmentUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   priority: z.enum(["normal", "urgent"]).default("normal"),
 });
 
