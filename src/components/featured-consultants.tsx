@@ -9,22 +9,54 @@ import { Button } from "./ui/button";
 import { Slider } from "./ui/slider";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Checkbox } from "./ui/checkbox";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
+import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Info } from "lucide-react";
+import { Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Info, BookOpen, Mic, Video, Star, BadgeCheck, Languages, Clock, ChevronDown } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "./ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { getSession, setSession } from "@/lib/session";
+import { isWithinInterval, addDays, startOfDay, endOfDay, isFuture } from 'date-fns';
 
 const specialties = [
-    { name: "Love", icon: Heart },
-    { name: "Work", icon: Briefcase },
-    { name: "Health", icon: HeartPulse },
-    { name: "Money", icon: CircleDollarSign },
+    { id: "Love", name: "Love", icon: Heart },
+    { id: "Work", name: "Work", icon: Briefcase },
+    { id: "Health", name: "Health", icon: HeartPulse },
+    { id: "Money", name: "Money", icon: CircleDollarSign },
+    { id: "Life Path", name: "Life Path", icon: Star },
 ];
-const languages = ["EN", "FR"];
-const availabilities = ["Online now", "Today", "This week"];
+
+const badges = [
+    { id: "Top Rated", name: "Top Rated" },
+    { id: "Rising Star", name: "Rising Star" },
+    { id: "New", name: "New" },
+    { id: "Promo 24h", name: "Promo 24h" },
+];
+
+const contentFilters = [
+    { id: "hasArticles", name: "Has Articles", icon: BookOpen },
+    { id: "hasPodcasts", name: "Has Podcasts", icon: Mic },
+    { id: "hasUpcomingConference", name: "Has Upcoming Conference", icon: Video },
+];
+
+const availabilityFilters = [
+    { id: 'online', name: 'Online now' },
+    { id: 'busy', name: 'Busy' },
+    { id: 'offline', name: 'Offline' }
+];
+
+const ratingFilters = [
+    { value: "0", label: "Any" },
+    { value: "4", label: "4.0+" },
+    { value: "4.5", label: "4.5+" },
+    { value: "4.8", label: "4.8+" },
+];
+
+
 const sortOptions = {
     recommended: "Recommended",
     price_asc: "Price (low to high)",
@@ -36,23 +68,38 @@ const sortOptions = {
 type SortKey = keyof typeof sortOptions;
 
 interface Filters {
+    myFavorites: boolean;
     specialties: string[];
-    languages: string[];
-    availability: string;
-    promoOnly: boolean;
-    rate: number[];
-    highRatingOnly: boolean;
-    sort: SortKey;
+    price: number[];
+    minPrice: string;
+    maxPrice: string;
+    rating: string;
+    badges: string[];
+    languages: {
+        EN?: "basic" | "fluent" | "native";
+        FR?: "basic" | "fluent" | "native";
+    };
+    availability: string[];
+    content: string[];
+    frOnlyVisibility: boolean;
+    aPlusPlusOnly: boolean;
+    onPromo: boolean;
 }
 
 const defaultFilters: Filters = {
+    myFavorites: false,
     specialties: [],
-    languages: [],
-    availability: "",
-    promoOnly: false,
-    rate: [12],
-    highRatingOnly: false,
-    sort: "recommended",
+    price: [0, 10],
+    minPrice: "0",
+    maxPrice: "10",
+    rating: "0",
+    badges: [],
+    languages: {},
+    availability: [],
+    content: [],
+    frOnlyVisibility: false,
+    aPlusPlusOnly: false,
+    onPromo: false,
 };
 
 export function FeaturedConsultants({ initialQuery }: { initialQuery?: string }) {
@@ -66,16 +113,30 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
     const [filters, setFilters] = useState<Filters>(() => getSession('discover.filters.v1') || defaultFilters);
     const [sort, setSort] = useState<SortKey>(() => getSession('discover.sort.v1') || 'recommended');
+    const [priceBounds, setPriceBounds] = useState<[number, number]>([0, 10]);
+    const [favorites, setFavorites] = useState<string[]>([]);
 
     useEffect(() => {
         const storedConsultants = getSession<Consultant[]>('discover.consultants.v1');
         if (storedConsultants) {
             setAllConsultants(storedConsultants);
+            const prices = storedConsultants.map(c => c.pricePerMin);
+            const min = Math.floor(Math.min(...prices));
+            const max = Math.ceil(Math.max(...prices));
+            setPriceBounds([min, max]);
+
+            // Initialize price filter based on bounds
+            const savedFilters = getSession('discover.filters.v1');
+            if (!savedFilters || !savedFilters.price) {
+                updateFilters({ price: [min, max], minPrice: String(min), maxPrice: String(max) });
+            }
         }
+        
+        setFavorites(getSession<string[]>('discover.favorites.v1') || []);
         setIsLoading(false);
     }, []);
 
-    const updateFilters = (newFilters: Partial<Omit<Filters, 'sort'>>) => {
+    const updateFilters = (newFilters: Partial<Filters>) => {
         setFilters(prev => {
             const updated = { ...prev, ...newFilters };
             setSession('discover.filters.v1', updated);
@@ -88,129 +149,249 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         setSession('discover.sort.v1', newSort);
     }
 
-    useEffect(() => {
-      setQuery(initialQuery || "");
-    }, [initialQuery]);
-
     const filteredAndSortedConsultants = useMemo(() => {
         setIsLoading(true);
-        let result = [...allConsultants];
 
-        // This filtering logic will be expanded in a later step
-        // For now, it just returns all consultants
+        const onlineScore = (c: Consultant) => c.availability.online ? 1 : 0;
+        const promoScore = (c: Consultant) => (c.promoActive || (c.badges && c.badges.includes('Promo 24h'))) ? 1 : 0;
+
+        let result = allConsultants.sort((a, b) => {
+            switch (sort) {
+                case 'price_asc':
+                    return a.pricePerMin - b.pricePerMin;
+                case 'rating_desc':
+                    return b.rating - a.rating;
+                case 'most_reviewed':
+                    return b.reviewsCount - a.reviewsCount;
+                case 'newest':
+                    return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+                case 'recommended':
+                default:
+                    const scoreA = a.rating * 0.6 + a.reviewsCount / 100 * 0.25 + onlineScore(a) * 0.1 + promoScore(a) * 0.05;
+                    const scoreB = b.rating * 0.6 + b.reviewsCount / 100 * 0.25 + onlineScore(b) * 0.1 + promoScore(b) * 0.05;
+                    return scoreB - scoreA;
+            }
+        });
+        
+        result = result.filter(c => {
+            // General
+            if (filters.myFavorites && !favorites.includes(c.id)) return false;
+
+            // Specialties
+            if (filters.specialties.length > 0 && !filters.specialties.some(s => c.specialties.includes(s as any))) return false;
+            
+            // Price
+            if (c.pricePerMin < filters.price[0] || c.pricePerMin > filters.price[1]) return false;
+
+            // Rating
+            if (parseFloat(filters.rating) > 0 && c.rating < parseFloat(filters.rating)) return false;
+
+            // Badges
+            if (filters.badges.length > 0 && !filters.badges.every(b => c.badges && c.badges.includes(b as any))) return false;
+
+            // Languages
+            const langLevels = { basic: 1, fluent: 2, native: 3 };
+            if (filters.languages.EN && (!c.languages.some(l => l.code === 'EN') || langLevels[c.languages.find(l => l.code === 'EN')!.level] < langLevels[filters.languages.EN])) return false;
+            if (filters.languages.FR && (!c.languages.some(l => l.code === 'FR') || langLevels[c.languages.find(l => l.code === 'FR')!.level] < langLevels[filters.languages.FR])) return false;
+
+            // Availability
+            const isOnline = c.availability.online === true;
+            const hasSlotsToday = c.availability.slots.some(s => isWithinInterval(new Date(s), { start: startOfDay(new Date()), end: endOfDay(new Date()) }) && isFuture(new Date(s)));
+            const hasSlotsThisWeek = c.availability.slots.some(s => isWithinInterval(new Date(s), { start: startOfDay(new Date()), end: addDays(new Date(), 7) }) && isFuture(new Date(s)));
+
+            if(filters.availability.length > 0) {
+                 const availChecks = filters.availability.map(a => {
+                    if (a === 'Online now') return isOnline;
+                    if (a === 'Today') return hasSlotsToday;
+                    if (a === 'This week') return hasSlotsThisWeek;
+                    return false;
+                });
+                if(!availChecks.some(check => check)) return false;
+            }
+
+
+            // Content
+            if(filters.content.length > 0) {
+                const contentChecks = filters.content.map(filter => {
+                    if(filter === 'hasArticles') return c.contentCounts.articles > 0;
+                    if(filter === 'hasPodcasts') return c.contentCounts.podcasts > 0;
+                    if(filter === 'hasUpcomingConference') return c.contentCounts.conferences > 0;
+                    return false;
+                })
+                if(!contentChecks.every(check => check)) return false;
+            }
+
+            // Admin
+            if (filters.aPlusPlusOnly && c.rating < 4.8) return false;
+            if (filters.onPromo && !(c.promoActive || (c.badges && c.badges.includes('Promo 24h')))) return false;
+
+            return true;
+        })
 
         setTimeout(() => setIsLoading(false), 300);
         return result;
-    }, [allConsultants, filters, query, sort]);
+    }, [allConsultants, filters, sort, favorites]);
 
     const handleResetFilters = () => {
-        setFilters(defaultFilters);
+        setFilters({...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])});
         setSort('recommended');
-        setSession('discover.filters.v1', defaultFilters);
+        setSession('discover.filters.v1', {...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])});
         setSession('discover.sort.v1', 'recommended');
     };
 
-    const handleChipToggle = (group: 'specialties' | 'languages', value: string) => {
+    const handleMultiSelectToggle = (group: 'specialties' | 'badges' | 'availability' | 'content', value: string) => {
         const current = filters[group] as string[];
         const newValues = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
         updateFilters({ [group]: newValues });
     };
 
-    const handleAvailabilityToggle = (value: string) => {
-        const newAvailability = filters.availability === value ? "" : value;
-        updateFilters({ availability: newAvailability });
-    };
+    const handlePriceInputChange = (type: 'min' | 'max', value: string) => {
+        const numericValue = parseFloat(value);
+        const newPrice = [...filters.price];
+        const key = type === 'min' ? 'minPrice' : 'maxPrice';
+        const priceIndex = type === 'min' ? 0 : 1;
+
+        updateFilters({ [key]: value });
+
+        if (!isNaN(numericValue)) {
+            newPrice[priceIndex] = numericValue;
+            updateFilters({ price: newPrice });
+        }
+    }
 
     const FilterControls = () => (
-        <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 space-y-6">
-            <h3 className="font-headline text-lg font-bold">Filters</h3>
-            <TooltipProvider>
-                <div className="space-y-4">
-                    <div>
-                        <Label className="font-semibold text-sm">Specialties:</Label>
-                        <div className="flex flex-wrap gap-2 pt-2">
-                             {specialties.map(({name, icon: Icon}) => (
-                                <Button
-                                    key={name}
-                                    variant={filters.specialties.includes(name) ? "secondary" : "outline"}
-                                    size="sm"
-                                    onClick={() => handleChipToggle('specialties', name)}
-                                    className="rounded-full gap-2"
-                                >
-                                    <Icon className="h-4 w-4" /> {name}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                     <div>
-                        <Label className="font-semibold text-sm">Languages:</Label>
-                        <div className="flex flex-wrap gap-2 pt-2">
-                            {languages.map((lang) => (
-                                 <Button
-                                    key={lang}
-                                    variant={filters.languages.includes(lang) ? "secondary" : "outline"}
-                                    size="sm"
-                                    onClick={() => handleChipToggle('languages', lang)}
-                                    className="rounded-full gap-2"
-                                >
-                                    {lang === 'EN' ? '🇬🇧' : '🇫🇷'} {lang}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                     <div>
-                        <Label className="font-semibold text-sm">Availability:</Label>
-                        <div className="flex flex-wrap gap-2 pt-2 bg-muted p-1 rounded-lg">
-                            {availabilities.map((avail) => (
-                                <Button
-                                    key={avail}
-                                    variant={filters.availability === avail ? "background" : "ghost"}
-                                    size="sm"
-                                    onClick={() => handleAvailabilityToggle(avail)}
-                                    className="flex-1 justify-center shadow-sm"
-                                >
-                                    {avail}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                    <div>
-                        <div className="flex justify-between items-center">
-                            <Label htmlFor="price-range" className="flex items-center gap-1 font-semibold">
-                                Max Price
-                                 <Tooltip>
-                                    <TooltipTrigger asChild><Info className="h-3 w-3 cursor-pointer"/></TooltipTrigger>
-                                    <TooltipContent>Maximum rate per minute you’re comfortable paying.</TooltipContent>
-                                </Tooltip>
-                            </Label>
-                            <span className="text-primary font-bold">{filters.rate[0].toFixed(2)}€/min</span>
-                        </div>
-                        <Slider id="price-range" min={0} max={12} step={0.5} value={filters.rate} onValueChange={(v) => updateFilters({ rate: v })} />
-                    </div>
-                     <div className="flex items-center justify-between">
-                         <Tooltip>
-                            <TooltipTrigger asChild>
-                                 <Label htmlFor="promo-only" className="flex items-center gap-2 font-semibold">
-                                    On promo
-                                    <Info className="h-3 w-3 cursor-pointer"/>
+        <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 -mr-4 lg:mr-0">
+            <div className="space-y-6 p-4 lg:p-0">
+                <Accordion type="multiple" defaultValue={['general', 'specialty', 'price', 'rating', 'availability']} className="w-full">
+                    <AccordionItem value="general">
+                        <AccordionTrigger className="font-semibold text-sm">General</AccordionTrigger>
+                        <AccordionContent>
+                             <div className="flex items-center justify-between">
+                                <Label htmlFor="my-favorites" className="flex items-center gap-2">
+                                    <Heart className="h-4 w-4" /> My favorites
                                 </Label>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Discounted per-minute rate for a limited time.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                        <Switch id="promo-only" checked={filters.promoOnly} onCheckedChange={(c) => updateFilters({promoOnly: c})} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="rating-only" className="font-semibold">4★+ only</Label>
-                        <Switch id="rating-only" checked={filters.highRatingOnly} onCheckedChange={(c) => updateFilters({ highRatingOnly: c })}/>
-                    </div>
-
-                    <div className="pt-4">
-                        <Button variant="outline" onClick={handleResetFilters} className="w-full">Reset all filters</Button>
-                    </div>
+                                <Switch id="my-favorites" checked={filters.myFavorites} onCheckedChange={(c) => updateFilters({ myFavorites: c })} />
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="specialty">
+                        <AccordionTrigger className="font-semibold text-sm">Specialty</AccordionTrigger>
+                        <AccordionContent className="space-y-2">
+                             {specialties.map(({ id, name }) => (
+                                <div key={id} className="flex items-center space-x-2">
+                                    <Checkbox id={`spec-${id}`} checked={filters.specialties.includes(id)} onCheckedChange={() => handleMultiSelectToggle('specialties', id)} />
+                                    <Label htmlFor={`spec-${id}`} className="font-normal text-foreground/80">{name}</Label>
+                                </div>
+                            ))}
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="price">
+                        <AccordionTrigger className="font-semibold text-sm">Price per minute</AccordionTrigger>
+                        <AccordionContent>
+                            <div className="flex justify-between items-center mb-2">
+                                <Label className="text-primary font-bold">€{filters.price[0]} &mdash; €{filters.price[1]}/min</Label>
+                            </div>
+                            <Slider min={priceBounds[0]} max={priceBounds[1]} step={0.5} value={filters.price} onValueChange={(v) => updateFilters({ price: v, minPrice: String(v[0]), maxPrice: String(v[1]) })} />
+                             <div className="flex gap-2 mt-2">
+                                <Input type="number" placeholder="Min" value={filters.minPrice} onChange={(e) => handlePriceInputChange('min', e.target.value)} />
+                                <Input type="number" placeholder="Max" value={filters.maxPrice} onChange={(e) => handlePriceInputChange('max', e.target.value)} />
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="rating">
+                        <AccordionTrigger className="font-semibold text-sm">Rating</AccordionTrigger>
+                        <AccordionContent>
+                            <RadioGroup value={filters.rating} onValueChange={(v) => updateFilters({ rating: v })}>
+                                {ratingFilters.map(r => (
+                                    <div key={r.value} className="flex items-center space-x-2">
+                                        <RadioGroupItem value={r.value} id={`rating-${r.value}`} />
+                                        <Label htmlFor={`rating-${r.value}`} className="font-normal text-foreground/80">{r.label}</Label>
+                                    </div>
+                                ))}
+                            </RadioGroup>
+                        </AccordionContent>
+                    </AccordionItem>
+                     <AccordionItem value="badges">
+                        <AccordionTrigger className="font-semibold text-sm">Badges</AccordionTrigger>
+                        <AccordionContent className="space-y-2">
+                             {badges.map(b => (
+                                <div key={b.id} className="flex items-center space-x-2">
+                                    <Checkbox id={`badge-${b.id}`} checked={filters.badges.includes(b.id)} onCheckedChange={() => handleMultiSelectToggle('badges', b.id)} />
+                                    <Label htmlFor={`badge-${b.id}`} className="font-normal text-foreground/80">{b.name}</Label>
+                                </div>
+                            ))}
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="languages">
+                        <AccordionTrigger className="font-semibold text-sm">Languages & fluency</AccordionTrigger>
+                        <AccordionContent>
+                            <div className="space-y-2">
+                                {['EN', 'FR'].map(langCode => (
+                                    <div key={langCode}>
+                                        <Label className="font-semibold">{langCode}</Label>
+                                        <RadioGroup value={filters.languages[langCode as 'EN' | 'FR']} onValueChange={(v) => updateFilters({ languages: { ...filters.languages, [langCode]: v } })}>
+                                            {['basic', 'fluent', 'native'].map(level => (
+                                                <div key={level} className="flex items-center space-x-2">
+                                                    <RadioGroupItem value={level} id={`lang-${langCode}-${level}`} />
+                                                    <Label htmlFor={`lang-${langCode}-${level}`} className="capitalize font-normal text-foreground/80">{level}</Label>
+                                                </div>
+                                            ))}
+                                        </RadioGroup>
+                                        <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => {
+                                            const newLangs = {...filters.languages};
+                                            delete newLangs[langCode as 'EN' | 'FR'];
+                                            updateFilters({languages: newLangs});
+                                        }}>Clear</Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="availability">
+                        <AccordionTrigger className="font-semibold text-sm">Availability</AccordionTrigger>
+                        <AccordionContent className="space-y-2">
+                             {availabilityFilters.map(a => (
+                                <div key={a.id} className="flex items-center space-x-2">
+                                    <Checkbox id={`avail-${a.id}`} checked={filters.availability.includes(a.name)} onCheckedChange={() => handleMultiSelectToggle('availability', a.name)} />
+                                    <Label htmlFor={`avail-${a.id}`} className="font-normal text-foreground/80">{a.name}</Label>
+                                </div>
+                            ))}
+                        </AccordionContent>
+                    </AccordionItem>
+                     <AccordionItem value="content">
+                        <AccordionTrigger className="font-semibold text-sm">Content</AccordionTrigger>
+                        <AccordionContent className="space-y-2">
+                             {contentFilters.map(f => (
+                                <div key={f.id} className="flex items-center space-x-2">
+                                    <Checkbox id={`content-${f.id}`} checked={filters.content.includes(f.id)} onCheckedChange={() => handleMultiSelectToggle('content', f.id)} />
+                                    <Label htmlFor={`content-${f.id}`} className="font-normal text-foreground/80">{f.name}</Label>
+                                </div>
+                            ))}
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="admin">
+                        <AccordionTrigger className="font-semibold text-sm">Admin</AccordionTrigger>
+                        <AccordionContent className="space-y-2">
+                             <div className="flex items-center justify-between">
+                                <Label htmlFor="fr-only">FR-only visibility</Label>
+                                <Switch id="fr-only" checked={filters.frOnlyVisibility} onCheckedChange={(c) => updateFilters({ frOnlyVisibility: c })} />
+                            </div>
+                             <div className="flex items-center justify-between">
+                                <Label htmlFor="a-plus-plus">A++ only (rating ≥ 4.8)</Label>
+                                <Switch id="a-plus-plus" checked={filters.aPlusPlusOnly} onCheckedChange={(c) => updateFilters({ aPlusPlusOnly: c })} />
+                            </div>
+                             <div className="flex items-center justify-between">
+                                <Label htmlFor="on-promo">On promo</Label>
+                                <Switch id="on-promo" checked={filters.onPromo} onCheckedChange={(c) => updateFilters({ onPromo: c })} />
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+                <div className="pt-4 space-y-2 lg:hidden">
+                    <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply filters</Button>
+                    <Button variant="outline" onClick={handleResetFilters} className="w-full">Clear all</Button>
                 </div>
-            </TooltipProvider>
+            </div>
         </aside>
     );
 
@@ -222,16 +403,17 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                     Filters ({filteredAndSortedConsultants.length} results)
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[320px] flex flex-col">
-                <SheetHeader className="text-left">
+            <SheetContent side="left" className="w-[320px] flex flex-col p-0">
+                <SheetHeader className="text-left p-4 border-b">
                     <SheetTitle>Filters</SheetTitle>
                 </SheetHeader>
-                <div className="py-4 flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto">
                     <FilterControls />
                 </div>
-                <div className="border-t pt-4">
-                    <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply Filters</Button>
-                </div>
+                <SheetFooter className="p-4 border-t">
+                    <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply filters</Button>
+                    <Button variant="outline" onClick={handleResetFilters} className="w-full">Clear all</Button>
+                </SheetFooter>
             </SheetContent>
         </Sheet>
     );
@@ -243,18 +425,21 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             <main>
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
-                        Showing {filteredAndSortedConsultants.length} consultants
+                        Showing {filteredAndSortedConsultants.length} of {allConsultants.length} consultants
                     </p>
-                    <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
-                        <SelectTrigger className="w-full sm:w-[200px]">
-                            <SelectValue placeholder="Sort by..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {Object.entries(sortOptions).map(([key, value]) => (
-                                <SelectItem key={key} value={key}>{value}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
+                            <SelectTrigger className="w-full sm:w-[200px]">
+                                <SelectValue placeholder="Sort by..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {Object.entries(sortOptions).map(([key, value]) => (
+                                    <SelectItem key={key} value={key}>{value}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {isDesktop && <Button variant="link" onClick={handleResetFilters} className="text-muted-foreground">Clear all</Button>}
+                    </div>
                 </div>
                 <div role="status" aria-live="polite">
                     {isLoading ? (
@@ -263,24 +448,22 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                                  <div key={i} className="space-y-3">
                                     <Skeleton className="h-[225px] w-full rounded-xl" />
                                     <div className="space-y-2">
-                                        <Skeleton className="h-4 w-[250px]" />
-                                        <Skeleton className="h-4 w-[200px]" />
+                                        <Skeleton className="h-4 w-3/4" />
+                                        <Skeleton className="h-4 w-1/2" />
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : filteredAndSortedConsultants.length > 0 ? (
-                        <>
-                            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                                {filteredAndSortedConsultants.map((consultant) => (
-                                    <ConsultantCard 
-                                        key={consultant.id}
-                                        consultant={consultant}
-                                        onStartNow={() => setIsStartNowModalOpen(true)}
-                                    />
-                                ))}
-                            </div>
-                        </>
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                            {filteredAndSortedConsultants.map((consultant) => (
+                                <ConsultantCard 
+                                    key={consultant.id}
+                                    consultant={consultant}
+                                    onStartNow={() => setIsStartNowModalOpen(true)}
+                                />
+                            ))}
+                        </div>
                     ) : (
                         <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
                             <h3 className="font-headline text-2xl font-bold">No matches yet</h3>
@@ -298,3 +481,5 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </>
     );
 }
+
+    

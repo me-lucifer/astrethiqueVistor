@@ -1,11 +1,15 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { FeaturedConsultants } from "@/components/featured-consultants";
 import { seedConsultants } from "@/lib/consultants-seeder";
+import { useSearchParams } from "next/navigation";
 
-export default function DiscoverPage() {
+function DiscoverContent() {
+    const searchParams = useSearchParams();
+    const query = searchParams.get('query') || "";
+
     useEffect(() => {
         seedConsultants();
     }, []);
@@ -22,8 +26,19 @@ export default function DiscoverPage() {
             </p>
             
             <div className="lg:grid lg:grid-cols-[320px_1fr] lg:gap-8">
-                <FeaturedConsultants />
+                <FeaturedConsultants initialQuery={query} />
             </div>
         </div>
     );
 }
+
+
+export default function DiscoverPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <DiscoverContent />
+        </Suspense>
+    );
+}
+
+    
