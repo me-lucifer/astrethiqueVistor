@@ -16,14 +16,11 @@ export interface Conference {
   language: ("EN" | "FR");
   tags: ("Love" | "Work" | "Health" | "Money" | "Life Path")[];
   type: "Workshop" | "Group Reading" | "Webinar" | "Q&A";
-  price: number;
-  isFree: boolean; // Derived from price
+  isFree: boolean;
   excerpt: string;
   description: string; // Rich text/HTML for the about tab
   agenda: { time: string; topic: string }[];
   faqs: { question: string; answer: string }[];
-  capacity: number;
-  seatsLeft?: number; // Optional
   recordingAvailable: boolean;
   languages: string[];
 }
@@ -80,7 +77,6 @@ const types: Conference['type'][] = ["Workshop", "Group Reading", "Webinar", "Q&
 const createConference = (id: number): Conference => {
     const now = new Date();
     let date: Date;
-    const price = 0; // All events are free
     const title = conferenceTitles[(id-1) % conferenceTitles.length];
 
     switch(id) {
@@ -106,8 +102,6 @@ const createConference = (id: number): Conference => {
              date = addDays(now, Math.floor(Math.random() * 28) + 1);
     }
     
-    const capacity = Math.floor(Math.random() * 130) + 20; // 20-150
-    const seatsLeft = id % 4 === 0 ? 0 : Math.floor(Math.random() * capacity);
     const host = hosts[(id-1) % hosts.length];
     const languages = (id % 3 === 0) ? ["FR"] : ["EN"];
     if (id % 5 === 0) languages.push(id % 3 === 0 ? 'EN' : 'FR');
@@ -126,7 +120,6 @@ const createConference = (id: number): Conference => {
         languages: languages,
         tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
         type: types[id % types.length],
-        price: 0,
         isFree: true,
         excerpt: excerpts[(id-1) % excerpts.length],
         description: `<h4>Overview</h4><p>${excerpts[(id-1) % excerpts.length]} This session is designed for both beginners and intermediate students of astrology, offering fresh perspectives and practical applications.</p><h4>What You'll Learn</h4><ul><li>Key principles of the topic at hand.</li><li>How to apply this knowledge to your own life for immediate insight.</li><li>Advanced techniques for deeper understanding.</li></ul><p>Join us for an enlightening experience that will empower you to take control of your destiny.</p>`,
@@ -141,8 +134,6 @@ const createConference = (id: number): Conference => {
             { question: "How do I join the session?", answer: "A unique link to join the virtual conference room will be sent to your email address 1 hour before the event begins. Please check your spam folder if you don't see it." },
             { question: "What is the cancellation policy?", answer: "You can receive a full refund up to 24 hours before the conference starts. Within 24 hours, tickets are non-refundable but can be transferred to a friend." }
         ],
-        capacity: capacity,
-        seatsLeft: seatsLeft,
         recordingAvailable: Math.random() > 0.5,
     }
 };

@@ -101,7 +101,6 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
 
     const [allConferences, setAllConferences] = useState<Conference[]>([]);
     const [rsvps, setRsvps] = useState<Rsvp[]>([]);
-    const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const isLoading = isPending;
@@ -137,9 +136,6 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
 
         const storedRsvps = getLocal<Rsvp[]>("rsvps");
         if (storedRsvps) setRsvps(storedRsvps);
-
-        const storedWaitlist = getLocal<WaitlistEntry[]>("waitlist");
-        if(storedWaitlist) setWaitlist(storedWaitlist);
 
         // Set initial filters from URL params or session storage
         const urlFilters: Partial<Filters> = {}; // You can extend this to parse more filters from URL
@@ -282,13 +278,6 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         setSelectedConference(null);
     };
 
-    const handleWaitlistClick = (conf: Conference) => {
-        const newWaitlist = [...waitlist, { eventId: conf.id }];
-        setWaitlist(newWaitlist);
-        setLocal("waitlist", newWaitlist);
-        toast({ title: "You're on the waitlist!", description: `We'll notify you if a spot opens up for "${conf.title}".` });
-    }
-
     const handleReminderChange = (eventId: string, reminder: 'remind24h' | 'remind1h' | 'remind10m', checked: boolean) => {
         const updatedRsvps = rsvps.map(r => r.eventId === eventId ? {...r, [reminder]: checked} : r);
         setRsvps(updatedRsvps);
@@ -312,7 +301,6 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     }
     
     const isRsvpd = (id: string) => rsvps.some(r => r.eventId === id);
-    const isOnWaitlist = (id: string) => waitlist.some(w => w.eventId === id);
     
     const formatDate = (dateISO: string, durationMin: number) => {
         const date = new Date(dateISO);
@@ -336,7 +324,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     
         const tzName = timeZone.replace(/_/g, ' ');
     
-        return `${datePart} - ${endTimePart} • ${durationMin} min • ${tzName}`;
+        return `${datePart} - ${endTimePart} • ${durationMin} min`;
     };
 
     const FilterControls = () => (
@@ -528,10 +516,8 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {filteredConferences.map((conference) => {
                                     const rsvpDetails = rsvps.find(r => r.eventId === conference.id);
-                                    const hasSeats = conference.seatsLeft === undefined || conference.seatsLeft > 0;
                                     const eventIsLive = isLive(conference);
                                     const userIsRsvpd = isRsvpd(conference.id);
-                                    const userOnWaitlist = isOnWaitlist(conference.id);
 
                                     return (
                                     <Card key={conference.id} className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
@@ -553,7 +539,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                     <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary" aria-label={conference.title}>{conference.title}</h3>
                                                     
                                                     <div className="text-sm text-muted-foreground">
-                                                        <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
+                                                        <div className="flex items-center gap-2 flex-wrap"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
                                                     </div>
                                                     <div className="flex items-center gap-3 pt-2">
                                                         <Image src={`https://i.pravatar.cc/40?u=${encodeURIComponent(conference.hostAlias)}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
@@ -580,26 +566,19 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                                 <StarRating rating={conference.hostRating} size={14} />
                                                                 <span aria-label={`Host rating: ${conference.hostRating}`}>({conference.hostRating})</span>
-                                                                <span>•</span>
-                                                                <span>{conference.language}</span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     
                                                     <div className="flex flex-wrap gap-2 pt-1">
+                                                        {(conference.languages || []).map(lang => <Badge key={lang} variant="outline" className="font-normal">{lang}</Badge>)}
                                                         {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                                                         <Badge variant="outline">{conference.type}</Badge>
                                                     </div>
                                                 </div>
                                             </Link>
                                         </CardContent>
-                                        <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="secondary" className="bg-green-600/10 text-green-400 border-green-600/20">Free</Badge>
-                                                {conference.seatsLeft !== undefined && (
-                                                   <Badge variant="outline" className="font-normal">Seats left: {conference.seatsLeft}</Badge>
-                                                )}
-                                            </div>
+                                        <CardFooter className="p-4 pt-0 mt-auto flex justify-end items-center gap-2">
                                             <div className="flex items-center gap-2">
                                                 
                                                 <Popover>
@@ -641,22 +620,11 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                 ) : (
                                                     <Button 
                                                         size="sm" 
-                                                        onClick={() => {
-                                                            if (hasSeats) {
-                                                                handleRsvpClick(conference);
-                                                            } else if (!userOnWaitlist) {
-                                                                handleWaitlistClick(conference);
-                                                            }
-                                                        }}
+                                                        onClick={() => handleRsvpClick(conference)}
                                                         variant={userIsRsvpd ? "outline" : "default"} 
-                                                        disabled={!hasSeats && userOnWaitlist}
-                                                        aria-label={userIsRsvpd ? `Cancel RSVP for ${conference.title}` : (hasSeats ? `RSVP for ${conference.title}, a free event` : (userOnWaitlist ? `You are on the waitlist for ${conference.title}` : `Join the waitlist for ${conference.title}, a free event`))}
+                                                        aria-label={userIsRsvpd ? `Cancel RSVP for ${conference.title}` : `RSVP for ${conference.title}, a free event`}
                                                     >
-                                                        {userIsRsvpd ? <><CheckCircle className="mr-2 h-4 w-4" /> Going</> : (
-                                                            hasSeats ? <><Ticket className="mr-2 h-4 w-4" /> RSVP</> : (
-                                                                userOnWaitlist ? "On waitlist" : "Waitlist"
-                                                            )
-                                                        )}
+                                                        {userIsRsvpd ? <><CheckCircle className="mr-2 h-4 w-4" /> Going</> : <><Ticket className="mr-2 h-4 w-4" /> RSVP</>}
                                                     </Button>
                                                 )}
                                             </div>
@@ -693,3 +661,4 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
 }
 
     
+
