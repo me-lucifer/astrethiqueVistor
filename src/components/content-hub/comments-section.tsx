@@ -122,7 +122,9 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
               <h3 className="font-semibold">Sign in to add a comment.</h3>
               <div className="flex gap-2 justify-center mt-4">
                 <Button onClick={() => setIsAuthModalOpen(true)}>Login</Button>
-                <Button variant="outline" onClick={() => setIsAuthModalOpen(true)}>Create account</Button>
+                <Button variant="outline" asChild>
+                    <Link href="/register">Create account</Link>
+                </Button>
               </div>
             </div>
           )}
@@ -142,7 +144,10 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
                     {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                   </p>
                 </div>
-                <p className="text-sm text-foreground/90 mt-1">{comment.text}</p>
+                <p className="text-sm text-foreground/90 mt-1 whitespace-pre-wrap">{comment.text}</p>
+                <div className="mt-1">
+                    <Button variant="link" size="sm" className="text-xs text-muted-foreground p-0 h-auto">Report</Button>
+                </div>
               </div>
             </div>
           ))}
@@ -163,5 +168,3 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
     </>
   );
 }
-
-    
