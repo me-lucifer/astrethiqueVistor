@@ -280,6 +280,28 @@ export const translations = {
                 title: "Law Enforcement Inquiries",
                 content: "Official requests from law enforcement agencies should be directed to our legal team. Please include the legal basis for your request."
             }
+        },
+        kycIdVerification: {
+            title: "KYC / ID Verification",
+            lastUpdated: "Last updated",
+            toc: "On this page",
+            whatWeVerify: {
+                title: "What We Verify",
+                content: "We verify a consultant's identity using a valid, government-issued photo ID (e.g., passport, driver's license). This is a one-time process to confirm that the person is who they say they are."
+            },
+            whenAndWhy: {
+                title: "When & Why We Verify",
+                content: "Verification is mandatory for all consultants before they can offer services on the platform. This helps prevent fraud, increases trust, and ensures a safer environment for everyone."
+            },
+            dataFlow: {
+                title: "Data Flow & Security",
+                content: "The verification process is handled by a secure, third-party provider. We do not store your ID documents on our servers. We only receive a 'verified' or 'not verified' signal, which is used to display the 'KYC/ID verified' badge on a consultant's profile."
+            },
+            retentionAndRights: {
+                title: "Retention & Your Rights",
+                content: "Because we do not store the original documents, any data rights requests (like deletion) should be directed to our third-party provider, though we will facilitate this process. For more information on your data, please see our",
+                link: "Privacy Policy"
+            }
         }
     },
     fr: {
@@ -561,6 +583,28 @@ export const translations = {
             lawEnforcement: {
                 title: "Demandes des Forces de l'Ordre",
                 content: "Les demandes officielles des forces de l'ordre doivent être adressées à notre équipe juridique. Veuillez inclure la base juridique de votre demande."
+            }
+        },
+        kycIdVerification: {
+            title: "Vérification KYC / ID",
+            lastUpdated: "Dernière mise à jour",
+            toc: "Sur cette page",
+            whatWeVerify: {
+                title: "Ce que nous vérifions",
+                content: "Placeholder FR: We verify a consultant's identity using a valid, government-issued photo ID (e.g., passport, driver's license). This is a one-time process to confirm that the person is who they say they are."
+            },
+            whenAndWhy: {
+                title: "Quand et pourquoi",
+                content: "Placeholder FR: Verification is mandatory for all consultants before they can offer services on the platform. This helps prevent fraud, increases trust, and ensures a safer environment for everyone."
+            },
+            dataFlow: {
+                title: "Flux de données et sécurité",
+                content: "Placeholder FR: The verification process is handled by a secure, third-party provider. We do not store your ID documents on our servers. We only receive a 'verified' or 'not verified' signal, which is used to display the 'KYC/ID verified' badge on a consultant's profile."
+            },
+            retentionAndRights: {
+                title: "Rétention et vos droits",
+                content: "Placeholder FR: Because we do not store the original documents, any data rights requests (like deletion) should be directed to our third-party provider, though we will facilitate this process. For more information on your data, please see our",
+                link: "Politique de confidentialité"
             }
         }
     }
