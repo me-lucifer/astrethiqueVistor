@@ -1,11 +1,12 @@
 
 import { ContentHubItem } from "@/lib/content-hub-seeder";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import Link from "next/link";
+import { Button } from "../ui/button";
 
 export const YouTubePlayer = ({ item }: { item: ContentHubItem }) => {
-    if (!item.youtubeUrl) return null;
-    
     // Extract video ID from URL
-    const extractYouTubeId = (url: string): string | null => {
+    const extractYouTubeId = (url?: string): string | null => {
         if (!url) return null;
         let videoId = '';
         try {
@@ -33,7 +34,25 @@ export const YouTubePlayer = ({ item }: { item: ContentHubItem }) => {
     
     const videoId = extractYouTubeId(item.youtubeUrl);
 
-    if (!videoId) return <p className="text-destructive">Could not load video. Invalid YouTube URL provided.</p>;
+    if (!videoId) {
+        return (
+            <Card className="bg-destructive/10 border-destructive text-destructive-foreground">
+                <CardHeader>
+                    <CardTitle>Invalid Podcast Link</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <CardDescription className="text-destructive-foreground/80">
+                        The link for this podcast appears to be invalid or broken.
+                    </CardDescription>
+                </CardContent>
+                <CardFooter>
+                     <Button variant="destructive" asChild>
+                        <a href={item.youtubeUrl} target="_blank" rel="noopener noreferrer">Try opening on YouTube</a>
+                     </Button>
+                </CardFooter>
+            </Card>
+        );
+    }
 
     const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0`;
 
@@ -50,3 +69,5 @@ export const YouTubePlayer = ({ item }: { item: ContentHubItem }) => {
         </div>
     );
 }
+
+    

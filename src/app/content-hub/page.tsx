@@ -33,7 +33,6 @@ export default function ContentHubPage() {
     // Filter and sort state
     const [query, setQuery] = useState(searchParams.get('q') || '');
     const [topics, setTopics] = useState<string[]>(searchParams.get('topics')?.split(',').filter(Boolean) || []);
-    const [zodiac, setZodiac] = useState<string[]>(searchParams.get('zodiac')?.split(',').filter(Boolean) || []);
     const [type, setType] = useState(searchParams.get('type') || 'all');
     const [language, setLanguage] = useState(searchParams.get('lang') || 'all');
     const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
@@ -42,15 +41,7 @@ export default function ContentHubPage() {
     useEffect(() => {
         seedContentHub();
         const items = getSession<ContentHubItem[]>('ch_items') || [];
-        
-        // Add bookmark status from another session key
-        const savedIds = getSession<string[]>("savedContentIds") || [];
-        const itemsWithBookmarks = items.map(item => ({
-            ...item,
-            bookmarked: savedIds.includes(item.id)
-        }));
-
-        setAllItems(itemsWithBookmarks);
+        setAllItems(items);
 
         // Check for daily mood for personalization
         const dailyMood = getSession<DailyMood>("daily_mood");
@@ -68,20 +59,19 @@ export default function ContentHubPage() {
         const params = new URLSearchParams();
         if (query) params.set('q', query);
         if (topics.length) params.set('topics', topics.join(','));
-        if (zodiac.length) params.set('zodiac', zodiac.join(','));
         if (type !== 'all') params.set('type', type);
         if (language !== 'all') params.set('lang', language);
         if (sort !== 'newest') params.set('sort', sort);
         if (authorFilter) params.set('author', authorFilter);
         router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    }, [query, topics, zodiac, type, language, sort, authorFilter, pathname, router]);
+    }, [query, topics, type, language, sort, authorFilter, pathname, router]);
 
     useEffect(() => {
         const debounceTimer = setTimeout(() => {
             updateURL();
         }, 300);
         return () => clearTimeout(debounceTimer);
-    }, [query, topics, zodiac, type, language, sort, authorFilter, updateURL]);
+    }, [query, topics, type, language, sort, authorFilter, updateURL]);
 
 
     const filteredItems = useMemo(() => {
@@ -102,10 +92,6 @@ export default function ContentHubPage() {
 
         if (topics.length > 0) {
             items = items.filter(item => item.tags.some(t => topics.includes(t)));
-        }
-        
-        if (zodiac.length > 0) {
-            items = items.filter(item => item.zodiac.some(z => zodiac.includes(z)));
         }
 
         if (type !== 'all') {
@@ -133,7 +119,7 @@ export default function ContentHubPage() {
         }
 
         return items;
-    }, [allItems, query, topics, zodiac, type, language, sort, authorFilter]);
+    }, [allItems, query, topics, type, language, sort, authorFilter]);
     
     const visibleItems = useMemo(() => {
         return filteredItems.slice(0, page * ITEMS_PER_PAGE);
@@ -142,7 +128,6 @@ export default function ContentHubPage() {
     const handleReset = () => {
         setQuery('');
         setTopics([]);
-        setZodiac([]);
         setType('all');
         setLanguage('all');
         setSort('newest');
@@ -174,14 +159,9 @@ export default function ContentHubPage() {
     }
 
     const handleToggleBookmark = (itemId: string) => {
-        const savedIds = getSession<string[]>("savedContentIds") || [];
-        const isBookmarked = savedIds.includes(itemId);
-        const newSavedIds = isBookmarked ? savedIds.filter(id => id !== itemId) : [...savedIds, itemId];
-        setSession("savedContentIds", newSavedIds);
-
         const updatedItems = allItems.map(item => {
             if (item.id === itemId) {
-                return { ...item, bookmarked: !isBookmarked };
+                return { ...item, bookmarked: !item.bookmarked };
             }
             return item;
         });
@@ -230,7 +210,6 @@ export default function ContentHubPage() {
             <ContentHubFilters
                 query={query} setQuery={setQuery}
                 topics={topics} setTopics={setTopics}
-                zodiac={zodiac} setZodiac={setZodiac}
                 type={type} setType={setType}
                 language={language} setLanguage={setLanguage}
                 sort={sort} setSort={setSort}
@@ -288,3 +267,5 @@ export default function ContentHubPage() {
         </div>
     );
 }
+
+    

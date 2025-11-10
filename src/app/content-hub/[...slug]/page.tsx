@@ -144,11 +144,6 @@ export default function ContentDetailPage() {
         const updatedItem = { ...targetItem, bookmarked: !targetItem.bookmarked };
         updateItemInSession(updatedItem);
 
-        const savedIds = getSession<string[]>("savedContentIds") || [];
-        const isBookmarked = savedIds.includes(targetItem.id);
-        const newSavedIds = isBookmarked ? savedIds.filter(id => id !== targetItem.id) : [...savedIds, targetItem.id];
-        setSession("savedContentIds", newSavedIds);
-
         toast({
             title: updatedItem.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
         });
@@ -271,7 +266,7 @@ export default function ContentDetailPage() {
                                     {item.type === 'article' ? <BookOpen className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
                                     {item.type}
                                 </Badge>
-                                {item.tags.map(topic => (
+                                {item.tags.length > 0 && item.tags.map(topic => (
                                     <Button key={topic} variant="link" className="p-0 h-auto" onClick={() => handleTopicClick(topic)}>
                                         <Badge variant="outline">{topic}</Badge>
                                     </Button>
@@ -289,7 +284,7 @@ export default function ContentDetailPage() {
                                     <span className="font-medium text-foreground">{item.author.name}</span>
                                 </button>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => handleToggleLike(item.id)} className={`gap-2 ${item.liked ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                    <Button variant="ghost" size="sm" onClick={() => handleToggleLike(item.id)} className={`gap-2 ${item.liked ? 'text-destructive' : 'text-muted-foreground'}`} aria-label={item.liked ? `Unlike this item, it has ${item.likes} likes` : `Like this item, it has ${item.likes} likes`}>
                                         <Heart className={`h-5 w-5 ${item.liked ? 'fill-current' : ''}`} />
                                         {item.likes}
                                     </Button>
@@ -401,3 +396,5 @@ export default function ContentDetailPage() {
         </div>
     );
 }
+
+    
