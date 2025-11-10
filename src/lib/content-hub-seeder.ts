@@ -133,9 +133,104 @@ export const seedContentHub = () => {
     const existingItems = getSession<ContentHubItem[]>("ch_items");
     if (!existingItems || existingItems.length === 0) {
         const items = Array.from({ length: 10 }, (_, i) => createItem(i));
-        const initialComments = createInitialComments(items);
-        setSession("ch_items", items);
+
+        const now = new Date();
+        
+        const newPodcasts: ContentHubItem[] = [
+            {
+                id: 'ch-item-11',
+                type: 'podcast',
+                title: 'Cosmic Currents: The Power of Retrogrades',
+                excerpt: "Explore the misunderstood power of planetary retrogrades and how to harness their energy for reflection and realignment.",
+                body: "<p>In this episode, we demystify planetary retrogrades, often feared but rarely understood. Learn why these periods are powerful opportunities for review, revision, and deep personal growth. We'll cover Mercury, Venus, and Mars retrogrades, offering practical tips to navigate each cycle with confidence.</p>",
+                heroImage: `https://picsum.photos/seed/ch11/600/400`,
+                author: authors[0],
+                language: 'EN',
+                tags: ["Astrology", "Planets", "Spirituality"],
+                zodiac: ["Pisces"],
+                publishedAt: new Date(now.getTime() - 2 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                readMinutes: null,
+                durationMinutes: 28,
+                views: 3200,
+                likes: 180,
+                featured: false,
+                liked: false,
+                bookmarked: false,
+                deleted: false,
+                youtubeUrl: "https://www.youtube.com/watch?v=9xwazD5SyVg",
+            },
+            {
+                id: 'ch-item-12',
+                type: 'podcast',
+                title: 'Spirit Guides & Signs',
+                excerpt: "Learn to recognize and interpret the signs from your spirit guides in your daily life. A practical guide to spiritual connection.",
+                body: "<p>Are your spirit guides trying to send you a message? This episode explores the common signs, symbols, and synchronicities that our spiritual support team uses to communicate with us. From angel numbers to animal messengers, we'll help you tune in and understand the guidance that's all around you.</p>",
+                heroImage: `https://picsum.photos/seed/ch12/600/400`,
+                author: authors[1],
+                language: 'FR',
+                tags: ["Tarot", "Astrology"],
+                zodiac: [],
+                publishedAt: new Date(now.getTime() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                readMinutes: null,
+                durationMinutes: 18,
+                views: 2100,
+                likes: 150,
+                featured: false,
+                liked: false,
+                bookmarked: false,
+                deleted: false,
+                youtubeUrl: "https://www.youtube.com/watch?v=ysz5S6PUM-U",
+            },
+            {
+                id: 'ch-item-13',
+                type: 'podcast',
+                title: 'Astrology 101: Houses Explained',
+                excerpt: "A beginner-friendly breakdown of the 12 houses in astrology and what they represent in your birth chart and your life.",
+                body: "<p>The 12 houses of the zodiac form the architecture of your life's experiences. In this essential 'Astrology 101' episode, we break down each house, from the 1st house of Self to the 12th house of the Unconscious. Understand how the planets in these houses shape your personality, career, relationships, and spiritual path.</p>",
+                heroImage: `https://picsum.photos/seed/ch13/600/400`,
+                author: authors[2],
+                language: 'EN',
+                tags: ["Astrology", "Beginner", "Houses"],
+                zodiac: [],
+                publishedAt: new Date(now.getTime() - 5 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                readMinutes: null,
+                durationMinutes: 36,
+                views: 5400,
+                likes: 320,
+                featured: true,
+                liked: false,
+                bookmarked: false,
+                deleted: false,
+                youtubeUrl: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+            },
+            {
+                id: 'ch-item-14',
+                type: 'podcast',
+                title: 'Lunar Nodes Deep Dive',
+                excerpt: "Go beyond the basics and discover the karmic lessons of the North and South Nodes in your birth chart.",
+                body: "<p>This advanced session explores the profound meaning of the lunar nodes. The South Node reveals your past life karma and ingrained patterns, while the North Node points toward your soul's ultimate destiny and growth potential. Learn how to work with your nodal axis to break free from old habits and align with your true purpose.</p>",
+                heroImage: `https://picsum.photos/seed/ch14/600/400`,
+                author: authors[3],
+                language: 'FR',
+                tags: ["Astrology", "Nodes", "Advanced"],
+                zodiac: ["Cancer"],
+                publishedAt: new Date(now.getTime() - 7 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                readMinutes: null,
+                durationMinutes: 24,
+                views: 1800,
+                likes: 95,
+                featured: false,
+                liked: false,
+                bookmarked: false,
+                deleted: false,
+                youtubeUrl: "https://www.youtube.com/watch?v=oHg5SJYRHA0",
+            },
+        ];
+
+        const allItems = [...items, ...newPodcasts];
+
+        const initialComments = createInitialComments(allItems);
+        setSession("ch_items", allItems);
         setSession("commentsByContentId", initialComments);
     }
 };
-
