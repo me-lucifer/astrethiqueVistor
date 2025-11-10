@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -93,7 +94,7 @@ const PrivacyPolicyContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
-                    <Button variant="ghost" className="hidden md:inline-flex">
+                    <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
                         <Printer className="mr-2 h-4 w-4" />
                         {t.printDownload}
                     </Button>
@@ -105,7 +106,7 @@ const PrivacyPolicyContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="data-controller" id="data-controller">
-                            <AccordionTrigger className="text-xl font-headline">{t.dataController.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.dataController.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.dataController.content[0]}</p>
                                 <ul className="list-none p-0">
@@ -116,7 +117,7 @@ const PrivacyPolicyContent = () => {
                         </AccordionItem>
 
                         <AccordionItem value="data-we-collect" id="data-we-collect">
-                             <AccordionTrigger className="text-xl font-headline">{t.dataWeCollect.title}</AccordionTrigger>
+                             <AccordionTrigger><h2>{t.dataWeCollect.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                <p>{t.dataWeCollect.intro}</p>
                                 <ul>
@@ -130,7 +131,7 @@ const PrivacyPolicyContent = () => {
                         </AccordionItem>
 
                         <AccordionItem value="why-we-process" id="why-we-process">
-                            <AccordionTrigger className="text-xl font-headline">{t.whyWeProcess.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.whyWeProcess.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                <p>{t.whyWeProcess.intro}</p>
                                 <ul>
@@ -143,14 +144,14 @@ const PrivacyPolicyContent = () => {
                         </AccordionItem>
                         
                          <AccordionItem value="international-transfers" id="international-transfers">
-                             <AccordionTrigger className="text-xl font-headline">{t.internationalTransfers.title}</AccordionTrigger>
+                             <AccordionTrigger><h2>{t.internationalTransfers.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                <p>{t.internationalTransfers.content[0]}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="data-retention" id="data-retention">
-                            <AccordionTrigger className="text-xl font-headline">{t.dataRetention.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.dataRetention.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.dataRetention.intro}</p>
                                 <Table>
@@ -173,13 +174,13 @@ const PrivacyPolicyContent = () => {
                         </AccordionItem>
 
                         <AccordionItem value="your-rights" id="your-rights">
-                             <AccordionTrigger className="text-xl font-headline">{t.yourRights.title}</AccordionTrigger>
+                             <AccordionTrigger><h2>{t.yourRights.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.yourRights.intro}</p>
                                 <ul>
                                     {t.yourRights.rightsList.map((right: string, i: number) => <li key={i}>{right}</li>)}
                                 </ul>
-                                <h4>{t.yourRights.howToExercise.title}</h4>
+                                <h3>{t.yourRights.howToExercise.title}</h3>
                                 <p>
                                     {t.yourRights.howToExercise.text[0]} <a href="mailto:privacy@astrethique.com">privacy@astrethique.com</a>.
                                 </p>
@@ -187,15 +188,15 @@ const PrivacyPolicyContent = () => {
                         </AccordionItem>
 
                         <AccordionItem value="other-info" id="other-info">
-                             <AccordionTrigger className="text-xl font-headline">{t.otherInfo.title}</AccordionTrigger>
+                             <AccordionTrigger><h2>{t.otherInfo.title}</h2></AccordionTrigger>
                             <AccordionContent>
-                                <h4>{t.otherInfo.agePolicy.title}</h4>
+                                <h3>{t.otherInfo.agePolicy.title}</h3>
                                 <p>{t.otherInfo.agePolicy.text}</p>
-                                <h4>{t.otherInfo.cookies.title}</h4>
+                                <h3>{t.otherInfo.cookies.title}</h3>
                                 <p>{t.otherInfo.cookies.text[0]} <Link href="/legal-hub/cookie-policy">{t.otherInfo.cookies.linkText}</Link>.</p>
-                                <h4>{t.otherInfo.policyChanges.title}</h4>
+                                <h3>{t.otherInfo.policyChanges.title}</h3>
                                 <p>{t.otherInfo.policyChanges.text}</p>
-                                <h4>{t.otherInfo.contact.title}</h4>
+                                <h3>{t.otherInfo.contact.title}</h3>
                                 <p>{t.otherInfo.contact.text[0]} <a href="mailto:privacy@astrethique.com">privacy@astrethique.com</a>.</p>
                             </AccordionContent>
                         </AccordionItem>
@@ -287,6 +288,10 @@ const TermsOfServiceContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
+                     <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {translations[language].privacyPolicy.printDownload}
+                    </Button>
                 </div>
             </div>
             
@@ -295,63 +300,63 @@ const TermsOfServiceContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="eligibility" id="eligibility">
-                            <AccordionTrigger className="text-xl font-headline">{t.eligibility.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.eligibility.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.eligibility.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="disclaimer" id="disclaimer">
-                            <AccordionTrigger className="text-xl font-headline">{t.disclaimer.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.disclaimer.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.disclaimer.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="platform" id="platform">
-                            <AccordionTrigger className="text-xl font-headline">{t.platform.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.platform.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.platform.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="billing" id="billing">
-                            <AccordionTrigger className="text-xl font-headline">{t.billing.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.billing.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.billing.content} <Link href="/legal-hub/refunds-and-cancellations">{t.billing.link}</Link>.</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="content" id="content">
-                            <AccordionTrigger className="text-xl font-headline">{t.content.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.content.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.content.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="conduct" id="conduct">
-                            <AccordionTrigger className="text-xl font-headline">{t.conduct.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.conduct.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.conduct.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="termination" id="termination">
-                            <AccordionTrigger className="text-xl font-headline">{t.termination.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.termination.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.termination.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="governing-law" id="governing-law">
-                            <AccordionTrigger className="text-xl font-headline">{t.governingLaw.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.governingLaw.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.governingLaw.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="contact" id="contact">
-                            <AccordionTrigger className="text-xl font-headline">{t.contact.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.contact.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.contact.content} <a href="mailto:legal@astrethique.com">legal@astrethique.com</a>.</p>
                             </AccordionContent>
@@ -445,6 +450,10 @@ const PricingAndFeesContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
+                     <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {translations[language].privacyPolicy.printDownload}
+                    </Button>
                 </div>
             </div>
             
@@ -453,21 +462,21 @@ const PricingAndFeesContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="model" id="model">
-                            <AccordionTrigger className="text-xl font-headline">{t.model.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.model.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.model.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="wallet" id="wallet">
-                            <AccordionTrigger className="text-xl font-headline">{t.wallet.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.wallet.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.wallet.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="fees" id="fees">
-                            <AccordionTrigger className="text-xl font-headline">{t.fees.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.fees.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.fees.content[0]}</p>
                                 <p>{t.fees.content[1]}</p>
@@ -475,7 +484,7 @@ const PricingAndFeesContent = () => {
                         </AccordionItem>
                         
                         <AccordionItem value="example" id="example">
-                            <AccordionTrigger className="text-xl font-headline">{t.example.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.example.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.example.intro}</p>
                                 <Table>
@@ -596,6 +605,10 @@ const CookiePolicyContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
+                     <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {translations[language].privacyPolicy.printDownload}
+                    </Button>
                 </div>
             </div>
             
@@ -604,14 +617,14 @@ const CookiePolicyContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="what-are-cookies" id="what-are-cookies">
-                            <AccordionTrigger className="text-xl font-headline">{t.whatAreCookies.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.whatAreCookies.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.whatAreCookies.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="how-we-use" id="how-we-use">
-                            <AccordionTrigger className="text-xl font-headline">{t.howWeUse.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.howWeUse.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.howWeUse.intro}</p>
                                 <ul>
@@ -623,7 +636,7 @@ const CookiePolicyContent = () => {
                         </AccordionItem>
                         
                         <AccordionItem value="managing" id="managing">
-                            <AccordionTrigger className="text-xl font-headline">{t.managing.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.managing.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.managing.content}</p>
                                 <Button onClick={handleManageClick} className="mt-4">{t.managing.buttonText}</Button>
@@ -713,6 +726,10 @@ const RefundsAndCancellationsContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
+                     <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {translations[language].privacyPolicy.printDownload}
+                    </Button>
                 </div>
             </div>
             
@@ -721,35 +738,35 @@ const RefundsAndCancellationsContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="consultant-no-show" id="consultant-no-show">
-                            <AccordionTrigger className="text-xl font-headline">{t.consultantNoShow.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.consultantNoShow.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.consultantNoShow.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="user-cancellations" id="user-cancellations">
-                            <AccordionTrigger className="text-xl font-headline">{t.userCancellations.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.userCancellations.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.userCancellations.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="technical-failures" id="technical-failures">
-                            <AccordionTrigger className="text-xl font-headline">{t.technicalFailures.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.technicalFailures.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.technicalFailures.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="conferences" id="conferences">
-                            <AccordionTrigger className="text-xl font-headline">{t.conferences.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.conferences.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.conferences.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="how-to-request" id="how-to-request">
-                            <AccordionTrigger className="text-xl font-headline">{t.howToRequest.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.howToRequest.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.howToRequest.content} <a href="mailto:support@astrethique.com">support@astrethique.com</a>.</p>
                             </AccordionContent>
@@ -839,6 +856,10 @@ const ContentAndCommunityGuidelinesContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
+                     <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {translations[language].privacyPolicy.printDownload}
+                    </Button>
                 </div>
             </div>
             
@@ -847,42 +868,42 @@ const ContentAndCommunityGuidelinesContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="respect" id="respect">
-                            <AccordionTrigger className="text-xl font-headline">{t.respectfulConduct.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.respectfulConduct.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.respectfulConduct.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="boundaries" id="boundaries">
-                            <AccordionTrigger className="text-xl font-headline">{t.professionalBoundaries.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.professionalBoundaries.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.professionalBoundaries.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="authenticity" id="authenticity">
-                            <AccordionTrigger className="text-xl font-headline">{t.authenticity.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.authenticity.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.authenticity.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="comments" id="comments">
-                            <AccordionTrigger className="text-xl font-headline">{t.commentingRules.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.commentingRules.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.commentingRules.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="enforcement" id="enforcement">
-                            <AccordionTrigger className="text-xl font-headline">{t.enforcement.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.enforcement.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.enforcement.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="reporting" id="reporting">
-                            <AccordionTrigger className="text-xl font-headline">{t.reporting.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.reporting.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.reporting.content} <a href="mailto:support@astrethique.com">support@astrethique.com</a>.</p>
                             </AccordionContent>
@@ -970,6 +991,10 @@ const SafetyAndReportingContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
+                     <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {translations[language].privacyPolicy.printDownload}
+                    </Button>
                 </div>
             </div>
             
@@ -978,28 +1003,28 @@ const SafetyAndReportingContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="emergency-disclaimer" id="emergency-disclaimer">
-                            <AccordionTrigger className="text-xl font-headline">{t.emergencyDisclaimer.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.emergencyDisclaimer.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.emergencyDisclaimer.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="how-to-report" id="how-to-report">
-                            <AccordionTrigger className="text-xl font-headline">{t.howToReport.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.howToReport.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.howToReport.content} <a href="mailto:support@astrethique.com">support@astrethique.com</a>.</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="blocking-and-muting" id="blocking-and-muting">
-                            <AccordionTrigger className="text-xl font-headline">{t.blockingAndMuting.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.blockingAndMuting.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.blockingAndMuting.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="law-enforcement" id="law-enforcement">
-                            <AccordionTrigger className="text-xl font-headline">{t.lawEnforcement.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.lawEnforcement.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.lawEnforcement.content} <a href="mailto:legal@astrethique.com">legal@astrethique.com</a>.</p>
                             </AccordionContent>
@@ -1087,6 +1112,10 @@ const KycIdVerificationContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
+                     <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {translations[language].privacyPolicy.printDownload}
+                    </Button>
                 </div>
             </div>
             
@@ -1095,28 +1124,28 @@ const KycIdVerificationContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="what-we-verify" id="what-we-verify">
-                            <AccordionTrigger className="text-xl font-headline">{t.whatWeVerify.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.whatWeVerify.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.whatWeVerify.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="when-and-why" id="when-and-why">
-                            <AccordionTrigger className="text-xl font-headline">{t.whenAndWhy.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.whenAndWhy.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.whenAndWhy.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="data-flow" id="data-flow">
-                            <AccordionTrigger className="text-xl font-headline">{t.dataFlow.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.dataFlow.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.dataFlow.content}</p>
                             </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="retention-rights" id="retention-rights">
-                            <AccordionTrigger className="text-xl font-headline">{t.retentionAndRights.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.retentionAndRights.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.retentionAndRights.content} <Link href="/legal-hub/privacy-policy">{t.retentionAndRights.link}</Link>.</p>
                             </AccordionContent>
@@ -1202,6 +1231,10 @@ const DataProcessingContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
+                     <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {translations[language].privacyPolicy.printDownload}
+                    </Button>
                 </div>
             </div>
             
@@ -1210,14 +1243,14 @@ const DataProcessingContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="controller-processor" id="controller-processor">
-                            <AccordionTrigger className="text-xl font-headline">{t.controllerProcessor.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.controllerProcessor.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.controllerProcessor.content}</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="subprocessors" id="subprocessors">
-                            <AccordionTrigger className="text-xl font-headline">{t.subprocessors.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.subprocessors.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.subprocessors.intro}</p>
                                 <Table>
@@ -1325,6 +1358,10 @@ const CopyrightAndTakedownContent = () => {
                 </div>
                  <div className="flex gap-2 items-center">
                     <LanguageToggle />
+                     <Button variant="ghost" className="hidden md:inline-flex" aria-label="Opens printer dialog (prototype)">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {translations[language].privacyPolicy.printDownload}
+                    </Button>
                 </div>
             </div>
             
@@ -1333,14 +1370,14 @@ const CopyrightAndTakedownContent = () => {
                     <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
                         
                         <AccordionItem value="submit-complaint" id="submit-complaint">
-                            <AccordionTrigger className="text-xl font-headline">{t.submitComplaint.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.submitComplaint.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.submitComplaint.content} <a href="mailto:legal@astrethique.com">legal@astrethique.com</a>.</p>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="required-info" id="required-info">
-                            <AccordionTrigger className="text-xl font-headline">{t.requiredInfo.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.requiredInfo.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.requiredInfo.intro}</p>
                                 <ul>
@@ -1350,7 +1387,7 @@ const CopyrightAndTakedownContent = () => {
                         </AccordionItem>
                         
                         <AccordionItem value="counter-notice" id="counter-notice">
-                            <AccordionTrigger className="text-xl font-headline">{t.counterNotice.title}</AccordionTrigger>
+                            <AccordionTrigger><h2>{t.counterNotice.title}</h2></AccordionTrigger>
                             <AccordionContent>
                                 <p>{t.counterNotice.content}</p>
                             </AccordionContent>
@@ -1445,3 +1482,4 @@ export default function LegalDetailPage() {
         </div>
     );
 }
+
