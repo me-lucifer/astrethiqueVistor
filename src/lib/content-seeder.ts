@@ -34,7 +34,7 @@ const titles = [
 ];
 
 const tags: Tag[] = ["Love", "Work", "Health", "Money", "Astrology", "Tarot", "Numerology", "Clairvoyance"];
-const authors = ["Admin", "Aeliana", "Kael", "Seraphina", "Orion"];
+const authors = ["Admin", "Aeliana", "Kael", "Seraphina", "Orion", "Eva", "Marcus"];
 const types: ContentType[] = ["Article", "Podcast", "Video"];
 
 const createContentItem = (id: number): ContentItem => {
