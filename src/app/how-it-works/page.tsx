@@ -131,6 +131,30 @@ export default function HowItWorksPage() {
       answer: "After every paid session, a detailed invoice is automatically sent to your registered email address. You can also view your full session history and invoices in your account dashboard."
     }
   ];
+  
+    const consultantFaqs = [
+    {
+      question: "How do promotions work (limits & visibility)?",
+      answer: "You can run one free 24-hour promotion per week and one paid promotion per month. Both give your profile enhanced visibility on the Discover page. You cannot run more than one promo per week."
+    },
+    {
+      question: "When can I change my rate?",
+      answer: "You can adjust your per-minute rate once every 30 days. This policy ensures pricing stability for clients while giving you the flexibility to adapt to your business needs."
+    },
+    {
+      question: "Why is my profile hidden in some countries (language gating)?",
+      answer: "Your profile is only visible to users in regions where they speak the languages you have listed on your profile. This 'language gating' ensures clients have a good experience by connecting with consultants they can understand."
+    },
+    {
+      question: "When are monthly invoices generated and paid (acceptance flow)?",
+      answer: "Invoices for the previous month's earnings are generated on the 1st of each month. You must review and accept the invoice in your dashboard, after which funds are transferred to your wallet for payout."
+    },
+    {
+      question: "How does content publishing & approval work?",
+      answer: "You can submit articles, podcasts, or conference ideas through your dashboard. All content is reviewed by our admin team for quality and adherence to guidelines before it is published on the platform."
+    }
+  ];
+
 
   const VisitorContent = () => (
     <div className="mt-12">
@@ -266,17 +290,32 @@ export default function HowItWorksPage() {
         ))}
       </div>
       <div className="mt-16">
-          <h3 className="font-headline text-2xl font-bold mb-6">Quick Links for Consultants</h3>
-          <div className="space-y-3 max-w-md">
-            {consultantQuickLinks.map(link => (
-              <Link key={link.label} href={link.href}>
-                <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors">
-                  <link.icon className="h-5 w-5 text-primary" />
-                  <span className="font-medium">{link.label}</span>
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+            <div>
+                <h3 className="font-headline text-2xl font-bold mb-6">Quick Links for Consultants</h3>
+                <div className="space-y-3 max-w-md">
+                    {consultantQuickLinks.map(link => (
+                    <Link key={link.label} href={link.href}>
+                        <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors">
+                        <link.icon className="h-5 w-5 text-primary" />
+                        <span className="font-medium">{link.label}</span>
+                        </div>
+                    </Link>
+                    ))}
                 </div>
-              </Link>
-            ))}
-          </div>
+            </div>
+            <div>
+                 <h3 className="font-headline text-2xl font-bold mb-6">Consultant FAQs</h3>
+                 <Accordion type="single" collapsible className="w-full">
+                    {consultantFaqs.map((faq, index) => (
+                        <AccordionItem key={index} value={`item-${index}`}>
+                            <AccordionTrigger>{faq.question}</AccordionTrigger>
+                            <AccordionContent>{faq.answer}</AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            </div>
+        </div>
         </div>
     </div>
   );
