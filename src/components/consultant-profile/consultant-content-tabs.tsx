@@ -11,10 +11,51 @@ import { Separator } from '@/components/ui/separator';
 import { StarRating } from '@/components/star-rating';
 import { ContentCard } from '../content-card';
 import Link from 'next/link';
-import { Briefcase, MapPin } from 'lucide-react';
+import { Briefcase, MapPin, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const CollapsibleBio = ({ bio }: { bio: string }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isClamped, setIsClamped] = useState(true);
+    const contentRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (contentRef.current && contentRef.current.scrollHeight > 420) {
+            setIsClamped(true);
+        } else {
+            setIsClamped(false);
+        }
+    }, [bio]);
+
+    return (
+        <div>
+            <div
+                ref={contentRef}
+                className={cn(
+                    "prose prose-invert max-w-none text-foreground/80 relative transition-[max-height] duration-500 ease-in-out overflow-hidden",
+                    !isExpanded && "max-h-[420px]"
+                )}
+                style={{ maxHeight: isExpanded ? contentRef.current?.scrollHeight : '420px' }}
+            >
+                <div dangerouslySetInnerHTML={{ __html: bio }} />
+                {!isExpanded && isClamped && (
+                    <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                )}
+            </div>
+            {isClamped && (
+                <div className="mt-4">
+                    <Button variant="link" onClick={() => setIsExpanded(!isExpanded)} className="p-0 text-base">
+                        {isExpanded ? 'Show less' : 'Read more'}
+                        <ChevronDown className={cn("ml-1 h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
+                    </Button>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const BioContent = ({ bio, years, country }: { bio: string, years: number, country: string }) => (
-    <div className="prose prose-invert max-w-none text-foreground/80 space-y-4">
+    <div className="space-y-4">
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-foreground/90">
             <div className="flex items-center gap-2">
                 <Briefcase className="h-4 w-4 text-primary" />
@@ -25,7 +66,7 @@ const BioContent = ({ bio, years, country }: { bio: string, years: number, count
                 <span>From {country}</span>
             </div>
         </div>
-        <div dangerouslySetInnerHTML={{ __html: bio }} />
+        <CollapsibleBio bio={bio} />
     </div>
 );
 
