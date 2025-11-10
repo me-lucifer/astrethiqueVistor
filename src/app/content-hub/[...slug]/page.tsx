@@ -100,8 +100,10 @@ export default function ContentDetailPage() {
 
             if (foundItem && !foundItem.deleted) {
                 setItem(foundItem);
-                const allComments = getSession<{[key: string]: Comment[]}>('commentsByContentId') || {};
-                setComments(allComments[itemId] || []);
+                const allComments = getSession<{[key: string]: Comment[]}>('contentHub_comments_v1') || {};
+                const itemComments = allComments[itemId] || [];
+                itemComments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                setComments(itemComments);
             } else {
                 setItem(null);
                 setComments([]);
@@ -125,54 +127,59 @@ export default function ContentDetailPage() {
         setSession('ch_items', updatedItems);
     }, [allItems]);
 
-    const handleToggleLike = useCallback(() => {
-        if (!item) return;
-        const newLiked = !item.liked;
-        const newLikes = newLiked ? item.likes + 1 : item.likes - 1;
-        const updatedItem = { ...item, liked: newLiked, likes: newLikes };
-        updateItemInSession(updatedItem);
-    }, [item, updateItemInSession]);
+    const handleToggleLike = useCallback((itemIdToLike: string) => {
+        let targetItem = item && item.id === itemIdToLike ? item : allItems.find(i => i.id === itemIdToLike);
+        if (!targetItem) return;
 
-    const handleToggleBookmark = useCallback(() => {
-        if (!item) return;
+        const newLiked = !targetItem.liked;
+        const newLikes = newLiked ? (targetItem.likes ?? 0) + 1 : (targetItem.likes ?? 1) - 1;
+        const updatedItem = { ...targetItem, liked: newLiked, likes: newLikes };
+        updateItemInSession(updatedItem);
+    }, [item, allItems, updateItemInSession]);
+
+    const handleToggleBookmark = useCallback((itemIdToBookmark: string) => {
+        let targetItem = item && item.id === itemIdToBookmark ? item : allItems.find(i => i.id === itemIdToBookmark);
+        if (!targetItem) return;
         
-        const updatedItem = { ...item, bookmarked: !item.bookmarked };
+        const updatedItem = { ...targetItem, bookmarked: !targetItem.bookmarked };
         updateItemInSession(updatedItem);
 
         const savedIds = getSession<string[]>("savedContentIds") || [];
-        const isBookmarked = savedIds.includes(item.id);
-        const newSavedIds = isBookmarked ? savedIds.filter(id => id !== item.id) : [...savedIds, item.id];
+        const isBookmarked = savedIds.includes(targetItem.id);
+        const newSavedIds = isBookmarked ? savedIds.filter(id => id !== targetItem.id) : [...savedIds, targetItem.id];
         setSession("savedContentIds", newSavedIds);
 
         toast({
             title: updatedItem.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
         });
-    }, [item, updateItemInSession, toast]);
+    }, [item, allItems, updateItemInSession, toast]);
 
-    const handleAddComment = useCallback((commentText: string) => {
+    const handleAddComment = useCallback((text: string, displayName?: string) => {
         if (!item) return;
 
         const newComment: Comment = {
             id: `comment-${Date.now()}`,
             contentId: item.id,
-            displayName: "Current User", // Replace with actual user data
+            displayName: displayName || "Guest",
             createdAt: new Date().toISOString(),
-            text: commentText,
+            text,
         };
         
-        const allComments = getSession<{[key: string]: Comment[]}>('commentsByContentId') || {};
+        const allComments = getSession<{[key: string]: Comment[]}>('contentHub_comments_v1') || {};
         const currentComments = allComments[item.id] || [];
         const updatedComments = [newComment, ...currentComments];
         
-        setSession('commentsByContentId', { ...allComments, [item.id]: updatedComments });
+        setSession('contentHub_comments_v1', { ...allComments, [item.id]: updatedComments });
         setComments(updatedComments);
 
-        // Also update comment count on the item
         const updatedItem = { ...item, commentCount: (item.commentCount || 0) + 1 };
         updateItemInSession(updatedItem);
 
+        toast({
+            title: "Comment posted",
+        });
 
-    }, [item, updateItemInSession]);
+    }, [item, updateItemInSession, toast]);
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -282,11 +289,11 @@ export default function ContentDetailPage() {
                                     <span className="font-medium text-foreground">{item.author.name}</span>
                                 </button>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="sm" onClick={handleToggleLike} className={`gap-2 ${item.liked ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                    <Button variant="ghost" size="sm" onClick={() => handleToggleLike(item.id)} className={`gap-2 ${item.liked ? 'text-destructive' : 'text-muted-foreground'}`}>
                                         <Heart className={`h-5 w-5 ${item.liked ? 'fill-current' : ''}`} />
                                         {item.likes}
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={handleToggleBookmark}>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={() => handleToggleBookmark(item.id)}>
                                          <Bookmark className={`h-5 w-5 ${item.bookmarked ? 'fill-current text-primary' : ''}`} />
                                     </Button>
                                     <DropdownMenu>
@@ -307,7 +314,7 @@ export default function ContentDetailPage() {
                                 <span className="flex items-center gap-1.5"><Eye className="h-4 w-4" /> {formatViews(item.views)} views</span>
                                 <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> Published {formatDate(item.publishedAt)}</span>
                                 <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {formatLength(item)}</span>
-                                {item.commentCount && item.commentCount > 0 && <span className="flex items-center gap-1.5"><MessageSquare className="h-4 w-4" /> {item.commentCount} comments</span>}
+                                <span className="flex items-center gap-1.5"><MessageSquare className="h-4 w-4" /> {item.commentCount || 0} comments</span>
                             </div>
                         </header>
                         
@@ -333,7 +340,11 @@ export default function ContentDetailPage() {
 
                     <Separator className="my-12" />
 
-                    <CommentsSection comments={comments} onAddComment={handleAddComment} />
+                    <CommentsSection
+                        contentId={item.id}
+                        comments={comments}
+                        onAddComment={handleAddComment}
+                    />
 
                     {moreFromAuthor.length > 0 && (
                         <section className="mt-16">

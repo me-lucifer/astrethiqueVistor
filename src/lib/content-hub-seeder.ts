@@ -230,7 +230,7 @@ export const seedContentHub = () => {
 
         const initialComments = createInitialComments(allItems);
         setSession("ch_items", allItems);
-        setSession("commentsByContentId", initialComments);
+        setSession("contentHub_comments_v1", initialComments);
         setSession("ch_seeded_v3", true);
     }
 };
