@@ -1,10 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,27 +13,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Clock } from "lucide-react";
-
-const ticketSchema = z.object({
-  userType: z.enum(["visitor", "consultant"]),
-  topic: z.string().min(1, "Please select a topic."),
-  subject: z.string().min(5, "Subject must be at least 5 characters."),
-  description: z.string().min(20, "Description must be at least 20 characters.").max(600, "Description cannot exceed 600 characters."),
-  email: z.string().email("Please enter a valid email address."),
-  displayName: z.string().optional(),
-  referenceId: z.string().optional(),
-  attachmentUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
-  priority: z.enum(["normal", "urgent"]).default("normal"),
-});
-
-type TicketFormData = z.infer<typeof ticketSchema>;
+import { CheckCircle } from "lucide-react";
+import { addTicket, ticketSchema, type TicketFormData } from "@/lib/support";
 
 const topicOptions = [
   "Bookings", "Billing", "Account/Login", "Technical issue", "Content/Comments", "Conferences", "Safety/Report"
 ];
 
-export function SupportContactForm({ activeTab }: { activeTab: "visitor" | "consultant" }) {
+interface SupportContactFormProps {
+  activeTab: "visitor" | "consultant";
+  onTicketSubmitted: () => void;
+}
+
+export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportContactFormProps) {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [ticketId, setTicketId] = useState("");
 
@@ -53,20 +44,22 @@ export function SupportContactForm({ activeTab }: { activeTab: "visitor" | "cons
     },
   });
 
-  const generateTicketId = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const randomDigits = Math.floor(1000 + Math.random() * 9000);
-    return `AST-${year}${month}-${randomDigits}`;
-  };
+  useEffect(() => {
+    form.setValue("userType", activeTab);
+  }, [activeTab, form]);
 
   const onSubmit = (data: TicketFormData) => {
-    console.log("Form submitted:", data);
-    const newTicketId = generateTicketId();
-    setTicketId(newTicketId);
+    const newTicket = addTicket(data);
+    setTicketId(newTicket.id);
     setIsSuccessModalOpen(true);
-    form.reset();
+    onTicketSubmitted(); // Notify parent
+    form.reset({
+      ...data,
+      subject: '',
+      description: '',
+      referenceId: '',
+      attachmentUrl: '',
+    });
   };
   
   const descriptionValue = form.watch("description");
@@ -103,7 +96,7 @@ export function SupportContactForm({ activeTab }: { activeTab: "visitor" | "cons
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                           className="flex gap-4"
                         >
                           <FormItem className="flex items-center space-x-2">
@@ -242,7 +235,7 @@ export function SupportContactForm({ activeTab }: { activeTab: "visitor" | "cons
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                           className="flex gap-4"
                         >
                           <FormItem className="flex items-center space-x-2">
@@ -299,4 +292,3 @@ export function SupportContactForm({ activeTab }: { activeTab: "visitor" | "cons
     </>
   );
 }
-

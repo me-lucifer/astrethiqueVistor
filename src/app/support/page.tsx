@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, CircleDot, HelpCircle, CalendarClock, User, Wallet, Tv, Languages, Shield, Wrench, Search, Star, FileText, ArrowRight, Briefcase } from "lucide-react";
+import { HelpCircle, CalendarClock, User, Wallet, Tv, Languages, Shield, Wrench, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,8 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SupportContactForm } from "@/components/support/contact-form";
+import { SystemStatus } from "@/components/support/system-status";
+import { MyRequests } from "@/components/support/my-requests";
 
 const visitorTopics = [
     { id: "faq-bookings", href: "#faq-bookings", title: "Bookings & Sessions", description: "Help with scheduling, session types, and cancellations.", icon: CalendarClock },
@@ -161,19 +163,9 @@ const faqData = {
 
 export default function SupportPage() {
   const [activeTab, setActiveTab] = useState<"visitor" | "consultant">("visitor");
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [ticketSubmissionCount, setTicketSubmissionCount] = useState(0);
 
-  const StatusItem = ({ service, status }: { service: string, status: 'Operational' | 'Issues' }) => (
-    <div className="flex items-center justify-between py-2">
-      <p className="text-foreground/90">{service}</p>
-      <div className="flex items-center gap-2">
-        <div className={cn("h-2.5 w-2.5 rounded-full", status === 'Operational' ? 'bg-success' : 'bg-destructive')} />
-        <span className={cn(status === 'Operational' ? 'text-success' : 'text-destructive')}>{status}</span>
-      </div>
-    </div>
-  );
-  
   const topics = activeTab === 'visitor' ? visitorTopics : consultantTopics;
   const quickLinks = activeTab === 'visitor' ? visitorQuickLinks : consultantQuickLinks;
   
@@ -193,6 +185,10 @@ export default function SupportPage() {
     }).filter(section => section.questions.length > 0);
   }, [activeTab, searchQuery]);
 
+  const handleTicketSubmitted = () => {
+    setTicketSubmissionCount(prev => prev + 1);
+  };
+
 
   return (
     <div className="container py-12">
@@ -206,30 +202,7 @@ export default function SupportPage() {
           </p>
         </div>
         <div className="shrink-0">
-          <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-            <DialogTrigger asChild>
-                <div className="flex items-center gap-4 cursor-pointer group">
-                     <div className="flex items-center gap-2 text-sm text-success">
-                        <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75 motion-reduce:animate-none"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
-                        </span>
-                        <span>All systems operational</span>
-                    </div>
-                     <Button variant="link" size="sm" className="p-0">View details</Button>
-                </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-sm">
-                <DialogHeader>
-                    <DialogTitle>System Status</DialogTitle>
-                </DialogHeader>
-                <div className="divide-y divide-border">
-                    <StatusItem service="Chat" status="Operational" />
-                    <StatusItem service="Audio/Video" status="Operational" />
-                    <StatusItem service="Payments" status="Operational" />
-                </div>
-            </DialogContent>
-          </Dialog>
+          <SystemStatus />
         </div>
       </div>
 
@@ -318,14 +291,18 @@ export default function SupportPage() {
             </div>
         )}
         
-        <div className="mt-24 pt-16 border-t">
+        <div id="contact-support" className="mt-24 pt-16 border-t scroll-mt-24">
              <h2 className="text-center font-headline text-3xl font-bold mb-4">
                 Still need help?
             </h2>
             <p className="text-center text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
                 If you couldn't find your answer in the FAQs, please submit a ticket and our support team will get back to you.
             </p>
-            <SupportContactForm activeTab={activeTab} />
+            <SupportContactForm activeTab={activeTab} onTicketSubmitted={handleTicketSubmitted} />
+        </div>
+
+        <div className="mt-24 pt-16 border-t">
+          <MyRequests key={ticketSubmissionCount} />
         </div>
 
     </div>
