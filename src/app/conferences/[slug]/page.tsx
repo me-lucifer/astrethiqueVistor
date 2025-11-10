@@ -250,7 +250,7 @@ export default function ConferenceDetailPage() {
                                            <StarRating rating={conference.hostRating} />
                                            <span>({conference.hostRating})</span>
                                            <span>•</span>
-                                           <span>{conference.languages.join(' & ')}</span>
+                                           <span>{(conference.languages || []).join(' & ')}</span>
                                        </div>
                                        <p className="text-sm text-foreground/80 pt-1">Our host is a seasoned expert in their field, dedicated to providing deep insights and practical guidance.</p>
                                        <Button asChild variant="link" className="p-0 h-auto">
@@ -387,6 +387,8 @@ export default function ConferenceDetailPage() {
         </div>
     );
 }
+
+    
 
     
 
