@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, Euro, Wallet, Lock, Heart, Briefcase, HeartPulse, CircleDollarSign, ShieldCheck, UserCheck, Info } from "lucide-react";
+import { ArrowRight, Sparkles, Wallet, Lock, Heart, Briefcase, HeartPulse, CircleDollarSign, ShieldCheck, UserCheck, Info, Gift } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { DailyHoroscopeModal } from "@/components/daily-horoscope-modal";
@@ -34,19 +34,19 @@ const categories = [
 const trustItems = [
     { icon: UserCheck, text: "Admin-approved & KYC-verified consultants" },
     { icon: Lock, text: "GDPR-compliant data" },
-    { icon: ShieldCheck, text: "Transparent pricing before you start" }
+    { icon: ShieldCheck, text: "Transparent session details before you start" }
 ];
 
 const valuePillars = [
     {
-      icon: Euro,
-      title: "Per-Consultant Rate",
-      description: "Each expert sets a clear €/min rate shown before you start."
+      icon: Gift,
+      title: "Free Events & Content",
+      description: "Enjoy free access to conferences, articles, and podcasts."
     },
     {
       icon: Wallet,
       title: "Prepaid Wallet & Live Meter",
-      description: "Top up once, watch your remaining minutes in real time."
+      description: "For private sessions, top up once and watch your balance."
     },
     {
       icon: Lock,
@@ -118,7 +118,7 @@ export default function Home() {
               Guidance you can feel good about.
             </h1>
             <p className="mt-6 text-lg leading-8 text-white/90 drop-shadow-sm">
-              Speak with vetted consultants by chat, audio, or video — pay per minute, budget-friendly, and GDPR-respectful.
+              Speak with vetted consultants by chat, audio, or video — with budget-friendly options and GDPR-respectful practices.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="transition-transform motion-safe:hover:scale-[1.01] w-full sm:w-auto" onClick={() => setIsStartNowModalOpen(true)}>
@@ -136,7 +136,7 @@ export default function Home() {
               </Button>
             </div>
             <div className="mt-8 text-xs text-white/70">
-              <p>Transparent per-minute pricing. Optional monthly ‘Budget Lock’.</p>
+              <p>Transparent per-minute pricing for private sessions. Optional monthly ‘Budget Lock’.</p>
             </div>
           </div>
         </div>
@@ -284,3 +284,5 @@ export default function Home() {
     </TooltipProvider>
   );
 }
+
+    

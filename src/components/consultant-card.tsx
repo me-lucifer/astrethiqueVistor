@@ -205,7 +205,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>Per-minute pricing. You only pay for the time you're connected.</p>
+                                        <p>Per-minute pricing for private sessions. You only pay for the time you are connected.</p>
                                     </TooltipContent>
                                 </Tooltip>
                                 <div className="flex flex-wrap gap-2">
@@ -294,3 +294,5 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         </TooltipProvider>
     );
 }
+
+    
