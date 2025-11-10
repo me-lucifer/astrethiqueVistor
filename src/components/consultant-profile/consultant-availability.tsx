@@ -86,6 +86,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
                     variant={selectedMode === mode.id ? 'secondary' : 'outline'}
                     onClick={() => handleModeChange(mode.id)}
                     aria-pressed={selectedMode === mode.id}
+                    aria-label={`Select ${mode.label} mode`}
                     className="gap-2"
                   >
                     <mode.icon className="h-5 w-5" />
@@ -114,7 +115,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
                             size="lg" 
                             onClick={handleNotifyClick}
                             disabled={isNotifying}
-                            aria-label={isNotifying ? `You'll be notified when ${consultant.name} is online` : `Notify me when ${consultant.name} is online`}
+                            aria-label={isNotifying ? `You are set to be notified when ${consultant.name} is online` : `Notify me when ${consultant.name} is online`}
                         >
                             {isNotifying ? <CheckCircle className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
                             {isNotifying ? "Notifying" : "Notify me"}
@@ -139,3 +140,5 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     </div>
   );
 }
+
+    
