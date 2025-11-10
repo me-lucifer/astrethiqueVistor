@@ -1,64 +1,19 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { getSession, setSession } from '@/lib/session';
+import { ConsultantProfile } from '@/lib/consultant-profile';
+import { ConsultantProfileHeader } from '@/components/consultant-profile/consultant-profile-header';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PlaceholderPage } from '@/components/placeholder-page';
 
-// Define the data model interfaces based on the provided structure
-interface ContentItem {
-  id: string;
-  title: string;
-  tags: string[];
-  likes: number;
-  cover: string;
-}
-
-interface Podcast extends ContentItem {
-  duration: string;
-}
-
-interface Conference extends ContentItem {
-  date: string;
-  time: string;
-}
-
-interface Review {
-  id: string;
-  author: string;
-  stars: number;
-  date: string;
-  text: string;
-}
-
-interface ConsultantProfile {
-  id: string;
-  name: string;
-  avatar: string;
-  isOnline: boolean;
-  badges: string[];
-  rating: number;
-  reviewsCount: number;
-  languages: string[];
-  pricePerMin: number;
-  prevPricePerMin?: number;
-  summary: string;
-  specialties: string[];
-  verifications: {
-    adminApproved: boolean;
-    kycVerified: boolean;
-    lastReview: string;
-  };
-  nextSlots: string[];
-  content: {
-    articles: ContentItem[];
-    podcasts: Podcast[];
-    conferences: Conference[];
-  };
-  reviews: Review[];
-  favorite: boolean;
-}
-
-const seedConsultantProfile = () => {
+// This is the same seeder function from the previous step,
+// now used within the page component for self-containment.
+const seedConsultantProfile = (): ConsultantProfile => {
   const profile: ConsultantProfile = {
     id: "elena-voyance",
     name: "Elena Voyance",
@@ -91,7 +46,7 @@ const seedConsultantProfile = () => {
       { id:"r2", author:"David C.", stars:5, date:"2024-07-28", text:"She is the real deal. Her guidance was both profound and practical." },
       { id:"r3", author:"Sophie R.", stars:4, date:"2024-07-25", text:"Elena was kind and patient; her reading resonated with my situation." }
     ],
-    favorite: false
+    favorite: getSession<string[]>("consultantFavorites")?.includes("elena-voyance") || false
   };
   setSession("consultantProfile", profile);
   return profile;
@@ -99,38 +54,67 @@ const seedConsultantProfile = () => {
 
 export default function Page() {
   const params = useParams();
+  const router = useRouter();
   const { id } = params;
   const [consultant, setConsultant] = useState<ConsultantProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let profile = getSession<ConsultantProfile>("consultantProfile");
-    if (!profile) {
+    
+    // Seed if no profile exists or if the ID doesn't match the demo ID
+    if (!profile || profile.id !== id) {
       profile = seedConsultantProfile();
     }
     
-    // In a real app, you'd fetch the specific consultant by `id`
-    // For this prototype, we'll just use the seeded profile if the id matches
     if (profile && profile.id === id) {
         setConsultant(profile);
     } else {
-        // Handle case where profile for `id` doesn't exist.
-        // For now, we can show the seeded one as a fallback for demo purposes.
+        // Fallback for demo purposes if the ID is somehow wrong.
         setConsultant(profile);
     }
-
+    setLoading(false);
   }, [id]);
 
+  if (loading) {
+    return (
+        <div className="container py-8 space-y-8">
+            <Skeleton className="h-10 w-48" />
+            <div className="flex flex-col md:flex-row gap-8">
+                <Skeleton className="h-32 w-32 rounded-full" />
+                <div className="flex-1 space-y-4">
+                    <Skeleton className="h-8 w-1/2" />
+                    <Skeleton className="h-6 w-1/4" />
+                    <Skeleton className="h-4 w-3/4" />
+                </div>
+            </div>
+            <Skeleton className="h-48 w-full" />
+        </div>
+    )
+  }
+
   if (!consultant) {
-    return <div>Loading profile...</div>;
+    return (
+        <PlaceholderPage
+            title="Consultant Not Found"
+            description="We couldn't find a consultant with that ID."
+        />
+    );
   }
 
   return (
     <div className="container py-8">
-      <h1 className="text-4xl font-bold mb-4">{consultant.name}</h1>
-      <p>Profile page for ID: {id}</p>
-      <pre className="bg-muted p-4 rounded-lg mt-4 text-xs overflow-auto">
-        {JSON.stringify(consultant, null, 2)}
-      </pre>
+        <Button variant="ghost" onClick={() => router.push('/discover')} className="mb-6 rounded-full border border-transparent hover:border-accent hover:text-accent">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Discover
+        </Button>
+        <div className="space-y-8">
+            <ConsultantProfileHeader consultant={consultant} />
+            {/* The rest of the page components will go here */}
+             <pre className="bg-muted p-4 rounded-lg mt-4 text-xs overflow-auto">
+                {JSON.stringify(consultant, null, 2)}
+            </pre>
+        </div>
     </div>
   );
 }

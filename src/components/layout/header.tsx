@@ -28,6 +28,10 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
 
+  const isDiscoverActive = (path: string) => {
+    return path.startsWith('/discover') || path.startsWith('/consultant/');
+  }
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between gap-4">
@@ -38,7 +42,10 @@ export function Header() {
           </Link>
           <nav className="hidden xl:flex items-center gap-4 text-sm font-medium">
             {navLinks.map((link) => {
-              const isActive = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
+              const isActive = link.href === '/discover' 
+                ? isDiscoverActive(pathname)
+                : (link.href === '/' ? pathname === '/' : pathname.startsWith(link.href));
+
               return (
                 <Link 
                   key={link.href} 
@@ -97,7 +104,9 @@ export function Header() {
               </SheetHeader>
               <nav className="flex-1 px-4 flex flex-col gap-2 pt-4">
                 {navLinks.map((link) => {
-                   const isActive = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
+                   const isActive = link.href === '/discover'
+                    ? isDiscoverActive(pathname)
+                    : (link.href === '/' ? pathname === '/' : pathname.startsWith(link.href));
                   return (
                     <Button key={link.href} variant={isActive ? "secondary" : "ghost"} className="justify-start text-base" asChild>
                       <Link href={link.href}>
