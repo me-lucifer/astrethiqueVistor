@@ -9,11 +9,16 @@ export interface Conference {
   title: string;
   dateISO: string;
   hostAlias: string;
+  hostRating: number;
   tags: ("Love" | "Work" | "Health" | "Money" | "Life Path")[];
+  type: "Workshop" | "Group Reading" | "Webinar" | "Q&A";
   language: "EN" | "FR";
-  isFree: boolean;
+  price: number;
+  isFree: boolean; // Derived from price
   excerpt: string;
   capacity: number;
+  seatsAvailable: boolean;
+  recordingAvailable: boolean;
 }
 
 const conferenceTitles = [
@@ -48,11 +53,13 @@ const excerpts = [
 
 const hosts = ["Aeliana", "Kael", "Seraphina", "Orion", "Elara", "Lyra", "Caspian", "Marcus", "Eva"];
 const tags: Conference['tags'] = ["Love", "Work", "Health", "Money", "Life Path"];
+const types: Conference['type'][] = ["Workshop", "Group Reading", "Webinar", "Q&A"];
 
 
 const createConference = (id: number): Conference => {
     const now = new Date();
     let date: Date;
+    const price = id % 3 === 0 ? 0 : Math.floor(Math.random() * 80) + 20;
 
     switch(id) {
         case 1: // Starting in 5 minutes
@@ -82,15 +89,20 @@ const createConference = (id: number): Conference => {
         title: conferenceTitles[(id-1) % conferenceTitles.length],
         dateISO: date.toISOString(),
         hostAlias: hosts[(id-1) % hosts.length],
+        hostRating: Math.round((4.0 + Math.random()) * 10) / 10,
         tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
+        type: types[id % types.length],
         language: (id % 3 === 0) ? "FR" : "EN",
-        isFree: id === 3, // Make one item free
+        price,
+        isFree: price === 0,
         excerpt: excerpts[(id-1) % excerpts.length],
         capacity: Math.floor(Math.random() * 50) + 10,
+        seatsAvailable: Math.random() > 0.3,
+        recordingAvailable: Math.random() > 0.5,
     }
 };
 
 export const seedConferences = () => {
-  const conferences: Conference[] = Array.from({ length: 8 }, (_, i) => createConference(i + 1));
+  const conferences: Conference[] = Array.from({ length: 12 }, (_, i) => createConference(i + 1));
   setLocal("conferences", conferences);
 };

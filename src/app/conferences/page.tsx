@@ -4,7 +4,7 @@ import { FeaturedConferences } from "@/components/featured-conferences";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { getSession, setSession } from "@/lib/session";
 
 const useDebounce = <T>(value: T, delay: number): T => {
@@ -20,7 +20,8 @@ const useDebounce = <T>(value: T, delay: number): T => {
     return debouncedValue;
 };
 
-export default function ConferencesPage() {
+
+function ConferencesContent() {
     const searchParams = useSearchParams();
     const initialQuery = searchParams.get('query') || getSession<string>('conferences.search.v1') || "";
     const [query, setQuery] = useState(initialQuery);
@@ -58,7 +59,18 @@ export default function ConferencesPage() {
                 </div>
             </form>
         </div>
-        <FeaturedConferences initialQuery={debouncedQuery} />
+
+        <div className="grid lg:grid-cols-[320px_1fr] lg:gap-8">
+            <FeaturedConferences initialQuery={debouncedQuery} />
+        </div>
     </div>
   );
+}
+
+export default function ConferencesPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ConferencesContent />
+        </Suspense>
+    );
 }

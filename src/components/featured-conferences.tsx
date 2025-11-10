@@ -9,17 +9,23 @@ import { isWithinInterval, addDays, startOfDay, endOfDay, endOfWeek, endOfMonth,
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Ticket, CheckCircle, Bell, X, Heart, Briefcase, HeartPulse, CircleDollarSign, Filter } from "lucide-react";
+import { Calendar, Ticket, CheckCircle, Bell, X, Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Star } from "lucide-react";
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNotifications } from "@/contexts/notification-context";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./ui/skeleton";
 import { Switch } from "./ui/switch";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Slider } from "./ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar"
+import { DateRange } from "react-day-picker";
 
 
 interface Rsvp {
@@ -31,27 +37,45 @@ interface Rsvp {
 }
 
 interface Filters {
-    topics: string[];
+    categories: string[];
+    types: string[];
     languages: string[];
     when: string;
+    dateRange?: DateRange;
+    price: [number, number];
     freeOnly: boolean;
+    hostRating: string;
+    seatsAvailable: boolean;
+    recordingAvailable: boolean;
 }
 
 const defaultFilters: Filters = {
-    topics: [],
+    categories: [],
+    types: [],
     languages: [],
     when: "All",
+    price: [0, 100],
     freeOnly: false,
+    hostRating: "0",
+    seatsAvailable: false,
+    recordingAvailable: false,
 };
 
-const topics = [
-    { name: "Love", icon: Heart },
-    { name: "Work", icon: Briefcase },
-    { name: "Health", icon: HeartPulse },
-    { name: "Money", icon: CircleDollarSign },
+const categories = [
+    { id: "Love", name: "Love", icon: Heart },
+    { id: "Work", name: "Work", icon: Briefcase },
+    { id: "Health", name: "Health", icon: HeartPulse },
+    { id: "Money", name: "Money", icon: CircleDollarSign },
+    { id: "Life Path", name: "Life Path", icon: Star },
 ];
+const conferenceTypes = ["Workshop", "Group Reading", "Webinar", "Q&A"];
 const languages = ["EN", "FR"];
 const whenOptions = ["Today", "This week", "This month", "All"];
+const ratingFilters = [
+    { value: "0", label: "Any" },
+    { value: "4", label: "4.0+" },
+    { value: "4.5", label: "4.5+" },
+];
 
 
 export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: string }) {
@@ -67,7 +91,8 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const [isPending, startTransition] = useTransition();
     const isLoading = isPending;
     const [query, setQuery] = useState(initialQuery);
-
+    
+    const [priceBounds, setPriceBounds] = useState<[number, number]>([0, 100]);
 
     const [filters, setFilters] = useState<Filters>(() => {
         if (typeof window === "undefined") return defaultFilters;
@@ -80,6 +105,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         const storedConferences = getLocal<Conference[]>("conferences");
         if (storedConferences) {
             setAllConferences(storedConferences);
+            const prices = storedConferences.map(c => c.price ?? 0);
+            const min = Math.floor(Math.min(...prices, 0));
+            const max = Math.ceil(Math.max(...prices, 100));
+            setPriceBounds([min, max]);
         }
 
         const storedRsvps = getLocal<Rsvp[]>("rsvps");
@@ -87,18 +116,8 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
             setRsvps(storedRsvps);
         }
 
-        const urlFilters: Partial<Filters> = {};
-        const topicsParam = searchParams.get('topic');
-        if (topicsParam) urlFilters.topics = topicsParam.split(',');
-        const langParam = searchParams.get('lang');
-        if (langParam) urlFilters.languages = langParam.split(',');
-        const whenParam = searchParams.get('when');
-        if (whenParam && whenOptions.map(w => w.toLowerCase().replace(' ','-')).includes(whenParam)) {
-            const whenMap: {[key: string]: string} = {'today': 'Today', 'this-week': 'This week', 'this-month': 'This month', 'all': 'All'};
-            urlFilters.when = whenMap[whenParam];
-        }
-        urlFilters.freeOnly = searchParams.get('free') === 'true';
-
+        // Set initial filters from URL params or session storage
+        const urlFilters: Partial<Filters> = {}; // You can extend this to parse more filters from URL
         const sessionState = sessionStorage.getItem('discover.conferences.filters');
         const initialState = {...defaultFilters, ...(sessionState ? JSON.parse(sessionState) : {}), ...urlFilters};
         setFilters(initialState);
@@ -115,12 +134,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const createQueryString = useCallback((newFilters: Partial<Filters>) => {
         const current = new URLSearchParams(Array.from(searchParams.entries()));
         const allFilters = { ...filters, ...newFilters };
-
-        if(allFilters.topics.length > 0) current.set('topic', allFilters.topics.join(',')); else current.delete('topic');
-        if(allFilters.languages.length > 0) current.set('lang', allFilters.languages.join(',')); else current.delete('lang');
-        if(allFilters.when !== defaultFilters.when) current.set('when', allFilters.when.toLowerCase().replace(' ', '-')); else current.delete('when');
-        if(allFilters.freeOnly) current.set('free', 'true'); else current.delete('free');
-
+        // This can be extended to update URL based on filters
         return current.toString();
     }, [searchParams, filters]);
 
@@ -129,18 +143,19 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
             const updated = { ...filters, ...newFilters };
             setFilters(updated);
             sessionStorage.setItem('discover.conferences.filters', JSON.stringify(updated));
-            router.push(`${pathname}?${createQueryString(newFilters)}`, { scroll: false });
+            // router.push(`${pathname}?${createQueryString(newFilters)}`, { scroll: false });
         });
     };
 
-    const handleChipToggle = (group: 'topics' | 'languages', value: string) => {
+    const handleChipToggle = (group: 'categories' | 'types' | 'languages', value: string) => {
         const current = filters[group] as string[];
         const newValues = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
         updateFilters({ [group]: newValues });
     };
     
     const handleResetFilters = () => {
-        updateFilters(defaultFilters);
+        const newFilters = {...defaultFilters, price: priceBounds};
+        updateFilters(newFilters);
         router.push(`${pathname}`, { scroll: false });
     }
 
@@ -159,14 +174,14 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
             );
         }
 
-        if (filters.topics.length > 0) {
-            result = result.filter(c => filters.topics.some(t => c.tags.includes(t as any)));
+        if (filters.categories.length > 0) {
+            result = result.filter(c => filters.categories.some(t => c.tags.includes(t as any)));
+        }
+        if (filters.types.length > 0) {
+            result = result.filter(c => filters.types.includes(c.type));
         }
         if (filters.languages.length > 0) {
             result = result.filter(c => filters.languages.includes(c.language as any));
-        }
-        if (filters.freeOnly) {
-            result = result.filter(c => c.isFree);
         }
 
         const whenIntervals = {
@@ -175,10 +190,34 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
             "This month": { start: startOfDay(now), end: endOfMonth(now) },
             "All": null
         }
-        const interval = whenIntervals[filters.when as keyof typeof whenIntervals];
-        if (interval) {
-            result = result.filter(c => isWithinInterval(new Date(c.dateISO), interval));
+        if (filters.when !== 'Pick a range') {
+            const interval = whenIntervals[filters.when as keyof typeof whenIntervals];
+            if (interval) {
+                result = result.filter(c => isWithinInterval(new Date(c.dateISO), interval));
+            }
+        } else if (filters.dateRange?.from) {
+             result = result.filter(c => {
+                const date = new Date(c.dateISO);
+                return date >= (filters.dateRange?.from as Date) && date <= (filters.dateRange?.to || filters.dateRange?.from as Date)
+            });
         }
+        
+        if (filters.freeOnly) {
+            result = result.filter(c => c.price === 0);
+        } else {
+            result = result.filter(c => (c.price ?? 0) >= filters.price[0] && (c.price ?? 0) <= filters.price[1]);
+        }
+
+        if (parseFloat(filters.hostRating) > 0) {
+            result = result.filter(c => c.hostRating >= parseFloat(filters.hostRating));
+        }
+        if (filters.seatsAvailable) {
+            result = result.filter(c => c.seatsAvailable);
+        }
+        if (filters.recordingAvailable) {
+            result = result.filter(c => c.recordingAvailable);
+        }
+
 
         result.sort((a, b) => new Date(a.dateISO).getTime() - new Date(b.dateISO).getTime());
 
@@ -220,40 +259,120 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const formatDate = (dateISO: string) => format(new Date(dateISO), "PPP p");
 
     const FilterControls = () => (
-         <div className="space-y-4">
-            <div className="flex flex-col lg:flex-row gap-4">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-sm">Topic:</span>
-                    {topics.map(({name, icon: Icon}) => (
-                        <Button key={name} variant={filters.topics.includes(name) ? "secondary" : "outline"} size="sm" onClick={() => handleChipToggle('topics', name)} className="rounded-full gap-2">
-                            <Icon className="h-4 w-4" /> {name}
-                        </Button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-sm">Language:</span>
-                    {languages.map((lang) => (
-                        <Button key={lang} variant={filters.languages.includes(lang) ? "secondary" : "outline"} size="sm" onClick={() => handleChipToggle('languages', lang)} className="rounded-full gap-2">
-                             {lang === 'EN' ? '🇬🇧' : '🇫🇷'} {lang}
-                        </Button>
-                    ))}
+         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 -mr-4 lg:mr-0">
+            <div className="space-y-6 p-4 lg:p-0">
+                <Accordion type="multiple" defaultValue={['category', 'type', 'languages', 'date', 'price']} className="w-full">
+                    <AccordionItem value="category">
+                        <AccordionTrigger className="font-semibold text-sm">Category</AccordionTrigger>
+                        <AccordionContent className="space-y-2 pt-2">
+                           <div className="flex flex-wrap gap-2">
+                             {categories.map(({id, name}) => (
+                                <Button key={id} variant={filters.categories.includes(id) ? "secondary" : "outline"} size="sm" onClick={() => handleChipToggle('categories', id)} className="rounded-full">
+                                    {name}
+                                </Button>
+                            ))}
+                           </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="type">
+                        <AccordionTrigger className="font-semibold text-sm">Type</AccordionTrigger>
+                        <AccordionContent className="space-y-2 pt-2">
+                           <div className="flex flex-wrap gap-2">
+                             {conferenceTypes.map((type) => (
+                                <Button key={type} variant={filters.types.includes(type) ? "secondary" : "outline"} size="sm" onClick={() => handleChipToggle('types', type)} className="rounded-full">
+                                    {type}
+                                </Button>
+                            ))}
+                           </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                     <AccordionItem value="languages">
+                        <AccordionTrigger className="font-semibold text-sm">Languages</AccordionTrigger>
+                        <AccordionContent className="space-y-2 pt-2">
+                           <div className="flex flex-wrap gap-2">
+                             {languages.map((lang) => (
+                                <Button key={lang} variant={filters.languages.includes(lang) ? "secondary" : "outline"} size="sm" onClick={() => handleChipToggle('languages', lang)} className="rounded-full">
+                                    {lang}
+                                </Button>
+                            ))}
+                           </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                     <AccordionItem value="date">
+                        <AccordionTrigger className="font-semibold text-sm">Date</AccordionTrigger>
+                        <AccordionContent className="pt-2">
+                           <RadioGroup value={filters.when} onValueChange={(v) => updateFilters({ when: v, dateRange: undefined })}>
+                                {whenOptions.map(o => (
+                                    <div key={o} className="flex items-center space-x-2">
+                                        <RadioGroupItem value={o} id={`date-${o}`} />
+                                        <Label htmlFor={`date-${o}`} className="font-normal text-foreground/80">{o}</Label>
+                                    </div>
+                                ))}
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="Pick a range" id="date-range" />
+                                    <Label htmlFor="date-range" className="font-normal text-foreground/80">Pick a range</Label>
+                                </div>
+                            </RadioGroup>
+                             {filters.when === 'Pick a range' && (
+                                <div className="pt-4">
+                                     <CalendarPicker
+                                        mode="range"
+                                        selected={filters.dateRange}
+                                        onSelect={(range) => updateFilters({ dateRange: range })}
+                                    />
+                                </div>
+                            )}
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="price">
+                        <AccordionTrigger className="font-semibold text-sm">Price</AccordionTrigger>
+                        <AccordionContent className="pt-2 space-y-4">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="free-only" checked={filters.freeOnly} onCheckedChange={(c) => updateFilters({ freeOnly: c as boolean })} />
+                                <Label htmlFor="free-only">Free only</Label>
+                            </div>
+                            <div className={cn(filters.freeOnly && "opacity-50 pointer-events-none")}>
+                                <div className="flex justify-between items-center mb-2">
+                                    <Label htmlFor="price-slider" className="text-primary font-bold">€{filters.price[0]} &mdash; €{filters.price[1]}</Label>
+                                </div>
+                                <Slider id="price-slider" aria-label="Price range" min={priceBounds[0]} max={priceBounds[1]} step={5} value={filters.price} onValueChange={(v) => updateFilters({ price: v as [number,number] })} />
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                     <AccordionItem value="host-rating">
+                        <AccordionTrigger className="font-semibold text-sm">Host Rating</AccordionTrigger>
+                        <AccordionContent className="pt-2">
+                            <RadioGroup value={filters.hostRating} onValueChange={(v) => updateFilters({ hostRating: v })}>
+                                {ratingFilters.map(r => (
+                                    <div key={r.value} className="flex items-center space-x-2">
+                                        <RadioGroupItem value={r.value} id={`rating-${r.value}`} />
+                                        <Label htmlFor={`rating-${r.value}`} className="font-normal text-foreground/80">{r.label}</Label>
+                                    </div>
+                                ))}
+                            </RadioGroup>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="availability">
+                        <AccordionTrigger className="font-semibold text-sm">Availability</AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="seats-available">Seats available</Label>
+                                <Switch id="seats-available" checked={filters.seatsAvailable} onCheckedChange={(c) => updateFilters({ seatsAvailable: c })} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="recording-available">Recording available</Label>
+                                <Switch id="recording-available" checked={filters.recordingAvailable} onCheckedChange={(c) => updateFilters({ recordingAvailable: c })} />
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+
+                </Accordion>
+                <div className="flex flex-col gap-2">
+                    <Button onClick={isDesktop ? handleResetFilters : ()=>setIsSheetOpen(false)}>Apply Filters</Button>
+                    <Button variant="ghost" onClick={handleResetFilters}>Reset All</Button>
                 </div>
             </div>
-            <div className="flex flex-col lg:flex-row items-center gap-4">
-                 <div className="flex items-center gap-2 flex-wrap bg-muted p-1 rounded-lg w-full lg:w-auto">
-                    {whenOptions.map((opt) => (
-                         <Button key={opt} variant={filters.when === opt ? "background" : "ghost"} size="sm" onClick={() => updateFilters({ when: opt })} className="flex-1 justify-center shadow-sm">
-                            {opt}
-                        </Button>
-                    ))}
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Switch id="free-only" checked={filters.freeOnly} onCheckedChange={(c) => updateFilters({freeOnly: c})} />
-                    <Label htmlFor="free-only">Free only</Label>
-                </div>
-                <Button variant="link" onClick={handleResetFilters} className="p-0 h-auto">Reset all</Button>
-            </div>
-        </div>
+        </aside>
     );
 
     const mobileSheet = (
@@ -264,16 +383,12 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                     Filters ({filteredConferences.length} results)
                 </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-lg h-auto flex flex-col">
-                 <SheetHeader className="text-left flex-row items-center justify-between pr-6">
+            <SheetContent side="left" className="w-[320px] flex flex-col p-0">
+                <SheetHeader className="text-left p-4 border-b">
                     <SheetTitle>Filters</SheetTitle>
-                    <Button variant="link" onClick={handleResetFilters}>Reset</Button>
                 </SheetHeader>
-                <div className="py-4 flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto">
                     <FilterControls />
-                </div>
-                <div className="border-t pt-4">
-                     <Button onClick={() => setIsSheetOpen(false)} className="w-full">Apply Filters</Button>
                 </div>
             </SheetContent>
         </Sheet>
@@ -286,11 +401,9 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
 
     return (
        <>
-            <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 py-4 mb-6">
-                 {isDesktop ? <FilterControls /> : mobileSheet}
-            </div>
+            {isDesktop ? <FilterControls /> : mobileSheet}
 
-            <div role="status" aria-live="polite">
+            <main role="status" aria-live="polite">
                 {isLoading ? (
                      <div className="space-y-4">
                         {Array.from({ length: 3 }).map((_, i) => (
@@ -310,7 +423,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                     <CardHeader>
                                         <div className="flex items-start justify-between gap-4">
                                             <CardTitle className="font-headline text-xl">{conference.title}</CardTitle>
-                                            {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting soon</Badge>}
+                                            <div className="flex items-center gap-2">
+                                                {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting soon</Badge>}
+                                                <Badge variant="outline" className="hidden sm:flex items-center gap-1.5"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {conference.hostRating.toFixed(1)}</Badge>
+                                            </div>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="grid gap-4">
@@ -321,7 +437,8 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                         <p className="text-sm text-foreground/70">{conference.excerpt}</p>
                                         <div className="flex flex-wrap gap-2">
                                             <Badge variant="outline">{conference.language}</Badge>
-                                            {conference.isFree ? <Badge variant="outline">Free</Badge> : <Badge variant="outline">Paid</Badge>}
+                                            <Badge variant="outline">{conference.type}</Badge>
+                                            <Badge variant="outline">{conference.price === 0 ? "Free" : `€${conference.price}`}</Badge>
                                             {conference.tags.map(tag => (
                                                 <Badge key={tag} variant="secondary" className="bg-secondary/10 text-secondary-foreground/80">{tag}</Badge>
                                             ))}
@@ -367,13 +484,13 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                         )})}
                     </div>
                 ) : (
-                    <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
+                    <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg lg:col-span-3">
                         <h3 className="font-headline text-2xl font-bold">No matching conferences.</h3>
                         <p className="text-muted-foreground mt-2 mb-4">Try widening your filters.</p>
                         <Button onClick={handleResetFilters}>Clear filters</Button>
                     </div>
                 )}
-            </div>
+            </main>
        </>
     );
 }
