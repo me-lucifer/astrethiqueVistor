@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ConsultantProfile } from '@/lib/consultant-profile';
@@ -54,7 +54,7 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                             className="rounded-full object-cover aspect-square border-4 border-card"
                         />
                          {consultant.isOnline && (
-                            <div className="absolute bottom-2 right-2 flex items-center gap-2 bg-success text-success-foreground px-3 py-1 rounded-full text-xs font-bold border border-background/20">
+                            <div title="Online" aria-label="Consultant is online" className="absolute bottom-2 right-2 flex items-center gap-2 bg-success text-success-foreground px-3 py-1 rounded-full text-xs font-bold border border-background/20">
                                 <span className="relative flex h-2.5 w-2.5">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/70 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
@@ -110,7 +110,7 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                         </div>
                          <div className="flex gap-2">
                             {consultant.languages.map(lang => (
-                                <Badge key={lang} variant="outline" className="rounded-md text-xs">{lang}</Badge>
+                                <Badge key={lang} variant="outline" className="rounded-md text-xs" aria-label={`Language: ${lang}`}>{lang}</Badge>
                             ))}
                         </div>
                     </div>

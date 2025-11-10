@@ -110,7 +110,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
 
             <div className="sm:text-right space-y-4">
               <h2 className="font-headline text-xl font-bold">Choose an availability</h2>
-              <div className="flex gap-2 flex-wrap sm:justify-end">
+              <div className="flex gap-2 flex-wrap sm:justify-end overflow-x-auto sm:overflow-visible pb-2 sm:pb-0">
                   {availableSlots.map((slot, i) => (
                       <Button key={i} variant="outline" onClick={handleScheduleClick}>
                           {format(slot, 'p')}

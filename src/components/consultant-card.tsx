@@ -90,7 +90,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
     const handleScheduleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        router.push(`/consultant/${consultant.slug}#availability-section`);
+        router.push(`/discover/consultant/${consultant.slug}#availability-section`);
     };
 
     const handleNotifyClick = () => {
@@ -138,7 +138,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
 
     return (
         <TooltipProvider>
-            <Link href={`/consultant/${consultant.slug}`} className="group">
+            <Link href={`/discover/consultant/${consultant.slug}`} className="group">
                 <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
                     <CardContent className="p-0">
                         <div className="relative">

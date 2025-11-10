@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getSession, setSession } from '@/lib/session';
 import { ConsultantProfile } from '@/lib/consultant-profile';
@@ -107,6 +107,39 @@ export default function Page() {
     }
   }
 
+    const mockConsultant: Consultant | null = useMemo(() => {
+        if (!consultant) return null;
+        return {
+            id: consultant.id,
+            slug: consultant.id,
+            name: consultant.name,
+            rating: consultant.rating,
+            pricePerMin: consultant.pricePerMin,
+            priceWas: consultant.prevPricePerMin,
+            languages: consultant.languages.map(l => ({ code: l as any, level: 'fluent' })),
+            availability: {
+                online: consultant.isOnline,
+                slots: Array.from({length: 12}, (_, i) => {
+                    const now = new Date();
+                    return new Date(now.getTime() + (i * 30 + (i > 5 ? 1440 : 120) ) * 60000).toISOString()
+                })
+            },
+            specialties: consultant.specialties as any,
+            types: [],
+            specializesInSigns: [],
+            badges: consultant.badges as any,
+            contentCounts: { articles: 0, podcasts: 0, conferences: 0},
+            cover: '',
+            kycVerified: consultant.verifications.kycVerified,
+            adminApproved: consultant.verifications.adminApproved,
+            lastReviewDate: new Date().toISOString(),
+            bio: '',
+            reviews: [],
+            content: {articles: [], podcasts: [], conferences: []},
+            joinedAt: new Date().toISOString()
+        }
+    }, [consultant]);
+
   if (loading) {
     return (
         <div className="container py-8 space-y-8">
@@ -125,43 +158,13 @@ export default function Page() {
     )
   }
 
-  if (!consultant) {
+  if (!consultant || !mockConsultant) {
     return (
         <PlaceholderPage
             title="Consultant Not Found"
             description="We couldn't find a consultant with that ID."
         />
     );
-  }
-
-  const mockConsultant: Consultant = {
-      id: consultant.id,
-      slug: consultant.id,
-      name: consultant.name,
-      rating: consultant.rating,
-      pricePerMin: consultant.pricePerMin,
-      priceWas: consultant.prevPricePerMin,
-      languages: consultant.languages.map(l => ({ code: l as any, level: 'fluent' })),
-      availability: {
-          online: consultant.isOnline,
-          slots: Array.from({length: 12}, (_, i) => {
-              const now = new Date();
-              return new Date(now.getTime() + (i * 30 + (i > 5 ? 1440 : 120) ) * 60000).toISOString()
-          })
-      },
-      specialties: consultant.specialties as any,
-      types: [],
-      specializesInSigns: [],
-      badges: consultant.badges as any,
-      contentCounts: { articles: 0, podcasts: 0, conferences: 0},
-      cover: '',
-      kycVerified: consultant.verifications.kycVerified,
-      adminApproved: consultant.verifications.adminApproved,
-      lastReviewDate: new Date().toISOString(),
-      bio: '',
-      reviews: [],
-      content: {articles: [], podcasts: [], conferences: []},
-      joinedAt: new Date().toISOString()
   }
 
   return (

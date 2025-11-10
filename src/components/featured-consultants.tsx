@@ -551,7 +551,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                 )}
                 <div role="status" aria-live="polite">
                     {isLoading || allConsultants.length === 0 ? (
-                        <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+                        <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
                             {Array.from({ length: showFilters ? 8 : 4 }).map((_, i) => (
                                  <div key={i} className="space-y-3">
                                     <Skeleton className="h-[225px] w-full rounded-xl" />
@@ -564,7 +564,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                         </div>
                     ) : filteredAndSortedConsultants.length > 0 ? (
                         <>
-                            <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+                            <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
                                 {filteredAndSortedConsultants.slice(0, visibleCount).map((consultant) => (
                                     <ConsultantCard 
                                         key={consultant.id}
