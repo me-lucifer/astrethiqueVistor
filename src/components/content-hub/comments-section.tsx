@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Comment } from '@/lib/comments';
 import { getLocal } from '@/lib/local';
-import { AuthUser } from '@/lib/auth';
+import { AuthUser, getUser } from '@/lib/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,7 +37,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
 
   useEffect(() => {
     // In a real app, this would be context or a hook.
-    const storedUser = getLocal<AuthUser>('astrethique_auth_v1');
+    const storedUser = getUser();
     if (storedUser) {
       setIsLoggedIn(true);
       setUser(storedUser);
