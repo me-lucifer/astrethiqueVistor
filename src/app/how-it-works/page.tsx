@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Search, CalendarClock, Wallet, Star } from "lucide-react";
+import { Search, CalendarClock, Wallet, Star, Heart, Tv, HelpCircle, ShieldCheck, Languages, CheckBadge } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function HowItWorksPage() {
   const [activeTab, setActiveTab] = useState("visitor");
@@ -51,6 +52,22 @@ export default function HowItWorksPage() {
     },
   ];
 
+  const quickLinks = [
+    { icon: Search, label: "Discover consultants", href: "/discover" },
+    { icon: CalendarClock, label: "Start instantly", href: "/discover" },
+    { icon: Heart, label: "Favorites & notes", href: "/discover?myFavorites=true" },
+    { icon: Tv, label: "Free Conferences", href: "/conferences" },
+    { icon: HelpCircle, label: "Help Desk", href: "/support" },
+  ];
+
+  const trustItems = [
+    { icon: CheckBadge, label: "KYC-verified consultants" },
+    { icon: ShieldCheck, label: "GDPR-compliant data" },
+    { icon: Wallet, label: "Transparent pricing" },
+    { icon: Languages, label: "Language & region smart" },
+    { icon: Search, label: "Moderated content" },
+  ];
+
   const VisitorContent = () => (
     <div className="mt-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -79,6 +96,72 @@ export default function HowItWorksPage() {
           </Card>
         ))}
       </div>
+      
+      <div className="mt-16 grid lg:grid-cols-2 gap-12 items-start">
+        <div>
+          <h3 className="font-headline text-2xl font-bold mb-6">Quick Links</h3>
+          <div className="space-y-3">
+            {quickLinks.map(link => (
+              <Link key={link.href} href={link.href}>
+                <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors">
+                  <link.icon className="h-5 w-5 text-primary" />
+                  <span className="font-medium">{link.label}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h3 className="font-headline text-2xl font-bold mb-6">What to Expect</h3>
+          <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Before your session</AccordionTrigger>
+              <AccordionContent>
+                <ul className="list-disc pl-5 space-y-2 text-foreground/80">
+                  <li>Check the consultant's profile, including their bio, specialties, and reviews.</li>
+                  <li>Ensure your device has a stable internet connection for a smooth experience.</li>
+                  <li>Prepare a few questions or topics you wish to discuss to make the most of your time.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>During your session</AccordionTrigger>
+              <AccordionContent>
+                <ul className="list-disc pl-5 space-y-2 text-foreground/80">
+                  <li>Be open and honest to receive the most accurate guidance.</li>
+                  <li>A live per-minute meter will be visible, so you can track your spending.</li>
+                  <li>Feel free to ask for clarification if you don't understand something.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>After your session</AccordionTrigger>
+              <AccordionContent>
+                <ul className="list-disc pl-5 space-y-2 text-foreground/80">
+                  <li>You will receive an email with a detailed invoice.</li>
+                  <li>Take a moment to rate and review your consultant to help others.</li>
+                  <li>Add the consultant to your favorites for easy access next time.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </div>
+
+      <div className="mt-16 border-t pt-10">
+        <h3 className="font-headline text-2xl font-bold text-center mb-8">Trust &amp; Safety</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 text-center">
+            {trustItems.map(item => (
+                <div key={item.label} className="flex flex-col items-center gap-3">
+                    <div className="bg-primary/10 p-3 rounded-full border border-primary/20">
+                        <item.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground/90">{item.label}</p>
+                </div>
+            ))}
+        </div>
+      </div>
+
     </div>
   );
 
