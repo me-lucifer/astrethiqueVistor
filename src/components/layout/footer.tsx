@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Gem, Twitter, Facebook, Instagram, Linkedin } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { translations } from "@/lib/translations";
+import { CompanyContactPanel } from "./company-contact-panel";
 
 const socialLinks = [
   { href: "#", icon: Twitter, label: "Twitter" },
@@ -27,6 +28,7 @@ export function Footer() {
 
   return (
     <>
+      <CompanyContactPanel />
       <footer className="border-t border-border/40 bg-background">
         <div className="container py-8 flex flex-col lg:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
