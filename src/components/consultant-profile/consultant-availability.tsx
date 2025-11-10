@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { add, format, set } from 'date-fns';
 import { Consultant } from '@/lib/consultants';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,18 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const lastMode = getSession<string>('schedule.last-mode.v1');
+    if (lastMode) {
+      setSelectedMode(lastMode);
+    }
+  }, []);
+
+  const handleModeChange = (mode: string) => {
+    setSelectedMode(mode);
+    setSession('schedule.last-mode.v1', mode);
+  };
 
   const handleScheduleClick = () => {
     // For demo, we check if user is logged in via a simple session flag.
@@ -86,7 +98,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
                   <Button
                     key={mode.id}
                     variant={selectedMode === mode.id ? 'secondary' : 'outline'}
-                    onClick={() => setSelectedMode(mode.id)}
+                    onClick={() => handleModeChange(mode.id)}
                     className="gap-2"
                   >
                     <mode.icon className="h-5 w-5" />
