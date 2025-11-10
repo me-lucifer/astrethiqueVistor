@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Search, User, ArrowRight } from "lucide-react";
 import type { Consultant } from "@/lib/consultants";
-import consultantsData from "@/lib/consultants.json";
-import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
+import { getSession } from "@/lib/session";
+import Link from "next/link";
 
 type SearchResult = {
     id: string;
@@ -37,8 +37,15 @@ export function GlobalSearch() {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
+    const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
 
-    const allConsultants: Consultant[] = consultantsData;
+    useEffect(() => {
+        const consultants = getSession<Consultant[]>('discover.seed.v1');
+        if (consultants) {
+            setAllConsultants(consultants);
+        }
+    }, []);
+    
 
     const debouncedQuery = useDebounce(query, 250);
 
@@ -65,20 +72,24 @@ export function GlobalSearch() {
 
         const filteredConsultants = allConsultants
             .filter(c => 
-                c.nameAlias.toLowerCase().includes(lowercasedQuery) || 
+                c.name.toLowerCase().includes(lowercasedQuery) || 
                 c.specialties.some(s => s.toLowerCase().includes(lowercasedQuery))
             )
             .map(c => ({ 
                 id: c.id, 
-                title: c.nameAlias, 
+                title: c.name, 
                 description: c.specialties.join(", "), 
-                url: `/discover?query=${encodeURIComponent(debouncedQuery)}` 
+                url: `/consultant/${c.slug}` 
             } as SearchResult))
             .slice(0, 5);
 
-        setResults(filteredConsultants);
-        setIsLoading(false);
-        setIsOpen(true);
+        // This is a slow operation for a prototype, but simulates a real search
+        setTimeout(() => {
+            setResults(filteredConsultants);
+            setIsLoading(false);
+            setIsOpen(true);
+        }, 150)
+
 
     }, [debouncedQuery, allConsultants]);
 
@@ -108,13 +119,13 @@ export function GlobalSearch() {
     };
 
     return (
-        <div className="relative w-full max-w-xl mx-auto" ref={searchRef}>
+        <div className="relative w-full" ref={searchRef}>
             <form onSubmit={handleFormSubmit}>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                         placeholder="Search consultants..."
-                        className="pl-10 h-12 text-base"
+                        className="pl-10 h-11 text-base sm:text-sm"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onFocus={() => query.length > 1 && setIsOpen(true)}
@@ -136,6 +147,14 @@ export function GlobalSearch() {
                                     <h4 className="px-3 py-1 font-semibold text-sm text-muted-foreground">Consultants</h4>
                                     {results.map(item => <ResultItem key={item.id} item={item} />)}
                                 </div>
+                                {results.length > 4 && (
+                                     <Button variant="link" asChild className="w-full justify-center mt-1">
+                                        <Link href={`/discover?query=${encodeURIComponent(query)}`} onClick={handleResultClick}>
+                                            See all results
+                                            <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                     </Button>
+                                )}
                             </>
                         ) : (
                             <p className="text-center text-muted-foreground p-4 text-sm">No results for "{query}"</p>
