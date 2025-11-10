@@ -20,6 +20,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { ContentCard } from '@/components/content-card';
 import { useToast } from '@/hooks/use-toast';
+import { getSession } from '@/lib/session';
+import { StartNowModal } from '@/components/start-now-modal';
+import { RsvpConfirmationModal } from '@/components/rsvp-confirmation-modal';
+
+interface Rsvp {
+    eventId: string;
+    title: string;
+    dateISO: string;
+    type: 'conference';
+    remind24h: boolean;
+    remind1h: boolean;
+    remind10m: boolean;
+}
 
 export default function ConferenceDetailPage() {
     const params = useParams();
@@ -31,6 +44,8 @@ export default function ConferenceDetailPage() {
     const [relatedConferences, setRelatedConferences] = useState<Conference[]>([]);
     const [isRsvpd, setIsRsvpd] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isRsvpModalOpen, setIsRsvpModalOpen] = useState(false);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
     useEffect(() => {
         seedOnce("conferences_seeded_v2", seedConferences);
@@ -46,7 +61,7 @@ export default function ConferenceDetailPage() {
             setRelatedConferences(related);
         }
 
-        const rsvps = getLocal<any[]>("rsvps") || [];
+        const rsvps = getLocal<Rsvp[]>("rsvps") || [];
         if (currentConference && rsvps.some(r => r.eventId === currentConference.id)) {
             setIsRsvpd(true);
         }
@@ -54,20 +69,51 @@ export default function ConferenceDetailPage() {
         setLoading(false);
     }, [slug]);
 
-    const handleRsvp = () => {
+    const handleRsvpClick = () => {
         if (!conference) return;
 
-        let rsvps = getLocal<any[]>("rsvps") || [];
+        const isLoggedIn = getSession('userRegistered') === 'true';
+        if (!isLoggedIn) {
+            setIsAuthModalOpen(true);
+            return;
+        }
+
+        if (isRsvpd) {
+            // If already going, show confirmation to cancel
+            if (confirm("Are you sure you want to cancel your RSVP?")) {
+                handleConfirmRsvp();
+            }
+        } else {
+            setIsRsvpModalOpen(true);
+        }
+    };
+    
+    const handleConfirmRsvp = () => {
+        if (!conference) return;
+
+        let rsvps = getLocal<Rsvp[]>("rsvps") || [];
         if (isRsvpd) {
             rsvps = rsvps.filter(r => r.eventId !== conference.id);
             toast({ title: "RSVP Cancelled" });
+            setIsRsvpd(false);
         } else {
-            rsvps.push({ eventId: conference.id, title: conference.title, remind24h: false, remind1h: false, remind10m: false });
-            toast({ title: "RSVP Successful!", description: "This event has been added to your calendar." });
+            const newRsvp: Rsvp = {
+                eventId: conference.id,
+                title: conference.title,
+                dateISO: conference.dateISO,
+                type: 'conference',
+                remind24h: true,
+                remind1h: true,
+                remind10m: true
+            };
+            rsvps.push(newRsvp);
+            toast({ title: "You're in!", description: "We'll send reminders before it starts." });
+            setIsRsvpd(true);
         }
         setLocal("rsvps", rsvps);
-        setIsRsvpd(!isRsvpd);
+        setIsRsvpModalOpen(false);
     };
+
 
     const handleNotify = () => {
         toast({ title: "You'll be notified if a spot opens up." });
@@ -192,10 +238,10 @@ export default function ConferenceDetailPage() {
                         <CardContent className="p-6 space-y-4">
                            <div className="text-3xl font-bold text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</div>
                            <div className="space-y-2">
-                            {hasSeats ? (
-                                <Button size="lg" className="w-full" onClick={handleRsvp}>
+                            {hasSeats || isRsvpd ? (
+                                <Button size="lg" className="w-full" onClick={handleRsvpClick} variant={isRsvpd ? "outline" : "default"}>
                                     {isRsvpd ? <CheckCircle className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
-                                    {isRsvpd ? 'You are going!' : 'RSVP Now'}
+                                    {isRsvpd ? 'Going / Cancel' : 'RSVP Now'}
                                 </Button>
                             ) : (
                                 <Button size="lg" className="w-full" disabled>
@@ -203,7 +249,7 @@ export default function ConferenceDetailPage() {
                                 </Button>
                             )}
                             
-                            {!hasSeats && (
+                            {!hasSeats && !isRsvpd && (
                                 <Button size="lg" variant="secondary" className="w-full" onClick={handleNotify}>
                                     <Bell className="mr-2 h-4 w-4"/>
                                     Notify Me
@@ -251,6 +297,20 @@ export default function ConferenceDetailPage() {
                     </Carousel>
                 </div>
             )}
+            
+            {conference && (
+                <RsvpConfirmationModal
+                    isOpen={isRsvpModalOpen}
+                    onOpenChange={setIsRsvpModalOpen}
+                    conference={conference}
+                    onConfirm={handleConfirmRsvp}
+                />
+            )}
+            
+            <StartNowModal
+                isOpen={isAuthModalOpen}
+                onOpenChange={setIsAuthModalOpen}
+            />
         </div>
     );
 }

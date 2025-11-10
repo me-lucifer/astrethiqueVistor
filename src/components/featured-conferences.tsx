@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, useCallback, useTransition } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Conference, seedConferences } from "@/lib/conferences-seeder";
 import { getLocal, setLocal, seedOnce } from "@/lib/local";
+import { getSession } from "@/lib/session";
 import { isWithinInterval, addDays, startOfDay, endOfDay, endOfWeek, endOfMonth, isFuture, differenceInMinutes, format } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,11 +30,15 @@ import Image from "next/image";
 import { StarRating } from "./star-rating";
 import Link from "next/link";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-
+import { RsvpConfirmationModal } from "./rsvp-confirmation-modal";
+import { StartNowModal } from "./start-now-modal";
+import { useToast } from "@/hooks/use-toast";
 
 interface Rsvp {
     eventId: string;
     title: string;
+    dateISO: string;
+    type: 'conference';
     remind24h: boolean;
     remind1h: boolean;
     remind10m: boolean;
@@ -93,6 +98,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const isDesktop = useMediaQuery("(min-width: 1024px)");
+    const { toast } = useToast();
 
     const [allConferences, setAllConferences] = useState<Conference[]>([]);
     const [rsvps, setRsvps] = useState<Rsvp[]>([]);
@@ -103,6 +109,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const [query, setQuery] = useState(initialQuery);
     
     const [priceBounds, setPriceBounds] = useState<[number, number]>([0, 100]);
+    const [selectedConference, setSelectedConference] = useState<Conference | null>(null);
+    const [isRsvpModalOpen, setIsRsvpModalOpen] = useState(false);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
 
     const [filters, setFilters] = useState<Filters>(() => {
         if (typeof window === "undefined") return defaultFilters;
@@ -251,37 +261,41 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
 
     }, [allConferences, filters, query, sort]);
     
-    const handleRsvp = (conf: Conference) => {
+    const handleRsvpClick = (conf: Conference) => {
+        const isLoggedIn = getSession('userRegistered') === 'true';
+        if (!isLoggedIn) {
+            setIsAuthModalOpen(true);
+            return;
+        }
+        setSelectedConference(conf);
+        setIsRsvpModalOpen(true);
+    };
+
+    const handleConfirmRsvp = (conf: Conference) => {
         let updatedRsvps;
         if (isRsvpd(conf.id)) {
              updatedRsvps = rsvps.filter(r => r.eventId !== conf.id);
+             toast({ title: "RSVP Cancelled" });
         } else {
-            updatedRsvps = [...rsvps, { eventId: conf.id, title: conf.title, remind24h: false, remind1h: false, remind10m: false }];
+            const newRsvp: Rsvp = {
+                eventId: conf.id,
+                title: conf.title,
+                dateISO: conf.dateISO,
+                type: 'conference',
+                remind24h: true,
+                remind1h: true,
+                remind10m: true
+            };
+            updatedRsvps = [...rsvps, newRsvp];
+            toast({ title: "You're in!", description: "We'll send reminders before it starts." });
         }
         setRsvps(updatedRsvps);
         setLocal("rsvps", updatedRsvps);
+        setIsRsvpModalOpen(false);
+        setSelectedConference(null);
     };
-
-    const handleReminderChange = (eventId: string, reminder: 'remind24h' | 'remind1h' | 'remind10m', checked: boolean) => {
-        const updatedRsvps = rsvps.map(r => r.eventId === eventId ? {...r, [reminder]: checked} : r);
-        setRsvps(updatedRsvps);
-        setLocal("rsvps", updatedRsvps);
-
-        if(checked) {
-            const conference = allConferences.find(c => c.id === eventId);
-            if (conference) {
-                const reminderText = { remind24h: "24 hours", remind1h: "1 hour", remind10m: "10 minutes" }
-                addNotification({
-                    title: `Reminder set for "${conference.title}"`,
-                    body: `We'll remind you ${reminderText[reminder]} before the event.`,
-                    category: 'session',
-                })
-            }
-        }
-    }
-
+    
     const isRsvpd = (id: string) => rsvps.some(r => r.eventId === id);
-    const getRsvp = (id: string) => rsvps.find(r => r.eventId === id);
     
     const formatDate = (dateISO: string, durationMin: number) => {
         const date = new Date(dateISO);
@@ -436,123 +450,139 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     }
 
     return (
-        <TooltipProvider>
-            {isDesktop ? <FilterControls /> : null}
+        <>
+            <TooltipProvider>
+                {isDesktop ? <FilterControls /> : null}
 
-            <main className="w-full">
-                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                    <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
-                        Showing {filteredConferences.length} conferences
-                    </p>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                        {!isDesktop && mobileSheet}
-                        <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
-                            <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort by">
-                                <SelectValue placeholder="Sort by..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {Object.entries(sortOptions).map(([key, value]) => (
-                                    <SelectItem key={key} value={key}>{value}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-
-                <div role="status" aria-live="polite">
-                    {isLoading ? (
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {Array.from({ length: 3 }).map((_, i) => (
-                                <Card key={i}><CardHeader><Skeleton className="h-44 w-full" /></CardHeader><CardContent><Skeleton className="h-5 w-2/3" /><Skeleton className="h-4 w-full mt-2" /><Skeleton className="h-4 w-1/2 mt-2" /></CardContent><CardFooter><Skeleton className="h-8 w-24" /></CardFooter></Card>
-                            ))}
+                <main className="w-full">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                        <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
+                            Showing {filteredConferences.length} conferences
+                        </p>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            {!isDesktop && mobileSheet}
+                            <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
+                                <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort by">
+                                    <SelectValue placeholder="Sort by..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(sortOptions).map(([key, value]) => (
+                                        <SelectItem key={key} value={key}>{value}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
-                    ) : filteredConferences.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {filteredConferences.map((conference) => {
-                                const rsvpDetails = getRsvp(conference.id);
-                                const hasSeats = conference.seatsLeft === undefined || conference.seatsLeft > 0;
+                    </div>
 
-                                return (
-                                <Card key={conference.id} className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
-                                    <CardContent className="p-0">
-                                        <Link href={`/conferences/${conference.slug}`} className="block group">
-                                            <div className="relative">
-                                                <Image
-                                                    src={`https://picsum.photos/seed/${conference.id}/400/225`}
-                                                    alt={conference.title}
-                                                    width={400}
-                                                    height={225}
-                                                    className="w-full object-cover aspect-video group-hover:opacity-90 transition-opacity"
-                                                />
-                                                <div className="absolute top-2 right-2 flex gap-2">
-                                                    {conference.price === 0 && <Badge variant="default" className="bg-green-600">Free</Badge>}
-                                                    {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting Soon</Badge>}
-                                                </div>
-                                            </div>
-                                            <div className="p-4 space-y-3">
-                                                <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary">{conference.title}</h3>
-                                                
-                                                <div className="text-sm text-muted-foreground">
-                                                    <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
-                                                </div>
+                    <div role="status" aria-live="polite">
+                        {isLoading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <Card key={i}><CardHeader><Skeleton className="h-44 w-full" /></CardHeader><CardContent><Skeleton className="h-5 w-2/3" /><Skeleton className="h-4 w-full mt-2" /><Skeleton className="h-4 w-1/2 mt-2" /></CardContent><CardFooter><Skeleton className="h-8 w-24" /></CardFooter></Card>
+                                ))}
+                            </div>
+                        ) : filteredConferences.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {filteredConferences.map((conference) => {
+                                    const rsvpDetails = rsvps.find(r => r.eventId === conference.id);
+                                    const hasSeats = conference.seatsLeft === undefined || conference.seatsLeft > 0;
 
-                                                <div className="flex items-center gap-3 pt-2">
-                                                    <Image src={`https://i.pravatar.cc/40?u=${conference.hostAlias}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
-                                                    <div>
-                                                        <Link href={`/discover/consultant/${conference.hostId}`} className="font-semibold hover:underline">{conference.hostAlias}</Link>
-                                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                            <StarRating rating={conference.hostRating} size={14} />
-                                                            <span>({conference.hostRating})</span>
-                                                            <span>•</span>
-                                                            <span>{conference.language}</span>
-                                                        </div>
+                                    return (
+                                    <Card key={conference.id} className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
+                                        <CardContent className="p-0">
+                                            <Link href={`/conferences/${conference.slug}`} className="block group">
+                                                <div className="relative">
+                                                    <Image
+                                                        src={`https://picsum.photos/seed/${conference.id}/400/225`}
+                                                        alt={conference.title}
+                                                        width={400}
+                                                        height={225}
+                                                        className="w-full object-cover aspect-video group-hover:opacity-90 transition-opacity"
+                                                    />
+                                                    <div className="absolute top-2 right-2 flex gap-2">
+                                                        {conference.price === 0 && <Badge variant="default" className="bg-green-600">Free</Badge>}
+                                                        {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting Soon</Badge>}
                                                     </div>
                                                 </div>
-                                                
-                                                <div className="flex flex-wrap gap-2 pt-1">
-                                                    {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
-                                                    <Badge variant="outline">{conference.type}</Badge>
+                                                <div className="p-4 space-y-3">
+                                                    <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary">{conference.title}</h3>
+                                                    
+                                                    <div className="text-sm text-muted-foreground">
+                                                        <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-3 pt-2">
+                                                        <Image src={`https://i.pravatar.cc/40?u=${conference.hostAlias}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
+                                                        <div>
+                                                            <Link href={`/discover/consultant/${conference.hostId}`} className="font-semibold hover:underline">{conference.hostAlias}</Link>
+                                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                                <StarRating rating={conference.hostRating} size={14} />
+                                                                <span>({conference.hostRating})</span>
+                                                                <span>•</span>
+                                                                <span>{conference.language}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex flex-wrap gap-2 pt-1">
+                                                        {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                                                        <Badge variant="outline">{conference.type}</Badge>
+                                                    </div>
                                                 </div>
+                                            </Link>
+                                        </CardContent>
+                                        <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center">
+                                            <div className="font-bold text-lg text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</div>
+                                            <div className="flex items-center gap-2">
+                                                {conference.seatsLeft !== undefined && (
+                                                    <Tooltip>
+                                                        <TooltipTrigger>
+                                                            <Badge variant={hasSeats ? "outline" : "destructive"} className="flex items-center gap-1.5">
+                                                                <Users className="w-3.5 h-3.5" />
+                                                                {conference.seatsLeft} left
+                                                            </Badge>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Seats remaining: {conference.seatsLeft}/{conference.capacity}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                )}
+                                                <Button asChild variant="secondary" size="sm">
+                                                    <Link href={`/conferences/${conference.slug}`}>Details</Link>
+                                                </Button>
+                                                <Button size="sm" onClick={() => handleRsvpClick(conference)} variant={isRsvpd(conference.id) ? "outline" : "default"} disabled={!hasSeats && !isRsvpd(conference.id)}>
+                                                    {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
+                                                    {isRsvpd(conference.id) ? "Going" : (hasSeats ? "RSVP" : "Waitlist")}
+                                                </Button>
                                             </div>
-                                        </Link>
-                                    </CardContent>
-                                    <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center">
-                                        <div className="font-bold text-lg text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</div>
-                                        <div className="flex items-center gap-2">
-                                            {conference.seatsLeft !== undefined && (
-                                                <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <Badge variant={hasSeats ? "outline" : "destructive"} className="flex items-center gap-1.5">
-                                                            <Users className="w-3.5 h-3.5" />
-                                                            {conference.seatsLeft} left
-                                                        </Badge>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Seats remaining: {conference.seatsLeft}/{conference.capacity}</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            )}
-                                            <Button asChild variant="secondary" size="sm">
-                                                <Link href={`/conferences/${conference.slug}`}>Details</Link>
-                                            </Button>
-                                            <Button size="sm" onClick={() => handleRsvp(conference)} variant={isRsvpd(conference.id) ? "outline" : "default"} disabled={!hasSeats}>
-                                                {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
-                                                {isRsvpd(conference.id) ? "Going" : (hasSeats ? "RSVP" : "Waitlist")}
-                                            </Button>
-                                        </div>
-                                    </CardFooter>
-                                </Card>
-                            )})}
-                        </div>
-                    ) : (
-                        <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
-                            <h3 className="font-headline text-2xl font-bold">No matching conferences.</h3>
-                            <p className="text-muted-foreground mt-2 mb-4">Try widening your filters.</p>
-                            <Button onClick={handleResetFilters}>Clear filters</Button>
-                        </div>
-                    )}
-                </div>
-            </main>
-       </TooltipProvider>
+                                        </CardFooter>
+                                    </Card>
+                                )})}
+                            </div>
+                        ) : (
+                            <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
+                                <h3 className="font-headline text-2xl font-bold">No matching conferences.</h3>
+                                <p className="text-muted-foreground mt-2 mb-4">Try widening your filters.</p>
+                                <Button onClick={handleResetFilters}>Clear filters</Button>
+                            </div>
+                        )}
+                    </div>
+                </main>
+            </TooltipProvider>
+
+            {selectedConference && (
+                <RsvpConfirmationModal
+                    isOpen={isRsvpModalOpen}
+                    onOpenChange={setIsRsvpModalOpen}
+                    conference={selectedConference}
+                    onConfirm={() => handleConfirmRsvp(selectedConference)}
+                />
+            )}
+            
+            <StartNowModal
+                isOpen={isAuthModalOpen}
+                onOpenChange={setIsAuthModalOpen}
+            />
+        </>
     );
 }
