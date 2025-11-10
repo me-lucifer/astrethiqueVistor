@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Search, CalendarClock, Wallet, Star, Heart, Tv, HelpCircle, ShieldCheck, Languages, BadgeCheck } from "lucide-react";
+import { Search, CalendarClock, Wallet, Star, Heart, Tv, HelpCircle, ShieldCheck, Languages, BadgeCheck, User, Shield, Briefcase, FileText } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function HowItWorksPage() {
@@ -50,6 +50,35 @@ export default function HowItWorksPage() {
         { label: "My favorites", href: "/discover?myFavorites=true" },
       ],
     },
+  ];
+
+  const consultantSteps = [
+    {
+      icon: User,
+      title: "Build your profile",
+      description: "Showcase your specialties, consultation types, languages, timezone, and availability.",
+    },
+    {
+      icon: Shield,
+      title: "Get vetted",
+      description: "Complete a secure KYC (Know Your Customer) process and get admin approval to ensure trust.",
+    },
+    {
+      icon: Briefcase,
+      title: "Set your business rules",
+      description: "Set a per-minute rate (changes once/month), and use promos (1 free 24h/week, 1 paid/month).",
+    },
+    {
+      icon: Wallet,
+      title: "Start consulting & get paid",
+      description: "Chat/audio/video sessions, monthly invoices, wallet payouts, and performance bonuses.",
+    },
+  ];
+
+  const consultantQuickLinks = [
+    { label: "Set availability", href: "/consultant/dashboard/availability", icon: CalendarClock },
+    { label: "Create a promotion", href: "/consultant/dashboard/promotions", icon: Star },
+    { label: "Download invoices", href: "/consultant/dashboard/payouts", icon: FileText },
   ];
 
   const quickLinks = [
@@ -218,8 +247,37 @@ export default function HowItWorksPage() {
   );
 
   const ConsultantContent = () => (
-    <div className="mt-8 p-8 border-2 border-dashed border-border rounded-lg w-full min-h-[40vh] flex items-center justify-center">
-        <p className="text-foreground/60">Consultant content to be added here...</p>
+    <div className="mt-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {consultantSteps.map((step) => (
+          <Card key={step.title} className="bg-card/50">
+            <CardHeader>
+                <div className="flex items-center gap-4">
+                    <div className="bg-primary/10 p-3 rounded-full border border-primary/20">
+                        <step.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle className="font-headline text-lg">{step.title}</CardTitle>
+                </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-foreground/80">{step.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="mt-16">
+          <h3 className="font-headline text-2xl font-bold mb-6">Quick Links for Consultants</h3>
+          <div className="space-y-3 max-w-md">
+            {consultantQuickLinks.map(link => (
+              <Link key={link.label} href={link.href}>
+                <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors">
+                  <link.icon className="h-5 w-5 text-primary" />
+                  <span className="font-medium">{link.label}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
     </div>
   );
 
