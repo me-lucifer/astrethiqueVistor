@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Search, CalendarClock, Wallet, Star, Heart, Tv, HelpCircle, ShieldCheck, Languages, CheckBadge } from "lucide-react";
+import { Search, CalendarClock, Wallet, Star, Heart, Tv, HelpCircle, ShieldCheck, Languages, BadgeCheck } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function HowItWorksPage() {
@@ -61,7 +61,7 @@ export default function HowItWorksPage() {
   ];
 
   const trustItems = [
-    { icon: CheckBadge, label: "KYC-verified consultants" },
+    { icon: BadgeCheck, label: "KYC-verified consultants" },
     { icon: ShieldCheck, label: "GDPR-compliant data" },
     { icon: Wallet, label: "Transparent pricing" },
     { icon: Languages, label: "Language & region smart" },
