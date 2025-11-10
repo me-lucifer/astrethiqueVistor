@@ -156,7 +156,7 @@ export function UpcomingConferences() {
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     <Badge variant="outline">{conference.language}</Badge>
-                                    <Badge variant="default">Free</Badge>
+                                    <Badge variant="outline">{conference.durationMin} min</Badge>
                                     {conference.tags.map(tag => (
                                         <Badge key={tag} variant="secondary" className="bg-secondary/10 text-secondary-foreground/80">{tag}</Badge>
                                     ))}

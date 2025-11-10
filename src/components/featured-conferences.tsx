@@ -517,114 +517,116 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
 
                                     return (
                                     <Card key={conference.id} className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
-                                        <CardContent className="p-0">
-                                            <Link href={`/conferences/${conference.slug}`} className="block group" aria-label={`View details for ${conference.title}`}>
-                                                <div className="relative">
-                                                    <Image
-                                                        src={`https://picsum.photos/seed/${conference.id}/400/225`}
-                                                        alt={conference.title}
-                                                        width={400}
-                                                        height={225}
-                                                        className="w-full object-cover aspect-video group-hover:opacity-90 transition-opacity"
-                                                    />
-                                                    <div className="absolute top-2 right-2 flex gap-2">
-                                                        {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting Soon</Badge>}
-                                                    </div>
-                                                </div>
-                                                <div className="p-4 space-y-3">
-                                                    <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary" aria-label={conference.title}>{conference.title}</h3>
-                                                    
-                                                    <div className="text-sm text-muted-foreground space-y-2">
-                                                        <div className="flex items-center gap-2 flex-wrap"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            {(conference.languages || []).map(lang => <Badge key={lang} variant="outline" className="font-normal">{lang}</Badge>)}
-                                                            <Badge variant="outline">{conference.type}</Badge>
+                                        <div className="flex-1 flex flex-col p-0">
+                                            <Link href={`/conferences/${conference.slug}`} className="block group flex-1 flex flex-col" aria-label={`View details for ${conference.title}`}>
+                                                <CardContent className="p-0">
+                                                    <div className="relative">
+                                                        <Image
+                                                            src={`https://picsum.photos/seed/${conference.id}/400/225`}
+                                                            alt={conference.title}
+                                                            width={400}
+                                                            height={225}
+                                                            className="w-full object-cover aspect-video group-hover:opacity-90 transition-opacity"
+                                                        />
+                                                        <div className="absolute top-2 right-2 flex gap-2">
+                                                            {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting Soon</Badge>}
                                                         </div>
                                                     </div>
+                                                    <div className="p-4 space-y-3">
+                                                        <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary" aria-label={conference.title}>{conference.title}</h3>
+                                                        
+                                                        <div className="text-sm text-muted-foreground space-y-2">
+                                                            <div className="flex items-center gap-2 flex-wrap"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                {(conference.languages || []).map(lang => <Badge key={lang} variant="outline" className="font-normal">{lang}</Badge>)}
+                                                                <Badge variant="outline">{conference.type}</Badge>
+                                                            </div>
+                                                        </div>
 
-                                                    <div className="flex items-center gap-3 pt-2">
-                                                        <Image src={`https://i.pravatar.cc/40?u=${encodeURIComponent(conference.hostAlias)}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
-                                                        <div>
-                                                            <span
-                                                                role="button"
-                                                                tabIndex={0}
-                                                                className="font-semibold hover:underline cursor-pointer relative z-10"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    e.preventDefault();
-                                                                    router.push(`/discover/consultant/${conference.hostId}`);
-                                                                }}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        <div className="flex items-center gap-3 pt-2">
+                                                            <Image src={`https://i.pravatar.cc/40?u=${encodeURIComponent(conference.hostAlias)}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
+                                                            <div>
+                                                                <span
+                                                                    role="button"
+                                                                    tabIndex={0}
+                                                                    className="font-semibold hover:underline cursor-pointer relative z-10"
+                                                                    onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         e.preventDefault();
                                                                         router.push(`/discover/consultant/${conference.hostId}`);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                {conference.hostAlias}
-                                                            </span>
-                                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                                <StarRating rating={conference.hostRating} size={14} />
-                                                                <span aria-label={`Host rating: ${conference.hostRating}`}>({conference.hostRating})</span>
+                                                                    }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter' || e.key === ' ') {
+                                                                            e.stopPropagation();
+                                                                            e.preventDefault();
+                                                                            router.push(`/discover/consultant/${conference.hostId}`);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    {conference.hostAlias}
+                                                                </span>
+                                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                                    <StarRating rating={conference.hostRating} size={14} />
+                                                                    <span aria-label={`Host rating: ${conference.hostRating}`}>({conference.hostRating})</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
+                                                </CardContent>
+                                                <div className="p-4 pt-0 mt-auto">
+                                                    <div className="flex flex-wrap gap-1 min-h-[22px] overflow-hidden text-ellipsis whitespace-nowrap">
+                                                        {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                                                    </div>
                                                 </div>
                                             </Link>
-                                        </CardContent>
-                                        <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center gap-2">
-                                            <div className="flex flex-wrap gap-1">
-                                                {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Popover>
-                                                    <PopoverTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!userIsRsvpd} aria-label={`Set reminders for ${conference.title}`}>
-                                                            <Bell className="h-4 w-4" />
-                                                        </Button>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-60">
-                                                        <div className="grid gap-4">
-                                                            <div className="space-y-2">
-                                                                <h4 className="font-medium leading-none">Reminders</h4>
-                                                                <p className="text-sm text-muted-foreground">
-                                                                    Reminders are on by default.
-                                                                </p>
+                                        </div>
+                                        <CardFooter className="p-4 pt-0 flex justify-end items-center gap-2 border-t mt-auto">
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!userIsRsvpd} aria-label={`Set reminders for ${conference.title}`}>
+                                                        <Bell className="h-4 w-4" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-60">
+                                                    <div className="grid gap-4">
+                                                        <div className="space-y-2">
+                                                            <h4 className="font-medium leading-none">Reminders</h4>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                Reminders are on by default.
+                                                            </p>
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <div className="flex items-center space-x-2">
+                                                                <Checkbox id={`remind-24h-${conference.id}`} checked={rsvpDetails?.remind24h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind24h", c as boolean)} />
+                                                                <Label htmlFor={`remind-24h-${conference.id}`}>24 hours before</Label>
                                                             </div>
-                                                            <div className="grid gap-2">
-                                                                <div className="flex items-center space-x-2">
-                                                                    <Checkbox id={`remind-24h-${conference.id}`} checked={rsvpDetails?.remind24h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind24h", c as boolean)} />
-                                                                    <Label htmlFor={`remind-24h-${conference.id}`}>24 hours before</Label>
-                                                                </div>
-                                                                <div className="flex items-center space-x-2">
-                                                                    <Checkbox id={`remind-1h-${conference.id}`} checked={rsvpDetails?.remind1h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind1h", c as boolean)}/>
-                                                                    <Label htmlFor={`remind-1h-${conference.id}`}>1 hour before</Label>
-                                                                </div>
-                                                                <div className="flex items-center space-x-2">
-                                                                    <Checkbox id={`remind-10m-${conference.id}`} checked={rsvpDetails?.remind10m} onCheckedChange={(c) => handleReminderChange(conference.id, "remind10m", c as boolean)}/>
-                                                                    <Label htmlFor={`remind-10m-${conference.id}`}>10 minutes before</Label>
-                                                                </div>
+                                                            <div className="flex items-center space-x-2">
+                                                                <Checkbox id={`remind-1h-${conference.id}`} checked={rsvpDetails?.remind1h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind1h", c as boolean)}/>
+                                                                <Label htmlFor={`remind-1h-${conference.id}`}>1 hour before</Label>
+                                                            </div>
+                                                            <div className="flex items-center space-x-2">
+                                                                <Checkbox id={`remind-10m-${conference.id}`} checked={rsvpDetails?.remind10m} onCheckedChange={(c) => handleReminderChange(conference.id, "remind10m", c as boolean)}/>
+                                                                <Label htmlFor={`remind-10m-${conference.id}`}>10 minutes before</Label>
                                                             </div>
                                                         </div>
-                                                    </PopoverContent>
-                                                </Popover>
-                                                
-                                                {eventIsLive && userIsRsvpd ? (
-                                                    <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700" aria-label={`Join live event: ${conference.title}`}>
-                                                        <Tv className="mr-2 h-4 w-4" /> Join Live
-                                                    </Button>
-                                                ) : (
-                                                    <Button 
-                                                        size="sm" 
-                                                        onClick={() => handleRsvpClick(conference)}
-                                                        variant={userIsRsvpd ? "outline" : "default"} 
-                                                        aria-label={userIsRsvpd ? `Cancel RSVP for ${conference.title}` : `RSVP for ${conference.title}, a free event`}
-                                                    >
-                                                        {userIsRsvpd ? <><CheckCircle className="mr-2 h-4 w-4" /> Going</> : <><Ticket className="mr-2 h-4 w-4" /> RSVP</>}
-                                                    </Button>
-                                                )}
-                                            </div>
+                                                    </div>
+                                                </PopoverContent>
+                                            </Popover>
+                                            
+                                            {eventIsLive && userIsRsvpd ? (
+                                                <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700" aria-label={`Join live event: ${conference.title}`}>
+                                                    <Tv className="mr-2 h-4 w-4" /> Join Live
+                                                </Button>
+                                            ) : (
+                                                <Button 
+                                                    size="sm" 
+                                                    onClick={() => handleRsvpClick(conference)}
+                                                    variant={userIsRsvpd ? "outline" : "default"} 
+                                                    aria-label={userIsRsvpd ? `Cancel RSVP for ${conference.title}` : `RSVP for ${conference.title}, a free event`}
+                                                >
+                                                    {userIsRsvpd ? <><CheckCircle className="mr-2 h-4 w-4" /> Going</> : <><Ticket className="mr-2 h-4 w-4" /> RSVP</>}
+                                                </Button>
+                                            )}
                                         </CardFooter>
                                     </Card>
                                 )})}
