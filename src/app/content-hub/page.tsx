@@ -11,8 +11,14 @@ import { EmptyState } from '@/components/content-hub/empty-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Sparkles } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 9;
+
+type DailyMood = {
+    [key in "Love" | "Work" | "Health" | "Money"]?: 'low' | 'medium' | 'high';
+}
 
 export default function ContentHubPage() {
     const router = useRouter();
@@ -22,10 +28,11 @@ export default function ContentHubPage() {
     const [allItems, setAllItems] = useState<ContentHubItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [page, setPage] = useState(1);
+    const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
 
     // Filter and sort state
     const [query, setQuery] = useState(searchParams.get('q') || '');
-    const [topics, setTopics] = useState<string[]>(searchParams.get('topics')?.split(',') || []);
+    const [topics, setTopics] = useState<string[]>(searchParams.get('topics')?.split(',').filter(Boolean) || []);
     const [type, setType] = useState(searchParams.get('type') || 'all');
     const [language, setLanguage] = useState(searchParams.get('lang') || 'all');
     const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
@@ -35,6 +42,16 @@ export default function ContentHubPage() {
         seedContentHub();
         const items = getSession<ContentHubItem[]>('ch_items') || [];
         setAllItems(items);
+
+        // Check for daily mood for personalization
+        const dailyMood = getSession<DailyMood>("daily_mood");
+        if (dailyMood) {
+            const lowMoods = Object.entries(dailyMood)
+                .filter(([, mood]) => mood === 'low')
+                .map(([topic]) => topic);
+            setSuggestedTopics(lowMoods);
+        }
+
         setIsLoading(false);
     }, []);
 
@@ -143,6 +160,12 @@ export default function ContentHubPage() {
         setAllItems(updatedItems);
         setSession('ch_items', updatedItems);
     }
+    
+    const handleSuggestedTopicClick = (topic: string) => {
+        if (!topics.includes(topic)) {
+            setTopics([...topics, topic]);
+        }
+    };
 
     return (
         <div className="container py-12">
@@ -154,6 +177,28 @@ export default function ContentHubPage() {
                     Explore articles and podcasts from our experts—filter by topic, language, and type.
                 </p>
             </div>
+
+            {suggestedTopics.length > 0 && (
+                <div className="mb-8 p-4 bg-primary/10 border border-primary/20 rounded-lg flex flex-col sm:flex-row items-center gap-4">
+                    <div className="flex items-center gap-2 text-primary">
+                        <Sparkles className="h-5 w-5" />
+                        <p className="font-medium text-sm">Based on how you’re feeling, here’s content to lift you up.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {suggestedTopics.map(topic => (
+                            <Button 
+                                key={topic} 
+                                size="sm"
+                                variant="outline"
+                                className="bg-background/50"
+                                onClick={() => handleSuggestedTopicClick(topic)}
+                            >
+                                {topic}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <ContentHubFilters
                 query={query} setQuery={setQuery}
