@@ -39,6 +39,6 @@ export interface Consultant {
     conferences: { id: string; title: string; scheduleISO: string }[];
   };
   joinedAt: string; // ISO date string
-  promoActive?: boolean;
-  reviewsCount: number;
 }
+
+    

@@ -19,8 +19,6 @@ const createConsultant = (index: number): Consultant => {
         pricePerMin: Math.round((1.5 + Math.random() * 3.5) * 2) / 2,
         priceWas: index % 4 === 0 ? Math.round((3 + Math.random() * 3) * 2) / 2 : undefined,
         promo24h: index % 5 === 0,
-        promoActive: index % 4 === 0,
-        reviewsCount: Math.floor(Math.random() * 500) + 10,
         languages: index % 2 === 0 
             ? [{ code: 'EN', level: 'native' }, { code: 'FR', level: 'fluent' }]
             : [{ code: 'EN', level: 'native' }],
@@ -69,3 +67,5 @@ export const seedConsultants = () => {
     setSession('discover.seed.v1', true);
   }
 };
+
+    

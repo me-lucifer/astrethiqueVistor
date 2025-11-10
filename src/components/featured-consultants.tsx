@@ -59,9 +59,10 @@ const ratingFilters = [
 
 const sortOptions = {
     recommended: "Recommended",
-    price_asc: "Price (low to high)",
-    rating_desc: "Rating (high to low)",
-    most_reviewed: "Most reviewed",
+    rating_desc: "Rating ↓",
+    price_asc: "Price ↑",
+    price_desc: "Price ↓",
+    online_first: "Online first",
     newest: "Newest",
 };
 
@@ -117,8 +118,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     });
     const [sort, setSort] = useState<SortKey>(() => getSession('discover.sort.v1') || 'recommended');
     const [priceBounds, setPriceBounds] = useState<[number, number]>([0, 10]);
-    const [favorites, setFavorites] = useState<string[]>([]);
-    const [visibleCount, setVisibleCount] = useState(8);
 
     useEffect(() => {
         const storedConsultants = getSession<Consultant[]>('discover.consultants.v1');
@@ -134,8 +133,6 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 updateFilters({ price: [min, max], minPrice: String(min), maxPrice: String(max) });
             }
         }
-        
-        setFavorites(getSession<string[]>('discover.favorites.v1') || []);
         setIsLoading(false);
     }, []);
 
@@ -154,31 +151,9 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
     const filteredAndSortedConsultants = useMemo(() => {
         setIsLoading(true);
-
-        const onlineScore = (c: Consultant) => c.availability.online ? 1 : 0;
-        const promoScore = (c: Consultant) => (c.promoActive || (c.badges && c.badges.includes('Promo 24h'))) ? 1 : 0;
-
-        let result = allConsultants.sort((a, b) => {
-            switch (sort) {
-                case 'price_asc':
-                    return a.pricePerMin - b.pricePerMin;
-                case 'rating_desc':
-                    return b.rating - a.rating;
-                case 'most_reviewed':
-                    return b.reviewsCount - a.reviewsCount;
-                case 'newest':
-                    return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
-                case 'recommended':
-                default:
-                    const scoreA = a.rating * 0.6 + a.reviewsCount / 100 * 0.25 + onlineScore(a) * 0.1 + promoScore(a) * 0.05;
-                    const scoreB = b.rating * 0.6 + b.reviewsCount / 100 * 0.25 + onlineScore(b) * 0.1 + promoScore(b) * 0.05;
-                    return scoreB - scoreA;
-            }
-        });
-        
-        result = result.filter(c => {
-            // General
-            if (filters.myFavorites && !favorites.includes(c.id)) return false;
+        let result = allConsultants.filter(c => {
+            // My Favorites
+            // if (filters.myFavorites && !isFavorite(c.id)) return false;
 
             // Specialties
             if (filters.specialties.length > 0 && !filters.specialties.some(s => c.specialties.includes(s as any))) return false;
@@ -226,14 +201,33 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
             // Admin
             if (filters.aPlusPlusOnly && c.rating < 4.8) return false;
-            if (filters.onPromo && !(c.promoActive || (c.badges && c.badges.includes('Promo 24h')))) return false;
+            if (filters.onPromo && !c.promo24h) return false;
 
             return true;
-        })
+        });
 
+        result.sort((a, b) => {
+            switch (sort) {
+                case 'price_asc':
+                    return a.pricePerMin - b.pricePerMin;
+                case 'price_desc':
+                    return b.pricePerMin - a.pricePerMin;
+                case 'rating_desc':
+                    return b.rating - a.rating;
+                case 'newest':
+                    return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+                case 'online_first':
+                    return (b.availability.online ? 1 : 0) - (a.availability.online ? 1 : 0);
+                case 'recommended':
+                default:
+                    // Simple recommended sort for now
+                    return b.rating - a.rating;
+            }
+        });
+        
         setTimeout(() => setIsLoading(false), 300);
         return result;
-    }, [allConsultants, filters, sort, favorites]);
+    }, [allConsultants, filters, sort]);
 
     const handleResetFilters = () => {
         const newFilters = {...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])};
@@ -429,7 +423,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             <main>
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
-                        Showing {Math.min(visibleCount, filteredAndSortedConsultants.length)} of {filteredAndSortedConsultants.length} consultants
+                        Showing {filteredAndSortedConsultants.length} consultants
                     </p>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
@@ -459,22 +453,15 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                             ))}
                         </div>
                     ) : filteredAndSortedConsultants.length > 0 ? (
-                        <>
-                            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                                {filteredAndSortedConsultants.slice(0, visibleCount).map((consultant) => (
-                                    <ConsultantCard 
-                                        key={consultant.id}
-                                        consultant={consultant}
-                                        onStartNow={() => setIsStartNowModalOpen(true)}
-                                    />
-                                ))}
-                            </div>
-                            {visibleCount < filteredAndSortedConsultants.length && (
-                                <div className="mt-8 text-center">
-                                    <Button onClick={() => setVisibleCount(prev => prev + 8)}>Load more</Button>
-                                </div>
-                            )}
-                        </>
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                            {filteredAndSortedConsultants.map((consultant) => (
+                                <ConsultantCard 
+                                    key={consultant.id}
+                                    consultant={consultant}
+                                    onStartNow={() => setIsStartNowModalOpen(true)}
+                                />
+                            ))}
+                        </div>
                     ) : (
                         <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
                             <h3 className="font-headline text-2xl font-bold">No matches yet</h3>
@@ -492,5 +479,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </>
     );
 }
+
+    
 
     
