@@ -121,8 +121,6 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     });
   };
 
-  const availableSlots = consultant.availability.slots.slice(0, 4).map(s => new Date(s));
-  const drawerSlots = consultant.availability.slots.map(s => new Date(s));
   const isOnline = consultant.availability.online;
 
   return (
@@ -139,6 +137,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
                     key={mode.id}
                     variant={selectedMode === mode.id ? 'secondary' : 'outline'}
                     onClick={() => handleModeChange(mode.id)}
+                    aria-pressed={selectedMode === mode.id}
                     className="gap-2"
                   >
                     <mode.icon className="h-5 w-5" />
@@ -203,9 +202,9 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-2">
-              {drawerSlots.map((slot, i) => (
-                <Button key={i} variant="outline" onClick={() => handleSlotSelect(slot)}>
-                  {format(slot, 'p')}
+              {consultant.availability.slots.map((slot, i) => (
+                <Button key={i} variant="outline" onClick={() => handleSlotSelect(new Date(slot))}>
+                  {format(new Date(slot), 'p')}
                 </Button>
               ))}
             </div>
