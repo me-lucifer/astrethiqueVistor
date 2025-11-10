@@ -156,6 +156,7 @@ export function UpcomingConferences() {
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     <Badge variant="outline">{conference.language}</Badge>
+                                    <Badge variant="default">Free</Badge>
                                     {conference.tags.map(tag => (
                                         <Badge key={tag} variant="secondary" className="bg-secondary/10 text-secondary-foreground/80">{tag}</Badge>
                                     ))}
@@ -179,7 +180,7 @@ export function UpcomingConferences() {
                                                 <div className="space-y-2">
                                                     <h4 className="font-medium leading-none">Reminders</h4>
                                                     <p className="text-sm text-muted-foreground">
-                                                        Set reminders for this event.
+                                                        Reminders are on by default.
                                                     </p>
                                                 </div>
                                                 <div className="grid gap-2">

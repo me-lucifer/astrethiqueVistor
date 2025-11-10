@@ -589,7 +589,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                             <div className="space-y-2">
                                                                 <h4 className="font-medium leading-none">Reminders</h4>
                                                                 <p className="text-sm text-muted-foreground">
-                                                                    Set reminders for this event.
+                                                                    Reminders are on by default.
                                                                 </p>
                                                             </div>
                                                             <div className="grid gap-2">

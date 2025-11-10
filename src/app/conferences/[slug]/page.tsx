@@ -187,6 +187,7 @@ export default function ConferenceDetailPage() {
                         <div className="flex flex-wrap gap-2">
                             {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                             <Badge variant="outline">{conference.type}</Badge>
+                            <Badge variant="default">Free event</Badge>
                         </div>
                         <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight">{conference.title}</h1>
                         <div className="text-lg text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -266,7 +267,7 @@ export default function ConferenceDetailPage() {
                                     className="w-full" 
                                     onClick={handleRsvpClick} 
                                     variant={isRsvpd ? "outline" : "default"}
-                                    aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: `RSVP for ${conference.title}`}
+                                    aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: `RSVP for ${conference.title}, a free event`}
                                 >
                                     {isRsvpd ? <CheckCircle className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
                                     {isRsvpd ? 'Going / Cancel' : 'RSVP'}
@@ -286,7 +287,7 @@ export default function ConferenceDetailPage() {
                                             <div className="space-y-2">
                                                 <h4 className="font-medium leading-none">Reminders</h4>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Set reminders for this event.
+                                                    Reminders are on by default.
                                                 </p>
                                             </div>
                                             <div className="grid gap-2">
