@@ -70,7 +70,7 @@ export function ConsultantProfileHeader({ consultant }: { consultant: Consultant
                     <div className="flex items-center gap-1 text-primary">
                         <Star className="w-5 h-5 fill-current" />
                         <span className="font-bold text-lg text-foreground">{consultant.rating.toFixed(1)}</span>
-                        <span className="text-sm text-muted-foreground ml-1">({consultant.reviewsCount} reviews)</span>
+                        <span className="text-sm text-muted-foreground ml-1">({consultant.reviews.length} reviews)</span>
                     </div>
                      <div className="flex gap-2">
                         {consultant.languages.map(lang => (
@@ -85,7 +85,7 @@ export function ConsultantProfileHeader({ consultant }: { consultant: Consultant
                 
                 <div className="mt-4 border-t pt-4">
                      <div className="flex items-baseline gap-2">
-                        {consultant.promoActive ? (
+                        {consultant.promo24h ? (
                             <>
                                 <span className="text-3xl font-bold text-primary">{consultant.pricePerMin.toFixed(2)}€/min</span>
                                 {consultant.priceWas && (

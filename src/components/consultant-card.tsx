@@ -116,9 +116,11 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         </Button>
     );
     
-    const isOnline = consultant.availability === 'online';
-    const availabilityText = isOnline ? "Online" : (consultant.availability === "busy" ? "Busy" : "Offline");
-    const availabilityClass = isOnline ? "bg-success/80" : (consultant.availability === "busy" ? "bg-amber-500/80" : "bg-muted");
+    const availabilityString = consultant.availability.online ? 'online' : (getSession<string[]>('busyConsultants')?.includes(consultant.id) ? 'busy' : 'offline');
+
+    const isOnline = availabilityString === 'online';
+    const availabilityText = isOnline ? "Online" : (availabilityString === "busy" ? "Busy" : "Offline");
+    const availabilityClass = isOnline ? "bg-success/80" : (availabilityString === "busy" ? "bg-amber-500/80" : "bg-muted");
 
     return (
         <TooltipProvider>
@@ -252,5 +254,3 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         </TooltipProvider>
     );
 }
-
-    

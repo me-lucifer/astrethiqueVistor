@@ -12,7 +12,10 @@ export interface Consultant {
     code: 'EN' | 'FR';
     level: 'basic' | 'fluent' | 'native';
   }[];
-  availability: 'online' | 'busy' | 'offline';
+  availability: {
+      online: boolean;
+      slots: string[]; // array of ISO strings
+  };
   specialties: ('Love' | 'Work' | 'Health' | 'Money' | 'Life Path')[];
   badges: ('Top Rated' | 'Rising Star' | 'New' | 'Promo 24h')[];
   contentCounts: {
@@ -38,7 +41,3 @@ export interface Consultant {
   };
   joinedAt: string; // ISO date string
 }
-
-    
-
-    

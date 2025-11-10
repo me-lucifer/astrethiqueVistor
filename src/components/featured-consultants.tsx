@@ -182,18 +182,14 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
             // Availability
             if (filters.availability.length > 0) {
-                const isOnline = c.availability === 'online';
-                const isBusy = c.availability === 'busy';
-                const isOffline = c.availability === 'offline';
-                
+                const availabilityString = c.availability.online ? 'online' : (getSession<string[]>('busyConsultants')?.includes(c.id) ? 'busy' : 'offline');
                 const checks = {
-                    'Online now': isOnline,
-                    'Busy': isBusy,
-                    'Offline': isOffline,
+                    'Online now': availabilityString === 'online',
+                    'Busy': availabilityString === 'busy',
+                    'Offline': availabilityString === 'offline',
                 };
-                
                 if (!filters.availability.some(filterKey => checks[filterKey as keyof typeof checks])) {
-                    return false;
+                     return false;
                 }
             }
 
@@ -219,8 +215,8 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
         result.sort((a, b) => {
             const availabilityOrder = { 'online': 1, 'busy': 2, 'offline': 3 };
-            const aAvail = typeof a.availability === 'string' ? a.availability : 'offline';
-            const bAvail = typeof b.availability === 'string' ? b.availability : 'offline';
+            const aAvail = a.availability.online ? 'online' : 'offline';
+            const bAvail = b.availability.online ? 'online' : 'offline';
 
             switch (sort) {
                 case 'price_asc':
@@ -230,7 +226,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 case 'rating_desc':
                     return b.rating - a.rating || a.pricePerMin - b.pricePerMin;
                 case 'newest':
-                    return parseISO(b.lastReviewDate).getTime() - parseISO(a.lastReviewDate).getTime();
+                    return parseISO(b.joinedAt).getTime() - parseISO(a.joinedAt).getTime();
                 case 'online_first':
                     return availabilityOrder[aAvail] - availabilityOrder[bAvail] || b.rating - a.rating;
                 case 'recommended':
@@ -495,5 +491,3 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </>
     );
 }
-
-    
