@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, Bookmark, Mic, BookOpen, Clock, Eye, Calendar, Play, Youtube } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { formatDistanceToNowStrict, format } from 'date-fns';
+import { format } from 'date-fns';
 
 type CardProps = {
     item: ContentHubItem;
@@ -24,7 +24,7 @@ function formatViews(views: number): string {
     if (views === undefined || views === null || isNaN(views)) {
         return '0';
     }
-    if (views >= 10000) {
+    if (views >= 100000) {
         return (views / 1000).toFixed(0) + 'k';
     }
     if (views >= 1000) {
@@ -75,11 +75,6 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
         if(onToggleBookmark) onToggleBookmark(item.id);
     }
 
-    const handleDetailClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        router.push(detailUrl);
-    }
-
     const isPromotedAndActive = item.promotedUntil && new Date(item.promotedUntil) > new Date();
     
     const metaAriaLabel = `Views: ${formatViews(item.views)}. Published on: ${formatDate(item.publishedAt)}. Length: ${formatLength(item)}.`;
@@ -112,7 +107,7 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                         <h3 className="font-headline text-lg font-bold leading-tight line-clamp-2 h-[56px] group-hover:text-primary">
                             {item.title}
                         </h3>
-
+                        
                         <div 
                             role="group"
                             aria-label={metaAriaLabel}
@@ -158,17 +153,22 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                              <Bookmark className={cn("h-4 w-4", item.bookmarked && "fill-current text-primary")} />
                         </Button>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div>
                         {isArticle ? (
-                             <Button variant="outline" size="sm" onClick={handleDetailClick}>
+                             <Button variant="outline" size="sm" asChild>
+                                <Link href={detailUrl}>
                                 Read more
+                                </Link>
                              </Button>
                         ) : (
                             <>
-                                <Button variant="secondary" size="sm" onClick={handleDetailClick}>
-                                    <Play className="mr-2 h-4 w-4" /> Open
+                                <Button variant="secondary" size="sm" asChild>
+                                    <Link href={detailUrl}>
+                                        <Play className="mr-2 h-4 w-4" /> Open
+                                    </Link>
                                 </Button>
-                                <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
+                                {/* This is a cosmetic button for the prototype */}
+                                <Button variant="outline" size="sm" className="ml-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
                                     <Youtube className="mr-2 h-4 w-4" /> YouTube
                                 </Button>
                             </>

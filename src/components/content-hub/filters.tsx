@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { getSession, setSession } from "@/lib/session";
 import { Separator } from "../ui/separator";
+import { Checkbox } from "../ui/checkbox";
 
 const topicOptions = ["Love", "Work", "Health", "Money", "Life Path", "Astrology", "Tarot", "Numerology", "Spirituality", "Beginner", "Advanced"];
+const zodiacOptions = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
 const typeOptions = [
     { value: 'all', label: 'Articles & Podcasts' },
     { value: 'article', label: 'Articles' },
@@ -25,9 +27,9 @@ const langOptions = [
 ];
 const sortOptions = [
     { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' },
     { value: 'most_viewed', label: 'Most Viewed' },
     { value: 'most_liked', label: 'Most Liked' },
+    { value: 'oldest', label: 'Oldest First' },
 ];
 
 
@@ -36,6 +38,8 @@ type FilterProps = {
     setQuery: (q: string) => void;
     topics: string[];
     setTopics: (t: string[]) => void;
+    zodiac: string[];
+    setZodiac: (z: string[]) => void;
     type: string;
     setType: (t: string) => void;
     language: string;
@@ -49,6 +53,7 @@ type FilterProps = {
 
 export function ContentHubFilters({
     query, setQuery, topics, setTopics,
+    zodiac, setZodiac,
     type, setType, language, setLanguage, sort, setSort,
     authorFilter, setAuthorFilter, onReset
 }: FilterProps) {
@@ -56,7 +61,7 @@ export function ContentHubFilters({
     const { toast } = useToast();
 
     const handleSaveSearch = () => {
-        const currentFilters = { query, topics, type, language, sort };
+        const currentFilters = { query, topics, type, language, sort, zodiac };
         let savedSearches = getSession<any[]>("ch_saved_searches") || [];
         savedSearches.push(currentFilters);
         setSession("ch_saved_searches", savedSearches);
@@ -66,7 +71,7 @@ export function ContentHubFilters({
         });
     }
 
-    const hasActiveFilters = query || topics.length > 0 || type !== 'all' || language !== 'all' || authorFilter;
+    const hasActiveFilters = query || topics.length > 0 || zodiac.length > 0 || type !== 'all' || language !== 'all' || authorFilter;
 
     return (
         <div className="space-y-4">
@@ -109,7 +114,7 @@ export function ContentHubFilters({
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="h-9">
-                                Topics ({topics.length > 0 ? topics.length : 'All'})
+                                Topics {topics.length > 0 ? `(${topics.length})` : ''}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-56 p-0">
@@ -125,11 +130,10 @@ export function ContentHubFilters({
                                                         : [...topics, topic];
                                                     setTopics(newTopics);
                                                 }}
+                                                className="flex items-center"
                                             >
-                                                <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary ${topics.includes(topic) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible"}`}>
-                                                   <X className="h-4 w-4" />
-                                                </div>
-                                                {topic}
+                                                <Checkbox checked={topics.includes(topic)} className="mr-2" />
+                                                <span>{topic}</span>
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>
@@ -137,6 +141,37 @@ export function ContentHubFilters({
                             </Command>
                         </PopoverContent>
                     </Popover>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="h-9">
+                                Zodiac {zodiac.length > 0 ? `(${zodiac.length})` : ''}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56 p-0">
+                            <Command>
+                                <CommandList>
+                                    <CommandGroup>
+                                        {zodiacOptions.map((sign) => (
+                                            <CommandItem
+                                                key={sign}
+                                                onSelect={() => {
+                                                    const newZodiac = zodiac.includes(sign)
+                                                        ? zodiac.filter(s => s !== sign)
+                                                        : [...zodiac, sign];
+                                                    setZodiac(newZodiac);
+                                                }}
+                                                className="flex items-center"
+                                            >
+                                                <Checkbox checked={zodiac.includes(sign)} className="mr-2" />
+                                                <span>{sign}</span>
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                    
                     {authorFilter && (
                          <Badge variant="secondary" className="gap-1.5 pl-1.5">
                             Author: {authorFilter}
@@ -149,6 +184,14 @@ export function ContentHubFilters({
                          <Badge key={topic} variant="secondary" className="gap-1.5 pl-1.5">
                             {topic}
                              <button onClick={() => setTopics(topics.filter(t => t !== topic))} className="rounded-full hover:bg-background/50">
+                                <X className="h-3 w-3" />
+                            </button>
+                        </Badge>
+                    ))}
+                     {zodiac.map(sign => (
+                         <Badge key={sign} variant="secondary" className="gap-1.5 pl-1.5">
+                            {sign}
+                             <button onClick={() => setZodiac(zodiac.filter(s => s !== sign))} className="rounded-full hover:bg-background/50">
                                 <X className="h-3 w-3" />
                             </button>
                         </Badge>
