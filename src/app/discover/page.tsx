@@ -35,19 +35,13 @@ function DiscoverContent() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList>
                     <TabsTrigger value="consultants">Consultants</TabsTrigger>
-                    <TabsTrigger value="conferences">Conferences</TabsTrigger>
-                    <TabsTrigger value="content">Content</TabsTrigger>
                 </TabsList>
                 <TabsContent value="consultants" className="py-6">
                     <div className="lg:grid lg:grid-cols-[320px_1fr] lg:gap-8">
-                        <FeaturedConsultants initialQuery={query} />
+                        <Suspense fallback={<div>Loading filters...</div>}>
+                            <FeaturedConsultants initialQuery={query} />
+                        </Suspense>
                     </div>
-                </TabsContent>
-                <TabsContent value="conferences" className="py-6">
-                     <FeaturedConferences />
-                </TabsContent>
-                <TabsContent value="content" className="py-6">
-                    <FeaturedContent displayFilters={true} />
                 </TabsContent>
             </Tabs>
 
@@ -63,5 +57,3 @@ export default function DiscoverPage() {
         </Suspense>
     );
 }
-
-    

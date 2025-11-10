@@ -3,7 +3,7 @@
 
 import { setSession, getSession } from "./session";
 import { Consultant } from "./consultants";
-import { addDays, addHours, format, subDays } from 'date-fns';
+import { addDays, addHours, format, subDays, parseISO } from 'date-fns';
 
 const createConsultant = (index: number): Consultant => {
     const now = new Date();
@@ -64,7 +64,7 @@ const createConsultant = (index: number): Consultant => {
 export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
-  const seeded = getSession('discover.seed.v1');
+  const seeded = getSession('discover.seeded.v1');
   if (!seeded) {
     const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
     
@@ -74,5 +74,7 @@ export const seedConsultants = () => {
     setSession('notify.me.v1', []);
     setSession('discover.filters.v1', {});
     setSession('discover.sort.v1', 'recommended');
+
+    setSession('discover.seeded.v1', true);
   }
 };

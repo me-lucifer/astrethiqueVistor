@@ -118,7 +118,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
     const loadState = useCallback(() => {
         const storedConsultants = getSession<Consultant[]>('discover.seed.v1');
-        if (storedConsultants) {
+        if (storedConsultants && Array.isArray(storedConsultants)) {
             setAllConsultants(storedConsultants);
             const prices = storedConsultants.map(c => c.pricePerMin);
             const min = Math.floor(Math.min(...prices, 0));
