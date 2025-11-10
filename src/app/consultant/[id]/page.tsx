@@ -22,12 +22,14 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { ArrowUp } from 'lucide-react';
+import { ConsultantProfile } from '@/lib/consultant-profile';
 
 export default function ConsultantProfilePage() {
   const params = useParams();
   const { id } = params;
   const { toast } = useToast();
   const [consultant, setConsultant] = useState<Consultant | null>(null);
+  const [profile, setProfile] = useState<ConsultantProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
@@ -35,7 +37,6 @@ export default function ConsultantProfilePage() {
     if (id) {
       const allConsultants = getSession<Consultant[]>('discover.seed.v1');
       if (allConsultants) {
-        // The `createConsultant` function in the seeder does not create availability slots, so we add them here for the demo.
         const foundConsultant = allConsultants.find(c => c.id === id || c.slug === id);
         if(foundConsultant) {
             const now = new Date();
@@ -45,8 +46,14 @@ export default function ConsultantProfilePage() {
                     return new Date(now.getTime() + (i * 30 + (i > 5 ? 1440 : 120) ) * 60000).toISOString()
                 })
             };
+            setConsultant(foundConsultant);
+
+            // Also find the profile for header
+             const sessionProfile = getSession<ConsultantProfile>('consultantProfile');
+             if(sessionProfile && (sessionProfile.id === id || sessionProfile.id === foundConsultant.slug)) {
+                 setProfile(sessionProfile);
+             }
         }
-        setConsultant(foundConsultant || null);
       }
       setLoading(false);
     }
@@ -84,7 +91,7 @@ export default function ConsultantProfilePage() {
     )
   }
 
-  if (!consultant) {
+  if (!consultant || !profile) {
     return (
         <PlaceholderPage
             title="Consultant Not Found"
@@ -96,7 +103,7 @@ export default function ConsultantProfilePage() {
   return (
     <div className="container py-8">
         <div className="space-y-8">
-            <ConsultantProfileHeader consultant={consultant as any} />
+            <ConsultantProfileHeader consultant={profile} />
             <ConsultantAvailability consultant={consultant} />
             <ConsultantContentTabs consultant={consultant} />
 
