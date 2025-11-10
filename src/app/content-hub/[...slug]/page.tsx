@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { getSession, setSession } from '@/lib/session';
 import { ContentHubItem } from '@/lib/content-hub-seeder';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock } from 'lucide-react';
+import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock, PlayCircle, PauseCircle, Rewind, FastForward } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContentHubCard } from '@/components/content-hub/card';
+import { Progress } from '@/components/ui/progress';
 
 const Placeholder = () => (
     <div className="container py-12">
@@ -42,6 +43,63 @@ const Placeholder = () => (
         </div>
     </div>
 );
+
+
+const PodcastPlayer = ({ item }: { item: ContentHubItem }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if(isPlaying) {
+            interval = setInterval(() => {
+                setProgress(prev => {
+                    if (prev >= 100) {
+                        setIsPlaying(false);
+                        return 100;
+                    }
+                    return prev + 1;
+                })
+            }, ((item.durationMinutes || 10) * 60 * 1000) / 100);
+        }
+        return () => clearInterval(interval);
+    }, [isPlaying, item.durationMinutes])
+
+    const formatTime = (percentage: number) => {
+        if (!item.durationMinutes) return "00:00";
+        const totalSeconds = item.durationMinutes * 60;
+        const currentSeconds = Math.floor((totalSeconds * percentage) / 100);
+        const minutes = Math.floor(currentSeconds / 60);
+        const seconds = currentSeconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+
+    return (
+        <div className="rounded-lg border bg-card/50 p-6 flex flex-col md:flex-row gap-6">
+            <div className="w-full md:w-1/3">
+                 <Image src={item.imageUrl} alt={item.title} width={300} height={300} className="w-full aspect-square object-cover rounded-md" />
+            </div>
+            <div className="w-full md:w-2/3 flex flex-col justify-center">
+                <h2 className="font-headline text-2xl font-bold">{item.title}</h2>
+                <button onClick={() => {}} className="text-sm text-muted-foreground hover:text-primary text-left mt-1">{item.author.name}</button>
+                <div className="mt-6 space-y-3">
+                    <Progress value={progress} className="w-full h-2" />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{formatTime(progress)}</span>
+                        <span>{formatTime(100)}</span>
+                    </div>
+                </div>
+                 <div className="mt-4 flex items-center justify-center gap-4">
+                    <Button variant="ghost" size="icon" aria-label="Rewind 10 seconds"><Rewind /></Button>
+                    <Button variant="ghost" size="icon" className="h-16 w-16" onClick={() => setIsPlaying(!isPlaying)} aria-label={isPlaying ? "Pause" : "Play"}>
+                        {isPlaying ? <PauseCircle className="h-12 w-12" /> : <PlayCircle className="h-12 w-12" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" aria-label="Fast-forward 10 seconds"><FastForward /></Button>
+                </div>
+            </div>
+        </div>
+    )
+}
 
 export default function ContentDetailPage() {
     const params = useParams();
@@ -240,13 +298,21 @@ export default function ContentDetailPage() {
                             </div>
                         </header>
                         
-                        <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden">
-                             <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />
-                        </div>
+                        {item.type === 'article' && (
+                             <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden">
+                                <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />
+                            </div>
+                        )}
                         
                         {isPromotedAndActive && (
                             <div className="mb-8 p-2 text-center text-sm bg-accent/10 text-accent-foreground border-l-4 border-accent rounded">
                                 Promoted Content
+                            </div>
+                        )}
+
+                        {item.type === 'podcast' && (
+                            <div className="mb-8">
+                                <PodcastPlayer item={item} />
                             </div>
                         )}
 

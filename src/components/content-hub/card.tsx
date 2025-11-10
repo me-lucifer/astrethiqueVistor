@@ -105,7 +105,7 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmarkClick}>
                              <Bookmark className={cn("h-4 w-4", item.bookmarked && "fill-current text-primary")} />
                         </Button>
-                        <Button asChild variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(detailUrl); }}>
+                        <Button asChild variant="outline" size="sm">
                            <Link href={detailUrl}>{isArticle ? 'Read more' : 'Listen now'}</Link>
                         </Button>
                     </div>
@@ -114,3 +114,4 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
         </Card>
     );
 }
+
