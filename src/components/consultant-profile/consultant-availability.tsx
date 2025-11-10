@@ -230,5 +230,3 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     </div>
   );
 }
-
-    

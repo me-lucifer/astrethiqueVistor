@@ -50,8 +50,8 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
     
     return (
         <TooltipProvider>
-            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
-                <div className="relative shrink-0 w-24 h-24 mx-auto lg:mx-0">
+            <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
+                <div className="relative shrink-0 w-24 h-24 mx-auto md:mx-0">
                     <Image
                         src={consultant.avatar}
                         alt={consultant.name}
@@ -62,7 +62,7 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                      {consultant.isOnline && (
                         <div title="Online" aria-label="Consultant is online" className="absolute bottom-0 right-0 flex items-center gap-2 bg-success text-success-foreground px-2 py-0.5 rounded-full text-xs font-bold border-2 border-background">
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/70 opacity-75"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/70 opacity-75 motion-reduce:animate-none"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                             </span>
                         </div>

@@ -133,18 +133,17 @@ const ContentSubTabs = ({ content }: { content: ConsultantProfile['content'] }) 
 
 
 export function ConsultantContentTabs({ consultant }: { consultant: ConsultantProfile }) {
-  const bioHtml = consultant.summary; // The 'summary' field should contain the rich HTML bio
   const contentCount = (consultant.content?.articles?.length || 0) + (consultant.content?.podcasts?.length || 0) + (consultant.content?.conferences?.length || 0);
     
   return (
     <Tabs defaultValue="about" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <TabsList className="sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <TabsTrigger value="about">About</TabsTrigger>
         <TabsTrigger value="reviews">Reviews ({consultant.reviews?.length || 0})</TabsTrigger>
         <TabsTrigger value="content">Content ({contentCount})</TabsTrigger>
       </TabsList>
       <TabsContent value="about" className="py-6">
-        <BioContent bio={bioHtml} years={consultant.yearsExperience} country={consultant.country} />
+        <BioContent bio={consultant.aboutHtml} years={consultant.yearsExperience} country={consultant.country} />
       </TabsContent>
       <TabsContent value="reviews" className="py-6">
         <ReviewsContent reviews={consultant.reviews} />

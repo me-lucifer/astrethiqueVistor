@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -15,6 +16,8 @@ const TabsList = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+      "md:grid md:w-full md:grid-cols-3", // desktop: grid
+      "w-full overflow-x-auto", // mobile: scrollable
       className
     )}
     {...props}
