@@ -1,40 +1,82 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { FileText, ShieldCheck, FileCheck } from "lucide-react";
-import Link from "next/link";
+"use client";
 
-const legalLinks = [
-  { href: "/terms", title: "Conditions Générales", description: "Nos conditions d'utilisation du service.", icon: FileText },
-  { href: "/privacy", title: "Politique de Confidentialité", description: "Comment nous protégeons vos données (GDPR).", icon: ShieldCheck },
-  { href: "/legal-notice", title: "Mentions Légales", description: "Informations légales sur l'entreprise.", icon: FileCheck },
-];
+import { useState } from "react";
+import { useLanguage } from "@/contexts/language-context";
+import { translations } from "@/lib/translations";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 export default function LegalHubPage() {
+  const { language, setLanguage } = useLanguage();
+  const t = translations[language];
+
+  const [activeFilters, setActiveFilters] = useState(["Visitors", "Consultants"]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const toggleFilter = (filter: string) => {
+    setActiveFilters(prev =>
+      prev.includes(filter)
+        ? prev.filter(f => f !== filter)
+        : [...prev, filter]
+    );
+  };
+  
+  const pageContent = {
+    en: {
+        title: "Legal Hub",
+        subtitle: "All policies in one place — transparent, GDPR-respectful.",
+    },
+    fr: {
+        title: "Pôle Juridique",
+        subtitle: "Toutes nos politiques au même endroit — transparentes et respectueuses du RGPD.",
+    }
+  }
+
   return (
     <div className="container py-16">
-      <div className="flex flex-col items-start gap-4 mb-8">
-        <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Pôle Juridique
+      <div className="flex flex-col items-center text-center gap-4 mb-12">
+        <h1 className="font-headline text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+          {pageContent[language].title}
         </h1>
         <p className="text-lg text-foreground/80 max-w-2xl">
-          Retrouvez ici toutes les informations légales concernant Astrethique, nos services et votre utilisation de la plateforme.
+          {pageContent[language].subtitle}
         </p>
+        <div className="mt-4 flex items-center gap-4">
+            <div className="inline-flex items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+                <Button variant={language === 'en' ? 'background' : 'ghost'} onClick={() => setLanguage('en')} className="px-4">EN</Button>
+                <Button variant={language === 'fr' ? 'background' : 'ghost'} onClick={() => setLanguage('fr')} className="px-4">FR</Button>
+            </div>
+            <div className="relative w-full max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input 
+                    placeholder="Search policies..."
+                    className="pl-10 h-11 text-base sm:text-sm"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+        </div>
+        <div className="flex gap-2">
+            <Button 
+                variant={activeFilters.includes("Visitors") ? "secondary" : "outline"}
+                onClick={() => toggleFilter("Visitors")}
+                className="rounded-full"
+            >
+                Visitors
+            </Button>
+             <Button 
+                variant={activeFilters.includes("Consultants") ? "secondary" : "outline"}
+                onClick={() => toggleFilter("Consultants")}
+                className="rounded-full"
+            >
+                Consultants
+            </Button>
+        </div>
       </div>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {legalLinks.map((link) => (
-          <Link href={link.href} key={link.href} className="group">
-            <Card className="h-full transition-all duration-300 ease-in-out group-hover:border-primary group-hover:shadow-lg group-hover:scale-[1.01] bg-card/50 hover:bg-card">
-              <CardHeader className="flex-row items-center gap-4">
-                <link.icon className="h-8 w-8 text-primary" />
-                <div>
-                  <CardTitle className="font-headline text-lg">{link.title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>{link.description}</CardDescription>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+
+      <div className="text-center text-muted-foreground">
+        <p>{language === 'en' ? "Policy content would be displayed here..." : "Le contenu des politiques serait affiché ici..."}</p>
       </div>
     </div>
   );
