@@ -99,10 +99,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const searchParams = useSearchParams();
     const isDesktop = useMediaQuery("(min-width: 1024px)");
     const { toast } = useToast();
+    const { addNotification } = useNotifications();
 
     const [allConferences, setAllConferences] = useState<Conference[]>([]);
     const [rsvps, setRsvps] = useState<Rsvp[]>([]);
-    const { addNotification } = useNotifications();
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const isLoading = isPending;
@@ -294,6 +294,28 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         setIsRsvpModalOpen(false);
         setSelectedConference(null);
     };
+
+    const handleReminderChange = (eventId: string, reminder: 'remind24h' | 'remind1h' | 'remind10m', checked: boolean) => {
+        const updatedRsvps = rsvps.map(r => r.eventId === eventId ? {...r, [reminder]: checked} : r);
+        setRsvps(updatedRsvps);
+        setLocal("rsvps", updatedRsvps);
+
+        if(checked) {
+            const conference = allConferences.find(c => c.id === eventId);
+            if (conference) {
+                const reminderText = {
+                    remind24h: "24 hours",
+                    remind1h: "1 hour",
+                    remind10m: "10 minutes"
+                }
+                addNotification({
+                    title: `Reminder set for "${conference.title}"`,
+                    body: `We'll remind you ${reminderText[reminder]} before the event.`,
+                    category: 'session',
+                })
+            }
+        }
+    }
     
     const isRsvpd = (id: string) => rsvps.some(r => r.eventId === id);
     
@@ -534,22 +556,39 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                         <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center">
                                             <div className="font-bold text-lg text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</div>
                                             <div className="flex items-center gap-2">
-                                                {conference.seatsLeft !== undefined && (
-                                                    <Tooltip>
-                                                        <TooltipTrigger>
-                                                            <Badge variant={hasSeats ? "outline" : "destructive"} className="flex items-center gap-1.5">
-                                                                <Users className="w-3.5 h-3.5" />
-                                                                {conference.seatsLeft} left
-                                                            </Badge>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>Seats remaining: {conference.seatsLeft}/{conference.capacity}</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                )}
-                                                <Button asChild variant="secondary" size="sm">
-                                                    <Link href={`/conferences/${conference.slug}`}>Details</Link>
-                                                </Button>
+                                                
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isRsvpd(conference.id)}>
+                                                            <Bell className="h-4 w-4" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-60">
+                                                        <div className="grid gap-4">
+                                                            <div className="space-y-2">
+                                                                <h4 className="font-medium leading-none">Reminders</h4>
+                                                                <p className="text-sm text-muted-foreground">
+                                                                    Set reminders for this event.
+                                                                </p>
+                                                            </div>
+                                                            <div className="grid gap-2">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <Checkbox id={`remind-24h-${conference.id}`} checked={rsvpDetails?.remind24h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind24h", c as boolean)} />
+                                                                    <Label htmlFor={`remind-24h-${conference.id}`}>24 hours before</Label>
+                                                                </div>
+                                                                <div className="flex items-center space-x-2">
+                                                                    <Checkbox id={`remind-1h-${conference.id}`} checked={rsvpDetails?.remind1h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind1h", c as boolean)}/>
+                                                                    <Label htmlFor={`remind-1h-${conference.id}`}>1 hour before</Label>
+                                                                </div>
+                                                                <div className="flex items-center space-x-2">
+                                                                    <Checkbox id={`remind-10m-${conference.id}`} checked={rsvpDetails?.remind10m} onCheckedChange={(c) => handleReminderChange(conference.id, "remind10m", c as boolean)}/>
+                                                                    <Label htmlFor={`remind-10m-${conference.id}`}>10 minutes before</Label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                
                                                 <Button size="sm" onClick={() => handleRsvpClick(conference)} variant={isRsvpd(conference.id) ? "outline" : "default"} disabled={!hasSeats && !isRsvpd(conference.id)}>
                                                     {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
                                                     {isRsvpd(conference.id) ? "Going" : (hasSeats ? "RSVP" : "Waitlist")}

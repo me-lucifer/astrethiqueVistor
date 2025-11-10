@@ -7,7 +7,7 @@ import { Conference, seedConferences } from '@/lib/conferences-seeder';
 import { getLocal, setLocal, seedOnce } from '@/lib/local';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, Clock, Video, Users, Star, Languages, PlusCircle, CheckCircle, Bell, ExternalLink, CalendarPlus } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Video, Users, Star, Languages, PlusCircle, CheckCircle, Bell, ExternalLink, CalendarPlus, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -23,6 +23,10 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/lib/session';
 import { StartNowModal } from '@/components/start-now-modal';
 import { RsvpConfirmationModal } from '@/components/rsvp-confirmation-modal';
+import { useNotifications } from '@/contexts/notification-context';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 interface Rsvp {
     eventId: string;
@@ -38,11 +42,12 @@ export default function ConferenceDetailPage() {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
+    const { addNotification } = useNotifications();
     const { slug } = params;
 
     const [conference, setConference] = useState<Conference | null>(null);
     const [relatedConferences, setRelatedConferences] = useState<Conference[]>([]);
-    const [isRsvpd, setIsRsvpd] = useState(false);
+    const [rsvps, setRsvps] = useState<Rsvp[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRsvpModalOpen, setIsRsvpModalOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -61,13 +66,16 @@ export default function ConferenceDetailPage() {
             setRelatedConferences(related);
         }
 
-        const rsvps = getLocal<Rsvp[]>("rsvps") || [];
-        if (currentConference && rsvps.some(r => r.eventId === currentConference.id)) {
-            setIsRsvpd(true);
-        }
+        const currentRsvps = getLocal<Rsvp[]>("rsvps") || [];
+        setRsvps(currentRsvps);
 
         setLoading(false);
     }, [slug]);
+
+    const isRsvpd = useMemo(() => {
+        if (!conference) return false;
+        return rsvps.some(r => r.eventId === conference.id);
+    }, [rsvps, conference]);
 
     const handleRsvpClick = () => {
         if (!conference) return;
@@ -91,11 +99,10 @@ export default function ConferenceDetailPage() {
     const handleConfirmRsvp = () => {
         if (!conference) return;
 
-        let rsvps = getLocal<Rsvp[]>("rsvps") || [];
+        let updatedRsvps;
         if (isRsvpd) {
-            rsvps = rsvps.filter(r => r.eventId !== conference.id);
+            updatedRsvps = rsvps.filter(r => r.eventId !== conference.id);
             toast({ title: "RSVP Cancelled" });
-            setIsRsvpd(false);
         } else {
             const newRsvp: Rsvp = {
                 eventId: conference.id,
@@ -106,13 +113,34 @@ export default function ConferenceDetailPage() {
                 remind1h: true,
                 remind10m: true
             };
-            rsvps.push(newRsvp);
+            updatedRsvps = [...rsvps, newRsvp];
             toast({ title: "You're in!", description: "We'll send reminders before it starts." });
-            setIsRsvpd(true);
         }
-        setLocal("rsvps", rsvps);
+        setRsvps(updatedRsvps);
+        setLocal("rsvps", updatedRsvps);
         setIsRsvpModalOpen(false);
     };
+
+    const handleReminderChange = (eventId: string, reminder: 'remind24h' | 'remind1h' | 'remind10m', checked: boolean) => {
+        const updatedRsvps = rsvps.map(r => r.eventId === eventId ? {...r, [reminder]: checked} : r);
+        setRsvps(updatedRsvps);
+        setLocal("rsvps", updatedRsvps);
+
+        if(checked) {
+            if (conference) {
+                const reminderText = {
+                    remind24h: "24 hours",
+                    remind1h: "1 hour",
+                    remind10m: "10 minutes"
+                }
+                addNotification({
+                    title: `Reminder set for "${conference.title}"`,
+                    body: `We'll remind you ${reminderText[reminder]} before the event.`,
+                    category: 'session',
+                })
+            }
+        }
+    }
 
 
     const handleNotify = () => {
@@ -148,6 +176,7 @@ export default function ConferenceDetailPage() {
     const hasSeats = conference.seatsLeft === undefined || conference.seatsLeft > 0;
     const date = new Date(conference.dateISO);
     const endDate = new Date(date.getTime() + conference.durationMin * 60000);
+    const rsvpDetails = rsvps.find(r => r.eventId === conference.id);
 
     return (
         <div className="container py-12">
@@ -238,28 +267,56 @@ export default function ConferenceDetailPage() {
                         <CardContent className="p-6 space-y-4">
                            <div className="text-3xl font-bold text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</div>
                            <div className="space-y-2">
-                            {hasSeats || isRsvpd ? (
-                                <Button size="lg" className="w-full" onClick={handleRsvpClick} variant={isRsvpd ? "outline" : "default"}>
+                                <Button size="lg" className="w-full" onClick={handleRsvpClick} variant={isRsvpd ? "outline" : "default"} disabled={!hasSeats && !isRsvpd}>
                                     {isRsvpd ? <CheckCircle className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
-                                    {isRsvpd ? 'Going / Cancel' : 'RSVP Now'}
+                                    {isRsvpd ? 'Going / Cancel' : (hasSeats ? 'RSVP Now' : 'Sold Out')}
                                 </Button>
-                            ) : (
-                                <Button size="lg" className="w-full" disabled>
-                                    Sold Out
-                                </Button>
-                            )}
-                            
-                            {!hasSeats && !isRsvpd && (
-                                <Button size="lg" variant="secondary" className="w-full" onClick={handleNotify}>
-                                    <Bell className="mr-2 h-4 w-4"/>
-                                    Notify Me
-                                </Button>
-                            )}
                            </div>
-                           <Button size="lg" variant="ghost" className="w-full">
-                               <CalendarPlus className="mr-2 h-4 w-4" />
-                               Add to Calendar
-                           </Button>
+
+                           <div className="flex gap-2">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full" disabled={!isRsvpd}>
+                                            <Bell className="mr-2 h-4 w-4" />
+                                            Reminders
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-60">
+                                        <div className="grid gap-4">
+                                            <div className="space-y-2">
+                                                <h4 className="font-medium leading-none">Reminders</h4>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Set reminders for this event.
+                                                </p>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <div className="flex items-center space-x-2">
+                                                    <Checkbox id={`remind-24h-${conference.id}`} checked={rsvpDetails?.remind24h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind24h", c as boolean)} />
+                                                    <Label htmlFor={`remind-24h-${conference.id}`}>24 hours before</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <Checkbox id={`remind-1h-${conference.id}`} checked={rsvpDetails?.remind1h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind1h", c as boolean)}/>
+                                                    <Label htmlFor={`remind-1h-${conference.id}`}>1 hour before</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <Checkbox id={`remind-10m-${conference.id}`} checked={rsvpDetails?.remind10m} onCheckedChange={(c) => handleReminderChange(conference.id, "remind10m", c as boolean)}/>
+                                                    <Label htmlFor={`remind-10m-${conference.id}`}>10 minutes before</Label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                               <Button variant="ghost" className="w-full">
+                                   <CalendarPlus className="mr-2 h-4 w-4" />
+                                   Add to Calendar
+                               </Button>
+                           </div>
+                            {!hasSeats && !isRsvpd && (
+                                <Button variant="secondary" className="w-full" onClick={handleNotify}>
+                                    <AlertTriangle className="mr-2 h-4 w-4"/>
+                                    Notify Me If a Spot Opens
+                                </Button>
+                            )}
                            <div className="text-xs text-muted-foreground flex items-center gap-2 pt-2">
                                <Users className="h-4 w-4" />
                                <span>{conference.capacity} total spots.</span>
@@ -314,4 +371,3 @@ export default function ConferenceDetailPage() {
         </div>
     );
 }
-
