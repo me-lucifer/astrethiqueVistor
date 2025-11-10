@@ -52,16 +52,21 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
       startIso: slot.toISOString(),
       durationMin: parseInt(selectedDuration),
       pricePerMin: consultant.pricePerMin,
-      language: consultant.languages.map(l => l.code).join(', '),
-      specialties: consultant.specialties.join(', '),
     };
     
     setSession('schedule.holds.v1', [...appointments, newAppointment]);
+
+    // Remove from notify list if they exist
+    const notifyList = getSession<string[]>("notify.me.v1") || [];
+    if (notifyList.includes(consultant.id)) {
+        const newNotifyList = notifyList.filter(id => id !== consultant.id);
+        setSession("notify.me.v1", newNotifyList);
+    }
     
     setIsDrawerOpen(false);
     toast({
-      title: 'Session scheduled. We\'ll remind you.',
-      description: `Your ${selectedMode} session with ${consultant.name} is set for ${format(slot, 'PPP p')}.`,
+      title: 'Session Scheduled!',
+      description: `Your ${selectedMode} session with ${consultant.name} for ${format(slot, 'PPP p')} is confirmed.`,
     });
   };
 
