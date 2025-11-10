@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { formatDistanceToNow } from 'date-fns';
 
 const commentSchema = z.object({
-  comment: z.string().min(1, 'Comment cannot be empty.').max(500, 'Comment is too long.'),
+  comment: z.string().min(3, 'Comment must be at least 3 characters.').max(600, 'Comment must be 600 characters or less.'),
 });
 
 type CommentFormData = z.infer<typeof commentSchema>;
@@ -35,6 +35,7 @@ export function CommentsSection({ comments, onAddComment }: CommentsSectionProps
   };
   
   const getInitials = (name: string) => {
+    if (!name) return "G";
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
@@ -70,14 +71,14 @@ export function CommentsSection({ comments, onAddComment }: CommentsSectionProps
         {comments.map((comment) => (
           <div key={comment.id} className="flex items-start gap-4">
             <Avatar>
-              <AvatarImage src={comment.authorAvatar} alt={comment.authorName} />
-              <AvatarFallback>{getInitials(comment.authorName)}</AvatarFallback>
+              <AvatarImage />
+              <AvatarFallback>{getInitials(comment.displayName)}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-semibold text-sm">{comment.authorName}</p>
+                <p className="font-semibold text-sm">{comment.displayName || "Guest"}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                 </p>
               </div>
               <p className="text-sm text-foreground/90 mt-1">{comment.text}</p>

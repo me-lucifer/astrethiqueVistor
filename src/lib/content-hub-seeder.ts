@@ -5,10 +5,10 @@ import { getSession, setSession, removeSession } from "./session";
 
 export type Comment = {
   id: string;
-  authorName: string;
-  authorAvatar: string;
-  timestamp: string; // ISO string
+  contentId: string;
+  displayName: string;
   text: string;
+  createdAt: string; // ISO
 };
 
 export type ContentHubItem = {
@@ -37,7 +37,6 @@ export type ContentHubItem = {
   bookmarked: boolean;
   deleted: boolean;
   youtubeUrl?: string;
-  comments: Comment[];
 };
 
 
@@ -78,23 +77,6 @@ const createItem = (index: number): ContentHubItem => {
         promotedUntil = new Date(now.getTime() + (Math.floor(Math.random() * 7) + 1) * 24 * 60 * 60 * 1000).toISOString();
     }
 
-    const comments: Comment[] = [
-        {
-            id: 'comment-1',
-            authorName: 'Alex Doe',
-            authorAvatar: 'https://i.pravatar.cc/40?u=alex-doe',
-            timestamp: new Date(publishedAt.getTime() + 1000 * 60 * 60 * 24).toISOString(),
-            text: 'This was incredibly insightful, thank you for sharing!'
-        },
-        {
-            id: 'comment-2',
-            authorName: 'Jordan Smith',
-            authorAvatar: 'https://i.pravatar.cc/40?u=jordan-smith',
-            timestamp: new Date(publishedAt.getTime() + 1000 * 60 * 60 * 48).toISOString(),
-            text: 'I never thought about it that way before. This really changed my perspective.'
-        }
-    ];
-
     return {
         id: `ch-item-${index + 1}`,
         type: isPodcast ? "podcast" : "article",
@@ -117,9 +99,33 @@ const createItem = (index: number): ContentHubItem => {
         publishedAt: publishedAt.toISOString(),
         deleted: index === 9,
         youtubeUrl: isPodcast ? 'https://www.youtube.com/embed/dQw4w9WgXcQ' : undefined,
-        comments: comments,
     };
 };
+
+const createInitialComments = (items: ContentHubItem[]) => {
+    const commentsByContentId: { [key: string]: Comment[] } = {};
+    items.forEach(item => {
+        if (item.deleted) return;
+        commentsByContentId[item.id] = [
+            {
+                id: `comment-${item.id}-1`,
+                contentId: item.id,
+                displayName: 'Alex Doe',
+                text: 'This was incredibly insightful, thank you for sharing!',
+                createdAt: new Date(new Date(item.publishedAt).getTime() + 1000 * 60 * 60 * 24).toISOString(),
+            },
+            {
+                id: `comment-${item.id}-2`,
+                contentId: item.id,
+                displayName: 'Jordan Smith',
+                text: 'I never thought about it that way before. This really changed my perspective.',
+                createdAt: new Date(new Date(item.publishedAt).getTime() + 1000 * 60 * 60 * 48).toISOString(),
+            }
+        ];
+    });
+    return commentsByContentId;
+}
+
 
 export const seedContentHub = () => {
     if (typeof window === 'undefined') return;
@@ -127,6 +133,9 @@ export const seedContentHub = () => {
     const existingItems = getSession<ContentHubItem[]>("ch_items");
     if (!existingItems || existingItems.length === 0) {
         const items = Array.from({ length: 10 }, (_, i) => createItem(i));
+        const initialComments = createInitialComments(items);
         setSession("ch_items", items);
+        setSession("commentsByContentId", initialComments);
     }
 };
+

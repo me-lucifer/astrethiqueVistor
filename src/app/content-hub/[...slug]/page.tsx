@@ -90,24 +90,32 @@ export default function ContentDetailPage() {
     
     const [item, setItem] = useState<ContentHubItem | null>(null);
     const [allItems, setAllItems] = useState<ContentHubItem[]>([]);
+    const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    const itemId = useMemo(() => {
+        const slug = params.slug;
+        return (slug && slug.length === 2) ? slug[1] : null;
+    }, [params.slug]);
+
 
     useEffect(() => {
-        const slug = params.slug;
-        if (slug && slug.length === 2) {
-            const itemId = slug[1];
+        if (itemId) {
             const storedItems = getSession<ContentHubItem[]>('ch_items') || [];
             setAllItems(storedItems);
             const foundItem = storedItems.find(i => i.id === itemId);
 
             if (foundItem && !foundItem.deleted) {
                 setItem(foundItem);
+                const allComments = getSession<{[key: string]: Comment[]}>('commentsByContentId') || {};
+                setComments(allComments[itemId] || []);
             } else {
                 setItem(null);
+                setComments([]);
             }
         }
         setLoading(false);
-    }, [params.slug]);
+    }, [itemId]);
 
     const handleAuthorClick = (authorName: string) => {
         router.push(`/content-hub?author=${encodeURIComponent(authorName)}`);
@@ -153,15 +161,20 @@ export default function ContentDetailPage() {
 
         const newComment: Comment = {
             id: `comment-${Date.now()}`,
-            authorName: "Current User", // Replace with actual user data
-            authorAvatar: "https://i.pravatar.cc/40?u=current-user",
-            timestamp: new Date().toISOString(),
+            contentId: item.id,
+            displayName: "Current User", // Replace with actual user data
+            createdAt: new Date().toISOString(),
             text: commentText,
         };
         
-        const updatedItem = { ...item, comments: [newComment, ...item.comments] };
-        updateItemInSession(updatedItem);
-    }, [item, updateItemInSession]);
+        const allComments = getSession<{[key: string]: Comment[]}>('commentsByContentId') || {};
+        const currentComments = allComments[item.id] || [];
+        const updatedComments = [newComment, ...currentComments];
+        
+        setSession('commentsByContentId', { ...allComments, [item.id]: updatedComments });
+        setComments(updatedComments);
+
+    }, [item]);
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -321,7 +334,7 @@ export default function ContentDetailPage() {
 
                     <Separator className="my-12" />
 
-                    <CommentsSection comments={item.comments} onAddComment={handleAddComment} />
+                    <CommentsSection comments={comments} onAddComment={handleAddComment} />
 
                     {moreFromAuthor.length > 0 && (
                         <section className="mt-16">
