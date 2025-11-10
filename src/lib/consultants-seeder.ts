@@ -83,7 +83,14 @@ const createConsultant = (index: number): Consultant => {
         kycVerified: Math.random() > 0.2,
         adminApproved: Math.random() > 0.1,
         lastReviewDate: subDays(now, Math.floor(Math.random() * 90)).toISOString(),
-        bio: `<h4>What to expect in a session</h4><p>I combine <strong>Tarot</strong> and <strong>Astrology</strong> with practical coaching to give you clear, grounded next steps. My style is direct, compassionate, and solutions-oriented.</p><ul><li><strong>Special focus:</strong> Love & Relationships, Career pivots, Decision timing.</li><li><strong>Format:</strong> Chat, audio, or video—choose what’s comfortable.</li><li><strong>Outcome:</strong> Actionable insight you can use right away.</li></ul><p>Clients describe my readings as “accurate, timely, and empowering.”</p>`,
+        bio: `<h4>What to expect in a session</h4>
+<p>I combine <strong>Tarot</strong> and <strong>Astrology</strong> with practical coaching to give you clear, grounded next steps. My style is direct, compassionate, and solutions-oriented.</p>
+<ul>
+  <li><strong>Special focus:</strong> Love & Relationships, Career pivots, Decision timing.</li>
+  <li><strong>Format:</strong> Chat, audio, or video—choose what’s comfortable.</li>
+  <li><strong>Outcome:</strong> Actionable insight you can use right away.</li>
+</ul>
+<p>Clients describe my readings as “accurate, timely, and empowering.”</p>`,
         reviews: reviews,
         content: {
             articles: [{ id: 'a1', title: 'Article 1', tag: 'Love', level: 'Beginner', likes: 10 }],
