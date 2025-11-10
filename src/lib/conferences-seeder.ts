@@ -6,10 +6,12 @@ import { addDays, addMinutes, subMinutes, addHours } from "date-fns";
 
 export interface Conference {
   id: string;
+  slug: string;
   title: string;
   dateISO: string;
   durationMin: number;
   hostAlias: string;
+  hostId: string;
   hostRating: number;
   languages: ("EN" | "FR")[];
   tags: ("Love" | "Work" | "Health" | "Money" | "Life Path")[];
@@ -17,6 +19,9 @@ export interface Conference {
   price: number;
   isFree: boolean; // Derived from price
   excerpt: string;
+  description: string; // Rich text/HTML for the about tab
+  agenda: { time: string; topic: string }[];
+  faqs: { question: string; answer: string }[];
   capacity: number;
   seatsLeft?: number; // Optional
   recordingAvailable: boolean;
@@ -52,7 +57,18 @@ const excerpts = [
     "An overview of how astrology can provide powerful insights into health and constitutional predispositions."
 ];
 
-const hosts = ["Aeliana", "Kael", "Seraphina", "Orion", "Elara", "Lyra", "Caspian", "Marcus", "Eva"];
+const hosts = [
+    { alias: "Aeliana", id: "aeliana-rose" },
+    { alias: "Kael", id: "kaelen-vance" },
+    { alias: "Seraphina", id: "seraphina-moon" },
+    { alias: "Orion", id: "orion-blackwood" },
+    { alias: "Elara", id: "elara-solstice" },
+    { alias: "Lyra", id: "lyra-meadow" },
+    { alias: "Caspian", id: "caspian-sage" },
+    { alias: "Marcus", id: "marcus-redfield-clone" },
+    { alias: "Eva", id: "eva-green-clone" },
+];
+
 const tags: Conference['tags'] = ["Love", "Work", "Health", "Money", "Life Path"];
 const types: Conference['type'][] = ["Workshop", "Group Reading", "Webinar", "Q&A"];
 
@@ -61,6 +77,7 @@ const createConference = (id: number): Conference => {
     const now = new Date();
     let date: Date;
     const price = id % 3 === 0 ? 0 : Math.floor(Math.random() * 80) + 20;
+    const title = conferenceTitles[(id-1) % conferenceTitles.length];
 
     switch(id) {
         case 1: // Starting in 5 minutes
@@ -87,13 +104,16 @@ const createConference = (id: number): Conference => {
     
     const capacity = Math.floor(Math.random() * 40) + 10;
     const seatsLeft = id % 4 === 0 ? 0 : Math.floor(Math.random() * capacity);
+    const host = hosts[(id-1) % hosts.length];
 
     return {
         id: `${id}`,
-        title: conferenceTitles[(id-1) % conferenceTitles.length],
+        slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + `-${id}`,
+        title: title,
         dateISO: date.toISOString(),
         durationMin: [30, 45, 60, 90][id % 4],
-        hostAlias: hosts[(id-1) % hosts.length],
+        hostAlias: host.alias,
+        hostId: host.id,
         hostRating: Math.round((4.0 + Math.random()) * 10) / 10,
         languages: (id % 3 === 0) ? ["FR"] : (id % 4 === 0 ? ["EN", "FR"] : ["EN"]),
         tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
@@ -101,6 +121,18 @@ const createConference = (id: number): Conference => {
         price,
         isFree: price === 0,
         excerpt: excerpts[(id-1) % excerpts.length],
+        description: `<h4>Overview</h4><p>${excerpts[(id-1) % excerpts.length]} This session is designed for both beginners and intermediate students of astrology, offering fresh perspectives and practical applications.</p><h4>What You'll Learn</h4><ul><li>Key principles of the topic at hand.</li><li>How to apply this knowledge to your own life for immediate insight.</li><li>Advanced techniques for deeper understanding.</li></ul><p>Join us for an enlightening experience that will empower you to take control of your destiny.</p>`,
+        agenda: [
+            { time: "0-5 min", topic: "Welcome & Introductions" },
+            { time: "5-25 min", topic: "Core Concepts & Foundational Theory" },
+            { time: "25-45 min", topic: "Practical Application & Chart Examples" },
+            { time: "45-60 min", topic: "Live Q&A with the Host" }
+        ],
+        faqs: [
+            { question: "What if I can't make it live?", answer: "A recording of the session will be available to all ticket holders for 30 days after the event, provided you've registered." },
+            { question: "How do I join the session?", answer: "A unique link to join the virtual conference room will be sent to your email address 1 hour before the event begins. Please check your spam folder if you don't see it." },
+            { question: "What is the cancellation policy?", answer: "You can receive a full refund up to 24 hours before the conference starts. Within 24 hours, tickets are non-refundable but can be transferred to a friend." }
+        ],
         capacity: capacity,
         seatsLeft: seatsLeft,
         recordingAvailable: Math.random() > 0.5,

@@ -1,0 +1,257 @@
+
+"use client";
+
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Conference, seedConferences } from '@/lib/conferences-seeder';
+import { getLocal, setLocal, seedOnce } from '@/lib/local';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Calendar, Clock, Video, Users, Star, Languages, PlusCircle, CheckCircle, Bell, ExternalLink, CalendarPlus } from 'lucide-react';
+import { format } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardContent } from '@/components/ui/card';
+import Image from 'next/image';
+import Link from 'next/link';
+import { StarRating } from '@/components/star-rating';
+import { PlaceholderPage } from '@/components/placeholder-page';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { ContentCard } from '@/components/content-card';
+import { useToast } from '@/hooks/use-toast';
+
+export default function ConferenceDetailPage() {
+    const params = useParams();
+    const router = useRouter();
+    const { toast } = useToast();
+    const { slug } = params;
+
+    const [conference, setConference] = useState<Conference | null>(null);
+    const [relatedConferences, setRelatedConferences] = useState<Conference[]>([]);
+    const [isRsvpd, setIsRsvpd] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        seedOnce("conferences_seeded_v2", seedConferences);
+        const allConferences = getLocal<Conference[]>("conferences") || [];
+        const currentConference = allConferences.find(c => c.slug === slug);
+
+        if (currentConference) {
+            setConference(currentConference);
+            const related = allConferences.filter(c => 
+                c.id !== currentConference.id && 
+                (c.tags.some(tag => currentConference.tags.includes(tag)) || c.hostAlias === currentConference.hostAlias)
+            ).slice(0, 6);
+            setRelatedConferences(related);
+        }
+
+        const rsvps = getLocal<any[]>("rsvps") || [];
+        if (currentConference && rsvps.some(r => r.eventId === currentConference.id)) {
+            setIsRsvpd(true);
+        }
+
+        setLoading(false);
+    }, [slug]);
+
+    const handleRsvp = () => {
+        if (!conference) return;
+
+        let rsvps = getLocal<any[]>("rsvps") || [];
+        if (isRsvpd) {
+            rsvps = rsvps.filter(r => r.eventId !== conference.id);
+            toast({ title: "RSVP Cancelled" });
+        } else {
+            rsvps.push({ eventId: conference.id, title: conference.title, remind24h: false, remind1h: false, remind10m: false });
+            toast({ title: "RSVP Successful!", description: "This event has been added to your calendar." });
+        }
+        setLocal("rsvps", rsvps);
+        setIsRsvpd(!isRsvpd);
+    };
+
+    const handleNotify = () => {
+        toast({ title: "You'll be notified if a spot opens up." });
+    }
+
+    if (loading) {
+        return (
+            <div className="container py-12">
+                <Skeleton className="h-8 w-48 mb-8" />
+                <div className="grid md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2 space-y-6">
+                        <Skeleton className="h-12 w-3/4" />
+                        <Skeleton className="h-6 w-1/2" />
+                        <div className="flex gap-2">
+                            <Skeleton className="h-6 w-20" />
+                            <Skeleton className="h-6 w-20" />
+                        </div>
+                        <Skeleton className="h-64 w-full" />
+                    </div>
+                    <div className="space-y-4">
+                        <Skeleton className="h-48 w-full" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    if (!conference) {
+        return <PlaceholderPage title="Conference not found" description="We couldn't find the conference you were looking for." />;
+    }
+
+    const hasSeats = conference.seatsLeft === undefined || conference.seatsLeft > 0;
+    const date = new Date(conference.dateISO);
+    const endDate = new Date(date.getTime() + conference.durationMin * 60000);
+
+    return (
+        <div className="container py-12">
+            <Button variant="ghost" onClick={() => router.push('/conferences')} className="mb-6">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Conferences
+            </Button>
+
+            <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 items-start">
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                            {conference.price === 0 && <Badge className="bg-green-600">Free</Badge>}
+                            {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                            <Badge variant="outline">{conference.type}</Badge>
+                        </div>
+                        <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight">{conference.title}</h1>
+                        <div className="text-lg text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2">
+                            <div className="flex items-center gap-2"><Calendar className="w-5 h-5 text-primary" /> <span>{format(date, 'EEEE, MMMM d, yyyy')}</span></div>
+                            <div className="flex items-center gap-2"><Clock className="w-5 h-5 text-primary" /> <span>{`${format(date, 'p')} - ${format(endDate, 'p')} (${Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' ')})`}</span></div>
+                        </div>
+                         <div className="flex items-center gap-2 text-muted-foreground"><Video className="w-5 h-5 text-primary" /> <span>Duration: {conference.durationMin} minutes</span></div>
+                    </div>
+                    
+                    <Tabs defaultValue="about" className="w-full">
+                        <TabsList className="grid w-full grid-cols-4">
+                            <TabsTrigger value="about">About</TabsTrigger>
+                            <TabsTrigger value="agenda">Agenda</TabsTrigger>
+                            <TabsTrigger value="host">Host</TabsTrigger>
+                            <TabsTrigger value="faqs">FAQs</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="about" className="py-6 prose prose-invert max-w-none text-foreground/80">
+                            <div dangerouslySetInnerHTML={{ __html: conference.description }} />
+                        </TabsContent>
+                        <TabsContent value="agenda" className="py-6">
+                            <ul className="space-y-4">
+                                {conference.agenda.map((item, index) => (
+                                    <li key={index} className="flex gap-4">
+                                        <div className="flex flex-col items-center">
+                                            <div className="bg-primary/20 text-primary text-xs font-bold rounded-full px-2 py-0.5 whitespace-nowrap">{item.time}</div>
+                                            {index < conference.agenda.length - 1 && <div className="w-px h-full bg-border my-1"></div>}
+                                        </div>
+                                        <p className="pt-px text-foreground/90">{item.topic}</p>
+                                    </li>
+                                ))}
+                            </ul>
+                        </TabsContent>
+                        <TabsContent value="host" className="py-6 space-y-6">
+                           <Card className="bg-card/50">
+                               <CardContent className="p-6 flex items-start gap-6">
+                                   <Image src={`https://i.pravatar.cc/80?u=${conference.hostAlias}`} alt={conference.hostAlias} width={80} height={80} className="rounded-full" />
+                                   <div className="space-y-2">
+                                       <h4 className="text-xl font-bold">{conference.hostAlias}</h4>
+                                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                           <StarRating rating={conference.hostRating} />
+                                           <span>({conference.hostRating})</span>
+                                           <span>•</span>
+                                           <span>{conference.languages.join(' & ')}</span>
+                                       </div>
+                                       <p className="text-sm text-foreground/80 pt-1">Our host is a seasoned expert in their field, dedicated to providing deep insights and practical guidance.</p>
+                                       <Button asChild variant="link" className="p-0 h-auto">
+                                            <Link href={`/discover/consultant/${conference.hostId}`}>
+                                                View Profile <ExternalLink className="ml-2 h-4 w-4" />
+                                            </Link>
+                                       </Button>
+                                   </div>
+                               </CardContent>
+                           </Card>
+                           <h4 className="font-headline text-lg font-bold">Other events by {conference.hostAlias}</h4>
+                           {/* Placeholder for other events */}
+                           <p className="text-sm text-muted-foreground">No other upcoming events from this host.</p>
+                        </TabsContent>
+                        <TabsContent value="faqs" className="py-6">
+                            <Accordion type="single" collapsible className="w-full">
+                                {conference.faqs.map((faq, index) => (
+                                    <AccordionItem key={index} value={`item-${index}`}>
+                                        <AccordionTrigger>{faq.question}</AccordionTrigger>
+                                        <AccordionContent>{faq.answer}</AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+
+                <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
+                     <Card>
+                        <CardContent className="p-6 space-y-4">
+                           <div className="text-3xl font-bold text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</div>
+                           <div className="space-y-2">
+                            {hasSeats ? (
+                                <Button size="lg" className="w-full" onClick={handleRsvp}>
+                                    {isRsvpd ? <CheckCircle className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
+                                    {isRsvpd ? 'You are going!' : 'RSVP Now'}
+                                </Button>
+                            ) : (
+                                <Button size="lg" className="w-full" disabled>
+                                    Sold Out
+                                </Button>
+                            )}
+                            
+                            {!hasSeats && (
+                                <Button size="lg" variant="secondary" className="w-full" onClick={handleNotify}>
+                                    <Bell className="mr-2 h-4 w-4"/>
+                                    Notify Me
+                                </Button>
+                            )}
+                           </div>
+                           <Button size="lg" variant="ghost" className="w-full">
+                               <CalendarPlus className="mr-2 h-4 w-4" />
+                               Add to Calendar
+                           </Button>
+                           <div className="text-xs text-muted-foreground flex items-center gap-2 pt-2">
+                               <Users className="h-4 w-4" />
+                               <span>{conference.capacity} total spots.</span>
+                               {conference.seatsLeft !== undefined && <span>{conference.seatsLeft} remaining.</span>}
+                           </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            {relatedConferences.length > 0 && (
+                <div className="mt-16">
+                    <h2 className="font-headline text-2xl font-bold mb-6">Related Conferences</h2>
+                     <Carousel opts={{ align: "start", slidesToScroll: "auto" }} className="w-full">
+                        <CarouselContent>
+                            {relatedConferences.map((item) => (
+                                <CarouselItem key={item.id} className="md:basis-1/2 lg:basis-1/3">
+                                    {/* This is a simplified card for the carousel */}
+                                     <Link href={`/conferences/${item.slug}`} className="group block">
+                                        <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
+                                            <CardContent className="p-0">
+                                                <Image src={`https://picsum.photos/seed/${item.id}/400/225`} alt={item.title} width={400} height={225} className="w-full object-cover aspect-video group-hover:opacity-90" />
+                                                <div className="p-4">
+                                                    <h3 className="font-bold font-headline group-hover:text-primary line-clamp-2">{item.title}</h3>
+                                                    <p className="text-sm text-muted-foreground mt-1">{format(new Date(item.dateISO), 'MMM d, p')}</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                     </Link>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="-left-4" />
+                        <CarouselNext className="-right-4" />
+                    </Carousel>
+                </div>
+            )}
+        </div>
+    );
+}
+

@@ -117,7 +117,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     });
 
      useEffect(() => {
-        seedOnce("conferences_seeded", seedConferences);
+        seedOnce("conferences_seeded_v2", seedConferences); // Use a new seed key to ensure data update
         const storedConferences = getLocal<Conference[]>("conferences");
         if (storedConferences) {
             setAllConferences(storedConferences);
@@ -475,45 +475,46 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                 return (
                                 <Card key={conference.id} className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
                                     <CardContent className="p-0">
-                                        <div className="relative">
-                                            <Image
-                                                src={`https://picsum.photos/seed/${conference.id}/400/225`}
-                                                alt={conference.title}
-                                                width={400}
-                                                height={225}
-                                                className="w-full object-cover aspect-video"
-                                            />
-                                            <div className="absolute top-2 right-2 flex gap-2">
-                                                {conference.price === 0 && <Badge variant="default" className="bg-green-600">Free</Badge>}
-                                                {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting Soon</Badge>}
-                                            </div>
-                                        </div>
-                                        <div className="p-4 space-y-3">
-                                            <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary">{conference.title}</h3>
-                                            
-                                            <div className="text-sm text-muted-foreground">
-                                                <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
-                                            </div>
-
-                                            <div className="flex items-center gap-3 pt-2">
-                                                <Image src={`https://i.pravatar.cc/40?u=${conference.hostAlias}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
-                                                <div>
-                                                    {/* In a real app this would link to the host profile */}
-                                                    <Link href="#" className="font-semibold hover:underline">{conference.hostAlias}</Link>
-                                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                        <StarRating rating={conference.hostRating} size={14} />
-                                                        <span>({conference.hostRating})</span>
-                                                        <span>•</span>
-                                                        <span>{conference.language}</span>
-                                                    </div>
+                                        <Link href={`/conferences/${conference.slug}`} className="block group">
+                                            <div className="relative">
+                                                <Image
+                                                    src={`https://picsum.photos/seed/${conference.id}/400/225`}
+                                                    alt={conference.title}
+                                                    width={400}
+                                                    height={225}
+                                                    className="w-full object-cover aspect-video group-hover:opacity-90 transition-opacity"
+                                                />
+                                                <div className="absolute top-2 right-2 flex gap-2">
+                                                    {conference.price === 0 && <Badge variant="default" className="bg-green-600">Free</Badge>}
+                                                    {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting Soon</Badge>}
                                                 </div>
                                             </div>
-                                            
-                                            <div className="flex flex-wrap gap-2 pt-1">
-                                                {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
-                                                <Badge variant="outline">{conference.type}</Badge>
+                                            <div className="p-4 space-y-3">
+                                                <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary">{conference.title}</h3>
+                                                
+                                                <div className="text-sm text-muted-foreground">
+                                                    <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
+                                                </div>
+
+                                                <div className="flex items-center gap-3 pt-2">
+                                                    <Image src={`https://i.pravatar.cc/40?u=${conference.hostAlias}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
+                                                    <div>
+                                                        <Link href={`/discover/consultant/${conference.hostId}`} className="font-semibold hover:underline">{conference.hostAlias}</Link>
+                                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                            <StarRating rating={conference.hostRating} size={14} />
+                                                            <span>({conference.hostRating})</span>
+                                                            <span>•</span>
+                                                            <span>{conference.language}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex flex-wrap gap-2 pt-1">
+                                                    {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                                                    <Badge variant="outline">{conference.type}</Badge>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </Link>
                                     </CardContent>
                                     <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center">
                                         <div className="font-bold text-lg text-primary">{conference.price === 0 ? 'Free' : `€${conference.price}`}</div>
@@ -531,20 +532,9 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                     </TooltipContent>
                                                 </Tooltip>
                                             )}
-                                             <Sheet>
-                                                <SheetTrigger asChild><Button variant="secondary" size="sm">Details</Button></SheetTrigger>
-                                                <SheetContent>
-                                                    <SheetHeader>
-                                                        <SheetTitle>{conference.title}</SheetTitle>
-                                                        <SheetDescription>Hosted by {conference.hostAlias} on {formatDate(conference.dateISO, conference.durationMin)}</SheetDescription>
-                                                    </SheetHeader>
-                                                    <div className="py-4 space-y-4">
-                                                        <p>{conference.excerpt}</p>
-                                                        <p className="text-sm text-muted-foreground">Capacity: {conference.capacity} spots.</p>
-                                                        <p>This event provides an in-depth look at the topic, offering valuable insights and practical advice. Join our expert host for an interactive and enlightening session.</p>
-                                                    </div>
-                                                </SheetContent>
-                                            </Sheet>
+                                            <Button asChild variant="secondary" size="sm">
+                                                <Link href={`/conferences/${conference.slug}`}>Details</Link>
+                                            </Button>
                                             <Button size="sm" onClick={() => handleRsvp(conference)} variant={isRsvpd(conference.id) ? "outline" : "default"} disabled={!hasSeats}>
                                                 {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
                                                 {isRsvpd(conference.id) ? "Going" : (hasSeats ? "RSVP" : "Waitlist")}
