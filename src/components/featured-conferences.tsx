@@ -6,11 +6,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Conference, seedConferences } from "@/lib/conferences-seeder";
 import { getLocal, setLocal, seedOnce } from "@/lib/local";
 import { getSession } from "@/lib/session";
-import { isWithinInterval, addDays, startOfDay, endOfDay, endOfWeek, endOfMonth, isFuture, differenceInMinutes, format } from 'date-fns';
+import { isWithinInterval, addDays, startOfDay, endOfDay, endOfWeek, endOfMonth, isFuture, differenceInMinutes } from 'date-fns';
+import { format, toDate } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Ticket, CheckCircle, Bell, X, Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Star, Clock, Video, Users } from "lucide-react";
+import { Calendar, Ticket, CheckCircle, Bell, X, Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Star, Clock, Video, Users, Globe } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -113,6 +114,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const [isRsvpModalOpen, setIsRsvpModalOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+    const [timeZone, setTimeZone] = useState<string>("");
+    useEffect(() => {
+        setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    }, []);
 
     const [filters, setFilters] = useState<Filters>(() => {
         if (typeof window === "undefined") return defaultFilters;
@@ -323,11 +328,25 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         const date = new Date(dateISO);
         const endDate = new Date(date.getTime() + durationMin * 60000);
         
-        const datePart = format(date, 'MMM d, p');
-        const endTimePart = format(endDate, 'p');
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' ');
+        const datePart = new Intl.DateTimeFormat(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: false,
+            timeZone,
+        }).format(date);
+        
+        const endTimePart = new Intl.DateTimeFormat(undefined, {
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: false,
+            timeZone,
+        }).format(endDate);
     
-        return `${datePart} - ${endTimePart} • ${durationMin} min • ${timezone}`;
+        const tzName = timeZone.replace(/_/g, ' ');
+    
+        return `${datePart} - ${endTimePart} • ${durationMin} min • ${tzName}`;
     };
 
     const FilterControls = () => (
@@ -481,10 +500,14 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                         <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
                             Showing {filteredConferences.length} conferences
                         </p>
-                        <div className="flex gap-2 w-full sm:w-auto">
+                        <div className="flex gap-2 w-full sm:w-auto items-center">
                             {!isDesktop && mobileSheet}
-                            <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
-                                <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort by">
+                            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+                                <Globe className="h-4 w-4" />
+                                <span>{timeZone.replace(/_/g, ' ')}</span>
+                            </div>
+                             <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
+                                <SelectTrigger className="w-full sm:w-[180px]" aria-label="Sort by">
                                     <SelectValue placeholder="Sort by..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -494,6 +517,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+                     <div className="flex sm:hidden items-center justify-center gap-2 text-xs text-muted-foreground mb-4">
+                        <Globe className="h-4 w-4" />
+                        <span>All times shown in: {timeZone.replace(/_/g, ' ')}</span>
                     </div>
 
                     <div role="status" aria-live="polite">
