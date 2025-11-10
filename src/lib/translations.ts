@@ -131,6 +131,22 @@ export const translations = {
                 policyChanges: { title: "Changes to This Policy", text: "We will notify you of any significant changes to this policy via email or a notice on our platform." },
                 contact: { title: "Contact DPO", text: ["For any privacy-specific concerns, you can contact our Data Protection Officer at"] }
             }
+        },
+        
+        // Terms of Service Page
+        termsOfService: {
+            title: "Terms of Service",
+            lastUpdated: "Last updated",
+            toc: "On this page",
+            eligibility: { title: "Eligibility & Account", content: "You must be 18 or older to use our services. You are responsible for your account and may be asked to complete identity verification (KYC)." },
+            disclaimer: { title: "Not Professional Advice", content: "Services are for guidance and are not a substitute for professional medical, legal, or financial advice. Not for emergencies." },
+            platform: { title: "Using ASTRETHIQUE", content: "Consultants are independent providers. Conferences and podcasts may be hosted on third-party platforms." },
+            billing: { title: "Wallet & Billing", content: "All sessions are billed per minute from your prepaid wallet. You are responsible for any applicable taxes (e.g., VAT). See our", link: "Refunds Policy" },
+            content: { title: "Content Ownership", content: "You own the content you upload, but you grant us a license to display it on our platform." },
+            conduct: { title: "Prohibited Conduct", content: "Harassment, hate speech, illegal activities, making unsubstantiated medical or legal claims, and spam are strictly prohibited." },
+            termination: { title: "Suspension & Termination", content: "We reserve the right to suspend or terminate accounts that violate these terms." },
+            governingLaw: { title: "Governing Law", content: "These terms are governed by the laws of the United Kingdom." },
+            contact: { title: "Contact", content: "For questions about these terms, contact us at" }
         }
     },
     fr: {
@@ -264,6 +280,23 @@ export const translations = {
                 policyChanges: { title: "Modifications de cette politique", text: "Nous vous informerons de tout changement important." },
                 contact: { title: "Contacter le DPO", text: ["Pour toute préoccupation spécifique à la confidentialité, contactez notre Délégué à la Protection des Données à"] }
             }
+        },
+        
+        // Terms of Service Page
+        termsOfService: {
+            title: "Conditions d'Utilisation",
+            lastUpdated: "Dernière mise à jour",
+            toc: "Sur cette page",
+            eligibility: { title: "Éligibilité et Compte", content: "Vous devez avoir 18 ans ou plus. Vous êtes responsable de votre compte et une vérification d'identité (KYC) peut être requise." },
+            disclaimer: { title: "Avis de non-responsabilité", content: "Les services sont pour guidance et ne remplacent pas un avis professionnel (médical, juridique, financier). Pas pour les urgences." },
+            platform: { title: "Utilisation d'ASTRETHIQUE", content: "Les consultants sont indépendants. Les conférences peuvent être hébergées sur des plateformes tierces." },
+            billing: { title: "Portefeuille et Facturation", content: "Les sessions sont facturées à la minute depuis votre portefeuille. Vous êtes responsable des taxes applicables (TVA). Voir notre", link: "Politique de Remboursement" },
+            content: { title: "Propriété du Contenu", content: "Vous possédez votre contenu, mais vous nous accordez une licence pour l'afficher." },
+            conduct: { title: "Conduite Interdite", content: "Le harcèlement, les discours de haine, l'illégalité, les affirmations médicales/juridiques non fondées et le spam sont interdits." },
+            termination: { title: "Suspension et Résiliation", content: "Nous nous réservons le droit de suspendre ou de résilier les comptes qui enfreignent ces conditions." },
+            governingLaw: { title: "Droit Applicable", content: "Ces conditions sont régies par le droit du Royaume-Uni." },
+            contact: { title: "Contact", content: "Pour toute question sur ces conditions, contactez-nous à" }
         }
     }
 };
+
