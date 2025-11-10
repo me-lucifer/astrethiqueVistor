@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from '@/components/ui/form';
-import { Input } from '../ui/input';
 import { formatDistanceToNow } from 'date-fns';
 import { AuthModal } from '../auth-modal';
 
@@ -34,8 +33,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
+  
   const checkUser = () => {
     const storedUser = getUser();
     if (storedUser) {
@@ -55,10 +53,6 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
       window.removeEventListener('storage', checkUser);
     }
   }, []);
-  
-  const handleLoginSuccess = () => {
-    checkUser();
-  };
   
   const handleLogout = () => {
       logoutUser();
@@ -125,10 +119,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
           ) : (
             <div className="text-center py-6 px-4 border-2 border-dashed rounded-lg">
               <h3 className="font-semibold">Sign in to add a comment.</h3>
-              <div className="flex gap-2 justify-center mt-4">
-                <Button onClick={() => setIsAuthModalOpen(true)} aria-label="Login to comment">Login</Button>
-                <Button variant="outline" onClick={() => setIsAuthModalOpen(true)} aria-label="Create account to comment">Create account</Button>
-              </div>
+              <p className="text-sm text-muted-foreground mt-1">Use the main login in the site header.</p>
             </div>
           )}
         </div>
@@ -171,11 +162,6 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
           )}
         </div>
       </section>
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onOpenChange={setIsAuthModalOpen}
-        onLoginSuccess={handleLoginSuccess}
-      />
     </>
   );
 }

@@ -1,23 +1,58 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Gem, Search } from 'lucide-react';
+import { Menu, Gem, Search, User, LogOut } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AuthModal } from '../auth-modal';
+import { getUser, logoutUser, AuthUser } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export function Header() {
   const pathname = usePathname();
+  const { toast } = useToast();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  const checkUser = () => {
+      setUser(getUser());
+  }
+
+  useEffect(() => {
+    checkUser();
+    window.addEventListener('storage', checkUser);
+    return () => window.removeEventListener('storage', checkUser);
+  }, []);
+  
+  const handleLoginSuccess = () => {
+    checkUser();
+  };
+  
+  const handleLogout = () => {
+      logoutUser();
+      checkUser();
+      toast({ title: "You've been logged out." });
+  }
+
+  const getInitials = (name: string) => {
+    if (!name || name.trim() === '') return "G";
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  }
+
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -33,7 +68,44 @@ export function Header() {
     return path.startsWith('/discover') || path.startsWith('/consultant/');
   }
 
+  const AuthButtons = () => (
+    <>
+      <Button variant="ghost" onClick={() => setIsAuthModalOpen(true)}>Login</Button>
+      <Button onClick={() => setIsAuthModalOpen(true)}>Register</Button>
+    </>
+  );
+
+  const UserMenu = () => {
+    if (!user) return null;
+    return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="gap-2">
+                <Avatar className="h-6 w-6">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                </Avatar>
+                {user.name}
+                <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem disabled>
+                <User className="mr-2 h-4 w-4"/>
+                <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4"/>
+                <span>Sign out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+    )
+  }
+
   return (
+    <>
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
@@ -66,12 +138,7 @@ export function Header() {
         </div>
         
         <div className="hidden lg:flex items-center gap-2">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/register">Register</Link>
-            </Button>
+            {user ? <UserMenu /> : <AuthButtons />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" disabled>
@@ -118,14 +185,14 @@ export function Header() {
                 })}
               </nav>
               <div className="p-4 border-t space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                   <Button variant="ghost" asChild>
-                    <Link href="/login">Login</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/register">Register</Link>
-                  </Button>
-                </div>
+                {user ? (
+                    <Button variant="outline" className="w-full" onClick={handleLogout}>Sign out</Button>
+                ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button variant="ghost" onClick={() => setIsAuthModalOpen(true)}>Login</Button>
+                        <Button onClick={() => setIsAuthModalOpen(true)}>Register</Button>
+                    </div>
+                )}
                  <Button variant="outline" disabled className="w-full">
                   Visitor
                 </Button>
@@ -135,5 +202,11 @@ export function Header() {
         </div>
       </div>
     </header>
+     <AuthModal
+        isOpen={isAuthModalOpen}
+        onOpenChange={setIsAuthModalOpen}
+        onLoginSuccess={handleLoginSuccess}
+      />
+    </>
   );
 }
