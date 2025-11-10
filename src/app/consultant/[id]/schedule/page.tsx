@@ -1,11 +1,13 @@
 
-import { PlaceholderPage } from "@/components/placeholder-page";
+"use client";
 
-export default function SchedulePage() {
-  return (
-    <PlaceholderPage
-      title="Schedule Session"
-      description="This page would contain the full scheduling interface for the consultant."
-    />
-  );
+import { useRouter } from 'next/navigation';
+
+export default function DeprecatedSchedulePage() {
+    const router = useRouter();
+    if(typeof window !== 'undefined') {
+        const newPath = window.location.pathname.replace('/consultant/', '/discover/consultant/');
+        router.replace(newPath);
+    }
+    return null;
 }
