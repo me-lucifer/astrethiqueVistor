@@ -302,6 +302,32 @@ export const translations = {
                 content: "Because we do not store the original documents, any data rights requests (like deletion) should be directed to our third-party provider, though we will facilitate this process. For more information on your data, please see our",
                 link: "Privacy Policy"
             }
+        },
+        dataProcessing: {
+            title: "Data Processing & Sub-processors",
+            lastUpdated: "Last updated",
+            toc: "On this page",
+            controllerProcessor: {
+                title: "Controller vs. Processor",
+                content: "Under GDPR, ASTRETHIQUE acts as the 'data controller' for our users' personal data (e.g., account info, usage data). Consultants are 'data controllers' for the information they gather during sessions. Our partners, listed below, act as 'data processors' on our behalf."
+            },
+            subprocessors: {
+                title: "Our Sub-processors",
+                intro: "We use a limited number of third-party services to provide our platform. We have vetted each one for their security and data protection standards.",
+                table: {
+                    category: "Category",
+                    name: "Name",
+                    region: "Region",
+                    purpose: "Purpose"
+                },
+                rows: [
+                    { category: "Payments", name: "Stripe, Inc.", region: "USA/EU", purpose: "Payment processing" },
+                    { category: "Analytics", name: "Google Analytics", region: "USA/EU", purpose: "Website traffic analysis" },
+                    { category: "Email", name: "Postmark (ActiveCampaign, LLC)", region: "USA/EU", purpose: "Transactional & marketing emails" },
+                    { category: "ID Verification", name: "Veriff", region: "USA/EU", purpose: "Consultant KYC/ID checks" }
+                ],
+                note: "We will update this list before engaging any new sub-processor."
+            }
         }
     },
     fr: {
@@ -605,6 +631,32 @@ export const translations = {
                 title: "Rétention et vos droits",
                 content: "Placeholder FR: Because we do not store the original documents, any data rights requests (like deletion) should be directed to our third-party provider, though we will facilitate this process. For more information on your data, please see our",
                 link: "Politique de confidentialité"
+            }
+        },
+        dataProcessing: {
+            title: "Traitement des Données & Sous-traitants",
+            lastUpdated: "Dernière mise à jour",
+            toc: "Sur cette page",
+            controllerProcessor: {
+                title: "Responsable du Traitement vs Sous-traitant",
+                content: "En vertu du RGPD, ASTRETHIQUE agit en tant que 'responsable du traitement' pour les données personnelles de nos utilisateurs (par ex. infos de compte, données d'utilisation). Les consultants sont 'responsables du traitement' pour les informations qu'ils recueillent lors des sessions. Nos partenaires, listés ci-dessous, agissent en tant que 'sous-traitants' pour notre compte."
+            },
+            subprocessors: {
+                title: "Nos Sous-traitants",
+                intro: "Nous utilisons un nombre limité de services tiers pour fournir notre plateforme. Nous avons évalué chacun d'eux pour leurs normes de sécurité et de protection des données.",
+                table: {
+                    category: "Catégorie",
+                    name: "Nom",
+                    region: "Région",
+                    purpose: "Objectif"
+                },
+                rows: [
+                    { category: "Paiements", name: "Stripe, Inc.", region: "USA/EU", purpose: "Traitement des paiements" },
+                    { category: "Analytique", name: "Google Analytics", region: "USA/EU", purpose: "Analyse du trafic du site" },
+                    { category: "Email", name: "Postmark (ActiveCampaign, LLC)", region: "USA/EU", purpose: "Emails transactionnels et marketing" },
+                    { category: "Vérification ID", name: "Veriff", region: "USA/EU", purpose: "Vérifications KYC/ID des consultants" }
+                ],
+                note: "Nous mettrons à jour cette liste avant d'engager tout nouveau sous-traitant."
             }
         }
     }
