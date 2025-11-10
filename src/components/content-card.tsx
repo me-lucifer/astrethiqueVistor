@@ -15,7 +15,7 @@ interface ContentCardProps {
         title: string;
         type: ContentType;
         cover: string;
-        tags: string[];
+        tags?: string[];
         likes?: number;
         duration?: string;
         date?: string;
@@ -57,7 +57,7 @@ export function ContentCard({ item }: ContentCardProps) {
                     </div>
                     <div className="p-4">
                         <div className="flex flex-wrap gap-2 mb-2">
-                            {item.tags.map(tag => (
+                            {item.tags && item.tags.map(tag => (
                                 <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
                             ))}
                         </div>
