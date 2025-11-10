@@ -5,11 +5,17 @@ import { setSession, getSession } from "./session";
 import { Consultant } from "./consultants";
 import { addDays, addHours, format, subDays, parseISO } from 'date-fns';
 
+const names = [
+    "Aeliana Rose", "Kaelen Vance", "Seraphina Moon", "Orion Blackwood", 
+    "Elara Solstice", "Lyra Meadow", "Caspian Sage", "Astrid Belle",
+    "Ronan Rivers", "Fiona Glen", "Julian Croft", "Maya Dane"
+];
+
 const createConsultant = (index: number): Consultant => {
     const now = new Date();
     const isOnline = index % 4 === 0; // Better distribution for online status
     const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
-    const consultantName = `Consultant ${index}`;
+    const consultantName = names[(index - 1) % names.length];
     
     // Create a version of availability compatible with the card and list views.
     // The profile page will add more complex availability data.
