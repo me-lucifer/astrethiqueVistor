@@ -4,7 +4,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { addTicket, TicketFormData } from "@/lib/support";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -13,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { CheckCircle } from "lucide-react";
 
 const reportSchema = z.object({
     url: z.string().url("Please enter a valid URL."),
@@ -27,10 +28,9 @@ interface ReportModalProps {
     type: 'content' | 'consultant';
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
-    onTicketSubmitted: () => void;
 }
 
-const ReportModal = ({ type, isOpen, onOpenChange, onTicketSubmitted }: ReportModalProps) => {
+const ReportModal = ({ type, isOpen, onOpenChange }: ReportModalProps) => {
     const { toast } = useToast();
     const form = useForm<ReportFormData>({
         resolver: zodResolver(reportSchema),
@@ -42,17 +42,20 @@ const ReportModal = ({ type, isOpen, onOpenChange, onTicketSubmitted }: ReportMo
         : ["Unprofessional Behavior", "Inappropriate Conduct", "Misleading Profile", "Scam or Fraud", "Other"];
 
     const onSubmit = (data: ReportFormData) => {
-        const ticketData: TicketFormData = {
-            userType: 'visitor',
-            topic: 'Safety/Report',
-            subject: `Report: ${type === 'content' ? 'Content' : 'Consultant'} - ${data.reason}`,
-            description: `URL: ${data.url}\n\nReason: ${data.reason}\n\nDetails: ${data.details}`,
-            email: data.email,
-            priority: 'urgent',
-        };
-        addTicket(ticketData);
-        onTicketSubmitted();
-        toast({ title: "Report submitted", description: "Thank you, our team will review it shortly." });
+        const adminEmail = "support@astrethique.com";
+        const mailtoSubject = `[AST Support] Report: ${type === 'content' ? 'Content' : 'Consultant'} - ${data.reason}`;
+        const mailtoBody = `
+URL: ${data.url}
+Reason: ${data.reason}
+Details: ${data.details}
+Email: ${data.email || 'Anonymous'}
+Priority: Urgent
+        `;
+
+        const mailtoLink = `mailto:${adminEmail}?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
+        window.location.href = mailtoLink;
+
+        toast({ title: "Report submitted", description: "Thank you, we've prepared an email for you to send." });
         onOpenChange(false);
         form.reset();
     };
@@ -111,7 +114,7 @@ const ReportModal = ({ type, isOpen, onOpenChange, onTicketSubmitted }: ReportMo
 }
 
 
-export function ReportingCta({ onTicketSubmitted }: { onTicketSubmitted: () => void }) {
+export function ReportingCta() {
     const [isContentModalOpen, setIsContentModalOpen] = useState(false);
     const [isConsultantModalOpen, setIsConsultantModalOpen] = useState(false);
     
@@ -129,13 +132,11 @@ export function ReportingCta({ onTicketSubmitted }: { onTicketSubmitted: () => v
                 type="content"
                 isOpen={isContentModalOpen}
                 onOpenChange={setIsContentModalOpen}
-                onTicketSubmitted={onTicketSubmitted}
             />
              <ReportModal 
                 type="consultant"
                 isOpen={isConsultantModalOpen}
                 onOpenChange={setIsConsultantModalOpen}
-                onTicketSubmitted={onTicketSubmitted}
             />
         </div>
     );

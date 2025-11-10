@@ -14,37 +14,3 @@ export const ticketSchema = z.object({
 });
 
 export type TicketFormData = z.infer<typeof ticketSchema>;
-
-export type TicketStatus = "New" | "In Review" | "Resolved";
-
-export interface SupportTicket extends TicketFormData {
-  id: string;
-  status: TicketStatus;
-  createdAt: string; // ISO string
-}
-
-function generateTicketId(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const randomDigits = Math.floor(1000 + Math.random() * 9000);
-  return `AST-${year}${month}-${randomDigits}`;
-}
-
-/**
- * Creates a new ticket object and generates an ID. Does not save to localStorage.
- * @param data The form data for the ticket.
- * @returns A new support ticket object.
- */
-export function addTicket(data: TicketFormData): SupportTicket {
-  const newTicket: SupportTicket = {
-    ...data,
-    id: generateTicketId(),
-    status: "New",
-    createdAt: new Date().toISOString(),
-  };
-
-  // This function no longer saves to localStorage.
-  // The ticket object is returned for immediate use, like showing in a success modal.
-  return newTicket;
-}

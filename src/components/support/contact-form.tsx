@@ -11,10 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
-import { addTicket, ticketSchema, type TicketFormData } from "@/lib/support";
+import { ticketSchema, type TicketFormData } from "@/lib/support";
 import { useToast } from "@/hooks/use-toast";
 
 const topicOptions = [
@@ -23,13 +23,11 @@ const topicOptions = [
 
 interface SupportContactFormProps {
   activeTab: "visitor" | "consultant";
-  onTicketSubmitted: () => void;
 }
 
-export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportContactFormProps) {
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [ticketId, setTicketId] = useState("");
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+export function SupportContactForm({ activeTab }: SupportContactFormProps) {
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const { toast } = useToast();
 
   const form = useForm<TicketFormData>({
@@ -50,15 +48,35 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
   }, [activeTab, form]);
 
   const onValidSubmit = (data: TicketFormData) => {
-    const newTicket = addTicket(data);
-    setTicketId(newTicket.id);
-    setIsSuccessModalOpen(true);
-    onTicketSubmitted(); // Notify parent
+    const adminEmail = "support@astrethique.com";
+    const mailtoSubject = `[AST Support] ${data.topic} — ${data.subject}`;
+    const mailtoBody = `
+Role: ${data.userType}
+Topic: ${data.topic}
+Priority: ${data.priority}
+Email: ${data.email}
+Display name: ${data.displayName || '—'}
+
+Description:
+${data.description}
+    `;
+
+    const mailtoLink = `mailto:${adminEmail}?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
+
+    window.location.href = mailtoLink;
+    
+    setSubmittedEmail(data.email);
+    setIsSuccess(true);
     form.reset({
-      ...form.getValues(),
+      ...data, // keep user's details
       subject: '',
-      description: '',
+      description: ''
     });
+
+    // Scroll to the top of the form to show the success message
+    const formElement = document.getElementById('contact-support');
+    formElement?.scrollIntoView({ behavior: 'smooth' });
+
   };
 
   const onInvalidSubmit = () => {
@@ -70,13 +88,6 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
   
   const descriptionValue = form.watch("description");
 
-  useEffect(() => {
-      if (isSuccessModalOpen) {
-          setTimeout(() => {
-              closeButtonRef.current?.focus();
-          }, 100)
-      }
-  }, [isSuccessModalOpen]);
 
   return (
     <>
@@ -99,6 +110,15 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
         </div>
         <Card>
           <CardContent className="p-6">
+            {isSuccess && (
+                 <Alert className="mb-6 border-success text-success [&>svg]:text-success">
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertTitle>Thanks!</AlertTitle>
+                    <AlertDescription>
+                        We’ve prepared an email with your request. Please press ‘Send’ in your mail app. We’ll reply to you at {submittedEmail}.
+                    </AlertDescription>
+                </Alert>
+            )}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)} className="space-y-6">
                 <FormField
@@ -252,29 +272,6 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
-        <DialogContent>
-            <DialogHeader>
-                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-success/10 mx-auto mb-4">
-                    <CheckCircle className="h-6 w-6 text-success" />
-                </div>
-                <DialogTitle className="text-center">Thanks, we've received your request.</DialogTitle>
-                <DialogDescription className="text-center">
-                    Our team will review your request and get back to you as soon as possible.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="text-center bg-muted/50 p-3 rounded-md">
-                <p className="text-sm text-muted-foreground">Your ticket number is:</p>
-                <p className="font-mono font-bold text-lg">{ticketId}</p>
-            </div>
-            <DialogFooter>
-                <DialogClose asChild>
-                    <Button ref={closeButtonRef} className="w-full">Close</Button>
-                </DialogClose>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

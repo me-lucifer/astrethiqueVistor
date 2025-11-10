@@ -280,7 +280,7 @@ export default function SupportPage() {
             </div>
         )}
         
-        <ReportingCta onTicketSubmitted={() => {}} />
+        <ReportingCta />
 
         <div id="contact-support" className="mt-24 pt-16 border-t scroll-mt-24">
              <h2 className="text-center font-headline text-3xl font-bold mb-4">
@@ -289,7 +289,7 @@ export default function SupportPage() {
             <p className="text-center text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
                 If you couldn't find your answer in the FAQs, please submit a ticket and our support team will get back to you.
             </p>
-            <SupportContactForm activeTab={activeTab} onTicketSubmitted={() => {}} />
+            <SupportContactForm activeTab={activeTab} />
         </div>
     </div>
   );
