@@ -1,7 +1,7 @@
 
 "use client";
 
-import { getSession, setSession, removeSession } from "./session";
+import { getLocal, setLocal } from "./local";
 
 export type Comment = {
   id: string;
@@ -129,7 +129,7 @@ const createInitialComments = (items: ContentHubItem[]) => {
 export const seedContentHub = () => {
     if (typeof window === 'undefined') return;
 
-    const existingItems = getSession<ContentHubItem[]>("ch_items");
+    const existingItems = getLocal<ContentHubItem[]>("ch_items");
     if (!existingItems || existingItems.length < 14) { // check if new podcasts are added
         const items = Array.from({ length: 10 }, (_, i) => createItem(i));
 
@@ -229,8 +229,10 @@ export const seedContentHub = () => {
         const allItems = [...items, ...newPodcasts];
 
         const initialComments = createInitialComments(allItems);
-        setSession("ch_items", allItems);
-        setSession("contentHub_comments_v1", initialComments);
-        setSession("ch_seeded_v3", true);
+        setLocal("ch_items", allItems);
+        setLocal("contentHub_comments_v1", initialComments);
+        setLocal("ch_seeded_v3", true);
     }
 };
+
+    

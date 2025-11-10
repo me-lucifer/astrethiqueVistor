@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getSession, setSession } from '@/lib/session';
+import { getLocal, setLocal } from '@/lib/local';
 import { ContentHubItem, Comment } from '@/lib/content-hub-seeder';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock, Eye, Calendar, BookOpen, Mic, MessageSquare } from 'lucide-react';
@@ -94,13 +94,13 @@ export default function ContentDetailPage() {
 
     useEffect(() => {
         if (itemId) {
-            const storedItems = getSession<ContentHubItem[]>('ch_items') || [];
+            const storedItems = getLocal<ContentHubItem[]>('ch_items') || [];
             setAllItems(storedItems);
             const foundItem = storedItems.find(i => i.id === itemId);
 
             if (foundItem && !foundItem.deleted) {
                 setItem(foundItem);
-                const allComments = getSession<{[key: string]: Comment[]}>('contentHub_comments_v1') || {};
+                const allComments = getLocal<{[key: string]: Comment[]}>('contentHub_comments_v1') || {};
                 const itemComments = allComments[itemId] || [];
                 itemComments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
                 setComments(itemComments);
@@ -124,7 +124,7 @@ export default function ContentDetailPage() {
         const updatedItems = allItems.map(i => i.id === updatedItem.id ? updatedItem : i);
         setAllItems(updatedItems);
         setItem(updatedItem); // also update the local state for the detail page
-        setSession('ch_items', updatedItems);
+        setLocal('ch_items', updatedItems);
     }, [allItems]);
 
     const handleToggleLike = useCallback((itemIdToLike: string) => {
@@ -149,22 +149,32 @@ export default function ContentDetailPage() {
         });
     }, [item, allItems, updateItemInSession, toast]);
 
-    const handleAddComment = useCallback((text: string, displayName?: string) => {
+    const handleAddComment = useCallback((text: string) => {
         if (!item) return;
+
+        const user = getLocal<{displayName: string}>('user');
+        if (!user) {
+            toast({
+                variant: "destructive",
+                title: "Authentication Error",
+                description: "You must be logged in to comment.",
+            });
+            return;
+        }
 
         const newComment: Comment = {
             id: `comment-${Date.now()}`,
             contentId: item.id,
-            displayName: displayName || "Guest",
+            displayName: user.displayName,
             createdAt: new Date().toISOString(),
             text,
         };
         
-        const allComments = getSession<{[key: string]: Comment[]}>('contentHub_comments_v1') || {};
+        const allComments = getLocal<{[key: string]: Comment[]}>('contentHub_comments_v1') || {};
         const currentComments = allComments[item.id] || [];
         const updatedComments = [newComment, ...currentComments];
         
-        setSession('contentHub_comments_v1', { ...allComments, [item.id]: updatedComments });
+        setLocal('contentHub_comments_v1', { ...allComments, [item.id]: updatedComments });
         setComments(updatedComments);
 
         const updatedItem = { ...item, commentCount: (item.commentCount || 0) + 1 };
@@ -396,3 +406,5 @@ export default function ContentDetailPage() {
         </div>
     );
 }
+
+    
