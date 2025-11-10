@@ -172,6 +172,33 @@ export const translations = {
                 link1: "Terms of Service",
                 link2: "Refunds and Cancellations Policy"
             }
+        },
+
+        // Cookie Policy Page
+        cookiePolicy: {
+            title: "Cookie Policy",
+            lastUpdated: "Last updated",
+            toc: "On this page",
+            whatAreCookies: {
+                title: "What Are Cookies?",
+                content: "Cookies are small text files stored on your device that help our website function and remember your preferences. They are standard for most modern websites."
+            },
+            howWeUse: {
+                title: "How We Use Cookies",
+                intro: "We use cookies for several purposes:",
+                essential: { title: "Strictly Necessary", text: "These are required for core site functionality, like keeping you logged in." },
+                analytics: { title: "Analytics", text: "These help us understand how visitors use our site so we can improve it. This data is aggregated and anonymous." },
+                preferences: { title: "Preferences", text: "These remember your choices, like your preferred language, to personalize your experience." }
+            },
+            managing: {
+                title: "Managing Your Preferences",
+                content: "You can change your cookie preferences at any time. Adjusting your settings may impact your experience on our site.",
+                buttonText: "Manage Cookie Settings"
+            },
+            footer: {
+                text: "For more information on how we handle your data, please see our",
+                linkText: "Privacy Policy"
+            }
         }
     },
     fr: {
@@ -346,7 +373,33 @@ export const translations = {
                 link1: "Conditions d'Utilisation",
                 link2: "Politique de Remboursements et d'Annulations"
             }
+        },
+
+        // Cookie Policy Page
+        cookiePolicy: {
+            title: "Politique de Cookies",
+            lastUpdated: "Dernière mise à jour",
+            toc: "Sur cette page",
+            whatAreCookies: {
+                title: "Que sont les cookies ?",
+                content: "Les cookies sont de petits fichiers texte stockés sur votre appareil qui aident notre site web à fonctionner et à se souvenir de vos préférences. Ils sont standard pour la plupart des sites web modernes."
+            },
+            howWeUse: {
+                title: "Comment nous utilisons les cookies",
+                intro: "Nous utilisons des cookies à plusieurs fins :",
+                essential: { title: "Strictement nécessaires", text: "Ceux-ci sont requis pour les fonctionnalités de base du site, comme vous maintenir connecté." },
+                analytics: { title: "Analytiques", text: "Ceux-ci nous aident à comprendre comment les visiteurs utilisent notre site afin de l'améliorer. Ces données sont agrégées et anonymes." },
+                preferences: { title: "Préférences", text: "Ceux-ci se souviennent de vos choix, comme votre langue préférée, pour personnaliser votre expérience." }
+            },
+            managing: {
+                title: "Gérer vos préférences",
+                content: "Vous pouvez modifier vos préférences en matière de cookies à tout moment. L'ajustement de vos paramètres peut avoir un impact sur votre expérience sur notre site.",
+                buttonText: "Gérer les paramètres des cookies"
+            },
+            footer: {
+                text: "Pour plus d'informations sur la manière dont nous traitons vos données, veuillez consulter notre",
+                linkText: "Politique de Confidentialité"
+            }
         }
     }
 };
-

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -43,37 +44,41 @@ export function CookieConsentBanner() {
     setIsManageModalOpen(true);
   };
 
-  if (!showBanner) {
+  if (!showBanner && !isManageModalOpen) {
     return (
-        <ManageCookiesModal 
-            isOpen={isManageModalOpen}
-            onOpenChange={setIsManageModalOpen}
-        />
+        // Render a hidden trigger that can be activated from other pages
+        <div id="cookie-consent-manage-trigger" style={{ display: 'none' }} onClick={() => setIsManageModalOpen(true)} />
     );
   }
 
   return (
     <>
-        <div className="fixed bottom-4 left-4 z-50">
-            <Card className="bg-background/80 backdrop-blur-sm border-border/50 shadow-2xl max-w-sm">
-                <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                    <Cookie className="w-5 h-5 text-primary shrink-0" />
-                    <p className="text-sm font-semibold text-foreground">
-                        We use cookies to improve your experience.
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <Button size="sm" onClick={handleAccept} className="flex-1">
-                    Accept
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleOpenManage} className="flex-1">
-                    Manage
-                    </Button>
-                </div>
-                </CardContent>
-            </Card>
-        </div>
+        {showBanner && (
+             <div className="fixed bottom-4 left-4 z-50">
+                <Card className="bg-background/80 backdrop-blur-sm border-border/50 shadow-2xl max-w-sm">
+                    <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                        <Cookie className="w-5 h-5 text-primary shrink-0" />
+                        <p className="text-sm font-semibold text-foreground">
+                            We use cookies to improve your experience.
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button size="sm" onClick={handleAccept} className="flex-1">
+                        Accept
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleOpenManage} className="flex-1">
+                        Manage
+                        </Button>
+                    </div>
+                    </CardContent>
+                </Card>
+            </div>
+        )}
+        <ManageCookiesModal 
+            isOpen={isManageModalOpen}
+            onOpenChange={setIsManageModalOpen}
+        />
     </>
   );
 }
@@ -81,12 +86,14 @@ export function CookieConsentBanner() {
 function ManageCookiesModal({isOpen, onOpenChange}: {isOpen: boolean, onOpenChange: (open: boolean) => void}) {
     const [analytics, setAnalytics] = useState(false);
     const [marketing, setMarketing] = useState(false);
+    const [preferences, setPreferences] = useState(false);
 
     useEffect(() => {
-        const consent = getLocal<{analytics: boolean, marketing: boolean}>("cookieConsent");
+        const consent = getLocal<{analytics: boolean, marketing: boolean, preferences: boolean}>("cookieConsent");
         if (consent) {
             setAnalytics(consent.analytics);
             setMarketing(consent.marketing);
+            setPreferences(consent.preferences);
         }
     }, [isOpen])
 
@@ -95,6 +102,7 @@ function ManageCookiesModal({isOpen, onOpenChange}: {isOpen: boolean, onOpenChan
             necessary: true,
             analytics,
             marketing,
+            preferences,
             setAt: new Date().toISOString()
         };
         setLocal("cookieConsent", consent);
@@ -122,6 +130,12 @@ function ManageCookiesModal({isOpen, onOpenChange}: {isOpen: boolean, onOpenChan
                             Analytics
                         </Label>
                         <Switch id="analytics-cookies" checked={analytics} onCheckedChange={setAnalytics}/>
+                    </div>
+                     <div className="flex items-center justify-between p-3 rounded-lg border">
+                        <Label htmlFor="preferences-cookies">
+                           Preferences
+                        </Label>
+                        <Switch id="preferences-cookies" checked={preferences} onCheckedChange={setPreferences}/>
                     </div>
                      <div className="flex items-center justify-between p-3 rounded-lg border">
                         <Label htmlFor="marketing-cookies">
