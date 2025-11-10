@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, UserPlus } from 'lucide-react';
 import { getSession } from '@/lib/session';
 
 const ITEMS_PER_PAGE = 9;
@@ -254,16 +254,29 @@ export default function ContentHubPage() {
                 </div>
             )}
 
-            <div className="mt-16 border-t pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="mt-16 border-t pt-8 text-center sm:hidden">
                 <p className="text-sm">
                     Looking for live sessions?{' '}
                     <Button variant="link" asChild className="p-0">
                         <Link href="/discover">Discover consultants</Link>
                     </Button>
                 </p>
-                <Button asChild>
-                    <Link href="/register">Create account</Link>
-                </Button>
+            </div>
+
+            <div className="hidden sm:flex sticky bottom-0 mt-16 py-4 justify-center bg-gradient-to-t from-background via-background to-transparent">
+                 <div className="flex justify-between items-center gap-4 p-4 rounded-lg bg-card border shadow-2xl w-full max-w-lg">
+                    <p className="text-sm">
+                        Looking for live 1-on-1 sessions?
+                    </p>
+                    <div className="flex gap-2">
+                        <Button asChild variant="outline">
+                            <Link href="/discover">Discover consultants</Link>
+                        </Button>
+                        <Button asChild>
+                            <Link href="/register"><UserPlus className="mr-2 h-4 w-4"/>Create account</Link>
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );

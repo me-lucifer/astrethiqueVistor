@@ -9,9 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Search, CalendarClock, Wallet, Star, Heart, Tv, HelpCircle, ShieldCheck, Languages, BadgeCheck, User, Shield, Briefcase, FileText } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useLanguage } from "@/contexts/language-context";
+import { translations } from "@/lib/translations";
+
 
 export default function HowItWorksPage() {
   const [activeTab, setActiveTab] = useState("visitor");
+  const { language } = useLanguage();
+  const t = translations[language];
 
   const visitorSteps = [
     {
@@ -321,10 +326,10 @@ export default function HowItWorksPage() {
   );
 
   return (
-    <div className="container py-16 max-w-7xl">
+    <div className="container py-16 max-w-7xl mx-auto">
       <div className="flex flex-col items-center text-center gap-4 mb-12">
         <h1 className="font-headline text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-          How it works
+          {t.navHowItWorks}
         </h1>
         <p className="text-lg text-foreground/80 max-w-3xl">
           Book vetted consultants in minutes. Transparent per-minute billing,

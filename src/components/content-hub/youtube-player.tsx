@@ -4,6 +4,7 @@
 import { ContentHubItem } from "@/lib/content-hub-seeder";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
+import { Mic } from "lucide-react";
 
 export const YouTubePlayer = ({ item }: { item: ContentHubItem }) => {
     // Extract video ID from URL
@@ -42,7 +43,7 @@ export const YouTubePlayer = ({ item }: { item: ContentHubItem }) => {
         return (
             <Card className="bg-destructive/10 border-destructive text-destructive-foreground">
                 <CardHeader>
-                    <CardTitle>Invalid Podcast Link</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Mic /> Invalid Podcast Link</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <CardDescription className="text-destructive-foreground/80">

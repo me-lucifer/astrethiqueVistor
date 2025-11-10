@@ -4,13 +4,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, CalendarClock, User, Wallet, Tv, Languages, Shield, Wrench, Search } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
@@ -26,7 +20,7 @@ const visitorTopics = [
     { id: "faq-account", href: "#faq-account", title: "Account & Login", description: "Manage your profile, password, and login issues.", icon: User },
     { id: "faq-billing", href: "#faq-billing", title: "Billing & Pricing", description: "Understand per-minute rates, wallet, and payments.", icon: Wallet },
     { id: "faq-conferences", href: "#faq-conferences", title: "Conferences & Replays", description: "Questions about free events, RSVPs, and recordings.", icon: Tv },
-    { id: "faq-content", href: "#faq-content", title: "Content Hub", description: "Find articles, podcasts, and manage your bookmarks.", icon: HelpCircle },
+    { id: "faq-content", href: "#faq-content", title: "Content Hub", description: "Find articles, podcasts, and manage your bookmarks.", icon: Wrench },
     { id: "faq-language", href: "#faq-language", title: "Language & Timezones", description: "Settings for language, region, and notifications.", icon: Languages },
     { id: "faq-safety", href: "#faq-safety", title: "Trust, Safety & Reporting", description: "Report issues, understand content moderation.", icon: Shield },
     { id: "faq-technical", href: "#faq-technical", title: "Technical Issues", description: "Troubleshoot chat, audio, or video problems.", icon: Wrench },
@@ -37,7 +31,7 @@ const consultantTopics = [
     { id: "faq-account-consultant", href: "#faq-account-consultant", title: "Profile & Account", description: "Update your bio, specialties, and account details.", icon: User },
     { id: "faq-billing-consultant", href: "#faq-billing-consultant", title: "Payouts & Invoices", description: "Understand earnings, invoice acceptance, and payouts.", icon: Wallet },
     { id: "faq-conferences-consultant", href: "#faq-conferences-consultant", title: "Hosting Conferences", description: "Propose and manage live events for the community.", icon: Tv },
-    { id: "faq-content-consultant", href: "#faq-content-consultant", title: "Publishing Content", description: "Submit articles/podcasts and understand the approval flow.", icon: HelpCircle },
+    { id: "faq-content-consultant", href: "#faq-content-consultant", title: "Publishing Content", description: "Submit articles/podcasts and understand the approval flow.", icon: Wrench },
     { id: "faq-language-consultant", href: "#faq-language-consultant", title: "Language & Visibility", description: "Understand how language gating affects your profile visibility.", icon: Languages },
     { id: "faq-safety-consultant", href: "#faq-safety-consultant", title: "Trust, Safety & Vetting", description: "Our policies on KYC, content moderation, and disputes.", icon: Shield },
     { id: "faq-technical-consultant", href: "#faq-technical-consultant", title: "Technical Best Practices", description: "Tips for ensuring smooth chat, audio, and video sessions.", icon: Wrench },
