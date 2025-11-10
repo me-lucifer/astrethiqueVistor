@@ -17,6 +17,7 @@ export interface Consultant {
       slots: string[]; // array of ISO strings
   };
   specialties: ('Love' | 'Work' | 'Health' | 'Money' | 'Life Path')[];
+  types: string[]; // Reading types like Astrology, Tarot, etc.
   badges: ('Top Rated' | 'Rising Star' | 'New' | 'Promo 24h')[];
   contentCounts: {
     articles: number;

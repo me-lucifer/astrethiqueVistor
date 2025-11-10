@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { setSession, getSession } from "./session";
@@ -11,10 +12,10 @@ const names = [
     "Ronan Rivers", "Fiona Glen", "Julian Croft", "Maya Dane"
 ];
 
+const readingTypes = ["Astrology","Tarot Reading","Numerology","Clairvoyance","Mediumship"];
+
 const createConsultant = (index: number): Consultant => {
     const now = new Date();
-    const isOnline = index % 4 === 0;
-    const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
     const consultantName = names[(index - 1) % names.length];
     
     const simpleAvailability = ['online', 'busy', 'offline', 'online'][index % 4] as 'online' | 'busy' | 'offline';
@@ -27,8 +28,10 @@ const createConsultant = (index: number): Consultant => {
         reviews.push({ author: 'Emily R.', rating: 5, dateISO: subDays(now, 2).toISOString(), text: 'Truly gifted and compassionate. Highly recommend!'});
     }
 
+    const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
+
     return {
-        id: `c${index}`,
+        id: consultantName.toLowerCase().replace(/\s+/g, '-'),
         slug: consultantName.toLowerCase().replace(/\s+/g, '-'),
         name: consultantName,
         rating: Math.round((4.2 + Math.random() * 0.8) * 10) / 10,
@@ -42,7 +45,8 @@ const createConsultant = (index: number): Consultant => {
             online: simpleAvailability === 'online',
             slots: [],
         },
-        specialties: specialties.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1),
+        specialties: specialties.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
+        types: readingTypes.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
         badges: ['New', 'Top Rated', 'Rising Star', 'Promo 24h'].sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2)),
         contentCounts: {
             articles: Math.floor(Math.random() * 10),
@@ -68,7 +72,7 @@ export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
   const seededVersion = getSession('discover.seeded.version');
-  const currentVersion = 'v2'; // Increment this version to force re-seeding
+  const currentVersion = 'v3'; // Increment this version to force re-seeding
 
   if (seededVersion !== currentVersion) {
     const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
@@ -79,6 +83,7 @@ export const seedConsultants = () => {
     setSession('notify.me.v1', []);
     setSession('discover.filters.v1', {});
     setSession('discover.sort.v1', 'recommended');
+    setSession('discover.types.v1', readingTypes);
 
     setSession('discover.seeded.version', currentVersion);
   }

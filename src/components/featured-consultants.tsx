@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useTransition } from "react";
@@ -14,7 +15,7 @@ import { Checkbox } from "./ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Info, BookOpen, Mic, Video, Star, BadgeCheck, Languages, Clock, ChevronDown } from "lucide-react";
+import { Heart, Briefcase, HeartPulse, CircleDollarSign, Filter, Info, BookOpen, Mic, Video, Star, BadgeCheck, Languages, Clock, ChevronDown, Sparkles } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "./ui/sheet";
@@ -65,6 +66,7 @@ type SortKey = keyof typeof sortOptions;
 interface Filters {
     myFavorites: boolean;
     specialties: string[];
+    types: string[];
     price: number[];
     minPrice: string;
     maxPrice: string;
@@ -84,6 +86,7 @@ interface Filters {
 const defaultFilters: Filters = {
     myFavorites: false,
     specialties: [],
+    types: [],
     price: [0, 10],
     minPrice: "0",
     maxPrice: "10",
@@ -101,6 +104,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     const isDesktop = useMediaQuery("(min-width: 1024px)");
 
     const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
+    const [readingTypes, setReadingTypes] = useState<string[]>([]);
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [query, setQuery] = useState(initialQuery || "");
@@ -139,6 +143,10 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         const savedQuery = getSession<string>('discover.search.v1');
         if (savedQuery) {
             setQuery(savedQuery);
+        }
+        const savedTypes = getSession<string[]>('discover.types.v1');
+        if (savedTypes) {
+            setReadingTypes(savedTypes);
         }
     }, []);
 
@@ -188,6 +196,8 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             if (filters.myFavorites && !favorites.includes(c.id)) return false;
             
             if (filters.specialties.length > 0 && !filters.specialties.some(s => c.specialties.includes(s as any))) return false;
+
+            if (filters.types.length > 0 && !filters.types.some(t => c.types.includes(t))) return false;
             
             if (c.pricePerMin < filters.price[0] || c.pricePerMin > filters.price[1]) return false;
 
@@ -263,7 +273,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         setSession('discover.sort.v1', 'recommended');
     };
 
-    const handleMultiSelectToggle = (group: 'specialties' | 'badges' | 'availability' | 'content', value: string) => {
+    const handleMultiSelectToggle = (group: 'specialties' | 'types' | 'badges' | 'availability' | 'content', value: string) => {
         const current = filters[group] as string[];
         const newValues = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
         updateFilters({ [group]: newValues });
@@ -286,7 +296,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     const FilterControls = () => (
         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 -mr-4 lg:mr-0">
             <div className="space-y-6 p-4 lg:p-0">
-                <Accordion type="multiple" defaultValue={['general', 'specialty', 'price', 'rating', 'availability']} className="w-full">
+                <Accordion type="multiple" defaultValue={['general', 'specialty', 'types', 'price', 'rating', 'availability']} className="w-full">
                     <AccordionItem value="general">
                         <AccordionTrigger className="font-semibold text-sm">General</AccordionTrigger>
                         <AccordionContent>
@@ -305,6 +315,17 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                                 <div key={id} className="flex items-center space-x-2">
                                     <Checkbox id={`spec-${id}`} checked={filters.specialties.includes(id)} onCheckedChange={() => handleMultiSelectToggle('specialties', id)} />
                                     <Label htmlFor={`spec-${id}`} className="font-normal text-foreground/80">{name}</Label>
+                                </div>
+                            ))}
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="types">
+                        <AccordionTrigger className="font-semibold text-sm">Reading Type</AccordionTrigger>
+                        <AccordionContent className="space-y-2">
+                             {readingTypes.map((type) => (
+                                <div key={type} className="flex items-center space-x-2">
+                                    <Checkbox id={`type-${type}`} checked={filters.types.includes(type)} onCheckedChange={() => handleMultiSelectToggle('types', type)} />
+                                    <Label htmlFor={`type-${type}`} className="font-normal text-foreground/80">{type}</Label>
                                 </div>
                             ))}
                         </AccordionContent>
