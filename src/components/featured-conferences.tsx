@@ -46,10 +46,6 @@ interface Rsvp {
     remind10m: boolean;
 }
 
-interface WaitlistEntry {
-    eventId: string;
-}
-
 interface Filters {
     categories: string[];
     types: string[];
@@ -538,9 +534,14 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                 <div className="p-4 space-y-3">
                                                     <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary" aria-label={conference.title}>{conference.title}</h3>
                                                     
-                                                    <div className="text-sm text-muted-foreground">
+                                                    <div className="text-sm text-muted-foreground space-y-2">
                                                         <div className="flex items-center gap-2 flex-wrap"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            {(conference.languages || []).map(lang => <Badge key={lang} variant="outline" className="font-normal">{lang}</Badge>)}
+                                                            <Badge variant="outline">{conference.type}</Badge>
+                                                        </div>
                                                     </div>
+
                                                     <div className="flex items-center gap-3 pt-2">
                                                         <Image src={`https://i.pravatar.cc/40?u=${encodeURIComponent(conference.hostAlias)}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
                                                         <div>
@@ -569,18 +570,14 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    
-                                                    <div className="flex flex-wrap gap-2 pt-1">
-                                                        {(conference.languages || []).map(lang => <Badge key={lang} variant="outline" className="font-normal">{lang}</Badge>)}
-                                                        {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
-                                                        <Badge variant="outline">{conference.type}</Badge>
-                                                    </div>
                                                 </div>
                                             </Link>
                                         </CardContent>
-                                        <CardFooter className="p-4 pt-0 mt-auto flex justify-end items-center gap-2">
+                                        <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center gap-2">
+                                            <div className="flex flex-wrap gap-1">
+                                                {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                                            </div>
                                             <div className="flex items-center gap-2">
-                                                
                                                 <Popover>
                                                     <PopoverTrigger asChild>
                                                         <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!userIsRsvpd} aria-label={`Set reminders for ${conference.title}`}>
@@ -659,6 +656,3 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         </>
     );
 }
-
-    
-
