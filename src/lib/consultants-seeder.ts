@@ -13,6 +13,7 @@ const names = [
 ];
 
 const readingTypes = ["Astrology","Tarot Reading","Numerology","Clairvoyance","Mediumship"];
+const zodiacSigns = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
 
 const createConsultant = (index: number): Consultant => {
     const now = new Date();
@@ -47,6 +48,7 @@ const createConsultant = (index: number): Consultant => {
         },
         specialties: specialties.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
         types: readingTypes.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
+        specializesInSigns: zodiacSigns.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 4) + 1),
         badges: ['New', 'Top Rated', 'Rising Star', 'Promo 24h'].sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2)),
         contentCounts: {
             articles: Math.floor(Math.random() * 10),
@@ -72,7 +74,7 @@ export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
   const seededVersion = getSession('discover.seeded.version');
-  const currentVersion = 'v3'; // Increment this version to force re-seeding
+  const currentVersion = 'v4'; // Increment this version to force re-seeding
 
   if (seededVersion !== currentVersion) {
     const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));

@@ -31,6 +31,8 @@ const specialties = [
     { id: "Life Path", name: "Life Path", icon: Star },
 ];
 
+const zodiacSigns = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+
 const badges = [
     { id: "Top Rated", name: "Top Rated" },
     { id: "Rising Star", name: "Rising Star" },
@@ -70,6 +72,7 @@ interface Filters {
     price: number[];
     minPrice: string;
     maxPrice: string;
+    zodiac: string;
     rating: string;
     badges: string[];
     languages: {
@@ -90,6 +93,7 @@ const defaultFilters: Filters = {
     price: [0, 10],
     minPrice: "0",
     maxPrice: "10",
+    zodiac: "",
     rating: "0",
     badges: [],
     languages: {},
@@ -201,6 +205,8 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             
             if (c.pricePerMin < filters.price[0] || c.pricePerMin > filters.price[1]) return false;
 
+            if (filters.zodiac && !c.specializesInSigns.includes(filters.zodiac)) return false;
+
             if (parseFloat(filters.rating) > 0 && c.rating < parseFloat(filters.rating)) return false;
 
             if (filters.badges.length > 0 && !filters.badges.every(b => c.badges && c.badges.includes(b as any))) return false;
@@ -296,7 +302,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     const FilterControls = () => (
         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 -mr-4 lg:mr-0">
             <div className="space-y-6 p-4 lg:p-0">
-                <Accordion type="multiple" defaultValue={['general', 'specialty', 'types', 'price', 'rating', 'availability']} className="w-full">
+                <Accordion type="multiple" defaultValue={['general', 'specialty', 'types', 'price', 'zodiac', 'rating', 'availability']} className="w-full">
                     <AccordionItem value="general">
                         <AccordionTrigger className="font-semibold text-sm">General</AccordionTrigger>
                         <AccordionContent>
@@ -341,6 +347,22 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                                 <Input type="number" aria-label="Minimum price" placeholder="Min" value={filters.minPrice} onChange={(e) => handlePriceInputChange('min', e.target.value)} />
                                 <Input type="number" aria-label="Maximum price" placeholder="Max" value={filters.maxPrice} onChange={(e) => handlePriceInputChange('max', e.target.value)} />
                             </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="zodiac">
+                        <AccordionTrigger className="font-semibold text-sm">Zodiac Sign</AccordionTrigger>
+                        <AccordionContent>
+                            <Select value={filters.zodiac} onValueChange={(v) => updateFilters({ zodiac: v === 'any' ? '' : v })}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a sign..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="any">Any</SelectItem>
+                                    {zodiacSigns.map(sign => (
+                                        <SelectItem key={sign} value={sign}>{sign}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="rating">
