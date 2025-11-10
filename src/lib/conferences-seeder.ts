@@ -46,7 +46,7 @@ const excerpts = [
     "An overview of how astrology can provide powerful insights into health and constitutional predispositions."
 ];
 
-const hosts = ["Aeliana", "Kael", "Seraphina", "Orion", "Elara", "Lyra", "Caspian"];
+const hosts = ["Aeliana", "Kael", "Seraphina", "Orion", "Elara", "Lyra", "Caspian", "Marcus", "Eva"];
 const tags: Conference['tags'] = ["Love", "Work", "Health", "Money", "Life Path"];
 
 
@@ -55,19 +55,22 @@ const createConference = (id: number): Conference => {
     let date: Date;
 
     switch(id) {
-        case 1: // Today
+        case 1: // Starting in 5 minutes
+            date = addMinutes(now, 5);
+            break;
+        case 2: // Today
             date = addHours(now, 3);
             break;
-        case 2: // This week
+        case 3: // This week
             date = addDays(now, 3);
             break;
-        case 3: // This week
+        case 4: // This week
             date = addDays(now, 5);
             break;
-        case 4: // This month
+        case 5: // This month
             date = addDays(now, 12);
             break;
-        case 5: // This month
+        case 6: // This month
             date = addDays(now, 20);
             break;
         default:
@@ -76,18 +79,18 @@ const createConference = (id: number): Conference => {
 
     return {
         id: `${id}`,
-        title: conferenceTitles[id % conferenceTitles.length],
+        title: conferenceTitles[(id-1) % conferenceTitles.length],
         dateISO: date.toISOString(),
-        hostAlias: hosts[id % hosts.length],
+        hostAlias: hosts[(id-1) % hosts.length],
         tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
         language: (id % 3 === 0) ? "FR" : "EN",
-        isFree: id === 2, // Make one item free
-        excerpt: excerpts[id % excerpts.length],
+        isFree: id === 3, // Make one item free
+        excerpt: excerpts[(id-1) % excerpts.length],
         capacity: Math.floor(Math.random() * 50) + 10,
     }
 };
 
 export const seedConferences = () => {
-  const conferences: Conference[] = Array.from({ length: 5 }, (_, i) => createConference(i + 1));
+  const conferences: Conference[] = Array.from({ length: 8 }, (_, i) => createConference(i + 1));
   setLocal("conferences", conferences);
 };

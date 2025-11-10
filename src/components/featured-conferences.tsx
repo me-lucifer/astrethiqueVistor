@@ -108,7 +108,6 @@ export function FeaturedConferences() {
         const current = new URLSearchParams(Array.from(searchParams.entries()));
         const allFilters = { ...filters, ...newFilters };
 
-        current.set("tab", "conferences");
         if(allFilters.topics.length > 0) current.set('topic', allFilters.topics.join(',')); else current.delete('topic');
         if(allFilters.languages.length > 0) current.set('lang', allFilters.languages.join(',')); else current.delete('lang');
         if(allFilters.when !== defaultFilters.when) current.set('when', allFilters.when.toLowerCase().replace(' ', '-')); else current.delete('when');
@@ -132,7 +131,7 @@ export function FeaturedConferences() {
     
     const handleResetFilters = () => {
         updateFilters(defaultFilters);
-        router.push(`${pathname}?tab=conferences`, { scroll: false });
+        router.push(`${pathname}`, { scroll: false });
     }
 
     const filteredConferences = useMemo(() => {
