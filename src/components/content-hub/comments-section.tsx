@@ -49,6 +49,11 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
 
   useEffect(() => {
     checkUser();
+    // Add a listener to update on storage events from other tabs
+    window.addEventListener('storage', checkUser);
+    return () => {
+      window.removeEventListener('storage', checkUser);
+    }
   }, []);
   
   const handleLoginSuccess = () => {
@@ -129,32 +134,40 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
         </div>
 
         <div className="space-y-8">
-          {visibleComments.map((comment) => (
-            <div key={comment.id} className="flex items-start gap-4">
-              <Avatar>
-                <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
-                <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-sm">{comment.author.name || "Guest"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                  </p>
+          {comments.length === 0 ? (
+             <div className="text-center py-10">
+                <p className="text-muted-foreground">Be the first to share your thoughts.</p>
+             </div>
+          ) : (
+            <>
+              {visibleComments.map((comment) => (
+                <div key={comment.id} className="flex items-start gap-4">
+                  <Avatar>
+                    <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
+                    <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-sm">{comment.author.name || "Guest"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                      </p>
+                    </div>
+                    <p className="text-sm text-foreground/90 mt-1 whitespace-pre-wrap">{comment.text}</p>
+                    <div className="mt-1">
+                        <Button variant="link" size="sm" className="text-xs text-muted-foreground p-0 h-auto">Report</Button>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm text-foreground/90 mt-1 whitespace-pre-wrap">{comment.text}</p>
-                <div className="mt-1">
-                    <Button variant="link" size="sm" className="text-xs text-muted-foreground p-0 h-auto">Report</Button>
-                </div>
-              </div>
-            </div>
-          ))}
-          {visibleCount < comments.length && (
-              <div className="text-center">
-                  <Button variant="outline" onClick={() => setVisibleCount(visibleCount + ITEMS_PER_PAGE)}>
-                      Load More
-                  </Button>
-              </div>
+              ))}
+              {visibleCount < comments.length && (
+                  <div className="text-center">
+                      <Button variant="outline" onClick={() => setVisibleCount(visibleCount + ITEMS_PER_PAGE)}>
+                          Load More
+                      </Button>
+                  </div>
+              )}
+            </>
           )}
         </div>
       </section>
