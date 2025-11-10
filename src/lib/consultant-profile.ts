@@ -53,4 +53,6 @@ export interface ConsultantProfile {
   };
   reviews: Review[];
   favorite: boolean;
+  yearsExperience: number;
+  country: string;
 }

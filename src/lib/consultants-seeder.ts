@@ -14,6 +14,7 @@ const names = [
 
 const readingTypes = ["Astrology","Tarot Reading","Numerology","Clairvoyance","Mediumship"];
 const zodiacSigns = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+const countries = ["France", "USA", "Canada", "UK", "Australia", "Germany", "Spain"];
 
 const cloneConsultant = (base: Consultant, id: string, name: string, price: number, lang: 'EN' | 'FR' | 'BOTH'): Consultant => {
     const slug = name.toLowerCase().replace(/\s+/g, '-');
@@ -80,7 +81,7 @@ const createConsultant = (index: number): Consultant => {
         kycVerified: Math.random() > 0.2,
         adminApproved: Math.random() > 0.1,
         lastReviewDate: subDays(now, Math.floor(Math.random() * 90)).toISOString(),
-        bio: `This is a short bio for ${consultantName}. They are an expert in ${specialties.join(', ')} and have been practicing for over ${Math.floor(Math.random()*10)+2} years.`,
+        bio: `This is a short bio for ${consultantName}. They are an expert in ${specialties.join(', ')}.`,
         reviews: reviews,
         content: {
             articles: [{ id: 'a1', title: 'Article 1', tag: 'Love', level: 'Beginner', likes: 10 }],
@@ -88,6 +89,8 @@ const createConsultant = (index: number): Consultant => {
             conferences: [{ id: 'k1', title: 'Conference 1', scheduleISO: addDays(now, 20).toISOString() }],
         },
         joinedAt: subDays(now, Math.floor(Math.random() * 365) + 30).toISOString(),
+        yearsExperience: Math.floor(Math.random() * 15) + 1,
+        country: countries[Math.floor(Math.random() * countries.length)],
     };
 };
 
@@ -95,7 +98,7 @@ export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
   const seededVersion = getSession('discover.seeded.version');
-  const currentVersion = 'v6'; // Increment this version to force re-seeding
+  const currentVersion = 'v7'; // Increment this version to force re-seeding
 
   if (seededVersion !== currentVersion) {
     const baseConsultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));

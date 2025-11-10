@@ -42,4 +42,6 @@ export interface Consultant {
     conferences: { id: string; title: string; scheduleISO: string }[];
   };
   joinedAt: string; // ISO date string
+  yearsExperience: number;
+  country: string;
 }

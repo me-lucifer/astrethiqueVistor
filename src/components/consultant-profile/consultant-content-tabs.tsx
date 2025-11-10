@@ -11,9 +11,22 @@ import { Separator } from '@/components/ui/separator';
 import { StarRating } from '@/components/star-rating';
 import { ContentCard } from '../content-card';
 import Link from 'next/link';
+import { Briefcase, MapPin } from 'lucide-react';
 
-const BioContent = ({ bio }: { bio: string }) => (
-    <div className="prose prose-invert max-w-none text-foreground/80" dangerouslySetInnerHTML={{ __html: bio }} />
+const BioContent = ({ bio, years, country }: { bio: string, years: number, country: string }) => (
+    <div className="prose prose-invert max-w-none text-foreground/80 space-y-4">
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-foreground/90">
+            <div className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-primary" />
+                <span>{years} years of experience</span>
+            </div>
+            <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span>From {country}</span>
+            </div>
+        </div>
+        <div dangerouslySetInnerHTML={{ __html: bio }} />
+    </div>
 );
 
 const getInitials = (name: string) => {
@@ -118,7 +131,7 @@ export function ConsultantContentTabs({ consultant }: { consultant: ConsultantPr
         <TabsTrigger value="content">Content</TabsTrigger>
       </TabsList>
       <TabsContent value="about" className="py-6">
-        <BioContent bio={bioHtml} />
+        <BioContent bio={bioHtml} years={consultant.yearsExperience} country={consultant.country} />
       </TabsContent>
       <TabsContent value="reviews" className="py-6">
         <ReviewsContent reviews={consultant.reviews} />

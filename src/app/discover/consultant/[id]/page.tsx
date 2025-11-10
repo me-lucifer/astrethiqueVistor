@@ -87,6 +87,8 @@ export default function Page() {
                         text: r.text
                     })),
                     favorite: isFavorite,
+                    yearsExperience: foundConsultant.yearsExperience,
+                    country: foundConsultant.country,
                 };
                 setProfile(consultantProfile);
             }
