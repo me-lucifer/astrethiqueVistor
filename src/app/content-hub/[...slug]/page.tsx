@@ -293,7 +293,7 @@ export default function ContentDetailPage() {
                                         <Heart className={`h-5 w-5 ${item.liked ? 'fill-current' : ''}`} />
                                         {item.likes}
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={() => handleToggleBookmark(item.id)}>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={() => handleToggleBookmark(item.id)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark this item'}>
                                          <Bookmark className={`h-5 w-5 ${item.bookmarked ? 'fill-current text-primary' : ''}`} />
                                     </Button>
                                     <DropdownMenu>
