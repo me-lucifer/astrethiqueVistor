@@ -244,18 +244,23 @@ export default function ContentHubPage() {
                         {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-96 w-full" />)}
                     </div>
                 ) : visibleItems.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {visibleItems.map(item => (
-                            <ContentHubCard
-                                key={item.id}
-                                item={item}
-                                onAuthorClick={handleAuthorFilter}
-                                onTopicClick={handleTopicClick}
-                                onToggleLike={handleToggleLike}
-                                onToggleBookmark={handleToggleBookmark}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="mb-4 text-sm text-muted-foreground">
+                            Showing {visibleItems.length} of {filteredItems.length}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {visibleItems.map(item => (
+                                <ContentHubCard
+                                    key={item.id}
+                                    item={item}
+                                    onAuthorClick={handleAuthorFilter}
+                                    onTopicClick={handleTopicClick}
+                                    onToggleLike={handleToggleLike}
+                                    onToggleBookmark={handleToggleBookmark}
+                                />
+                            ))}
+                        </div>
+                    </>
                 ) : (
                     <EmptyState onClear={handleReset} />
                 )}
