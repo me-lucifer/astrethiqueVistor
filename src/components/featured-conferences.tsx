@@ -27,7 +27,7 @@ import { Slider } from "./ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar"
 import { DateRange } from "react-day-picker";
-import Image from "next/image";
+import Image from 'next/image';
 import { StarRating } from "./star-rating";
 import Link from "next/link";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -91,7 +91,6 @@ const ratingFilters = [
 ];
 const sortOptions = {
     soonest: "Soonest",
-    price_asc: "Price (low to high)",
     host_rating_desc: "Host Rating",
 };
 
@@ -257,8 +256,6 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         // Sorting
         result.sort((a, b) => {
             switch(sort) {
-                case 'price_asc':
-                    return (a.price ?? 0) - (b.price ?? 0);
                 case 'host_rating_desc':
                     return b.hostRating - a.hostRating;
                 case 'soonest':
@@ -366,7 +363,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const FilterControls = () => (
          <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 -mr-4 lg:mr-0">
             <div className="space-y-6 p-4 lg:p-0">
-                <Accordion type="multiple" defaultValue={['category', 'type', 'languages', 'date', 'price']} className="w-full">
+                <Accordion type="multiple" defaultValue={['category', 'type', 'languages', 'date']} className="w-full">
                     <AccordionItem value="category">
                         <AccordionTrigger className="font-semibold text-sm">Category</AccordionTrigger>
                         <AccordionContent className="space-y-2 pt-2">
@@ -427,21 +424,6 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                     />
                                 </div>
                             )}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="price">
-                        <AccordionTrigger className="font-semibold text-sm">Price</AccordionTrigger>
-                        <AccordionContent className="pt-2 space-y-4">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="free-only" checked={filters.freeOnly} onCheckedChange={(c) => updateFilters({ freeOnly: c as boolean })} />
-                                <Label htmlFor="free-only">Free only</Label>
-                            </div>
-                            <div className={cn(filters.freeOnly && "opacity-50 pointer-events-none")}>
-                                <div className="flex justify-between items-center mb-2">
-                                    <Label htmlFor="price-slider" className="text-primary font-bold">€{filters.price[0]} &mdash; €{filters.price[1]}</Label>
-                                </div>
-                                <Slider id="price-slider" aria-label="Price range" min={priceBounds[0]} max={priceBounds[1]} step={5} value={filters.price} onValueChange={(v) => updateFilters({ price: v as [number,number] })} />
-                            </div>
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="host-rating">
@@ -613,7 +595,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                         <Image src={`https://i.pravatar.cc/40?u=${encodeURIComponent(conference.hostAlias)}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
                                                         <div>
                                                             <span
-                                                                role="link"
+                                                                role="button"
                                                                 tabIndex={0}
                                                                 className="font-semibold hover:underline cursor-pointer relative z-10"
                                                                 onClick={(e) => {
@@ -740,3 +722,5 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         </>
     );
 }
+
+    

@@ -25,6 +25,7 @@ export interface Conference {
   capacity: number;
   seatsLeft?: number; // Optional
   recordingAvailable: boolean;
+  languages: string[];
 }
 
 const conferenceTitles = [
@@ -79,8 +80,7 @@ const types: Conference['type'][] = ["Workshop", "Group Reading", "Webinar", "Q&
 const createConference = (id: number): Conference => {
     const now = new Date();
     let date: Date;
-    const priceOptions = [0, 5, 10, 15, 20, 25];
-    const price = priceOptions[id % priceOptions.length];
+    const price = 0;
     const title = conferenceTitles[(id-1) % conferenceTitles.length];
 
     switch(id) {
@@ -109,6 +109,9 @@ const createConference = (id: number): Conference => {
     const capacity = Math.floor(Math.random() * 130) + 20; // 20-150
     const seatsLeft = id % 4 === 0 ? 0 : Math.floor(Math.random() * capacity);
     const host = hosts[(id-1) % hosts.length];
+    const languages = (id % 3 === 0) ? ["FR"] : ["EN"];
+    if (id % 5 === 0) languages.push(id % 3 === 0 ? 'EN' : 'FR');
+
 
     return {
         id: `${id}`,
@@ -120,6 +123,7 @@ const createConference = (id: number): Conference => {
         hostId: host.id,
         hostRating: Math.round((4.0 + Math.random()) * 10) / 10,
         language: (id % 3 === 0) ? "FR" : "EN",
+        languages: languages,
         tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
         type: types[id % types.length],
         price,
@@ -148,3 +152,5 @@ export const seedConferences = () => {
   setLocal("conferences", conferences);
   setLocal("waitlist", []);
 };
+
+    

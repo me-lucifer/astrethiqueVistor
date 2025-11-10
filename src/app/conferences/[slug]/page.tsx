@@ -265,7 +265,7 @@ export default function ConferenceDetailPage() {
                 <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
                      <Card>
                         <CardContent className="p-6 space-y-4">
-                           <div className="text-3xl font-bold text-primary">{conference.price === 0 ? 'Free' : `€${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(conference.price).replace('€','')}`}</div>
+                           <div className="text-3xl font-bold text-primary">Free</div>
                            <div className="space-y-2">
                                 <Button size="lg" className="w-full" onClick={handleRsvpClick} variant={isRsvpd ? "outline" : "default"} disabled={!hasSeats && !isRsvpd} aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: `RSVP for ${conference.title}`}>
                                     {isRsvpd ? <CheckCircle className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
@@ -371,3 +371,5 @@ export default function ConferenceDetailPage() {
         </div>
     );
 }
+
+    

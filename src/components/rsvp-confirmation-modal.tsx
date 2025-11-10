@@ -50,7 +50,7 @@ export function RsvpConfirmationModal({
             <p className="font-bold text-base">{conference.title}</p>
             <p className="text-muted-foreground">{new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(date)}</p>
             <p className="text-muted-foreground">{timeString}</p>
-            <p className="font-semibold pt-2">Price: {conference.price === 0 ? 'Free' : `€${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(conference.price).replace('€','')}`}</p>
+            <p className="font-semibold pt-2">Price: Free</p>
         </div>
 
         <p className="text-xs text-muted-foreground text-center">
@@ -69,3 +69,5 @@ export function RsvpConfirmationModal({
     </Dialog>
   );
 }
+
+    
