@@ -1,4 +1,3 @@
-
 export const translations = {
     en: {
         // Header
@@ -198,6 +197,33 @@ export const translations = {
             footer: {
                 text: "For more information on how we handle your data, please see our",
                 linkText: "Privacy Policy"
+            }
+        },
+
+        // Refunds & Cancellations Page
+        refundsAndCancellations: {
+            title: "Refunds & Cancellations",
+            lastUpdated: "Last updated",
+            toc: "On this page",
+            consultantNoShow: {
+                title: "Consultant No-Show",
+                content: "If a consultant fails to attend a scheduled session, you are entitled to a full refund to your wallet or the option to reschedule. Please contact support to initiate this process."
+            },
+            userCancellations: {
+                title: "User Cancellations",
+                content: "You may cancel a scheduled session for a full refund up to 24 hours before the start time. Cancellations made within 24 hours of the session are non-refundable."
+            },
+            technicalFailures: {
+                title: "Technical Failures",
+                content: "If a session is significantly disrupted due to technical issues on our platform or the consultant's end, we will review the case and may issue a partial or full refund on a case-by-case basis."
+            },
+            conferences: {
+                title: "Conferences",
+                content: "Conferences are hosted by independent consultants on external platforms (e.g., Zoom). As such, any refunds or cancellations are governed by the host's individual policy. ASTRETHIQUE is not responsible for these transactions."
+            },
+            howToRequest: {
+                title: "How to Request a Refund",
+                content: "All refund requests must be sent via email to our support team. Please include the session date, time, and the consultant's name in your request."
             }
         }
     },
@@ -399,6 +425,33 @@ export const translations = {
             footer: {
                 text: "Pour plus d'informations sur la manière dont nous traitons vos données, veuillez consulter notre",
                 linkText: "Politique de Confidentialité"
+            }
+        },
+        
+        // Refunds & Cancellations Page
+        refundsAndCancellations: {
+            title: "Remboursements & Annulations",
+            lastUpdated: "Dernière mise à jour",
+            toc: "Sur cette page",
+            consultantNoShow: {
+                title: "Absence du Consultant",
+                content: "Si un consultant ne se présente pas à une session programmée, vous avez droit à un remboursement complet sur votre portefeuille ou à la possibilité de reprogrammer. Veuillez contacter le support pour lancer ce processus."
+            },
+            userCancellations: {
+                title: "Annulations par l'Utilisateur",
+                content: "Vous pouvez annuler une session programmée pour un remboursement complet jusqu'à 24 heures avant l'heure de début. Les annulations effectuées dans les 24 heures précédant la session ne sont pas remboursables."
+            },
+            technicalFailures: {
+                title: "Pannes Techniques",
+                content: "Si une session est considérablement perturbée en raison de problèmes techniques sur notre plateforme ou du côté du consultant, nous examinerons le cas et pourrons émettre un remboursement partiel ou total au cas par cas."
+            },
+            conferences: {
+                title: "Conférences",
+                content: "Les conférences sont organisées par des consultants indépendants sur des plateformes externes (par ex. Zoom). À ce titre, tout remboursement ou annulation est régi par la politique individuelle de l'hôte. ASTRETHIQUE n'est pas responsable de ces transactions."
+            },
+            howToRequest: {
+                title: "Comment Demander un Remboursement",
+                content: "Toutes les demandes de remboursement doivent être envoyées par email à notre équipe de support. Veuillez inclure la date, l'heure de la session et le nom du consultant dans votre demande."
             }
         }
     }

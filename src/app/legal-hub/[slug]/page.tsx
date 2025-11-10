@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,7 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 import { translations } from "@/lib/translations";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, FileText, Shield, User, Database, Globe, Scale, CircleUser, Info, Calendar, Gavel, AlertTriangle, Wallet, Copyright, UserX, Power, Mail, Euro, Cookie } from "lucide-react";
+import { ArrowLeft, Printer, FileText, Shield, User, Database, Globe, Scale, CircleUser, Info, Calendar, Gavel, AlertTriangle, Wallet, Copyright, UserX, Power, Mail, Euro, Cookie, Tv, Wrench, CalendarOff } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -628,6 +627,127 @@ const CookiePolicyContent = () => {
     )
 }
 
+const RefundsAndCancellationsContent = () => {
+    const { language } = useLanguage();
+    const t = translations[language].refundsAndCancellations;
+
+    const sections = [
+        { id: "consultant-no-show", title: t.consultantNoShow.title, icon: UserX },
+        { id: "user-cancellations", title: t.userCancellations.title, icon: CalendarOff },
+        { id: "technical-failures", title: t.technicalFailures.title, icon: Wrench },
+        { id: "conferences", title: t.conferences.title, icon: Tv },
+        { id: "how-to-request", title: t.howToRequest.title, icon: Mail },
+    ];
+    
+    const [activeSection, setActiveSection] = useState(sections[0].id);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setActiveSection(entry.target.id);
+                }
+            });
+        }, { rootMargin: "-50% 0px -50% 0px" });
+
+        sections.forEach(section => {
+            const el = document.getElementById(section.id);
+            if (el) observer.observe(el);
+        });
+
+        return () => {
+            sections.forEach(section => {
+                const el = document.getElementById(section.id);
+                if (el) observer.unobserve(el);
+            });
+        };
+    }, [sections]);
+
+    const lastUpdated = new Date("2024-07-26T10:00:00Z");
+
+    return (
+        <div className="container py-12">
+            <div className="flex justify-between items-start mb-6 gap-4">
+                <div>
+                    <Button asChild variant="ghost" className="-ml-4">
+                        <Link href="/legal-hub">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            {translations[language].legalHub}
+                        </Link>
+                    </Button>
+                    <h1 className="font-headline text-3xl md:text-4xl font-bold mt-2">{t.title}</h1>
+                    <div className="flex items-center gap-4 mt-2">
+                        <p className="text-sm text-muted-foreground">
+                            {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="grid lg:grid-cols-[1fr_280px] gap-12 items-start">
+                <div className="prose prose-invert max-w-none text-foreground/80 prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+                    <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
+                        
+                        <AccordionItem value="consultant-no-show" id="consultant-no-show">
+                            <AccordionTrigger className="text-xl font-headline">{t.consultantNoShow.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.consultantNoShow.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem value="user-cancellations" id="user-cancellations">
+                            <AccordionTrigger className="text-xl font-headline">{t.userCancellations.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.userCancellations.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem value="technical-failures" id="technical-failures">
+                            <AccordionTrigger className="text-xl font-headline">{t.technicalFailures.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.technicalFailures.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="conferences" id="conferences">
+                            <AccordionTrigger className="text-xl font-headline">{t.conferences.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.conferences.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="how-to-request" id="how-to-request">
+                            <AccordionTrigger className="text-xl font-headline">{t.howToRequest.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.howToRequest.content} <a href="mailto:support@astrethique.com">support@astrethique.com</a>.</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                    </Accordion>
+                </div>
+                <aside className="hidden lg:block sticky top-24 self-start">
+                    <h3 className="font-semibold mb-4">{t.toc}</h3>
+                    <nav>
+                        <ul className="space-y-2">
+                            {sections.map(section => (
+                                <li key={section.id}>
+                                    <a 
+                                        href={`#${section.id}`}
+                                        className={`flex items-center gap-2 p-2 rounded-md text-sm transition-colors ${activeSection === section.id ? 'bg-muted font-semibold' : 'text-muted-foreground hover:bg-muted/50'}`}
+                                    >
+                                        <section.icon className="h-4 w-4" />
+                                        {section.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                </aside>
+            </div>
+        </div>
+    )
+}
+
 
 
 export default function LegalDetailPage() {
@@ -648,6 +768,10 @@ export default function LegalDetailPage() {
     
     if (slug === 'cookie-policy') {
         return <CookiePolicyContent />;
+    }
+    
+    if (slug === 'refunds-and-cancellations') {
+        return <RefundsAndCancellationsContent />;
     }
 
 
