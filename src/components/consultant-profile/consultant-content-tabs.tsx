@@ -194,7 +194,7 @@ export function ConsultantContentTabs({ consultant }: { consultant: ConsultantPr
     
   return (
     <Tabs defaultValue="about" className="w-full">
-      <TabsList className="sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <TabsList className="sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-4 pb-2">
         <TabsTrigger value="about">About</TabsTrigger>
         <TabsTrigger value="reviews">Reviews ({consultant.reviews?.length || 0})</TabsTrigger>
         <TabsTrigger value="content">Content ({contentCount})</TabsTrigger>
@@ -211,3 +211,4 @@ export function ConsultantContentTabs({ consultant }: { consultant: ConsultantPr
     </Tabs>
   );
 }
+

@@ -99,7 +99,7 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                     
                     <p className="mt-4 text-foreground/80 max-w-prose text-sm">{consultant.summary}...</p>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <div className="mt-4 mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
                         {consultant.specialties?.length > 0 && consultant.specialties.map(specialty => (
                             <Badge key={specialty} variant="default" className="text-xs">{specialty}</Badge>
                         ))}
