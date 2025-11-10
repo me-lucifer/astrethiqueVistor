@@ -612,16 +612,25 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                     <div className="flex items-center gap-3 pt-2">
                                                         <Image src={`https://i.pravatar.cc/40?u=${encodeURIComponent(conference.hostAlias)}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
                                                         <div>
-                                                            <a
-                                                                href={`/discover/consultant/${conference.hostId}`}
-                                                                className="font-semibold hover:underline relative z-10"
+                                                            <span
+                                                                role="link"
+                                                                tabIndex={0}
+                                                                className="font-semibold hover:underline cursor-pointer relative z-10"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
+                                                                    e.preventDefault();
                                                                     router.push(`/discover/consultant/${conference.hostId}`);
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                                        e.stopPropagation();
+                                                                        e.preventDefault();
+                                                                        router.push(`/discover/consultant/${conference.hostId}`);
+                                                                    }
                                                                 }}
                                                             >
                                                                 {conference.hostAlias}
-                                                            </a>
+                                                            </span>
                                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                                 <StarRating rating={conference.hostRating} size={14} />
                                                                 <span>({conference.hostRating})</span>
