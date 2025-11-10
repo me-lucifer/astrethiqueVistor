@@ -154,6 +154,13 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         let result = allConsultants.filter(c => {
             // My Favorites
             // if (filters.myFavorites && !isFavorite(c.id)) return false;
+            
+            // This is a temp fix until the availability property is updated in the seeder.
+            const availability = typeof c.availability === 'string' ? c.availability : c.availability.online ? 'online' : 'offline';
+            const isOnline = availability === 'online';
+            const isBusy = availability === 'busy';
+            const isOffline = availability === 'offline';
+            
 
             // Specialties
             if (filters.specialties.length > 0 && !filters.specialties.some(s => c.specialties.includes(s as any))) return false;
@@ -173,15 +180,11 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             if (filters.languages.FR && (!c.languages.some(l => l.code === 'FR') || langLevels[c.languages.find(l => l.code === 'FR')!.level] < langLevels[filters.languages.FR])) return false;
 
             // Availability
-            const isOnline = c.availability.online === true;
-            const hasSlotsToday = c.availability.slots.some(s => isWithinInterval(new Date(s), { start: startOfDay(new Date()), end: endOfDay(new Date()) }) && isFuture(new Date(s)));
-            const hasSlotsThisWeek = c.availability.slots.some(s => isWithinInterval(new Date(s), { start: startOfDay(new Date()), end: addDays(new Date(), 7) }) && isFuture(new Date(s)));
-
             if(filters.availability.length > 0) {
                  const availChecks = filters.availability.map(a => {
                     if (a === 'Online now') return isOnline;
-                    if (a === 'Today') return hasSlotsToday;
-                    if (a === 'This week') return hasSlotsThisWeek;
+                    if (a === 'Busy') return isBusy;
+                    if (a === 'Offline') return isOffline;
                     return false;
                 });
                 if(!availChecks.some(check => check)) return false;
@@ -217,7 +220,9 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 case 'newest':
                     return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
                 case 'online_first':
-                    return (b.availability.online ? 1 : 0) - (a.availability.online ? 1 : 0);
+                     const aOnline = typeof a.availability === 'object' ? a.availability.online : a.availability === 'online';
+                     const bOnline = typeof b.availability === 'object' ? b.availability.online : b.availability === 'online';
+                    return (bOnline ? 1 : 0) - (aOnline ? 1 : 0);
                 case 'recommended':
                 default:
                     // Simple recommended sort for now
@@ -348,10 +353,10 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                     <AccordionItem value="availability">
                         <AccordionTrigger className="font-semibold text-sm">Availability</AccordionTrigger>
                         <AccordionContent className="space-y-2">
-                             {availabilityFilters.map(a => (
-                                <div key={a.id} className="flex items-center space-x-2">
-                                    <Checkbox id={`avail-${a.id}`} checked={filters.availability.includes(a.name)} onCheckedChange={() => handleMultiSelectToggle('availability', a.name)} />
-                                    <Label htmlFor={`avail-${a.id}`} className="font-normal text-foreground/80">{a.name}</Label>
+                             {['Online now', 'Busy', 'Offline'].map(a => (
+                                <div key={a} className="flex items-center space-x-2">
+                                    <Checkbox id={`avail-${a}`} checked={filters.availability.includes(a)} onCheckedChange={() => handleMultiSelectToggle('availability', a)} />
+                                    <Label htmlFor={`avail-${a}`} className="font-normal text-foreground/80">{a}</Label>
                                 </div>
                             ))}
                         </AccordionContent>

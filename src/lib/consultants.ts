@@ -11,9 +11,9 @@ export interface Consultant {
     code: 'EN' | 'FR';
     level: 'basic' | 'fluent' | 'native';
   }[];
-  availability: {
+  availability: 'online' | 'busy' | 'offline' | {
     online: boolean;
-    slots: string[]; // ISO date strings
+    slots: string[];
   };
   specialties: ('Love' | 'Work' | 'Health' | 'Money' | 'Life Path')[];
   badges: ('Top Rated' | 'Rising Star' | 'New' | 'Promo 24h')[];

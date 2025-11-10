@@ -72,7 +72,11 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
     const handleScheduleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        router.push(`/consultant/${consultant.slug}#availability-section`);
+        // For now, this just shows a toast. It would open a schedule modal.
+        toast({
+            title: "Schedule Clicked",
+            description: `Scheduling for ${consultant.name} is not implemented yet.`
+        })
     };
 
     const handleNotifyClick = () => {
@@ -96,6 +100,8 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
     );
     
     const isOnline = consultant.availability.online;
+    const availabilityText = isOnline ? "Online" : (consultant.availability === "busy" ? "Busy" : "Offline");
+    const availabilityClass = isOnline ? "bg-success/80" : (consultant.availability === "busy" ? "bg-amber-500/80" : "bg-muted");
 
     return (
         <TooltipProvider>
@@ -112,15 +118,18 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 data-ai-hint="portrait person"
                                 loading="lazy"
                             />
-                            {isOnline && (
-                                <div className="absolute top-3 left-3 flex items-center gap-2 bg-success/80 backdrop-blur-sm text-success-foreground px-3 py-1 rounded-full text-xs font-bold border border-success-foreground/20">
+                            <div className={cn(
+                                "absolute top-3 left-3 flex items-center gap-2 backdrop-blur-sm text-success-foreground px-3 py-1 rounded-full text-xs font-bold border border-success-foreground/20",
+                                availabilityClass
+                            )}>
+                                {isOnline && (
                                     <span className="relative flex h-2 w-2">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75 motion-reduce:animate-none"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                     </span>
-                                    Online
-                                </div>
-                            )}
+                                )}
+                                {availabilityText}
+                            </div>
                             <Button
                                 size="icon"
                                 variant="ghost"
@@ -131,7 +140,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 <Heart className={cn("h-5 w-5", isFavorite ? "fill-red-500 text-red-500" : "text-white")} />
                             </Button>
                             <div className="absolute bottom-3 right-3 flex gap-2">
-                                {consultant.promoActive && (
+                                {consultant.promo24h && (
                                     <Badge className="bg-primary text-primary-foreground border-primary-foreground/20">PROMO</Badge>
                                 )}
                                 {consultant.badges.includes("Top Rated") && (
@@ -190,10 +199,15 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                             <div className="flex flex-wrap gap-1 w-full">
                                 {consultant.specialties.slice(0, 3).map(spec => (
                                     <Badge key={spec} variant="outline" className="text-xs font-normal gap-1.5 bg-background">
-                                        {specialtyMap[spec]?.icon}
+                                        {specialtyMap[spec as keyof typeof specialtyMap]?.icon}
                                         {spec}
                                     </Badge>
                                 ))}
+                                {consultant.specialties.length > 3 && (
+                                    <Badge variant="outline" className="text-xs font-normal bg-background">
+                                        +{consultant.specialties.length - 3}
+                                    </Badge>
+                                )}
                             </div>
                         )}
                         <div className="flex items-center gap-4 text-xs text-muted-foreground w-full">

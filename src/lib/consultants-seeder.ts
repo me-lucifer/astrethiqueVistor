@@ -10,6 +10,7 @@ const createConsultant = (index: number): Consultant => {
     const isOnline = index % 3 === 0;
     const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
     const consultantName = `Consultant ${index}`;
+    const availabilityStatus = ['online', 'busy', 'offline'][index % 3] as 'online' | 'busy' | 'offline';
 
     return {
         id: `c_${index}`,
@@ -22,10 +23,7 @@ const createConsultant = (index: number): Consultant => {
         languages: index % 2 === 0 
             ? [{ code: 'EN', level: 'native' }, { code: 'FR', level: 'fluent' }]
             : [{ code: 'EN', level: 'native' }],
-        availability: {
-            online: isOnline,
-            slots: Array.from({ length: 5 }).map((_, i) => addHours(addDays(now, Math.floor(i/2)), i % 2).toISOString()),
-        },
+        availability: availabilityStatus,
         specialties: specialties.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1),
         badges: ['New', 'Top Rated', 'Rising Star', 'Promo 24h'].sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
         contentCounts: {
