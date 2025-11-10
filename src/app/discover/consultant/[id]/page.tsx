@@ -68,15 +68,17 @@ export default function Page() {
                     prevPricePerMin: foundConsultant.priceWas,
                     summary: foundConsultant.bio.replace(/<[^>]*>?/gm, '').substring(0, 140),
                     specialties: foundConsultant.specialties,
+                    types: foundConsultant.types,
                     verifications: {
                         adminApproved: foundConsultant.adminApproved,
                         kycVerified: foundConsultant.kycVerified,
                         lastReview: new Date(foundConsultant.lastReviewDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
                     },
                     nextSlots: foundConsultant.availability.slots,
+                    aboutHtml: foundConsultant.bio,
                     content: {
-                        articles: allContent.filter(c => c.type === 'Article' && c.author === foundConsultant.name.split(' ')[0]).slice(0,2),
-                        podcasts: allContent.filter(c => c.type === 'Podcast' && c.author === foundConsultant.name.split(' ')[0]).slice(0,1),
+                        articles: allContent.filter(c => c.type === 'Article' && (c.author === foundConsultant.name.split(' ')[0] || c.author ==='Eva' || c.author === 'Marcus' )).slice(0,2),
+                        podcasts: allContent.filter(c => c.type === 'Podcast' && (c.author === foundConsultant.name.split(' ')[0] || c.author ==='Eva' || c.author === 'Marcus' )).slice(0,1),
                         conferences: allConferences.filter(c => c.hostAlias === foundConsultant.name.split(' ')[0]).slice(0,1),
                     },
                     reviews: foundConsultant.reviews.map((r, i) => ({
@@ -107,8 +109,10 @@ export default function Page() {
 
   const scrollToAvailability = () => {
     const element = document.getElementById('availability-section');
+    const scheduleButton = document.getElementById('schedule-button');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
+      scheduleButton?.focus();
     }
   }
 

@@ -154,7 +154,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
                 {isOnline ? (
                     <>
                         <Button onClick={handleStartNowClick} size="lg">Start Now</Button>
-                        <Button onClick={handleScheduleClick} variant="outline" size="lg">
+                        <Button onClick={handleScheduleClick} variant="outline" size="lg" id="schedule-button">
                             <Clock className="mr-2 h-4 w-4" />
                             Schedule
                         </Button>
@@ -169,7 +169,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
                             {isNotifying ? <CheckCircle className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
                             {isNotifying ? "I'll be notified" : "Notify me"}
                         </Button>
-                        <Button onClick={handleScheduleClick} size="lg">
+                        <Button onClick={handleScheduleClick} size="lg" id="schedule-button">
                             <Clock className="mr-2 h-4 w-4" />
                             Schedule
                         </Button>
