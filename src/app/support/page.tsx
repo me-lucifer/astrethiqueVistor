@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -18,7 +19,7 @@ const visitorTopics = [
     { id: "faq-bookings", href: "#faq-bookings", title: "Bookings & Sessions", description: "Help with scheduling, session types, and cancellations.", icon: CalendarClock },
     { id: "faq-account", href: "#faq-account", title: "Account & Login", description: "Manage your profile, password, and login issues.", icon: User },
     { id: "faq-billing", href: "#faq-billing", title: "Billing & Pricing", description: "Understand per-minute rates, wallet, and payments.", icon: Wallet },
-    { id: "faq-conferences", href: "#faq-conferences", title: "Conferences & Replays", description: "Questions about free events, RSVPs, and recordings.", icon: Tv },
+    { id: "faq-conferences", href: "#faq-conferences", title: "Conferences", description: "Questions about free events, RSVPs, and recordings.", icon: Tv },
     { id: "faq-content", href: "#faq-content", title: "Content Hub", description: "Find articles, podcasts, and manage your bookmarks.", icon: Wrench },
     { id: "faq-language", href: "#faq-language", title: "Language & Timezones", description: "Settings for language, region, and notifications.", icon: Languages },
     { id: "faq-safety", href: "#faq-safety", title: "Trust, Safety & Reporting", description: "Report issues, understand content moderation.", icon: Shield },
@@ -88,10 +89,10 @@ const faqData = {
         },
         {
             id: "faq-conferences",
-            title: "Conferences & Replays",
+            title: "Conferences",
             questions: [
-                 { q: "Are conferences free?", a: "Yes, all live conferences are free to attend. Just RSVP to save your spot!" },
-                 { q: "Are replays available for conferences?", a: "Availability of replays depends on the host and is mentioned on the conference detail page. If available, replays can be accessed for a limited time after the event." },
+                 { q: "How do conferences work?", a: "Conferences are hosted by consultants on external platforms (e.g., Zoom/Google Meet). We display the title, date/time, timezone and a ‘Join link’. Replays are not hosted by us. If a host shares a replay link, it may appear on the conference detail." },
+                 { q: "How do I comment on articles/podcasts?", a: "You need to be logged into your account to post comments. If you're logged in, a comment box will appear below the content." }
             ]
         },
         {
