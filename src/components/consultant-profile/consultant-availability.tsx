@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { add, format, set } from 'date-fns';
 import { Consultant } from '@/lib/consultants';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquare, Video, Phone, Clock, Bell, CheckCircle } from 'lucide-react';
@@ -176,13 +176,16 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
             </div>
           </div>
         </CardContent>
+        <CardFooter className="p-0 pt-4">
+            <p className="text-xs text-muted-foreground">Per-minute billing during live sessions.</p>
+        </CardFooter>
       </Card>
       
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Schedule with {consultant.name}</SheetTitle>
-            <SheetDescription>Select a time for your {selectedMode} session.</SheetDescription>
+            <SheetDescription>Select a time for your ${selectedMode} session.</SheetDescription>
           </SheetHeader>
           <div className="py-4 grid grid-cols-1 gap-4">
             <div>
@@ -216,7 +219,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
             <AlertDialogHeader>
             <AlertDialogTitle>Notification set!</AlertDialogTitle>
             <AlertDialogDescription>
-                We'll let you know when {consultant.name} is back online.
+                We'll let you know when ${consultant.name} is back online.
             </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -227,3 +230,5 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     </div>
   );
 }
+
+    
