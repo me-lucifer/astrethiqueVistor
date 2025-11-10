@@ -82,8 +82,9 @@ const ratingFilters = [
     { value: "4.5", label: "4.5+" },
 ];
 const sortOptions = {
+    recommended: "Recommended",
     soonest: "Soonest",
-    host_rating_desc: "Host Rating",
+    host_rating_desc: "Most Popular",
 };
 
 type SortKey = keyof typeof sortOptions;
@@ -122,9 +123,9 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     });
     
     const [sort, setSort] = useState<SortKey>(() => {
-        if(typeof window === "undefined") return "soonest";
+        if(typeof window === "undefined") return "recommended";
         const savedSort = sessionStorage.getItem('discover.conferences.sort');
-        return savedSort ? (savedSort as SortKey) : 'soonest';
+        return savedSort ? (savedSort as SortKey) : 'recommended';
     });
 
      useEffect(() => {
@@ -239,8 +240,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                 case 'host_rating_desc':
                     return b.hostRating - a.hostRating;
                 case 'soonest':
-                default:
                      return new Date(a.dateISO).getTime() - new Date(b.dateISO).getTime();
+                case 'recommended':
+                default:
+                     return b.hostRating - a.hostRating; // Simple popularity sort for now
             }
         })
 
@@ -547,12 +550,11 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                         className="w-full object-cover aspect-video group-hover:opacity-90 transition-opacity"
                                                     />
                                                     <div className="absolute top-2 right-2 flex gap-2">
-                                                        {conference.price === 0 && <Badge variant="default" className="bg-green-600">Free</Badge>}
                                                         {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting Soon</Badge>}
                                                     </div>
                                                 </div>
                                                 <div className="p-4 space-y-3">
-                                                    <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary">{conference.title}</h3>
+                                                    <h3 className="font-headline text-lg font-bold line-clamp-2 h-[56px] group-hover:text-primary" aria-label={conference.title}>{conference.title}</h3>
                                                     
                                                     <div className="text-sm text-muted-foreground">
                                                         <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
@@ -581,7 +583,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                             </span>
                                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                                 <StarRating rating={conference.hostRating} size={14} />
-                                                                <span>({conference.hostRating})</span>
+                                                                <span aria-label={`Host rating: ${conference.hostRating}`}>({conference.hostRating})</span>
                                                                 <span>•</span>
                                                                 <span>{conference.language}</span>
                                                             </div>
@@ -595,8 +597,13 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                 </div>
                                             </Link>
                                         </CardContent>
-                                        <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center">
-                                            <div className="font-bold text-lg text-primary">{conference.price === 0 ? 'Free' : `€${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(conference.price).replace('€', '')}`}</div>
+                                        <CardFooter className="p-4 pt-0 mt-auto flex justify-between items-center gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="secondary" className="bg-green-600/10 text-green-400 border-green-600/20">Free</Badge>
+                                                {conference.seatsLeft !== undefined && (
+                                                   <Badge variant="outline" className="font-normal">Seats left: {conference.seatsLeft}</Badge>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-2">
                                                 
                                                 <Popover>
