@@ -11,7 +11,7 @@ export const ticketSchema = z.object({
   topic: z.string().min(1, "Please select a topic."),
   subject: z.string().min(5, "Subject must be at least 5 characters."),
   description: z.string().min(20, "Description must be at least 20 characters.").max(600, "Description cannot exceed 600 characters."),
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
   displayName: z.string().optional(),
   referenceId: z.string().optional(),
   attachmentUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
@@ -33,7 +33,11 @@ type TicketStore = {
 };
 
 function getAllTickets(): TicketStore {
-  return getLocal<TicketStore>(SUPPORT_TICKETS_KEY) || {};
+  const allTickets = getLocal<TicketStore>(SUPPORT_TICKETS_KEY) || {};
+  if (!allTickets['anonymous']) {
+      allTickets['anonymous'] = [];
+  }
+  return allTickets;
 }
 
 function saveAllTickets(store: TicketStore): void {
@@ -50,7 +54,8 @@ function generateTicketId(): string {
 
 export function addTicket(data: TicketFormData): SupportTicket {
   const allTickets = getAllTickets();
-  const userTickets = allTickets[data.email] || [];
+  const userKey = data.email || 'anonymous';
+  const userTickets = allTickets[userKey] || [];
 
   const newTicket: SupportTicket = {
     ...data,
@@ -60,7 +65,7 @@ export function addTicket(data: TicketFormData): SupportTicket {
   };
 
   const updatedUserTickets = [newTicket, ...userTickets];
-  allTickets[data.email] = updatedUserTickets;
+  allTickets[userKey] = updatedUserTickets;
 
   saveAllTickets(allTickets);
   return newTicket;
@@ -68,18 +73,23 @@ export function addTicket(data: TicketFormData): SupportTicket {
 
 export function getTicketsByEmail(email: string): SupportTicket[] {
   const allTickets = getAllTickets();
-  return allTickets[email] || [];
+  const userKey = email || 'anonymous';
+  // Also include anonymous tickets if an email is provided, in case user submitted both ways
+  const anonymousTickets = email ? allTickets['anonymous'] || [] : [];
+  const userTickets = allTickets[userKey] || [];
+  return [...userTickets, ...anonymousTickets].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export function updateTicketStatus(email: string, ticketId: string, status: TicketStatus): SupportTicket[] {
   const allTickets = getAllTickets();
-  const userTickets = allTickets[email] || [];
+  const userKey = email || 'anonymous';
+  const userTickets = allTickets[userKey] || [];
 
   const updatedTickets = userTickets.map(ticket =>
     ticket.id === ticketId ? { ...ticket, status } : ticket
   );
 
-  allTickets[email] = updatedTickets;
+  allTickets[userKey] = updatedTickets;
   saveAllTickets(allTickets);
   return updatedTickets;
 }

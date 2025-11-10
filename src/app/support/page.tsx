@@ -19,6 +19,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { SupportContactForm } from "@/components/support/contact-form";
 import { SystemStatus } from "@/components/support/system-status";
 import { MyRequests } from "@/components/support/my-requests";
+import { ReportingCta } from "@/components/support/reporting-cta";
 
 const visitorTopics = [
     { id: "faq-bookings", href: "#faq-bookings", title: "Bookings & Sessions", description: "Help with scheduling, session types, and cancellations.", icon: CalendarClock },
@@ -291,6 +292,8 @@ export default function SupportPage() {
             </div>
         )}
         
+        <ReportingCta onTicketSubmitted={handleTicketSubmitted} />
+
         <div id="contact-support" className="mt-24 pt-16 border-t scroll-mt-24">
              <h2 className="text-center font-headline text-3xl font-bold mb-4">
                 Still need help?
