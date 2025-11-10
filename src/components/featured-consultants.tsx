@@ -303,10 +303,10 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                             <div className="flex justify-between items-center mb-2">
                                 <Label className="text-primary font-bold">€{filters.price[0]} &mdash; €{filters.price[1]}/min</Label>
                             </div>
-                            <Slider min={priceBounds[0]} max={priceBounds[1]} step={0.5} value={filters.price} onValueChange={(v) => updateFilters({ price: v, minPrice: String(v[0]), maxPrice: String(v[1]) })} />
+                            <Slider aria-label="Price range" min={priceBounds[0]} max={priceBounds[1]} step={0.5} value={filters.price} onValueChange={(v) => updateFilters({ price: v, minPrice: String(v[0]), maxPrice: String(v[1]) })} />
                              <div className="flex gap-2 mt-2">
-                                <Input type="number" placeholder="Min" value={filters.minPrice} onChange={(e) => handlePriceInputChange('min', e.target.value)} />
-                                <Input type="number" placeholder="Max" value={filters.maxPrice} onChange={(e) => handlePriceInputChange('max', e.target.value)} />
+                                <Input type="number" aria-label="Minimum price" placeholder="Min" value={filters.minPrice} onChange={(e) => handlePriceInputChange('min', e.target.value)} />
+                                <Input type="number" aria-label="Maximum price" placeholder="Max" value={filters.maxPrice} onChange={(e) => handlePriceInputChange('max', e.target.value)} />
                             </div>
                         </AccordionContent>
                     </AccordionItem>
@@ -441,7 +441,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                     </p>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
-                            <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort by">
                                 <SelectValue placeholder="Sort by..." />
                             </SelectTrigger>
                             <SelectContent>

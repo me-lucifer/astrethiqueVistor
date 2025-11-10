@@ -152,7 +152,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 variant="ghost"
                                 className="absolute top-2 right-2 rounded-full h-8 w-8 bg-black/20 text-white hover:bg-black/40 hover:text-white"
                                 onClick={toggleFavorite}
-                                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                                aria-label={isFavorite ? `Remove ${consultant.name} from favorites` : `Add ${consultant.name} to favorites`}
                             >
                                 <Heart className={cn("h-5 w-5", isFavorite ? "fill-red-500 text-red-500" : "text-white")} />
                             </Button>

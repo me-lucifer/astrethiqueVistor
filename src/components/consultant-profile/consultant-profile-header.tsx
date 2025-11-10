@@ -60,7 +60,7 @@ export function ConsultantProfileHeader({ consultant }: { consultant: Consultant
                         variant="ghost"
                         className="rounded-full h-10 w-10 shrink-0"
                         onClick={toggleFavorite}
-                        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                        aria-label={isFavorite ? `Remove ${consultant.name} from favorites` : `Add ${consultant.name} to favorites`}
                     >
                         <Heart className={cn("h-6 w-6 transition-all", isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
                     </Button>
