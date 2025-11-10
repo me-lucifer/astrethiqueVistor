@@ -81,11 +81,12 @@ export default function Page() {
         <div className="container py-8 space-y-8">
             <Skeleton className="h-10 w-48" />
             <div className="flex flex-col md:flex-row gap-8">
-                <Skeleton className="h-32 w-32 rounded-full" />
+                <Skeleton className="h-40 w-40 rounded-full" />
                 <div className="flex-1 space-y-4">
                     <Skeleton className="h-8 w-1/2" />
                     <Skeleton className="h-6 w-1/4" />
                     <Skeleton className="h-4 w-3/4" />
+                     <Skeleton className="h-16 w-full" />
                 </div>
             </div>
             <Skeleton className="h-48 w-full" />
@@ -111,9 +112,6 @@ export default function Page() {
         <div className="space-y-8">
             <ConsultantProfileHeader consultant={consultant} />
             {/* The rest of the page components will go here */}
-             <pre className="bg-muted p-4 rounded-lg mt-4 text-xs overflow-auto">
-                {JSON.stringify(consultant, null, 2)}
-            </pre>
         </div>
     </div>
   );
