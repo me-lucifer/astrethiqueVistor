@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getSession, setSession } from "@/lib/session";
 import { Separator } from "../ui/separator";
 
-const topicOptions = ["Love", "Work", "Health", "Money", "Life Path"];
+const topicOptions = ["Love", "Work", "Health", "Money", "Life Path", "Astrology", "Tarot", "Numerology", "Spirituality", "Beginner", "Advanced"];
 const typeOptions = [
     { value: 'all', label: 'Articles & Podcasts' },
     { value: 'article', label: 'Articles' },
@@ -25,8 +25,9 @@ const langOptions = [
 ];
 const sortOptions = [
     { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'most_viewed', label: 'Most Viewed' },
     { value: 'most_liked', label: 'Most Liked' },
-    { value: 'featured', label: 'Featured' },
 ];
 
 

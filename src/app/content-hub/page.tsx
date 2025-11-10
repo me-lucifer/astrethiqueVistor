@@ -91,7 +91,7 @@ export default function ContentHubPage() {
         }
 
         if (topics.length > 0) {
-            items = items.filter(item => item.topics.some(t => topics.includes(t)));
+            items = items.filter(item => item.tags.some(t => topics.includes(t)));
         }
 
         if (type !== 'all') {
@@ -103,15 +103,18 @@ export default function ContentHubPage() {
         }
 
         switch (sort) {
-            case 'most_liked':
-                items.sort((a, b) => b.likes - a.likes);
+            case 'most_viewed':
+                items.sort((a, b) => (b.views || 0) - (a.views || 0));
                 break;
-            case 'featured':
-                items.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+            case 'most_liked':
+                items.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+                break;
+            case 'oldest':
+                items.sort((a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime());
                 break;
             case 'newest':
             default:
-                items.sort((a, b) => new Date(b.datePublished).getTime() - new Date(a.datePublished).getTime());
+                items.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
                 break;
         }
 
@@ -141,7 +144,7 @@ export default function ContentHubPage() {
         const updatedItems = allItems.map(item => {
             if (item.id === itemId) {
                 const newLiked = !item.liked;
-                const newLikes = newLiked ? item.likes + 1 : item.likes - 1;
+                const newLikes = newLiked ? (item.likes || 0) + 1 : (item.likes || 0) - 1;
                 return { ...item, liked: newLiked, likes: newLikes };
             }
             return item;
