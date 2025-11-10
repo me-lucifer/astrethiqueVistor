@@ -19,7 +19,7 @@ const createConsultant = (index: number): Consultant => {
     const now = new Date();
     const consultantName = names[(index - 1) % names.length];
     
-    const simpleAvailability = ['online', 'busy', 'offline', 'online'][index % 4] as 'online' | 'busy' | 'offline';
+    const simpleAvailability = ['online', 'offline', 'busy', 'online', 'offline', 'online', 'offline', 'busy', 'online', 'offline', 'online', 'offline'][index % 12] as 'online' | 'busy' | 'offline';
 
     const reviews = [
         { author: 'Jane D.', rating: 5, dateISO: subDays(now, 5).toISOString(), text: 'An amazing and insightful reading!'},
@@ -36,12 +36,12 @@ const createConsultant = (index: number): Consultant => {
         slug: consultantName.toLowerCase().replace(/\s+/g, '-'),
         name: consultantName,
         rating: Math.round((4.2 + Math.random() * 0.8) * 10) / 10,
-        pricePerMin: Math.round((1.5 + Math.random() * 3.5) * 2) / 2,
+        pricePerMin: Math.round((1.5 + Math.random() * 8.5) * 2) / 2,
         priceWas: index % 4 === 0 ? Math.round((3 + Math.random() * 3) * 2) / 2 : undefined,
         promo24h: index % 5 === 0,
-        languages: index % 2 === 0 
+        languages: index % 3 === 0 
             ? [{ code: 'EN', level: 'native' }, { code: 'FR', level: 'fluent' }]
-            : [{ code: 'EN', level: 'native' }],
+            : (index % 3 === 1 ? [{ code: 'FR', level: 'native'}] : [{ code: 'EN', level: 'native' }]),
         availability: {
             online: simpleAvailability === 'online',
             slots: [],
@@ -74,7 +74,7 @@ export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
   const seededVersion = getSession('discover.seeded.version');
-  const currentVersion = 'v4'; // Increment this version to force re-seeding
+  const currentVersion = 'v5'; // Increment this version to force re-seeding
 
   if (seededVersion !== currentVersion) {
     const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));

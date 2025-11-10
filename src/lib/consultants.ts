@@ -28,7 +28,7 @@ export interface Consultant {
   cover: string;
   kycVerified: boolean;
   adminApproved: boolean;
-  lastReviewDate: string; // YYYY-MM-DD
+  lastReviewDate: string; // ISO 8601 string
   bio: string;
   reviews: {
     author: string;

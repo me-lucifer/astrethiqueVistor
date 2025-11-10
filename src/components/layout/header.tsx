@@ -97,7 +97,7 @@ export function Header() {
               </SheetHeader>
               <nav className="flex-1 px-4 flex flex-col gap-2 pt-4">
                 {navLinks.map((link) => {
-                   const isActive = pathname.startsWith(link.href);
+                   const isActive = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
                   return (
                     <Button key={link.href} variant={isActive ? "secondary" : "ghost"} className="justify-start text-base" asChild>
                       <Link href={link.href}>
