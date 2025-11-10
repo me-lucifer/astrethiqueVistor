@@ -55,11 +55,7 @@ interface Filters {
     languages: string[];
     when: string;
     dateRange?: DateRange;
-    price: [number, number];
-    freeOnly: boolean;
     hostRating: string;
-    seatsAvailable: boolean;
-    recordingAvailable: boolean;
 }
 
 const defaultFilters: Filters = {
@@ -67,11 +63,7 @@ const defaultFilters: Filters = {
     types: [],
     languages: [],
     when: "All",
-    price: [0, 100],
-    freeOnly: false,
     hostRating: "0",
-    seatsAvailable: false,
-    recordingAvailable: false,
 };
 
 const categories = [
@@ -189,7 +181,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     };
     
     const handleResetFilters = () => {
-        const newFilters = {...defaultFilters, price: priceBounds};
+        const newFilters = {...defaultFilters};
         updateFilters(newFilters);
         router.push(`${pathname}`, { scroll: false });
     }
@@ -237,20 +229,8 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
             });
         }
         
-        if (filters.freeOnly) {
-            result = result.filter(c => c.price === 0);
-        } else {
-            result = result.filter(c => (c.price ?? 0) >= filters.price[0] && (c.price ?? 0) <= filters.price[1]);
-        }
-
         if (parseFloat(filters.hostRating) > 0) {
             result = result.filter(c => c.hostRating >= parseFloat(filters.hostRating));
-        }
-        if (filters.seatsAvailable) {
-            result = result.filter(c => (c.seatsLeft ?? c.capacity) > 0);
-        }
-        if (filters.recordingAvailable) {
-            result = result.filter(c => c.recordingAvailable);
         }
         
         // Sorting
@@ -439,20 +419,6 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                             </RadioGroup>
                         </AccordionContent>
                     </AccordionItem>
-                    <AccordionItem value="availability">
-                        <AccordionTrigger className="font-semibold text-sm">Availability</AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="seats-available">Seats available</Label>
-                                <Switch id="seats-available" checked={filters.seatsAvailable} onCheckedChange={(c) => updateFilters({ seatsAvailable: c })} />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="recording-available">Recording available</Label>
-                                <Switch id="recording-available" checked={filters.recordingAvailable} onCheckedChange={(c) => updateFilters({ recordingAvailable: c })} />
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-
                 </Accordion>
                 <div className="flex flex-col gap-2">
                     <Button onClick={isDesktop ? handleResetFilters : ()=>setIsSheetOpen(false)}>Apply Filters</Button>
