@@ -37,6 +37,9 @@ interface Rsvp {
     remind1h: boolean;
     remind10m: boolean;
 }
+interface WaitlistEntry {
+    eventId: string;
+}
 
 export default function ConferenceDetailPage() {
     const params = useParams();
@@ -48,12 +51,13 @@ export default function ConferenceDetailPage() {
     const [conference, setConference] = useState<Conference | null>(null);
     const [relatedConferences, setRelatedConferences] = useState<Conference[]>([]);
     const [rsvps, setRsvps] = useState<Rsvp[]>([]);
+    const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRsvpModalOpen, setIsRsvpModalOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
     useEffect(() => {
-        seedOnce("conferences_seeded_v2", seedConferences);
+        seedOnce("conferences_seeded_v3", seedConferences);
         const allConferences = getLocal<Conference[]>("conferences") || [];
         const currentConference = allConferences.find(c => c.slug === slug);
 
@@ -69,6 +73,9 @@ export default function ConferenceDetailPage() {
         const currentRsvps = getLocal<Rsvp[]>("rsvps") || [];
         setRsvps(currentRsvps);
 
+        const storedWaitlist = getLocal<WaitlistEntry[]>("waitlist");
+        if(storedWaitlist) setWaitlist(storedWaitlist);
+
         setLoading(false);
     }, [slug]);
 
@@ -76,6 +83,11 @@ export default function ConferenceDetailPage() {
         if (!conference) return false;
         return rsvps.some(r => r.eventId === conference.id);
     }, [rsvps, conference]);
+    
+    const isOnWaitlist = useMemo(() => {
+        if (!conference) return false;
+        return waitlist.some(w => w.eventId === conference.id);
+    }, [waitlist, conference]);
 
     const handleRsvpClick = () => {
         if (!conference) return;
@@ -143,8 +155,12 @@ export default function ConferenceDetailPage() {
     }
 
 
-    const handleNotify = () => {
-        toast({ title: "You'll be notified if a spot opens up." });
+    const handleWaitlistClick = () => {
+        if (!conference) return;
+        const newWaitlist = [...waitlist, { eventId: conference.id }];
+        setWaitlist(newWaitlist);
+        setLocal("waitlist", newWaitlist);
+        toast({ title: "You're on the waitlist!", description: `We'll notify you if a spot opens up for "${conference.title}".` });
     }
 
     if (loading) {
@@ -189,7 +205,7 @@ export default function ConferenceDetailPage() {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="space-y-3">
                         <div className="flex flex-wrap gap-2">
-                            {conference.price === 0 && <Badge className="bg-green-600">Free</Badge>}
+                            {conference.isFree && <Badge className="bg-green-600">Free event</Badge>}
                             {conference.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                             <Badge variant="outline">{conference.type}</Badge>
                         </div>
@@ -265,11 +281,17 @@ export default function ConferenceDetailPage() {
                 <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
                      <Card>
                         <CardContent className="p-6 space-y-4">
-                           <div className="text-3xl font-bold text-primary">Free</div>
                            <div className="space-y-2">
-                                <Button size="lg" className="w-full" onClick={handleRsvpClick} variant={isRsvpd ? "outline" : "default"} disabled={!hasSeats && !isRsvpd} aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: `RSVP for ${conference.title}`}>
+                                <Button 
+                                    size="lg" 
+                                    className="w-full" 
+                                    onClick={!hasSeats && !isRsvpd ? handleWaitlistClick : handleRsvpClick} 
+                                    variant={isRsvpd ? "outline" : "default"} 
+                                    disabled={!hasSeats && (isRsvpd || isOnWaitlist)}
+                                    aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: (hasSeats ? `RSVP for ${conference.title}` : `Join waitlist for ${conference.title}`)}
+                                >
                                     {isRsvpd ? <CheckCircle className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
-                                    {isRsvpd ? 'Going / Cancel' : (hasSeats ? 'RSVP Now' : 'Sold Out')}
+                                    {isRsvpd ? 'Going / Cancel' : (hasSeats ? 'RSVP' : (isOnWaitlist ? 'On waitlist' : 'Join waitlist'))}
                                 </Button>
                            </div>
 
@@ -311,12 +333,6 @@ export default function ConferenceDetailPage() {
                                    Add to Calendar
                                </Button>
                            </div>
-                            {!hasSeats && !isRsvpd && (
-                                <Button variant="secondary" className="w-full" onClick={handleNotify} aria-label="Notify me if a spot opens">
-                                    <AlertTriangle className="mr-2 h-4 w-4"/>
-                                    Notify Me If a Spot Opens
-                                </Button>
-                            )}
                            <div className="text-xs text-muted-foreground flex items-center gap-2 pt-2">
                                <Users className="h-4 w-4" />
                                <span>{conference.capacity} total spots.</span>
@@ -371,5 +387,7 @@ export default function ConferenceDetailPage() {
         </div>
     );
 }
+
+    
 
     

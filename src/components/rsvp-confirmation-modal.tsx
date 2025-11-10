@@ -42,7 +42,7 @@ export function RsvpConfirmationModal({
           </div>
           <DialogTitle className="text-center">Confirm your RSVP</DialogTitle>
           <DialogDescription className="text-center">
-             You are about to register for the following conference.
+             You are about to register for the following free conference.
           </DialogDescription>
         </DialogHeader>
         
@@ -50,7 +50,6 @@ export function RsvpConfirmationModal({
             <p className="font-bold text-base">{conference.title}</p>
             <p className="text-muted-foreground">{new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(date)}</p>
             <p className="text-muted-foreground">{timeString}</p>
-            <p className="font-semibold pt-2">Price: Free</p>
         </div>
 
         <p className="text-xs text-muted-foreground text-center">
@@ -69,5 +68,7 @@ export function RsvpConfirmationModal({
     </Dialog>
   );
 }
+
+    
 
     
