@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Gem, Search, User, LogOut } from 'lucide-react';
+import { Menu, Gem, Search, User, LogOut, Globe } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import {
   DropdownMenu,
@@ -21,10 +21,15 @@ import { cn } from '@/lib/utils';
 import { AuthModal } from '../auth-modal';
 import { getUser, logoutUser, AuthUser } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/language-context';
+import { translations } from '@/lib/translations';
 
 export function Header() {
   const pathname = usePathname();
   const { toast } = useToast();
+  const { language, toggleLanguage } = useLanguage();
+  const t = translations[language];
+
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
 
@@ -55,13 +60,13 @@ export function Header() {
 
 
   const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/discover', label: 'Discover' },
-    { href: '/conferences', label: 'Conferences' },
-    { href: '/how-it-works', label: 'How It Works' },
-    { href: '/content-hub', label: 'Content Hub' },
+    { href: '/', label: t.navHome },
+    { href: '/discover', label: t.navDiscover },
+    { href: '/conferences', label: t.navConferences },
+    { href: '/how-it-works', label: t.navHowItWorks },
+    { href: '/content-hub', label: t.navContentHub },
     { href: '/appointments', label: 'My Appointments' },
-    { href: '/support', label: 'Support' },
+    { href: '/support', label: t.navSupport },
   ];
 
   const isDiscoverActive = (path: string) => {
@@ -74,8 +79,8 @@ export function Header() {
 
   const AuthButtons = () => (
     <>
-      <Button variant="ghost" onClick={handleAuthClick} aria-label="Login to your account">Login</Button>
-      <Button onClick={handleAuthClick} aria-label="Create a new account">Register</Button>
+      <Button variant="ghost" onClick={handleAuthClick} aria-label={t.login}>{t.login}</Button>
+      <Button onClick={handleAuthClick} aria-label={t.register}>{t.register}</Button>
     </>
   );
 
@@ -146,19 +151,25 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" disabled>
-                  Visitor <ChevronDown className="ml-2 h-4 w-4" />
+                  {t.visitor} <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Visitor</DropdownMenuItem>
-                <DropdownMenuItem>Client</DropdownMenuItem>
+                <DropdownMenuItem>{t.visitor}</DropdownMenuItem>
+                <DropdownMenuItem>{t.client}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Button variant="ghost" size="icon" onClick={toggleLanguage} aria-label={`Switch to ${language === 'en' ? 'French' : 'English'}`}>
+                <Globe className="h-5 w-5" />
+            </Button>
             <NotificationBell />
         </div>
 
         <div className="lg:hidden flex items-center gap-2">
            <NotificationBell />
+           <Button variant="ghost" size="icon" onClick={toggleLanguage} aria-label={`Switch to ${language === 'en' ? 'French' : 'English'}`}>
+              <Globe className="h-5 w-5" />
+           </Button>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -193,12 +204,12 @@ export function Header() {
                     <Button variant="outline" className="w-full" onClick={handleLogout}>Sign out</Button>
                 ) : (
                     <div className="grid grid-cols-2 gap-2">
-                        <Button variant="ghost" onClick={handleAuthClick}>Login</Button>
-                        <Button onClick={handleAuthClick}>Register</Button>
+                        <Button variant="ghost" onClick={handleAuthClick}>{t.login}</Button>
+                        <Button onClick={handleAuthClick}>{t.register}</Button>
                     </div>
                 )}
                  <Button variant="outline" disabled className="w-full">
-                  Visitor
+                  {t.visitor}
                 </Button>
               </div>
             </SheetContent>

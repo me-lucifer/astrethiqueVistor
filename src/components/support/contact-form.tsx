@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ interface SupportContactFormProps {
 export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportContactFormProps) {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [ticketId, setTicketId] = useState("");
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const form = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
@@ -63,6 +64,14 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
   };
   
   const descriptionValue = form.watch("description");
+
+  useEffect(() => {
+      if (isSuccessModalOpen) {
+          setTimeout(() => {
+              closeButtonRef.current?.focus();
+          }, 100)
+      }
+  }, [isSuccessModalOpen]);
 
   return (
     <>
@@ -284,7 +293,7 @@ export function SupportContactForm({ activeTab, onTicketSubmitted }: SupportCont
             </div>
             <DialogFooter>
                 <DialogClose asChild>
-                    <Button className="w-full">Close</Button>
+                    <Button ref={closeButtonRef} className="w-full">Close</Button>
                 </DialogClose>
             </DialogFooter>
         </DialogContent>

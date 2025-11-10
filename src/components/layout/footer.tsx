@@ -2,25 +2,29 @@
 "use client";
 
 import Link from "next/link";
-import { Gem, Twitter, Facebook, Instagram, Linkedin, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-const footerLinks = [
-  { href: "/legal-hub", label: "Legal Hub" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/privacy", label: "Privacy (GDPR)" },
-  { href: "/terms", label: "Terms" },
-  { href: "/support", label: "Support" },
-];
+import { Gem, Twitter, Facebook, Instagram, Linkedin } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
+import { translations } from "@/lib/translations";
 
 const socialLinks = [
-  { href: "#", icon: Twitter },
-  { href: "#", icon: Facebook },
-  { href: "#", icon: Instagram },
-  { href: "#", icon: Linkedin },
+  { href: "#", icon: Twitter, label: "Twitter" },
+  { href: "#", icon: Facebook, label: "Facebook" },
+  { href: "#", icon: Instagram, label: "Instagram" },
+  { href: "#", icon: Linkedin, label: "LinkedIn" },
 ];
 
 export function Footer() {
+  const { language } = useLanguage();
+  const t = translations[language];
+
+  const footerLinks = [
+    { href: "/legal-hub", label: t.legalHub },
+    { href: "/pricing", label: t.pricing },
+    { href: "/privacy", label: t.privacy },
+    { href: "/terms", label: t.terms },
+    { href: "/support", label: t.support },
+  ];
+
   return (
     <>
       <footer className="border-t border-border/40 bg-background">
@@ -28,7 +32,7 @@ export function Footer() {
           <div className="flex items-center gap-2">
             <Gem className="h-5 w-5 text-primary" />
             <p className="text-sm text-foreground/60 font-headline">
-              &copy; 2025 ASTRETHIQUE. All rights reserved.
+              {t.copyright}
             </p>
           </div>
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
@@ -39,8 +43,8 @@ export function Footer() {
             ))}
           </nav>
           <div className="flex gap-4">
-            {socialLinks.map((link, i) => (
-              <Link key={i} href={link.href} className="text-foreground/60 hover:text-primary transition-colors">
+            {socialLinks.map((link) => (
+              <Link key={link.label} href={link.href} className="text-foreground/60 hover:text-primary transition-colors" aria-label={`Follow us on ${link.label}`}>
                 <link.icon className="h-5 w-5" />
               </Link>
             ))}

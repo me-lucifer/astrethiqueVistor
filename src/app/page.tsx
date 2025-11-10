@@ -24,43 +24,48 @@ import { StartNowModal } from "@/components/start-now-modal";
 import { getLocal } from "@/lib/local";
 import { getSession, setSession } from "@/lib/session";
 import { seedConsultants } from "@/lib/consultants-seeder";
-
-const categories = [
-    { name: "Love", icon: Heart, description: "Focused guidance on relationships.", query: "Love" },
-    { name: "Work", icon: Briefcase, description: "Focused guidance on career.", query: "Work" },
-    { name: "Health", icon: HeartPulse, description: "Focused guidance on well-being.", query: "Health" },
-    { name: "Money", icon: CircleDollarSign, description: "Focused guidance on finances.", query: "Money" },
-];
+import { useLanguage } from "@/contexts/language-context";
+import { translations } from "@/lib/translations";
 
 const trustItems = [
-    { icon: UserCheck, text: "Admin-approved & KYC-verified consultants" },
-    { icon: Lock, text: "GDPR-compliant data" },
-    { icon: ShieldCheck, text: "Transparent session details before you start" }
+    { icon: UserCheck, text: "trustPillar1" },
+    { icon: Lock, text: "trustPillar2" },
+    { icon: ShieldCheck, text: "trustPillar3" }
 ];
 
-const valuePillars = [
-    {
-      icon: Gift,
-      title: "Free Events & Content",
-      description: "Enjoy free access to conferences, articles, and podcasts."
-    },
-    {
-      icon: Wallet,
-      title: "Prepaid Wallet & Live Meter",
-      description: "For private sessions, top up once and watch your balance."
-    },
-    {
-      icon: Lock,
-      title: "Optional Budget Lock",
-      description: "Cap monthly spend; enable one emergency top-up if needed."
-    }
-];
 
 export default function Home() {
   const [isHoroscopeModalOpen, setIsHoroscopeModalOpen] = useState(false);
   const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
   const [showRegistrationBanner, setShowRegistrationBanner] = useState(false);
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const t = translations[language];
+
+  const categories = [
+    { name: t.catLove, icon: Heart, description: t.catLoveDesc, query: "Love" },
+    { name: t.catWork, icon: Briefcase, description: t.catWorkDesc, query: "Work" },
+    { name: t.catHealth, icon: HeartPulse, description: t.catHealthDesc, query: "Health" },
+    { name: t.catMoney, icon: CircleDollarSign, description: t.catMoneyDesc, query: "Money" },
+];
+
+  const valuePillars = [
+    {
+      icon: Gift,
+      title: "pillar1Title",
+      description: "pillar1Desc"
+    },
+    {
+      icon: Wallet,
+      title: "pillar2Title",
+      description: "pillar2Desc"
+    },
+    {
+      icon: Lock,
+      title: "pillar3Title",
+      description: "pillar3Desc"
+    }
+  ];
 
   useEffect(() => {
     // Seed consultant data if it doesn't exist
@@ -119,14 +124,14 @@ export default function Home() {
         <div className="relative z-10 container py-24 sm:py-32">
           <div className="mx-auto max-w-3xl">
             <h1 className="font-headline text-4xl font-bold tracking-tight text-white sm:text-6xl drop-shadow-md">
-              Guidance you can feel good about.
+              {t.heroHeadline}
             </h1>
             <p className="mt-6 text-lg leading-8 text-white/90 drop-shadow-sm">
-              Speak with vetted consultants by chat, audio, or video — with budget-friendly options and GDPR-respectful practices.
+              {t.heroSub}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="transition-transform motion-safe:hover:scale-[1.01] w-full sm:w-auto" onClick={() => setIsStartNowModalOpen(true)}>
-                Start Now
+                {t.startNow}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button
@@ -136,11 +141,11 @@ export default function Home() {
                 onClick={() => setIsHoroscopeModalOpen(true)}
               >
                 <Sparkles className="mr-2 h-5 w-5" />
-                Check Free Daily Horoscope
+                {t.checkHoroscope}
               </Button>
             </div>
             <div className="mt-8 text-xs text-white/70">
-              <p>Transparent per-minute pricing for private sessions. Optional monthly ‘Budget Lock’.</p>
+              <p>{t.heroTiny}</p>
             </div>
           </div>
         </div>
@@ -150,10 +155,10 @@ export default function Home() {
         <div className="container">
           <div className="text-center max-w-3xl mx-auto mb-12">
             <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Clarity and Control, by Design.
+              {t.valueHeadline}
             </h2>
             <p className="mt-4 text-lg text-foreground/80">
-              Our commitment to ethical, transparent practices empowers you to connect with confidence.
+              {t.valueSub}
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
@@ -164,18 +169,18 @@ export default function Home() {
                     <div className="bg-primary/10 p-3 rounded-full border border-primary/20">
                       <pillar.icon className="h-8 w-8 text-primary" />
                     </div>
-                    <CardTitle className="font-headline text-lg">{pillar.title}</CardTitle>
+                    <CardTitle className="font-headline text-lg">{t[pillar.title as keyof typeof t]}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
                     <p className="text-sm text-foreground/70 flex items-center justify-center gap-1">
-                        <span>{pillar.description.split(';')[0]}</span>
-                        {pillar.title === "Optional Budget Lock" && (
+                        <span>{t[pillar.description as keyof typeof t].split(';')[0]}</span>
+                        {pillar.title === "pillar3Title" && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Info className="h-4 w-4 cursor-pointer" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Cap monthly spend; one emergency top-up may apply, configured by admin.</p>
+                              <p>{t[pillar.description as keyof typeof t].split(';')[1]}</p>
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -192,10 +197,10 @@ export default function Home() {
         <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    Find the Right Guidance, Faster.
+                    {t.catHeadline}
                 </h2>
                 <p className="mt-4 text-lg text-foreground/80">
-                    Focus on what matters most to you right now. Our consultants cover a wide range of life's challenges and questions.
+                    {t.catSub}
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -218,10 +223,10 @@ export default function Home() {
         <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    Connect with a Trusted Expert
+                    {t.consultantHeadline}
                 </h2>
                 <p className="mt-4 text-lg text-foreground/80">
-                    Our consultants are here to provide clarity and support, whenever you need it.
+                    {t.consultantSub}
                 </p>
             </div>
             <FeaturedConsultants showFilters={false} />
@@ -232,10 +237,10 @@ export default function Home() {
         <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    Upcoming Conferences
+                    {t.confHeadline}
                 </h2>
                 <p className="mt-4 text-lg text-foreground/80">
-                    Join live events hosted by our experts to deepen your understanding.
+                    {t.confSub}
                 </p>
             </div>
             <UpcomingConferences />
@@ -246,10 +251,10 @@ export default function Home() {
         <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    Insights from our Content Hub
+                    {t.contentHeadline}
                 </h2>
                 <p className="mt-4 text-lg text-foreground/80">
-                    Explore articles and podcasts from our experts to gain clarity and perspective.
+                    {t.contentSub}
                 </p>
             </div>
             <FeaturedContent />
@@ -262,14 +267,14 @@ export default function Home() {
             {trustItems.map((item, index) => (
               <div key={index} className="flex flex-col md:flex-row items-center gap-4">
                 <item.icon className="h-8 w-8 text-primary shrink-0" />
-                <p className="text-foreground/80">{item.text}</p>
+                <p className="text-foreground/80">{t[item.text as keyof typeof t]}</p>
               </div>
             ))}
           </div>
           <div className="text-center mt-8">
             <Button variant="link" asChild>
                 <Link href="/how-it-works#trust">
-                    Learn more <ArrowRight className="ml-2 h-4 w-4" />
+                    {t.learnMore} <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
             </Button>
           </div>
