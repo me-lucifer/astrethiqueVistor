@@ -76,6 +76,13 @@ const ratingFilters = [
     { value: "4", label: "4.0+" },
     { value: "4.5", label: "4.5+" },
 ];
+const sortOptions = {
+    soonest: "Soonest",
+    price_asc: "Price (low to high)",
+    host_rating_desc: "Host Rating",
+};
+
+type SortKey = keyof typeof sortOptions;
 
 
 export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: string }) {
@@ -98,6 +105,12 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         if (typeof window === "undefined") return defaultFilters;
         const savedFilters = sessionStorage.getItem('discover.conferences.filters');
         return savedFilters ? JSON.parse(savedFilters) : defaultFilters;
+    });
+    
+    const [sort, setSort] = useState<SortKey>(() => {
+        if(typeof window === "undefined") return "soonest";
+        const savedSort = sessionStorage.getItem('discover.conferences.sort');
+        return savedSort ? (savedSort as SortKey) : 'soonest';
     });
 
      useEffect(() => {
@@ -131,19 +144,18 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
       })
     }, [initialQuery]);
 
-    const createQueryString = useCallback((newFilters: Partial<Filters>) => {
-        const current = new URLSearchParams(Array.from(searchParams.entries()));
-        const allFilters = { ...filters, ...newFilters };
-        // This can be extended to update URL based on filters
-        return current.toString();
-    }, [searchParams, filters]);
-
     const updateFilters = (newFilters: Partial<Filters>) => {
         startTransition(() => {
             const updated = { ...filters, ...newFilters };
             setFilters(updated);
             sessionStorage.setItem('discover.conferences.filters', JSON.stringify(updated));
-            // router.push(`${pathname}?${createQueryString(newFilters)}`, { scroll: false });
+        });
+    };
+    
+    const updateSort = (newSort: SortKey) => {
+        startTransition(() => {
+            setSort(newSort);
+            sessionStorage.setItem('discover.conferences.sort', newSort);
         });
     };
 
@@ -217,13 +229,24 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         if (filters.recordingAvailable) {
             result = result.filter(c => c.recordingAvailable);
         }
+        
+        // Sorting
+        result.sort((a, b) => {
+            switch(sort) {
+                case 'price_asc':
+                    return (a.price ?? 0) - (b.price ?? 0);
+                case 'host_rating_desc':
+                    return b.hostRating - a.hostRating;
+                case 'soonest':
+                default:
+                     return new Date(a.dateISO).getTime() - new Date(b.dateISO).getTime();
+            }
+        })
 
-
-        result.sort((a, b) => new Date(a.dateISO).getTime() - new Date(b.dateISO).getTime());
 
         return result;
 
-    }, [allConferences, filters, query]);
+    }, [allConferences, filters, query, sort]);
     
     const handleRsvp = (conf: Conference) => {
         let updatedRsvps;
@@ -401,95 +424,116 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
 
     return (
        <>
-            {isDesktop ? <FilterControls /> : mobileSheet}
+            {isDesktop ? <FilterControls /> : null}
 
-            <main role="status" aria-live="polite">
-                {isLoading ? (
-                     <div className="space-y-4">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                            <Card key={i}><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-1/2 mt-2" /></CardContent><CardFooter><Skeleton className="h-8 w-24" /></CardFooter></Card>
-                        ))}
+            <main className="w-full">
+                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                    <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
+                        Showing {filteredConferences.length} conferences
+                    </p>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        {!isDesktop && mobileSheet}
+                        <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
+                            <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort by">
+                                <SelectValue placeholder="Sort by..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {Object.entries(sortOptions).map(([key, value]) => (
+                                    <SelectItem key={key} value={key}>{value}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                ) : filteredConferences.length > 0 ? (
-                    <div className="space-y-6">
-                        {filteredConferences.map((conference) => {
-                            const rsvpDetails = getRsvp(conference.id);
-                            return (
-                            <Card key={conference.id} className={cn("transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card relative overflow-hidden", isStartingSoon(conference.dateISO) && "border-primary/50")}>
-                                {isStartingSoon(conference.dateISO) && (
-                                    <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-primary to-primary/50"></div>
-                                )}
-                                <div className={cn(isStartingSoon(conference.dateISO) && "pl-4")}>
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between gap-4">
-                                            <CardTitle className="font-headline text-xl">{conference.title}</CardTitle>
-                                            <div className="flex items-center gap-2">
-                                                {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting soon</Badge>}
-                                                <Badge variant="outline" className="hidden sm:flex items-center gap-1.5"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {conference.hostRating.toFixed(1)}</Badge>
+                </div>
+
+                <div role="status" aria-live="polite">
+                    {isLoading ? (
+                         <div className="space-y-4">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <Card key={i}><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-1/2 mt-2" /></CardContent><CardFooter><Skeleton className="h-8 w-24" /></CardFooter></Card>
+                            ))}
+                        </div>
+                    ) : filteredConferences.length > 0 ? (
+                        <div className="space-y-6">
+                            {filteredConferences.map((conference) => {
+                                const rsvpDetails = getRsvp(conference.id);
+                                return (
+                                <Card key={conference.id} className={cn("transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card relative overflow-hidden", isStartingSoon(conference.dateISO) && "border-primary/50")}>
+                                    {isStartingSoon(conference.dateISO) && (
+                                        <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-primary to-primary/50"></div>
+                                    )}
+                                    <div className={cn(isStartingSoon(conference.dateISO) && "pl-4")}>
+                                        <CardHeader>
+                                            <div className="flex items-start justify-between gap-4">
+                                                <CardTitle className="font-headline text-xl">{conference.title}</CardTitle>
+                                                <div className="flex items-center gap-2">
+                                                    {isStartingSoon(conference.dateISO) && <Badge variant="default">Starting soon</Badge>}
+                                                    <Badge variant="outline" className="hidden sm:flex items-center gap-1.5"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {conference.hostRating.toFixed(1)}</Badge>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="grid gap-4">
-                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-foreground/80">
-                                            <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-primary" /><span>{formatDate(conference.dateISO)}</span></div>
-                                            <div className="flex items-center gap-2"><span className="font-semibold">Host:</span><span>{conference.hostAlias}</span></div>
-                                        </div>
-                                        <p className="text-sm text-foreground/70">{conference.excerpt}</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            <Badge variant="outline">{conference.language}</Badge>
-                                            <Badge variant="outline">{conference.type}</Badge>
-                                            <Badge variant="outline">{conference.price === 0 ? "Free" : `€${conference.price}`}</Badge>
-                                            {conference.tags.map(tag => (
-                                                <Badge key={tag} variant="secondary" className="bg-secondary/10 text-secondary-foreground/80">{tag}</Badge>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
-                                        <div className="flex gap-2">
-                                            <Button size="sm" onClick={() => handleRsvp(conference)} variant={isRsvpd(conference.id) ? "secondary" : "default"}>
-                                                {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
-                                                {isRsvpd(conference.id) ? "Going" : "RSVP"}
-                                            </Button>
-                                            <Sheet>
-                                                <SheetTrigger asChild><Button variant="outline" size="sm">Details</Button></SheetTrigger>
-                                                <SheetContent>
-                                                    <SheetHeader>
-                                                        <SheetTitle>{conference.title}</SheetTitle>
-                                                        <SheetDescription>Hosted by {conference.hostAlias} on {formatDate(conference.dateISO)}</SheetDescription>
-                                                    </SheetHeader>
-                                                    <div className="py-4 space-y-4">
-                                                        <p>{conference.excerpt}</p>
-                                                        <p className="text-sm text-muted-foreground">Capacity: {conference.capacity} spots.</p>
-                                                        <p>This event provides an in-depth look at the topic, offering valuable insights and practical advice. Join our expert host for an interactive and enlightening session.</p>
-                                                    </div>
-                                                </SheetContent>
-                                            </Sheet>
-                                            <Popover>
-                                                <PopoverTrigger asChild><Button variant="outline" size="sm" disabled={!isRsvpd(conference.id)}><Bell className="mr-2 h-4 w-4" /> Remind</Button></PopoverTrigger>
-                                                <PopoverContent className="w-60">
-                                                    <div className="grid gap-4">
-                                                        <div className="space-y-2"><h4 className="font-medium leading-none">Reminders</h4><p className="text-sm text-muted-foreground">Set reminders for this event.</p></div>
-                                                        <div className="grid gap-2">
-                                                            <div className="flex items-center space-x-2"><Checkbox id={`remind24-${conference.id}`} checked={rsvpDetails?.remind24h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind24h", c as boolean)} /><Label htmlFor={`remind24-${conference.id}`}>24 hours before</Label></div>
-                                                            <div className="flex items-center space-x-2"><Checkbox id={`remind1-${conference.id}`} checked={rsvpDetails?.remind1h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind1h", c as boolean)}/><Label htmlFor={`remind1-${conference.id}`}>1 hour before</Label></div>
-                                                            <div className="flex items-center space-x-2"><Checkbox id={`remind10-${conference.id}`} checked={rsvpDetails?.remind10m} onCheckedChange={(c) => handleReminderChange(conference.id, "remind10m", c as boolean)}/><Label htmlFor={`remind10-${conference.id}`}>10 minutes before</Label></div>
+                                        </CardHeader>
+                                        <CardContent className="grid gap-4">
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-foreground/80">
+                                                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-primary" /><span>{formatDate(conference.dateISO)}</span></div>
+                                                <div className="flex items-center gap-2"><span className="font-semibold">Host:</span><span>{conference.hostAlias}</span></div>
+                                            </div>
+                                            <p className="text-sm text-foreground/70">{conference.excerpt}</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                <Badge variant="outline">{conference.language}</Badge>
+                                                <Badge variant="outline">{conference.type}</Badge>
+                                                <Badge variant="outline">{conference.price === 0 ? "Free" : `€${conference.price}`}</Badge>
+                                                {conference.tags.map(tag => (
+                                                    <Badge key={tag} variant="secondary" className="bg-secondary/10 text-secondary-foreground/80">{tag}</Badge>
+                                                ))}
+                                            </div>
+                                        </CardContent>
+                                        <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
+                                            <div className="flex gap-2">
+                                                <Button size="sm" onClick={() => handleRsvp(conference)} variant={isRsvpd(conference.id) ? "secondary" : "default"}>
+                                                    {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
+                                                    {isRsvpd(conference.id) ? "Going" : "RSVP"}
+                                                </Button>
+                                                <Sheet>
+                                                    <SheetTrigger asChild><Button variant="outline" size="sm">Details</Button></SheetTrigger>
+                                                    <SheetContent>
+                                                        <SheetHeader>
+                                                            <SheetTitle>{conference.title}</SheetTitle>
+                                                            <SheetDescription>Hosted by {conference.hostAlias} on {formatDate(conference.dateISO)}</SheetDescription>
+                                                        </SheetHeader>
+                                                        <div className="py-4 space-y-4">
+                                                            <p>{conference.excerpt}</p>
+                                                            <p className="text-sm text-muted-foreground">Capacity: {conference.capacity} spots.</p>
+                                                            <p>This event provides an in-depth look at the topic, offering valuable insights and practical advice. Join our expert host for an interactive and enlightening session.</p>
                                                         </div>
-                                                    </div>
-                                                </PopoverContent>
-                                            </Popover>
-                                        </div>
-                                    </CardFooter>
-                                </div>
-                            </Card>
-                        )})}
-                    </div>
-                ) : (
-                    <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg lg:col-span-3">
-                        <h3 className="font-headline text-2xl font-bold">No matching conferences.</h3>
-                        <p className="text-muted-foreground mt-2 mb-4">Try widening your filters.</p>
-                        <Button onClick={handleResetFilters}>Clear filters</Button>
-                    </div>
-                )}
+                                                    </SheetContent>
+                                                </Sheet>
+                                                <Popover>
+                                                    <PopoverTrigger asChild><Button variant="outline" size="sm" disabled={!isRsvpd(conference.id)}><Bell className="mr-2 h-4 w-4" /> Remind</Button></PopoverTrigger>
+                                                    <PopoverContent className="w-60">
+                                                        <div className="grid gap-4">
+                                                            <div className="space-y-2"><h4 className="font-medium leading-none">Reminders</h4><p className="text-sm text-muted-foreground">Set reminders for this event.</p></div>
+                                                            <div className="grid gap-2">
+                                                                <div className="flex items-center space-x-2"><Checkbox id={`remind24-${conference.id}`} checked={rsvpDetails?.remind24h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind24h", c as boolean)} /><Label htmlFor={`remind24-${conference.id}`}>24 hours before</Label></div>
+                                                                <div className="flex items-center space-x-2"><Checkbox id={`remind1-${conference.id}`} checked={rsvpDetails?.remind1h} onCheckedChange={(c) => handleReminderChange(conference.id, "remind1h", c as boolean)}/><Label htmlFor={`remind1-${conference.id}`}>1 hour before</Label></div>
+                                                                <div className="flex items-center space-x-2"><Checkbox id={`remind10-${conference.id}`} checked={rsvpDetails?.remind10m} onCheckedChange={(c) => handleReminderChange(conference.id, "remind10m", c as boolean)}/><Label htmlFor={`remind10-${conference.id}`}>10 minutes before</Label></div>
+                                                            </div>
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </div>
+                                        </CardFooter>
+                                    </div>
+                                </Card>
+                            )})}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
+                            <h3 className="font-headline text-2xl font-bold">No matching conferences.</h3>
+                            <p className="text-muted-foreground mt-2 mb-4">Try widening your filters.</p>
+                            <Button onClick={handleResetFilters}>Clear filters</Button>
+                        </div>
+                    )}
+                </div>
             </main>
        </>
     );
