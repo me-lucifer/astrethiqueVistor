@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, Bookmark, Mic, BookOpen, Clock, Eye, Calendar, Play, Youtube } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict, format } from 'date-fns';
 
 type CardProps = {
     item: ContentHubItem;
@@ -24,6 +24,9 @@ function formatViews(views: number): string {
     if (views === undefined || views === null || isNaN(views)) {
         return '0';
     }
+    if (views >= 10000) {
+        return (views / 1000).toFixed(0) + 'k';
+    }
     if (views >= 1000) {
         return (views / 1000).toFixed(1) + 'k';
     }
@@ -34,14 +37,22 @@ function formatDate(date: string): string {
     if (!date || isNaN(new Date(date).getTime())) {
         return '';
     }
-    return formatDistanceToNowStrict(new Date(date), { addSuffix: true });
+    return format(new Date(date), 'MMM dd, yyyy');
+}
+
+function formatLength(item: ContentHubItem): string {
+    if (item.type === 'article' && item.readMinutes) {
+        return `${item.readMinutes} min read`;
+    }
+    if (item.type === 'podcast' && item.durationMinutes) {
+        return `${item.durationMinutes} min`;
+    }
+    return '';
 }
 
 export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBookmark }: CardProps) {
     const router = useRouter();
     const isArticle = item.type === 'article';
-    const timeValue = isArticle ? item.readMinutes : item.durationMinutes;
-    const timeUnit = isArticle ? 'min read' : 'min';
     const detailUrl = `/content-hub/${item.type}/${item.id}`;
 
     const handleAuthorClick = (e: React.MouseEvent) => {
@@ -70,6 +81,8 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
     }
 
     const isPromotedAndActive = item.promotedUntil && new Date(item.promotedUntil) > new Date();
+    
+    const metaAriaLabel = `Views: ${formatViews(item.views)}. Published on: ${formatDate(item.publishedAt)}. Length: ${formatLength(item)}.`;
 
     return (
         <Card className="group overflow-hidden flex flex-col h-full bg-card/50 hover:bg-card transition-shadow duration-300">
@@ -100,10 +113,14 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                             {item.title}
                         </h3>
 
-                        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                        <div 
+                            role="group"
+                            aria-label={metaAriaLabel}
+                            className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                        >
                             <span className="flex items-center gap-1.5" title={`${item.views} views`}><Eye className="h-3.5 w-3.5" /> {formatViews(item.views)}</span>
                             <span className="flex items-center gap-1.5" title={new Date(item.publishedAt).toLocaleDateString()}><Calendar className="h-3.5 w-3.5" /> {formatDate(item.publishedAt)}</span>
-                            {timeValue && <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {timeValue} {timeUnit}</span>}
+                            <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {formatLength(item)}</span>
                         </div>
 
                         <p className="text-sm text-muted-foreground mt-2 line-clamp-2 h-[40px]">
