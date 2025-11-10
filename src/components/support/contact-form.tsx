@@ -68,22 +68,25 @@ ${data.description}
     setSubmittedEmail(data.email);
     setIsSuccess(true);
     form.reset({
-      ...data, // keep user's details
+      ...form.getValues(),
       subject: '',
       description: ''
     });
 
-    // Scroll to the top of the form to show the success message
     const formElement = document.getElementById('contact-support');
     formElement?.scrollIntoView({ behavior: 'smooth' });
-
   };
-
-  const onInvalidSubmit = () => {
+  
+  const onInvalidSubmit = (errors: any) => {
     toast({
       variant: "destructive",
       title: "Please fix the highlighted fields.",
     });
+    const firstErrorField = Object.keys(errors)[0];
+    if(firstErrorField) {
+      const element = document.getElementsByName(firstErrorField)[0];
+      element?.focus();
+    }
   };
   
   const descriptionValue = form.watch("description");
@@ -111,7 +114,7 @@ ${data.description}
         <Card>
           <CardContent className="p-6">
             {isSuccess && (
-                 <Alert className="mb-6 border-success text-success [&>svg]:text-success">
+                 <Alert aria-live="polite" className="mb-6 border-success text-success [&>svg]:text-success">
                     <CheckCircle className="h-4 w-4" />
                     <AlertTitle>Thanks!</AlertTitle>
                     <AlertDescription>
