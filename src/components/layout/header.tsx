@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Gem } from 'lucide-react';
+import { Menu, Gem, Search } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import {
   DropdownMenu,
@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { GlobalSearch } from '../global-search';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -58,10 +57,6 @@ export function Header() {
           </nav>
         </div>
         
-        <div className="flex-1 max-w-xl hidden md:flex">
-          <GlobalSearch />
-        </div>
-
         <div className="hidden lg:flex items-center gap-2">
             <Button variant="ghost" asChild>
               <Link href="/login">Login</Link>
@@ -100,12 +95,9 @@ export function Header() {
                     <span>ASTRETHIQUE</span>
                  </Link>
               </SheetHeader>
-              <div className='p-4'>
-                <GlobalSearch />
-              </div>
-              <nav className="flex-1 px-4 flex flex-col gap-2">
+              <nav className="flex-1 px-4 flex flex-col gap-2 pt-4">
                 {navLinks.map((link) => {
-                   const isActive = pathname === link.href;
+                   const isActive = pathname.startsWith(link.href);
                   return (
                     <Button key={link.href} variant={isActive ? "secondary" : "ghost"} className="justify-start text-base" asChild>
                       <Link href={link.href}>

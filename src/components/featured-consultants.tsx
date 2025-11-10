@@ -136,6 +136,10 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             }
             updateFilters(mergedFilters);
         }
+        const savedQuery = getSession<string>('discover.search.v1');
+        if (savedQuery) {
+            setQuery(savedQuery);
+        }
     }, []);
 
     useEffect(() => {
@@ -167,7 +171,20 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         const favorites = getSession<string[]>("discover.favorites.v1") || [];
         const langLevels = { basic: 1, fluent: 2, native: 3 };
 
-        let result = allConsultants.filter(c => {
+        let result = allConsultants;
+
+        // Search Query Filter
+        if (query && query.length > 0) {
+            const lowerCaseQuery = query.toLowerCase();
+            result = result.filter(c => 
+                c.name.toLowerCase().includes(lowerCaseQuery) ||
+                c.specialties.some(s => s.toLowerCase().includes(lowerCaseQuery)) ||
+                c.bio.toLowerCase().includes(lowerCaseQuery)
+            );
+        }
+
+        // Standard Filters
+        result = result.filter(c => {
             if (filters.myFavorites && !favorites.includes(c.id)) return false;
             
             if (filters.specialties.length > 0 && !filters.specialties.some(s => c.specialties.includes(s as any))) return false;
@@ -236,7 +253,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         });
         
         return result;
-    }, [allConsultants, filters, sort]);
+    }, [allConsultants, filters, sort, query]);
 
     const handleResetFilters = () => {
         const newFilters = {...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])};
@@ -452,7 +469,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                 )}
                 <div role="status" aria-live="polite">
                     {isLoading || allConsultants.length === 0 ? (
-                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {Array.from({ length: showFilters ? 8 : 4 }).map((_, i) => (
                                  <div key={i} className="space-y-3">
                                     <Skeleton className="h-[225px] w-full rounded-xl" />
