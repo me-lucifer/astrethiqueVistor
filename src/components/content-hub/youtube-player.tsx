@@ -1,6 +1,6 @@
 
 import { ContentHubItem } from "@/lib/content-hub-seeder";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import Link from "next/link";
 import { Button } from "../ui/button";
 
@@ -69,5 +69,3 @@ export const YouTubePlayer = ({ item }: { item: ContentHubItem }) => {
         </div>
     );
 }
-
-    
