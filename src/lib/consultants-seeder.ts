@@ -108,7 +108,7 @@ export const seedConsultants = () => {
         cloneConsultant(baseConsultants[3], 'samuel-jones-clone', 'Samuel Jones', 7.25, 'EN'),
         cloneConsultant(baseConsultants[4], 'eva-green-clone', 'Eva Green', 1.99, 'FR'),
         cloneConsultant(baseConsultants[5], 'liam-chen-clone', 'Liam Chen', 6.50, 'EN'),
-        cloneConsultant(baseConsultants[6], 'sofia-rodriguez-clone',- 'Sofia Rodriguez', 4.00, 'BOTH'),
+        cloneConsultant(baseConsultants[6], 'sofia-rodriguez-clone', 'Sofia Rodriguez', 4.00, 'BOTH'),
         cloneConsultant(baseConsultants[7], 'noah-patel-clone', 'Noah Patel', 8.00, 'EN'),
         cloneConsultant(baseConsultants[8], 'amelie-lacroix-clone', 'Amélie Lacroix', 3.00, 'FR'),
         cloneConsultant(baseConsultants[9], 'ethan-williams-clone', 'Ethan Williams', 5.50, 'EN'),
