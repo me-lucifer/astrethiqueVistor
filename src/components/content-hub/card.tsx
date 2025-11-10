@@ -8,9 +8,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Bookmark, Mic, BookOpen, Clock } from "lucide-react";
+import { Heart, Bookmark, Mic, BookOpen, Clock, Eye, Calendar, Play, Youtube } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { formatDistanceToNowStrict } from 'date-fns';
 
 type CardProps = {
     item: ContentHubItem;
@@ -19,11 +20,23 @@ type CardProps = {
     onToggleBookmark: (itemId: string) => void;
 };
 
+function formatViews(views: number): string {
+    if (views >= 1000) {
+        return (views / 1000).toFixed(1) + 'k';
+    }
+    return views.toString();
+}
+
+function formatDate(date: string): string {
+    return formatDistanceToNowStrict(new Date(date), { addSuffix: true });
+}
+
 export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBookmark }: CardProps) {
     const router = useRouter();
     const isArticle = item.type === 'article';
     const timeValue = isArticle ? item.readMinutes : item.durationMinutes;
     const timeUnit = isArticle ? 'min read' : 'min';
+    const detailUrl = `/content-hub/${item.type}/${item.id}`;
 
     const handleAuthorClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -49,8 +62,6 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
     }
 
     const isPromotedAndActive = item.promoted && item.promotionDaysRemaining > 0;
-    
-    const detailUrl = `/content-hub/${item.type}/${item.id}`;
 
     return (
         <Card className="group overflow-hidden flex flex-col h-full bg-card/50 hover:bg-card transition-shadow duration-300">
@@ -77,20 +88,31 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
 
                 <CardContent className="p-4 flex-1 flex flex-col">
                     <div className="flex-1">
-                        <div className="flex flex-wrap gap-1 mb-2">
-                            {item.topics.map(topic => (
-                                <Badge key={topic} variant="outline" className="font-normal">{topic}</Badge>
-                            ))}
-                        </div>
                         <h3 className="font-headline text-lg font-bold leading-tight line-clamp-2 h-[56px] group-hover:text-primary">
                             {item.title}
                         </h3>
+
+                        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1.5" title={`${item.views} views`}><Eye className="h-3.5 w-3.5" /> {formatViews(item.views)}</span>
+                            <span className="flex items-center gap-1.5" title={new Date(item.datePublished).toLocaleDateString()}><Calendar className="h-3.5 w-3.5" /> {formatDate(item.datePublished)}</span>
+                            {timeValue && <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {timeValue} {timeUnit}</span>}
+                        </div>
+
                         <p className="text-sm text-muted-foreground mt-2 line-clamp-2 h-[40px]">
                             {item.excerpt}
                         </p>
+                        
+                        <div className="mt-3 flex flex-wrap gap-1">
+                            {item.topics.slice(0,3).map(topic => (
+                                <Badge key={topic} variant="outline" className="font-normal">{topic}</Badge>
+                            ))}
+                            {item.topics.length > 3 && (
+                                <Badge variant="outline" className="font-normal">+{item.topics.length - 3}</Badge>
+                            )}
+                        </div>
                     </div>
                     
-                    <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                         <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground">
                             <Avatar className="h-6 w-6">
                                 <AvatarImage src={item.author.avatarUrl} alt={item.author.name} />
@@ -98,27 +120,37 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                             </Avatar>
                             <span>{item.author.name}</span>
                         </button>
-                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {timeValue} {timeUnit}</span>
-                        <Badge variant="outline">{item.language}</Badge>
                     </div>
                 </CardContent>
 
                 <div className="p-4 pt-0 mt-auto border-t flex justify-between items-center">
-                    <Button variant="ghost" size="sm" onClick={handleLikeClick} className={cn("gap-2", item.liked && "text-destructive")}>
-                        <Heart className={cn("h-4 w-4", item.liked && "fill-current")} />
-                        {item.likes}
-                    </Button>
-                    <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmarkClick}>
+                    <div className="flex items-center">
+                        <Button variant="ghost" size="sm" onClick={handleLikeClick} className={cn("gap-2", item.liked && "text-destructive")} aria-label={item.liked ? 'Unlike' : 'Like'}>
+                            <Heart className={cn("h-4 w-4", item.liked && "fill-current")} />
+                            {item.likes}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmarkClick} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark'}>
                              <Bookmark className={cn("h-4 w-4", item.bookmarked && "fill-current text-primary")} />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={handleDetailClick}>
-                           {isArticle ? 'Read more' : 'Listen now'}
-                        </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {isArticle ? (
+                             <Button variant="outline" size="sm" onClick={handleDetailClick}>
+                                Read more
+                             </Button>
+                        ) : (
+                            <>
+                                <Button variant="secondary" size="sm" onClick={handleDetailClick}>
+                                    <Play className="mr-2 h-4 w-4" /> Open
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://youtube.com', '_blank')}}>
+                                    <Youtube className="mr-2 h-4 w-4" /> YouTube
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
             </Link>
         </Card>
     );
 }
-

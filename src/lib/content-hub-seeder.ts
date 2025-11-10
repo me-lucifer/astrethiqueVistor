@@ -17,6 +17,7 @@ export type ContentHubItem = {
         name: string;
         avatarUrl: string;
     };
+    views: number;
     readMinutes?: number;
     durationMinutes?: number;
     featured: boolean;
@@ -72,6 +73,7 @@ const createItem = (index: number): ContentHubItem => {
         topics: [topics[index % topics.length], topics[(index + 2) % topics.length]],
         language: index % 4 === 0 ? "FR" : "EN",
         author,
+        views: Math.floor(Math.random() * 25000) + 500,
         readMinutes: isPodcast ? undefined : Math.floor(Math.random() * 5) + 3, // 3-7 min read
         durationMinutes: isPodcast ? Math.floor(Math.random() * 21) + 10 : undefined, // 10-30 min podcast
         featured: index < 2,
