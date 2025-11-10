@@ -1,17 +1,20 @@
 
-export interface ContentItem {
+
+export interface BaseContentItem {
   id: string;
   title: string;
   tags: string[];
-  likes: number;
   cover: string;
 }
+export interface ContentItem extends BaseContentItem {
+  likes?: number;
+}
 
-export interface Podcast extends ContentItem {
+export interface Podcast extends BaseContentItem {
   duration: string;
 }
 
-export interface Conference extends ContentItem {
+export interface Conference extends BaseContentItem {
   date: string;
   time: string;
 }
@@ -45,8 +48,8 @@ export interface ConsultantProfile {
   nextSlots: string[];
   content: {
     articles: ContentItem[];
-    podcasts: Podcast[];
-    conferences: Conference[];
+    podcasts: (ContentItem & { duration: number })[];
+    conferences: (BaseContentItem & { dateISO: string })[];
   };
   reviews: Review[];
   favorite: boolean;

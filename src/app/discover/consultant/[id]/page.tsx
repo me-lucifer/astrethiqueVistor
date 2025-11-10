@@ -24,6 +24,9 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { ContentItem, seedContentItems } from '@/lib/content-seeder';
+import { Conference, seedConferences } from '@/lib/conferences-seeder';
+import { getLocal } from '@/lib/local';
 
 export default function Page() {
   const params = useParams();
@@ -45,6 +48,12 @@ export default function Page() {
                 setConsultant(foundConsultant);
                 const isFavorite = getSession<string[]>("consultantFavorites")?.includes(foundConsultant.id) || false;
                 
+                // Get seeded content
+                seedContentItems();
+                seedConferences();
+                const allContent = getLocal<ContentItem[]>("contentItems") || [];
+                const allConferences = getLocal<Conference[]>("conferences") || [];
+
                 // Create profile object from consultant data
                 const consultantProfile: ConsultantProfile = {
                     id: foundConsultant.id,
@@ -66,9 +75,9 @@ export default function Page() {
                     },
                     nextSlots: foundConsultant.availability.slots,
                     content: {
-                        articles: [], // simplified for this page
-                        podcasts: [],
-                        conferences: []
+                        articles: allContent.filter(c => c.type === 'Article' && c.author === foundConsultant.name.split(' ')[0]).slice(0,2),
+                        podcasts: allContent.filter(c => c.type === 'Podcast' && c.author === foundConsultant.name.split(' ')[0]).slice(0,1),
+                        conferences: allConferences.filter(c => c.hostAlias === foundConsultant.name.split(' ')[0]).slice(0,1),
                     },
                     reviews: foundConsultant.reviews.map((r, i) => ({
                         id: `${foundConsultant.id}-review-${i}`,
