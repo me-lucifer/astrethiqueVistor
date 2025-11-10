@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
@@ -609,11 +610,19 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                     <div className="text-sm text-muted-foreground">
                                                         <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> <span>{formatDate(conference.dateISO, conference.durationMin)}</span></div>
                                                     </div>
-
-                                                    <div className="flex items-center gap-3 pt-2">
+                                                    <div className="flex items-center gap-3 pt-2 relative z-10">
                                                         <Image src={`https://i.pravatar.cc/40?u=${encodeURIComponent(conference.hostAlias)}`} alt={conference.hostAlias} width={40} height={40} className="rounded-full" />
                                                         <div>
-                                                            <Link href={`/discover/consultant/${conference.hostId}`} className="font-semibold hover:underline">{conference.hostAlias}</Link>
+                                                            <Link
+                                                                href={`/discover/consultant/${conference.hostId}`}
+                                                                className="font-semibold hover:underline"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    router.push(`/discover/consultant/${conference.hostId}`);
+                                                                }}
+                                                            >
+                                                                {conference.hostAlias}
+                                                            </Link>
                                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                                 <StarRating rating={conference.hostRating} size={14} />
                                                                 <span>({conference.hostRating})</span>
