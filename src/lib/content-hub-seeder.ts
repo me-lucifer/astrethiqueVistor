@@ -2,14 +2,7 @@
 "use client";
 
 import { getLocal, setLocal } from "./local";
-
-export type Comment = {
-  id: string;
-  contentId: string;
-  displayName: string;
-  text: string;
-  createdAt: string; // ISO
-};
+import type { Comment } from "./comments";
 
 export type ContentHubItem = {
   id: string;
@@ -112,12 +105,16 @@ const createItem = (index: number): ContentHubItem => {
 
 const createInitialComments = (items: ContentHubItem[]) => {
     const commentsByContentId: { [key: string]: Comment[] } = {};
+    const guestUser = { id: 'guest', name: 'Guest' };
     items.forEach(item => {
         if (item.deleted || !item.commentCount) return;
         commentsByContentId[item.id] = Array.from({ length: item.commentCount }).map((_, i) => ({
             id: `comment-${item.id}-${i + 1}`,
             contentId: item.id,
-            displayName: i % 2 === 0 ? 'Alex Doe' : 'Jordan Smith',
+            author: {
+                id: `guest-${i}`,
+                name: i % 2 === 0 ? 'Alex Doe' : 'Jordan Smith',
+            },
             text: i % 2 === 0 ? 'This was incredibly insightful, thank you for sharing!' : 'I never thought about it that way before. This really changed my perspective.',
             createdAt: new Date(new Date(item.publishedAt).getTime() + (1000 * 60 * 60 * 24 * (i + 1))).toISOString(),
         }));
@@ -230,9 +227,8 @@ export const seedContentHub = () => {
 
         const initialComments = createInitialComments(allItems);
         setLocal("ch_items", allItems);
-        setLocal("contentHub_comments_v1", initialComments);
+        // Use the new key for comments, but it will be migrated in comments.ts
+        setLocal("astrethique_comments_v1", initialComments);
         setLocal("ch_seeded_v3", true);
     }
 };
-
-    

@@ -6,7 +6,9 @@ import { useParams, useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getLocal, setLocal } from '@/lib/local';
-import { ContentHubItem, Comment } from '@/lib/content-hub-seeder';
+import { ContentHubItem } from '@/lib/content-hub-seeder';
+import { addComment as addCommentToStore, getComments } from '@/lib/comments';
+import type { Comment } from '@/lib/comments';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock, Eye, Calendar, BookOpen, Mic, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -100,9 +102,7 @@ export default function ContentDetailPage() {
 
             if (foundItem && !foundItem.deleted) {
                 setItem(foundItem);
-                const allComments = getLocal<{[key: string]: Comment[]}>('contentHub_comments_v1') || {};
-                const itemComments = allComments[itemId] || [];
-                itemComments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                const itemComments = getComments(itemId);
                 setComments(itemComments);
             } else {
                 setItem(null);
@@ -152,37 +152,24 @@ export default function ContentDetailPage() {
     const handleAddComment = useCallback((text: string) => {
         if (!item) return;
 
-        const user = getLocal<{displayName: string}>('user');
-        if (!user) {
+        const newComment = addCommentToStore(item.id, text);
+
+        if (newComment) {
+            setComments(prev => [newComment, ...prev]);
+
+            const updatedItem = { ...item, commentCount: (item.commentCount || 0) + 1 };
+            updateItemInSession(updatedItem);
+
             toast({
+                title: "Comment posted",
+            });
+        } else {
+             toast({
                 variant: "destructive",
                 title: "Authentication Error",
                 description: "You must be logged in to comment.",
             });
-            return;
         }
-
-        const newComment: Comment = {
-            id: `comment-${Date.now()}`,
-            contentId: item.id,
-            displayName: user.displayName,
-            createdAt: new Date().toISOString(),
-            text,
-        };
-        
-        const allComments = getLocal<{[key: string]: Comment[]}>('contentHub_comments_v1') || {};
-        const currentComments = allComments[item.id] || [];
-        const updatedComments = [newComment, ...currentComments];
-        
-        setLocal('contentHub_comments_v1', { ...allComments, [item.id]: updatedComments });
-        setComments(updatedComments);
-
-        const updatedItem = { ...item, commentCount: (item.commentCount || 0) + 1 };
-        updateItemInSession(updatedItem);
-
-        toast({
-            title: "Comment posted",
-        });
 
     }, [item, updateItemInSession, toast]);
 
@@ -271,17 +258,19 @@ export default function ContentDetailPage() {
                     </Link>
                     <article>
                         <header className="mb-8 space-y-4">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <Badge variant="secondary" className="gap-1.5 capitalize">
-                                    {item.type === 'article' ? <BookOpen className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                                    {item.type}
-                                </Badge>
-                                {item.tags.length > 0 && item.tags.map(topic => (
-                                    <Button key={topic} variant="link" className="p-0 h-auto" onClick={() => handleTopicClick(topic)}>
-                                        <Badge variant="outline">{topic}</Badge>
-                                    </Button>
-                                ))}
-                            </div>
+                             {item.tags.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Badge variant="secondary" className="gap-1.5 capitalize">
+                                        {item.type === 'article' ? <BookOpen className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                                        {item.type}
+                                    </Badge>
+                                    {item.tags.map(topic => (
+                                        <Button key={topic} variant="link" className="p-0 h-auto" onClick={() => handleTopicClick(topic)}>
+                                            <Badge variant="outline">{topic}</Badge>
+                                        </Button>
+                                    ))}
+                                </div>
+                            )}
                             
                             <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight">{item.title}</h1>
                             
@@ -406,5 +395,3 @@ export default function ContentDetailPage() {
         </div>
     );
 }
-
-    

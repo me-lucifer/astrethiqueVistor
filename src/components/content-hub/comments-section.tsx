@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Comment } from '@/lib/content-hub-seeder';
+import type { Comment } from '@/lib/comments';
 import { getLocal } from '@/lib/local';
+import { AuthUser } from '@/lib/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,12 +33,11 @@ const ITEMS_PER_PAGE = 5;
 export function CommentsSection({ contentId, comments, onAddComment }: CommentsSectionProps) {
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<{ displayName: string } | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     // In a real app, this would be context or a hook.
-    // For this prototype, we'll read from localStorage.
-    const storedUser = getLocal<{ displayName: string }>('user');
+    const storedUser = getLocal<AuthUser>('astrethique_auth_v1');
     if (storedUser) {
       setIsLoggedIn(true);
       setUser(storedUser);
@@ -71,7 +71,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
       </h2>
       
       <div className="mb-8">
-        {isLoggedIn ? (
+        {isLoggedIn && user ? (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -81,9 +81,10 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
-                            <AvatarFallback>{getInitials(user?.displayName || 'G')}</AvatarFallback>
+                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                         </Avatar>
-                        <span>Commenting as <span className="font-semibold">{user?.displayName}</span></span>
+                        <span>Commenting as <span className="font-semibold">{user.name}</span></span>
                     </FormLabel>
                     <FormControl>
                       <Textarea placeholder="Add a public comment..." {...field} />
@@ -93,7 +94,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
                 )}
               />
               <div className="flex justify-end">
-                <Button type="submit" disabled={!form.formState.isValid} aria-label="Post your comment">
+                <Button type="submit" disabled={!form.formState.isValid || form.formState.isSubmitting} aria-label="Post your comment">
                   Post Comment
                 </Button>
               </div>
@@ -121,12 +122,12 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
         {visibleComments.map((comment) => (
           <div key={comment.id} className="flex items-start gap-4">
             <Avatar>
-              <AvatarImage />
-              <AvatarFallback>{getInitials(comment.displayName)}</AvatarFallback>
+              <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
+              <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-semibold text-sm">{comment.displayName || "Guest"}</p>
+                <p className="font-semibold text-sm">{comment.author.name || "Guest"}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                 </p>
@@ -146,5 +147,3 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
     </section>
   );
 }
-
-    
