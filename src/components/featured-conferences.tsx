@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Conference, seedConferences } from "@/lib/conferences-seeder";
 import { getLocal, setLocal, seedOnce } from "@/lib/local";
@@ -54,7 +54,7 @@ const languages = ["EN", "FR"];
 const whenOptions = ["Today", "This week", "This month", "All"];
 
 
-export function FeaturedConferences() {
+export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: string }) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -63,8 +63,11 @@ export function FeaturedConferences() {
     const [allConferences, setAllConferences] = useState<Conference[]>([]);
     const [rsvps, setRsvps] = useState<Rsvp[]>([]);
     const { addNotification } = useNotifications();
-    const [isLoading, setIsLoading] = useState(true);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isPending, startTransition] = useTransition();
+    const isLoading = isPending;
+    const [query, setQuery] = useState(initialQuery);
+
 
     const [filters, setFilters] = useState<Filters>(() => {
         if (typeof window === "undefined") return defaultFilters;
@@ -101,8 +104,13 @@ export function FeaturedConferences() {
         setFilters(initialState);
         sessionStorage.setItem('discover.conferences.filters', JSON.stringify(initialState));
 
-        setIsLoading(false);
     }, [searchParams]);
+
+    useEffect(() => {
+      startTransition(() => {
+        setQuery(initialQuery);
+      })
+    }, [initialQuery]);
 
     const createQueryString = useCallback((newFilters: Partial<Filters>) => {
         const current = new URLSearchParams(Array.from(searchParams.entries()));
@@ -117,10 +125,12 @@ export function FeaturedConferences() {
     }, [searchParams, filters]);
 
     const updateFilters = (newFilters: Partial<Filters>) => {
-        const updated = { ...filters, ...newFilters };
-        setFilters(updated);
-        sessionStorage.setItem('discover.conferences.filters', JSON.stringify(updated));
-        router.push(`${pathname}?${createQueryString(newFilters)}`, { scroll: false });
+        startTransition(() => {
+            const updated = { ...filters, ...newFilters };
+            setFilters(updated);
+            sessionStorage.setItem('discover.conferences.filters', JSON.stringify(updated));
+            router.push(`${pathname}?${createQueryString(newFilters)}`, { scroll: false });
+        });
     };
 
     const handleChipToggle = (group: 'topics' | 'languages', value: string) => {
@@ -135,10 +145,19 @@ export function FeaturedConferences() {
     }
 
     const filteredConferences = useMemo(() => {
-        setIsLoading(true);
         const now = new Date();
         
         let result = allConferences.filter(c => isFuture(new Date(c.dateISO)));
+
+        if(query && query.length > 1) {
+            const lowerQuery = query.toLowerCase();
+            result = result.filter(c => 
+                c.title.toLowerCase().includes(lowerQuery) ||
+                c.hostAlias.toLowerCase().includes(lowerQuery) ||
+                c.tags.some(t => t.toLowerCase().includes(lowerQuery)) ||
+                c.excerpt.toLowerCase().includes(lowerQuery)
+            );
+        }
 
         if (filters.topics.length > 0) {
             result = result.filter(c => filters.topics.some(t => c.tags.includes(t as any)));
@@ -163,10 +182,9 @@ export function FeaturedConferences() {
 
         result.sort((a, b) => new Date(a.dateISO).getTime() - new Date(b.dateISO).getTime());
 
-        setTimeout(() => setIsLoading(false), 300);
         return result;
 
-    }, [allConferences, filters]);
+    }, [allConferences, filters, query]);
     
     const handleRsvp = (conf: Conference) => {
         let updatedRsvps;
