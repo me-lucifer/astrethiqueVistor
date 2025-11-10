@@ -25,17 +25,17 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const { toast } = useToast();
 
   useEffect(() => {
-    const lastMode = getSession<string>('schedule.last-mode.v1');
+    const lastMode = getSession<string>('consultant.selectedMode');
     if (lastMode) {
       setSelectedMode(lastMode);
     }
-    const notifyList = getSession<string[]>(`notify:${consultant.id}`);
+    const notifyList = getSession<boolean>(`notify:${consultant.id}`);
     setIsNotifying(!!notifyList);
   }, [consultant.id]);
 
   const handleModeChange = (mode: string) => {
     setSelectedMode(mode);
-    setSession('schedule.last-mode.v1', mode);
+    setSession('consultant.selectedMode', mode);
   };
 
   const handleScheduleClick = () => {
