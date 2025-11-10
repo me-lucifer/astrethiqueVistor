@@ -77,7 +77,7 @@ const PodcastPlayer = ({ item }: { item: ContentHubItem }) => {
     return (
         <div className="rounded-lg border bg-card/50 p-6 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-1/3">
-                 <Image src={item.imageUrl} alt={item.title} width={300} height={300} className="w-full aspect-square object-cover rounded-md" />
+                 <Image src={item.heroImage} alt={item.title} width={300} height={300} className="w-full aspect-square object-cover rounded-md" />
             </div>
             <div className="w-full md:w-2/3 flex flex-col justify-center">
                 <h2 className="font-headline text-2xl font-bold">{item.title}</h2>
@@ -218,7 +218,7 @@ export default function ContentDetailPage() {
             i.id !== item.id &&
             !i.deleted &&
             i.language === item.language &&
-            i.topics.some(t => item.topics.includes(t))
+            item.tags.some(t => item.tags.includes(t))
         ).slice(0, 4);
     }, [item, allItems]);
 
@@ -237,7 +237,7 @@ export default function ContentDetailPage() {
     
     const timeValue = item.type === 'article' ? item.readMinutes : item.durationMinutes;
     const timeUnit = item.type === 'article' ? 'min read' : 'min';
-    const isPromotedAndActive = item.promoted && item.promotionDaysRemaining > 0;
+    const isPromotedAndActive = item.promotedUntil && new Date(item.promotedUntil) > new Date();
 
     return (
         <div className="container py-12">
@@ -250,7 +250,7 @@ export default function ContentDetailPage() {
                     <article>
                         <header className="mb-8">
                             <div className="flex flex-wrap items-center gap-2 mb-4">
-                                {item.topics.map(topic => (
+                                {item.tags.map(topic => (
                                     <Button key={topic} variant="link" className="p-0 h-auto" onClick={() => handleTopicClick(topic)}>
                                         <Badge variant="secondary">{topic}</Badge>
                                     </Button>
@@ -265,13 +265,13 @@ export default function ContentDetailPage() {
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                     <button onClick={() => handleAuthorClick(item.author.name)} className="flex items-center gap-2 hover:text-foreground">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={item.author.avatarUrl} alt={item.author.name} />
+                                            <AvatarImage src={item.author.avatar} alt={item.author.name} />
                                             <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <span className="font-medium text-foreground">{item.author.name}</span>
                                     </button>
                                     <span>·</span>
-                                    <span>Published {new Date(item.datePublished).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                    <span>Published {new Date(item.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                     <span>·</span>
                                     <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {timeValue} {timeUnit}</span>
                                 </div>
@@ -300,7 +300,7 @@ export default function ContentDetailPage() {
                         
                         {item.type === 'article' && (
                              <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden">
-                                <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />
+                                <Image src={item.heroImage} alt={item.title} fill className="object-cover" />
                             </div>
                         )}
                         
@@ -375,4 +375,3 @@ export default function ContentDetailPage() {
         </div>
     );
 }
-

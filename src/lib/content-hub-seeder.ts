@@ -4,86 +4,92 @@
 import { getSession, setSession, removeSession } from "./session";
 
 export type ContentHubItem = {
+  id: string;
+  type: "article" | "podcast";
+  title: string;
+  excerpt: string;
+  body: string;
+  heroImage: string;
+  author: {
     id: string;
-    type: "article" | "podcast";
-    title: string;
-    excerpt: string;
-    body: string;
-    imageUrl: string;
-    topics: ("Love" | "Work" | "Health" | "Money" | "Life Path")[];
-    language: "EN" | "FR";
-    author: {
-        id: string;
-        name: string;
-        avatarUrl: string;
-    };
-    views: number;
-    readMinutes?: number;
-    durationMinutes?: number;
-    featured: boolean;
-    promoted: boolean;
-    promotionDaysRemaining: number;
-    likes: number;
-    liked: boolean;
-    bookmarked: boolean;
-    datePublished: string;
-    deleted: boolean;
+    name: string;
+    avatar: string;
+  };
+  language: "EN" | "FR";
+  zodiac: ("Aries" | "Taurus" | "Gemini" | "Cancer" | "Leo" | "Virgo" | "Libra" | "Scorpio" | "Sagittarius" | "Capricorn" | "Aquarius" | "Pisces")[];
+  tags: string[];
+  publishedAt: string; // ISO string
+  readMinutes: number | null;
+  durationMinutes: number | null;
+  views: number;
+  likes: number;
+  featured: boolean;
+  promotedUntil?: string; // ISO string
+  liked: boolean;
+  bookmarked: boolean;
+  deleted: boolean;
 };
 
+
 const authors = [
-  { id: 'aeliana-rose', name: 'Aeliana Rose', avatarUrl: 'https://i.pravatar.cc/40?u=aeliana-rose' },
-  { id: 'kaelen-vance', name: 'Kaelen Vance', avatarUrl: 'https://i.pravatar.cc/40?u=kaelen-vance' },
-  { id: 'seraphina-moon', name: 'Seraphina Moon', avatarUrl: 'https://i.pravatar.cc/40?u=seraphina-moon' },
-  { id: 'orion-blackwood', name: 'Orion Blackwood', avatarUrl: 'https://i.pravatar.cc/40?u=orion-blackwood' },
+  { id: 'aeliana-rose', name: 'Aeliana Rose', avatar: 'https://i.pravatar.cc/40?u=aeliana-rose' },
+  { id: 'kaelen-vance', name: 'Kaelen Vance', avatar: 'https://i.pravatar.cc/40?u=kaelen-vance' },
+  { id: 'seraphina-moon', name: 'Seraphina Moon', avatar: 'https://i.pravatar.cc/40?u=seraphina-moon' },
+  { id: 'orion-blackwood', name: 'Orion Blackwood', avatar: 'https://i.pravatar.cc/40?u=orion-blackwood' },
 ];
 
-const topics: ContentHubItem['topics'] = ["Love", "Work", "Health", "Money", "Life Path"];
+const allTags = ["Astrology", "Spirituality", "Tarot", "Numerology", "Beginner", "Advanced", "Life Path", "Love", "Work", "Health", "Money"];
+const zodiacSigns : ContentHubItem['zodiac'] = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
 
 const sampleTitles = [
     "Unlocking Your Career Potential with Tarot",
     "The Art of Mindful Relationships",
-    "Financial Wellness for Beginners: An Astrological Guide",
+    "Financial Wellness for Pisces: An Astrological Guide",
     "Navigating Life's Crossroads with Numerology",
-    "Healthy Habits for a Vibrant Life",
+    "Healthy Habits for a Vibrant Life (For Cancers)",
     "The Power of Positive Thinking in Your Career",
-    "Building Stronger Bonds: A Guide to Love",
+    "Building Stronger Bonds: A Guide to Love and Tarot",
     "Mastering Your Personal Finances with the Stars",
-    "Finding Your True North: A Clairvoyant's Guide",
+    "Finding Your True North: A Clairvoyant's Guide to Aries",
     "Podcast: The Future of Work-Life Balance",
     "Podcast: Love in the Digital Age",
-    "Podcast: Holistic Health Hacks",
-    "Decoding Your Dreams: A Practical Guide",
-    "The Beginner's Guide to Crystal Healing",
-    "Podcast: Manifesting Your Dream Job",
-    "How to Read Your Birth Chart for Beginners"
+    "Podcast: Holistic Health Hacks for Spiritual Beings",
 ];
 
 const createItem = (index: number): ContentHubItem => {
     const now = new Date();
-    const isPodcast = sampleTitles[index].toLowerCase().includes('podcast');
+    const isPodcast = sampleTitles[index % sampleTitles.length].toLowerCase().includes('podcast');
     const author = authors[index % authors.length];
     
+    // Set a date in the last 12 months
+    const publishedAt = new Date(now.getTime() - (index * 30 * 24 * 60 * 60 * 1000) - (Math.random() * 30 * 24 * 60 * 60 * 1000));
+    
+    let promotedUntil: string | undefined;
+    if (index === 2 || index === 3) {
+        promotedUntil = new Date(now.getTime() + (Math.floor(Math.random() * 7) + 1) * 24 * 60 * 60 * 1000).toISOString();
+    }
+
     return {
         id: `ch-item-${index + 1}`,
         type: isPodcast ? "podcast" : "article",
-        title: sampleTitles[index].replace('Podcast: ', ''),
+        title: sampleTitles[index % sampleTitles.length].replace('Podcast: ', ''),
         excerpt: "A brief, engaging summary of the content goes here, designed to capture the reader's interest and encourage them to click.",
-        body: "<p>This is placeholder content for the full article or podcast transcript. In a real application, this would be populated with rich text content.</p>",
-        imageUrl: `https://picsum.photos/seed/ch${index + 1}/600/400`,
-        topics: [topics[index % topics.length], topics[(index + 2) % topics.length]],
+        body: "<p>This is placeholder content for the full article or podcast transcript. In a real application, this would be populated with rich text content, including headings, lists, and other formatting to create an engaging reading experience for the user.</p><blockquote>This is a pull-quote style for a blockquote, giving emphasis to a key point in the text.</blockquote><p>More content follows the quote to round out the article.</p>",
+        heroImage: `https://picsum.photos/seed/ch${index + 1}/600/400`,
+        tags: [...new Set(allTags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 2))],
         language: index % 4 === 0 ? "FR" : "EN",
+        zodiac: zodiacSigns.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2)),
         author,
-        views: Math.floor(Math.random() * 25000) + 500,
-        readMinutes: isPodcast ? undefined : Math.floor(Math.random() * 5) + 3, // 3-7 min read
-        durationMinutes: isPodcast ? Math.floor(Math.random() * 21) + 10 : undefined, // 10-30 min podcast
+        views: Math.floor(Math.random() * 7800) + 200,
+        readMinutes: isPodcast ? null : Math.floor(Math.random() * 5) + 3, // 3-7 min read
+        durationMinutes: isPodcast ? Math.floor(Math.random() * 21) + 10 : null, // 10-30 min podcast
         featured: index < 2,
-        promoted: index === 2 || index === 3,
-        promotionDaysRemaining: index === 2 ? 5 : (index === 3 ? 2 : 0),
+        promotedUntil: promotedUntil,
         likes: Math.floor(Math.random() * 200),
         liked: false,
         bookmarked: false,
-        datePublished: new Date(now.getTime() - (index * 2 * 24 * 60 * 60 * 1000)).toISOString(), // Staggered dates
-        deleted: index === 15, // Mark the last item as "deleted"
+        publishedAt: publishedAt.toISOString(),
+        deleted: index === 9, // Mark the 10th item as "deleted"
     };
 };
 
@@ -92,7 +98,7 @@ export const seedContentHub = () => {
 
     const existingItems = getSession<ContentHubItem[]>("ch_items");
     if (!existingItems || existingItems.length === 0) {
-        const items = Array.from({ length: 16 }, (_, i) => createItem(i));
+        const items = Array.from({ length: 10 }, (_, i) => createItem(i));
         setSession("ch_items", items);
     }
 };

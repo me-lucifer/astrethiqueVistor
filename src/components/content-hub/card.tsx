@@ -66,14 +66,14 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
         router.push(detailUrl);
     }
 
-    const isPromotedAndActive = item.promoted && item.promotionDaysRemaining > 0;
+    const isPromotedAndActive = item.promotedUntil && new Date(item.promotedUntil) > new Date();
 
     return (
         <Card className="group overflow-hidden flex flex-col h-full bg-card/50 hover:bg-card transition-shadow duration-300">
             <Link href={detailUrl} className="flex flex-col h-full">
                 <div className="relative">
                     <Image
-                        src={item.imageUrl}
+                        src={item.heroImage}
                         alt={item.title}
                         width={600}
                         height={400}
@@ -99,7 +99,7 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
 
                         <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1.5" title={`${item.views} views`}><Eye className="h-3.5 w-3.5" /> {formatViews(item.views)}</span>
-                            <span className="flex items-center gap-1.5" title={new Date(item.datePublished).toLocaleDateString()}><Calendar className="h-3.5 w-3.5" /> {formatDate(item.datePublished)}</span>
+                            <span className="flex items-center gap-1.5" title={new Date(item.publishedAt).toLocaleDateString()}><Calendar className="h-3.5 w-3.5" /> {formatDate(item.publishedAt)}</span>
                             {timeValue && <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {timeValue} {timeUnit}</span>}
                         </div>
 
@@ -108,11 +108,11 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                         </p>
                         
                         <div className="mt-3 flex flex-wrap gap-1">
-                            {item.topics.slice(0,3).map(topic => (
+                            {item.tags.slice(0,3).map(topic => (
                                 <Badge key={topic} variant="outline" className="font-normal">{topic}</Badge>
                             ))}
-                            {item.topics.length > 3 && (
-                                <Badge variant="outline" className="font-normal">+{item.topics.length - 3}</Badge>
+                            {item.tags.length > 3 && (
+                                <Badge variant="outline" className="font-normal">+{item.tags.length - 3}</Badge>
                             )}
                         </div>
                     </div>
@@ -120,7 +120,7 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                     <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                         <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground">
                             <Avatar className="h-6 w-6">
-                                <AvatarImage src={item.author.avatarUrl} alt={item.author.name} />
+                                <AvatarImage src={item.author.avatar} alt={item.author.name} />
                                 <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <span>{item.author.name}</span>
