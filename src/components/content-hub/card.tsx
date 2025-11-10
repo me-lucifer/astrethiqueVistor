@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, Bookmark, Mic, BookOpen, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 type CardProps = {
     item: ContentHubItem;
@@ -19,6 +20,7 @@ type CardProps = {
 };
 
 export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBookmark }: CardProps) {
+    const router = useRouter();
     const isArticle = item.type === 'article';
     const timeValue = isArticle ? item.readMinutes : item.durationMinutes;
     const timeUnit = isArticle ? 'min read' : 'min';
@@ -39,6 +41,11 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
         e.preventDefault();
         e.stopPropagation();
         onToggleBookmark(item.id);
+    }
+
+    const handleDetailClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        router.push(detailUrl);
     }
 
     const isPromotedAndActive = item.promoted && item.promotionDaysRemaining > 0;
@@ -105,8 +112,8 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmarkClick}>
                              <Bookmark className={cn("h-4 w-4", item.bookmarked && "fill-current text-primary")} />
                         </Button>
-                        <Button asChild variant="outline" size="sm">
-                           <Link href={detailUrl}>{isArticle ? 'Read more' : 'Listen now'}</Link>
+                        <Button variant="outline" size="sm" onClick={handleDetailClick}>
+                           {isArticle ? 'Read more' : 'Listen now'}
                         </Button>
                     </div>
                 </div>
