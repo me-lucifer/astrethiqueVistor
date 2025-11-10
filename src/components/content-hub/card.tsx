@@ -76,7 +76,7 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
             <Link href={detailUrl} className="flex flex-col h-full">
                 <div className="relative">
                     <Image
-                        src={item.heroImage}
+                        src={item.heroImage || 'https://placehold.co/600x400/15120E/F6EBD2?text=Image'}
                         alt={item.title}
                         width={600}
                         height={400}
