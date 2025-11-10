@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Search, CalendarClock, Wallet, Star, Heart, Tv, HelpCircle, ShieldCheck, Languages, BadgeCheck, User, Shield, Briefcase, FileText } from "lucide-react";
+import { Search, CalendarClock, Wallet, Star, Heart, Tv, HelpCircle, ShieldCheck, Languages, BadgeCheck, User, Shield, Briefcase, FileText, Mail } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/language-context";
 import { translations } from "@/lib/translations";
@@ -91,7 +91,7 @@ export default function HowItWorksPage() {
     { label: "Start instantly", href: "/discover", icon: CalendarClock },
     { label: "Favorites & notes", href: "/discover?myFavorites=true", icon: Heart },
     { label: "Free Conferences", href: "/conferences", icon: Tv },
-    { label: "Help Desk", href: "/support", icon: HelpCircle },
+    { label: "Email support", href: "mailto:support@astrethique.com", icon: Mail },
   ];
 
   const trustItems = [

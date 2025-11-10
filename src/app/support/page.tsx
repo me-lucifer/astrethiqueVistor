@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, CalendarClock, User, Wallet, Tv, Languages, Shield, Wrench, Search } from "lucide-react";
+import { HelpCircle, CalendarClock, User, Wallet, Tv, Languages, Shield, Wrench, Search, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -44,6 +44,7 @@ const visitorQuickLinks = [
     { label: "Pricing", href: "/pricing"},
     { label: "Privacy (GDPR)", href: "/privacy"},
     { label: "Terms", href: "/terms"},
+    { label: "Email support", href: "mailto:support@astrethique.com" },
 ];
 
 const consultantQuickLinks = [
@@ -54,6 +55,7 @@ const consultantQuickLinks = [
     { label: "Pricing", href: "/pricing"},
     { label: "Privacy (GDPR)", href: "/privacy"},
     { label: "Terms", href: "/terms"},
+    { label: "Email support", href: "mailto:support@astrethique.com" },
 ];
 
 const faqData = {
@@ -92,15 +94,14 @@ const faqData = {
             title: "Conferences",
             questions: [
                  { q: "How do conferences work?", a: "Conferences are hosted by consultants on external platforms (e.g., Zoom/Google Meet). We display the title, date/time, timezone and a ‘Join link’. Replays are not hosted by us. If a host shares a replay link, it may appear on the conference detail." },
-                 { q: "How do I comment on articles/podcasts?", a: "You need to be logged into your account to post comments. If you're logged in, a comment box will appear below the content." }
             ]
         },
-        {
-            id: "faq-content",
-            title: "Content Hub",
+        { 
+            id: "faq-content", 
+            title: "Content Hub", 
             questions: [
                 { q: "How do I comment on articles/podcasts?", a: "You need to be logged into your account to post comments. If you're logged in, a comment box will appear below the content." }
-            ]
+            ] 
         },
         {
             id: "faq-technical",
