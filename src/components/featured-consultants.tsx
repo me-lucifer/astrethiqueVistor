@@ -128,9 +128,11 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
             const max = Math.ceil(Math.max(...prices));
             setPriceBounds([min, max]);
 
-            const savedFilters = getSession('discover.filters.v1');
+            const savedFilters = getSession<Filters>('discover.filters.v1');
             if (!savedFilters || !savedFilters.price) {
                 updateFilters({ price: [min, max], minPrice: String(min), maxPrice: String(max) });
+            } else {
+                 setFilters({ ...defaultFilters, ...savedFilters });
             }
         }
         setIsLoading(false);
@@ -151,12 +153,14 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 
     const filteredAndSortedConsultants = useMemo(() => {
         setIsLoading(true);
+        const favorites = getSession<string[]>("discover.favorites.v1") || [];
+
         let result = allConsultants.filter(c => {
             // My Favorites
-            // if (filters.myFavorites && !isFavorite(c.id)) return false;
+            if (filters.myFavorites && !favorites.includes(c.id)) return false;
             
             // This is a temp fix until the availability property is updated in the seeder.
-            const availability = typeof c.availability === 'string' ? c.availability : c.availability.online ? 'online' : 'offline';
+            const availability = typeof c.availability === 'string' ? c.availability : c.availability === 'online' ? 'online' : 'offline';
             const isOnline = availability === 'online';
             const isBusy = availability === 'busy';
             const isOffline = availability === 'offline';
@@ -220,8 +224,8 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 case 'newest':
                     return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
                 case 'online_first':
-                     const aOnline = typeof a.availability === 'object' ? a.availability.online : a.availability === 'online';
-                     const bOnline = typeof b.availability === 'object' ? b.availability.online : b.availability === 'online';
+                     const aOnline = a.availability === 'online';
+                     const bOnline = b.availability === 'online';
                     return (bOnline ? 1 : 0) - (aOnline ? 1 : 0);
                 case 'recommended':
                 default:
@@ -486,5 +490,8 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
 }
 
     
+
+    
+
 
     

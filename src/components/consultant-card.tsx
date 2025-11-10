@@ -9,7 +9,7 @@ import { Consultant } from "@/lib/consultants";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Bell, Heart, BookOpen, Mic, Video } from "lucide-react";
+import { Star, Bell, Heart, BookOpen, Mic, Video, CheckCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -42,24 +42,26 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
     const { toast } = useToast();
     const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
-    const [favorites, setFavorites] = useState<string[]>([]);
+    const [isNotifying, setIsNotifying] = useState(false);
 
     useEffect(() => {
         const favs = getSession<string[]>("discover.favorites.v1") || [];
-        setFavorites(favs);
         setIsFavorite(favs.includes(consultant.id));
+        
+        const notifyList = getSession<string[]>("notify.me.v1") || [];
+        setIsNotifying(notifyList.includes(consultant.id));
     }, [consultant.id]);
 
     const toggleFavorite = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         
+        const favs = getSession<string[]>("discover.favorites.v1") || [];
         const newFavorites = isFavorite
-            ? favorites.filter(id => id !== consultant.id)
-            : [...favorites, consultant.id];
+            ? favs.filter(id => id !== consultant.id)
+            : [...favs, consultant.id];
         
         setIsFavorite(!isFavorite);
-        setFavorites(newFavorites);
         setSession("discover.favorites.v1", newFavorites);
     }
 
@@ -72,34 +74,49 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
     const handleScheduleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        // For now, this just shows a toast. It would open a schedule modal.
-        toast({
-            title: "Schedule Clicked",
-            description: `Scheduling for ${consultant.name} is not implemented yet.`
-        })
+        router.push(`/consultant/${consultant.slug}#availability-section`);
     };
 
     const handleNotifyClick = () => {
         const notifyList = getSession<string[]>("notify.me.v1") || [];
-        if (!notifyList.includes(consultant.id)) {
-            setSession("notify.me.v1", [...notifyList, consultant.id]);
+        const newNotifyList = isNotifying
+            ? notifyList.filter(id => id !== consultant.id)
+            : [...notifyList, consultant.id];
+        
+        setIsNotifying(!isNotifying);
+        setSession("notify.me.v1", newNotifyList);
+
+        if (!isNotifying) {
+            setIsNotifyModalOpen(true);
+        } else {
+             toast({
+                title: "Notification removed",
+                description: `You will no longer be notified when ${consultant.name} is online.`,
+            });
         }
-        setIsNotifyModalOpen(true);
     };
 
     const StartNowButton = () => (
-        <Button size="sm" onClick={(e) => handleActionClick(e, onStartNow)}>Start now</Button>
+        <Button size="sm" onClick={(e) => handleActionClick(e, onStartNow)} aria-label={`Start now with ${consultant.name}`}>Start now</Button>
     );
     const ScheduleButton = () => (
-        <Button variant="outline" size="sm" onClick={handleScheduleClick}>
+        <Button variant="outline" size="sm" onClick={handleScheduleClick} aria-label={`Schedule a session with ${consultant.name}`}>
             Schedule
         </Button>
     );
      const NotifyButton = () => (
-        <Button variant="outline" size="sm" onClick={(e) => handleActionClick(e, handleNotifyClick)}><Bell className="mr-2 h-4 w-4" /> Notify me</Button>
+        <Button 
+            variant={isNotifying ? "secondary" : "outline"} 
+            size="sm" 
+            onClick={(e) => handleActionClick(e, handleNotifyClick)}
+            aria-label={isNotifying ? `Stop notifications for ${consultant.name}`: `Notify me when ${consultant.name} is online`}
+        >
+            {isNotifying ? <CheckCircle className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
+            {isNotifying ? "Notifying" : "Notify me"}
+        </Button>
     );
     
-    const isOnline = consultant.availability.online;
+    const isOnline = consultant.availability === 'online';
     const availabilityText = isOnline ? "Online" : (consultant.availability === "busy" ? "Busy" : "Offline");
     const availabilityClass = isOnline ? "bg-success/80" : (consultant.availability === "busy" ? "bg-amber-500/80" : "bg-muted");
 
@@ -235,3 +252,5 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         </TooltipProvider>
     );
 }
+
+    
