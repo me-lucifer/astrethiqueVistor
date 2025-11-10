@@ -15,6 +15,24 @@ import { format } from "date-fns";
 import { PlaceholderPage } from "@/components/placeholder-page";
 
 
+const PolicyFooter = ({ email, t }: { email: string, t: any }) => (
+    <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
+        <p>
+            {t.footer.text} <a href={`mailto:${email}`} className="text-primary hover:underline">{email}</a>.
+        </p>
+    </div>
+);
+
+const LanguageToggle = () => {
+    const { language, setLanguage } = useLanguage();
+    return (
+        <div className="inline-flex items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+            <Button variant={language === 'en' ? 'background' : 'ghost'} onClick={() => setLanguage('en')} className="px-3 h-8 text-xs">EN</Button>
+            <Button variant={language === 'fr' ? 'background' : 'ghost'} onClick={() => setLanguage('fr')} className="px-3 h-8 text-xs">FR</Button>
+        </div>
+    );
+}
+
 const PrivacyPolicyContent = () => {
     const { language } = useLanguage();
     const t = translations[language].privacyPolicy;
@@ -57,7 +75,7 @@ const PrivacyPolicyContent = () => {
 
     return (
         <div className="container py-12">
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -73,10 +91,13 @@ const PrivacyPolicyContent = () => {
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Updated</Badge>
                     </div>
                 </div>
-                 <Button variant="ghost" className="hidden md:inline-flex">
-                    <Printer className="mr-2 h-4 w-4" />
-                    {t.printDownload}
-                </Button>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
+                    <Button variant="ghost" className="hidden md:inline-flex">
+                        <Printer className="mr-2 h-4 w-4" />
+                        {t.printDownload}
+                    </Button>
+                </div>
             </div>
             
             <div className="grid lg:grid-cols-[1fr_280px] gap-12 items-start">
@@ -180,6 +201,7 @@ const PrivacyPolicyContent = () => {
                         </AccordionItem>
 
                     </Accordion>
+                     <PolicyFooter email="privacy@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>
@@ -248,7 +270,7 @@ const TermsOfServiceContent = () => {
 
     return (
         <div className="container py-12">
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -262,6 +284,9 @@ const TermsOfServiceContent = () => {
                             {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
                         </p>
                     </div>
+                </div>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
                 </div>
             </div>
             
@@ -333,6 +358,7 @@ const TermsOfServiceContent = () => {
                         </AccordionItem>
 
                     </Accordion>
+                    <PolicyFooter email="legal@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>
@@ -402,7 +428,7 @@ const PricingAndFeesContent = () => {
 
     return (
         <div className="container py-12">
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -416,6 +442,9 @@ const PricingAndFeesContent = () => {
                             {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
                         </p>
                     </div>
+                </div>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
                 </div>
             </div>
             
@@ -472,9 +501,7 @@ const PricingAndFeesContent = () => {
                         </AccordionItem>
 
                     </Accordion>
-                     <div className="mt-8 text-sm">
-                        <p>{t.footer.text} <Link href="/legal-hub/terms-of-service">{t.footer.link1}</Link> {language === 'en' ? 'and' : 'et'} <Link href="/legal-hub/refunds-and-cancellations">{t.footer.link2}</Link>.</p>
-                    </div>
+                     <PolicyFooter email="legal@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>
@@ -552,7 +579,7 @@ const CookiePolicyContent = () => {
              {/* The button in the banner is the primary trigger. This is a fallback. */}
             <div id="cookie-consent-manage-trigger" style={{ display: 'none' }} onClick={() => setIsManageModalOpen(true)} />
             
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -566,6 +593,9 @@ const CookiePolicyContent = () => {
                             {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
                         </p>
                     </div>
+                </div>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
                 </div>
             </div>
             
@@ -601,9 +631,7 @@ const CookiePolicyContent = () => {
                         </AccordionItem>
                         
                     </Accordion>
-                     <div className="mt-8 text-sm">
-                        <p>{t.footer.text} <Link href="/legal-hub/privacy-policy">{t.footer.linkText}</Link>.</p>
-                    </div>
+                     <PolicyFooter email="privacy@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>
@@ -668,7 +696,7 @@ const RefundsAndCancellationsContent = () => {
 
     return (
         <div className="container py-12">
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -682,6 +710,9 @@ const RefundsAndCancellationsContent = () => {
                             {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
                         </p>
                     </div>
+                </div>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
                 </div>
             </div>
             
@@ -725,6 +756,7 @@ const RefundsAndCancellationsContent = () => {
                         </AccordionItem>
                         
                     </Accordion>
+                     <PolicyFooter email="support@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>
@@ -790,7 +822,7 @@ const ContentAndCommunityGuidelinesContent = () => {
 
     return (
         <div className="container py-12">
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -804,6 +836,9 @@ const ContentAndCommunityGuidelinesContent = () => {
                             {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
                         </p>
                     </div>
+                </div>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
                 </div>
             </div>
             
@@ -854,6 +889,7 @@ const ContentAndCommunityGuidelinesContent = () => {
                         </AccordionItem>
                         
                     </Accordion>
+                     <PolicyFooter email="legal@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>
@@ -917,7 +953,7 @@ const SafetyAndReportingContent = () => {
 
     return (
         <div className="container py-12">
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -931,6 +967,9 @@ const SafetyAndReportingContent = () => {
                             {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
                         </p>
                     </div>
+                </div>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
                 </div>
             </div>
             
@@ -967,6 +1006,7 @@ const SafetyAndReportingContent = () => {
                         </AccordionItem>
                         
                     </Accordion>
+                     <PolicyFooter email="legal@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>
@@ -1030,7 +1070,7 @@ const KycIdVerificationContent = () => {
 
     return (
         <div className="container py-12">
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -1044,6 +1084,9 @@ const KycIdVerificationContent = () => {
                             {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
                         </p>
                     </div>
+                </div>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
                 </div>
             </div>
             
@@ -1080,6 +1123,7 @@ const KycIdVerificationContent = () => {
                         </AccordionItem>
                         
                     </Accordion>
+                     <PolicyFooter email="legal@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>
@@ -1141,7 +1185,7 @@ const DataProcessingContent = () => {
 
     return (
         <div className="container py-12">
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -1155,6 +1199,9 @@ const DataProcessingContent = () => {
                             {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
                         </p>
                     </div>
+                </div>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
                 </div>
             </div>
             
@@ -1198,6 +1245,7 @@ const DataProcessingContent = () => {
                         </AccordionItem>
                         
                     </Accordion>
+                     <PolicyFooter email="legal@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>
@@ -1260,7 +1308,7 @@ const CopyrightAndTakedownContent = () => {
 
     return (
         <div className="container py-12">
-            <div className="flex justify-between items-start mb-6 gap-4">
+            <div className="flex justify-between items-start mb-8 gap-4">
                 <div>
                     <Button asChild variant="ghost" className="-ml-4">
                         <Link href="/legal-hub">
@@ -1274,6 +1322,9 @@ const CopyrightAndTakedownContent = () => {
                             {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
                         </p>
                     </div>
+                </div>
+                 <div className="flex gap-2 items-center">
+                    <LanguageToggle />
                 </div>
             </div>
             
@@ -1306,6 +1357,7 @@ const CopyrightAndTakedownContent = () => {
                         </AccordionItem>
 
                     </Accordion>
+                     <PolicyFooter email="legal@astrethique.com" t={t} />
                 </div>
                 <aside className="hidden lg:block sticky top-24 self-start">
                     <h3 className="font-semibold mb-4">{t.toc}</h3>

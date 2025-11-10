@@ -130,7 +130,8 @@ export const translations = {
                 cookies: { title: "Cookies", text: ["We use cookies to operate and improve our site. For details, see our"], linkText: "Cookie Policy" },
                 policyChanges: { title: "Changes to This Policy", text: "We will notify you of any significant changes to this policy via email or a notice on our platform." },
                 contact: { title: "Contact DPO", text: ["For any privacy-specific concerns, you can contact our Data Protection Officer at"] }
-            }
+            },
+            footer: { text: "Questions about this policy? Email" }
         },
         
         // Terms of Service Page
@@ -146,7 +147,8 @@ export const translations = {
             conduct: { title: "Prohibited Conduct", content: "Harassment, hate speech, illegal activities, making unsubstantiated medical or legal claims, and spam are strictly prohibited." },
             termination: { title: "Suspension & Termination", content: "We reserve the right to suspend or terminate accounts that violate these terms." },
             governingLaw: { title: "Governing Law", content: "These terms are governed by the laws of the United Kingdom." },
-            contact: { title: "Contact", content: "For questions about these terms, contact us at" }
+            contact: { title: "Contact", content: "For questions about these terms, contact us at" },
+            footer: { text: "Questions about this policy? Email" }
         },
 
         // Pricing & Fees Page
@@ -167,10 +169,9 @@ export const translations = {
                 },
                 note: "Billing is calculated to the second and rounded to the nearest cent."
             },
-            footer: {
-                text: "For more details, please see our",
-                link1: "Terms of Service",
-                link2: "Refunds and Cancellations Policy"
+            footer: { 
+                text: "For more details, see our Terms of Service and Refunds Policy.",
+                textWithEmail: "Questions about this policy? Email",
             }
         },
 
@@ -195,10 +196,11 @@ export const translations = {
                 content: "You can change your cookie preferences at any time. Adjusting your settings may impact your experience on our site.",
                 buttonText: "Manage Cookie Settings"
             },
-            footer: {
+            footer: { 
                 text: "For more information on how we handle your data, please see our",
-                linkText: "Privacy Policy"
-            }
+                linkText: "Privacy Policy",
+                textWithEmail: "Questions about this policy? Email"
+             }
         },
         
         // Refunds & Cancellations Page
@@ -225,7 +227,8 @@ export const translations = {
             howToRequest: {
                 title: "How to Request a Refund",
                 content: "All refund requests must be sent via email to our support team. Please include the session date, time, and the consultant's name in your request."
-            }
+            },
+            footer: { text: "Questions about this policy? Email" }
         },
 
         // Community Guidelines Page
@@ -256,7 +259,8 @@ export const translations = {
             reporting: {
                 title: "Reporting",
                 content: "If you see content or behavior that violates these guidelines, please report it to our support team immediately by emailing"
-            }
+            },
+            footer: { text: "Questions about this policy? Email" }
         },
         
         // Safety & Reporting Page
@@ -279,7 +283,8 @@ export const translations = {
             lawEnforcement: {
                 title: "Law Enforcement Inquiries",
                 content: "Official requests from law enforcement agencies should be directed to our legal team. Please include the legal basis for your request."
-            }
+            },
+            footer: { text: "Questions about this policy? Email" }
         },
         kycIdVerification: {
             title: "KYC / ID Verification",
@@ -301,7 +306,8 @@ export const translations = {
                 title: "Retention & Your Rights",
                 content: "Because we do not store the original documents, any data rights requests (like deletion) should be directed to our third-party provider, though we will facilitate this process. For more information on your data, please see our",
                 link: "Privacy Policy"
-            }
+            },
+            footer: { text: "Questions about this policy? Email" }
         },
         dataProcessing: {
             title: "Data Processing & Sub-processors",
@@ -327,7 +333,8 @@ export const translations = {
                     { category: "ID Verification", name: "Veriff", region: "USA/EU", purpose: "Consultant KYC/ID checks" }
                 ],
                 note: "We will update this list before engaging any new sub-processor."
-            }
+            },
+            footer: { text: "Questions about this policy? Email" }
         },
         copyrightAndTakedown: {
             title: "Copyright & Takedown Policy",
@@ -352,7 +359,8 @@ export const translations = {
             counterNotice: {
                 title: "Counter-Notice Procedure",
                 content: "If you believe your content was removed by mistake, you may send a counter-notice to our legal team. We may reinstate the content upon receipt of a valid counter-notice, unless we receive notice from the complaining party that they have filed a legal action."
-            }
+            },
+            footer: { text: "Questions about this policy? Email" }
         }
     },
     fr: {
@@ -437,55 +445,56 @@ export const translations = {
             },
             dataWeCollect: {
                 title: "Données que nous collectons",
-                intro: "Texte d'introduction pour les données que nous collectons.",
-                accountInfo: { title: "Informations sur le compte", text: "Texte sur les informations de compte." },
-                kyc: { title: "Signaux KYC", text: "Texte sur les signaux KYC." },
-                usage: { title: "Données d'utilisation et de l'appareil", text: "Texte sur les données d'utilisation." },
-                payments: { title: "Paiements", text: "Texte sur les paiements." },
-                content: { title: "Contenu/Publications", text: "Texte sur le contenu et les publications." }
+                intro: "Intro FR...",
+                accountInfo: { title: "Informations sur le compte", text: "Texte FR..." },
+                kyc: { title: "Signaux KYC", text: "Texte FR..." },
+                usage: { title: "Données d'utilisation et de l'appareil", text: "Texte FR..." },
+                payments: { title: "Paiements", text: "Texte FR..." },
+                content: { title: "Contenu/Publications", text: "Texte FR..." }
             },
             whyWeProcess: {
                 title: "Pourquoi nous traitons vos données (Bases légales)",
-                intro: "Intro sur les bases légales.",
-                contract: { title: "Pour exécuter un contrat", text: "Texte sur l'exécution d'un contrat." },
-                consent: { title: "Consentement", text: "Texte sur le consentement." },
-                legitInterests: { title: "Intérêts légitimes", text: "Texte sur les intérêts légitimes." },
-                legalObligation: { title: "Obligation légale", text: "Texte sur l'obligation légale." }
+                intro: "Intro FR...",
+                contract: { title: "Pour exécuter un contrat", text: "Texte FR..." },
+                consent: { title: "Consentement", text: "Texte FR..." },
+                legitInterests: { title: "Intérêts légitimes", text: "Texte FR..." },
+                legalObligation: { title: "Obligation légale", text: "Texte FR..." }
             },
             internationalTransfers: {
                 title: "Transferts internationaux",
-                content: ["Texte sur les transferts internationaux et les garanties (SCCs/IDTA)."]
+                content: ["Texte FR..."]
             },
             dataRetention: {
                 title: "Conservation des données",
-                intro: "Intro sur la conservation des données.",
+                intro: "Intro FR...",
                 table: {
-                    category: "Catégorie de données",
-                    window: "Durée de conservation",
+                    category: "Catégorie",
+                    window: "Durée",
                     rows: [
-                        { category: "Données de compte de base", window: "Durée du compte + 1 an" },
-                        { category: "Enregistrements de session", window: "7 ans pour les archives financières" },
-                        { category: "Tickets de support", window: "3 ans après résolution" },
-                        { category: "Journaux d'utilisation", window: "1 an (anonymisé)" }
+                        { category: "Données de compte", window: "Durée du compte + 1 an" },
+                        { category: "Enregistrements de session", window: "7 ans" },
+                        { category: "Tickets de support", window: "3 ans" },
+                        { category: "Journaux d'utilisation", window: "1 an" }
                     ]
                 }
             },
             yourRights: {
                 title: "Vos droits",
-                intro: "Intro sur vos droits RGPD.",
+                intro: "Intro FR...",
                 rightsList: ["Accès", "Rectification", "Effacement", "Portabilité", "Limitation", "Objection"],
                 howToExercise: {
                     title: "Comment exercer vos droits",
-                    text: ["Pour exercer l'un de ces droits, veuillez nous contacter à"]
+                    text: ["Contactez-nous à"]
                 }
             },
             otherInfo: {
                 title: "Autres informations",
-                agePolicy: { title: "Politique d'âge", text: "Nos services sont destinés aux personnes de 18 ans et plus." },
-                cookies: { title: "Cookies", text: ["Pour plus de détails, consultez notre"], linkText: "Politique de cookies" },
-                policyChanges: { title: "Modifications de cette politique", text: "Nous vous informerons de tout changement important." },
-                contact: { title: "Contacter le DPO", text: ["Pour toute préoccupation spécifique à la confidentialité, contactez notre Délégué à la Protection des Données à"] }
-            }
+                agePolicy: { title: "Politique d'âge", text: "Texte FR..." },
+                cookies: { title: "Cookies", text: ["Voir notre"], linkText: "Politique de cookies" },
+                policyChanges: { title: "Modifications", text: "Texte FR..." },
+                contact: { title: "Contacter le DPO", text: ["Contactez notre DPO à"] }
+            },
+            footer: { text: "Des questions sur cette politique ? Envoyez un e-mail à" }
         },
         
         // Terms of Service Page
@@ -493,15 +502,16 @@ export const translations = {
             title: "Conditions d'Utilisation",
             lastUpdated: "Dernière mise à jour",
             toc: "Sur cette page",
-            eligibility: { title: "Éligibilité et Compte", content: "Vous devez avoir 18 ans ou plus. Vous êtes responsable de votre compte et une vérification d'identité (KYC) peut être requise." },
-            disclaimer: { title: "Avis de non-responsabilité", content: "Les services sont pour guidance et ne remplacent pas un avis professionnel (médical, juridique, financier). Pas pour les urgences." },
-            platform: { title: "Utilisation d'ASTRETHIQUE", content: "Les consultants sont indépendants. Les conférences peuvent être hébergées sur des plateformes tierces." },
-            billing: { title: "Portefeuille et Facturation", content: "Les sessions sont facturées à la minute depuis votre portefeuille. Vous êtes responsable des taxes applicables (TVA). Voir notre", link: "Politique de Remboursement" },
-            content: { title: "Propriété du Contenu", content: "Vous possédez votre contenu, mais vous nous accordez une licence pour l'afficher." },
-            conduct: { title: "Conduite Interdite", content: "Le harcèlement, les discours de haine, l'illégalité, les affirmations médicales/juridiques non fondées et le spam sont interdits." },
-            termination: { title: "Suspension et Résiliation", content: "Nous nous réservons le droit de suspendre ou de résilier les comptes qui enfreignent ces conditions." },
-            governingLaw: { title: "Droit Applicable", content: "Ces conditions sont régies par le droit du Royaume-Uni." },
-            contact: { title: "Contact", content: "Pour toute question sur ces conditions, contactez-nous à" }
+            eligibility: { title: "Éligibilité et Compte", content: "Texte FR..." },
+            disclaimer: { title: "Avis de non-responsabilité", content: "Texte FR..." },
+            platform: { title: "Utilisation d'ASTRETHIQUE", content: "Texte FR..." },
+            billing: { title: "Portefeuille et Facturation", content: "Texte FR... Voir notre", link: "Politique de Remboursement" },
+            content: { title: "Propriété du Contenu", content: "Texte FR..." },
+            conduct: { title: "Conduite Interdite", content: "Texte FR..." },
+            termination: { title: "Suspension et Résiliation", content: "Texte FR..." },
+            governingLaw: { title: "Droit Applicable", content: "Texte FR..." },
+            contact: { title: "Contact", content: "Contactez-nous à" },
+            footer: { text: "Des questions sur cette politique ? Envoyez un e-mail à" }
         },
 
         // Pricing & Fees Page
@@ -509,23 +519,22 @@ export const translations = {
             title: "Tarifs & Frais",
             lastUpdated: "Dernière mise à jour",
             toc: "Sur cette page",
-            model: { title: "Taux à la minute", content: "Chaque consultant fixe son propre tarif à la minute, qui est clairement affiché sur son profil et avant que vous ne commenciez une session. Vous ne payez que pour le temps de connexion." },
-            wallet: { title: "Portefeuille & Recharges", content: "Notre plateforme fonctionne avec un système de portefeuille prépayé. Vous approvisionnez votre portefeuille avec des fonds (par exemple, en EUR, USD), et les coûts des sessions sont déduits en temps réel. Une facture est envoyée à votre email après chaque session." },
-            fees: { title: "Frais de Plateforme & de Traitement", content: ["Des frais modiques sont inclus dans le tarif du consultant pour couvrir le traitement des paiements et la maintenance de notre plateforme.", "Toute taxe applicable comme la TVA sera clairement indiquée lors du processus de recharge."] },
+            model: { title: "Taux à la minute", content: "Texte FR..." },
+            wallet: { title: "Portefeuille & Recharges", content: "Texte FR..." },
+            fees: { title: "Frais de Plateforme & de Traitement", content: ["Texte FR...", "Texte FR..."] },
             example: { 
-                title: "Exemple de Calcul de Coût",
-                intro: "Voici quelques exemples de calcul des coûts de session :",
+                title: "Exemple de Calcul",
+                intro: "Voici quelques exemples :",
                 table: {
-                    duration: "Durée de la session",
-                    rate: "Tarif du consultant",
+                    duration: "Durée",
+                    rate: "Tarif",
                     cost: "Coût total"
                 },
-                note: "La facturation est calculée à la seconde et arrondie au centime le plus proche."
+                note: "Note FR..."
             },
-            footer: {
-                text: "Pour plus de détails, veuillez consulter nos",
-                link1: "Conditions d'Utilisation",
-                link2: "Politique de Remboursements et d'Annulations"
+            footer: { 
+                text: "Pour plus de détails, voir nos CGU et notre politique de remboursement.",
+                textWithEmail: "Des questions sur cette politique ? Envoyez un e-mail à"
             }
         },
 
@@ -536,178 +545,125 @@ export const translations = {
             toc: "Sur cette page",
             whatAreCookies: {
                 title: "Que sont les cookies ?",
-                content: "Les cookies sont de petits fichiers texte stockés sur votre appareil qui aident notre site web à fonctionner et à se souvenir de vos préférences. Ils sont standard pour la plupart des sites web modernes."
+                content: "Texte FR..."
             },
             howWeUse: {
                 title: "Comment nous utilisons les cookies",
-                intro: "Nous utilisons des cookies à plusieurs fins :",
-                essential: { title: "Strictement nécessaires", text: "Ceux-ci sont requis pour les fonctionnalités de base du site, comme vous maintenir connecté." },
-                analytics: { title: "Analytiques", text: "Ceux-ci nous aident à comprendre comment les visiteurs utilisent notre site afin de l'améliorer. Ces données sont agrégées et anonymes." },
-                preferences: { title: "Préférences", text: "Ceux-ci se souviennent de vos choix, comme votre langue préférée, pour personnaliser votre expérience." }
+                intro: "Intro FR...",
+                essential: { title: "Strictement nécessaires", text: "Texte FR..." },
+                analytics: { title: "Analytiques", text: "Texte FR..." },
+                preferences: { title: "Préférences", text: "Texte FR..." }
             },
             managing: {
                 title: "Gérer vos préférences",
-                content: "Vous pouvez modifier vos préférences en matière de cookies à tout moment. L'ajustement de vos paramètres peut avoir un impact sur votre expérience sur notre site.",
-                buttonText: "Gérer les paramètres des cookies"
+                content: "Texte FR...",
+                buttonText: "Gérer les cookies"
             },
-            footer: {
-                text: "Pour plus d'informations sur la manière dont nous traitons vos données, veuillez consulter notre",
-                linkText: "Politique de Confidentialité"
-            }
+            footer: { 
+                text: "Pour plus d'informations, voir notre",
+                linkText: "Politique de Confidentialité",
+                textWithEmail: "Des questions sur cette politique ? Envoyez un e-mail à"
+             }
         },
         
         // Refunds & Cancellations Page
         refundsAndCancellations: {
             title: "Remboursements & Annulations",
             lastUpdated: "Dernière mise à jour",
-            toc: "Sur cette page",
+            toc: "On this page",
             consultantNoShow: {
                 title: "Absence du Consultant",
-                content: "Si un consultant ne se présente pas à une session programmée, vous avez droit à un remboursement complet sur votre portefeuille ou à la possibilité de reprogrammer. Veuillez contacter le support pour lancer ce processus."
+                content: "Texte FR..."
             },
             userCancellations: {
                 title: "Annulations par l'Utilisateur",
-                content: "Vous pouvez annuler une session programmée pour un remboursement complet jusqu'à 24 heures avant l'heure de début. Les annulations effectuées dans les 24 heures précédant la session ne sont pas remboursables."
+                content: "Texte FR..."
             },
             technicalFailures: {
                 title: "Pannes Techniques",
-                content: "Si une session est considérablement perturbée en raison de problèmes techniques sur notre plateforme ou du côté du consultant, nous examinerons le cas et pourrons émettre un remboursement partiel ou total au cas par cas."
+                content: "Texte FR..."
             },
             conferences: {
                 title: "Conférences",
-                content: "Les conférences sont organisées par des consultants indépendants sur des plateformes externes (par ex. Zoom). À ce titre, tout remboursement ou annulation est régi par la politique individuelle de l'hôte. ASTRETHIQUE n'est pas responsable de ces transactions."
+                content: "Texte FR..."
             },
             howToRequest: {
                 title: "Comment Demander un Remboursement",
-                content: "Toutes les demandes de remboursement doivent être envoyées par email à notre équipe de support. Veuillez inclure la date, l'heure de la session et le nom du consultant dans votre demande."
-            }
+                content: "Texte FR..."
+            },
+            footer: { text: "Des questions sur cette politique ? Envoyez un e-mail à" }
         },
 
         // Community Guidelines Page
         communityGuidelines: {
             title: "Directives sur le Contenu et la Communauté",
             lastUpdated: "Dernière mise à jour",
-            toc: "Sur cette page",
-            respectfulConduct: {
-                title: "Soyez Respectueux",
-                content: "Notre communauté est fondée sur la confiance et le respect mutuel. Le harcèlement, les discours haineux, l'intimidation ou tout contenu illégal sont strictement interdits sur tous les profils, commentaires, articles et sessions."
-            },
-            professionalBoundaries: {
-                title: "Limites Professionnelles",
-                content: "Les consultants ne doivent pas présenter les conseils spirituels comme des faits médicaux, juridiques ou financiers. Utilisez toujours les avertissements appropriés et encouragez les utilisateurs à consulter des professionnels agréés pour ces questions."
-            },
-            authenticity: {
-                title: "Authenticité",
-                content: "Ne déformez pas votre identité, vos qualifications ou vos services. L'usurpation d'identité, les escroqueries ou les activités frauduleuses entraîneront une suspension immédiate et permanente."
-            },
-            commentingRules: {
-                title: "Règles de Commentaire",
-                content: "Les commentaires et avis doivent être constructifs et pertinents. Ne publiez pas de liens malveillants, de spam ou d'informations personnelles sur autrui (doxxing)."
-            },
-            enforcement: {
-                title: "Application",
-                content: "Les violations de ces directives peuvent entraîner un avertissement, la suppression de contenu ou la suspension du compte, selon la gravité de l'infraction. Nous nous réservons le droit de prendre les mesures appropriées à notre discrétion."
-            },
-            reporting: {
-                title: "Signalement",
-                content: "Si vous voyez un contenu ou un comportement qui enfreint ces directives, veuillez le signaler immédiatement à notre équipe de support en envoyant un e-mail à"
-            }
+            toc: "On this page",
+            respectfulConduct: { title: "Soyez Respectueux", content: "Texte FR..." },
+            professionalBoundaries: { title: "Limites Professionnelles", content: "Texte FR..." },
+            authenticity: { title: "Authenticité", content: "Texte FR..." },
+            commentingRules: { title: "Règles de Commentaire", content: "Texte FR..." },
+            enforcement: { title: "Application", content: "Texte FR..." },
+            reporting: { title: "Signalement", content: "Texte FR..." },
+            footer: { text: "Des questions sur cette politique ? Envoyez un e-mail à" }
         },
         
         // Safety & Reporting Page
         safetyAndReporting: {
             title: "Sécurité & Signalement",
             lastUpdated: "Dernière mise à jour",
-            toc: "Sur cette page",
-            emergencyDisclaimer: {
-                title: "Avis d'Urgence",
-                content: "Si vous ou quelqu'un d'autre êtes en danger immédiat, veuillez contacter immédiatement vos services d'urgence locaux. Notre plateforme n'est pas équipée pour gérer les situations de crise."
-            },
-            howToReport: {
-                title: "Comment Signaler un Problème",
-                content: "Pour signaler un contenu inapproprié, une préoccupation concernant un consultant ou un problème technique, veuillez envoyer un e-mail à notre équipe de support avec un lien vers la page pertinente et une description du problème."
-            },
-            blockingAndMuting: {
-                title: "Blocage et Masquage",
-                content: "Vous pouvez bloquer ou masquer des utilisateurs ou des consultants pour les empêcher de vous contacter. Cela peut être fait depuis leur page de profil. (Remarque : cette fonctionnalité est un placeholder pour le prototype)."
-            },
-            lawEnforcement: {
-                title: "Demandes des Forces de l'Ordre",
-                content: "Les demandes officielles des forces de l'ordre doivent être adressées à notre équipe juridique. Veuillez inclure la base juridique de votre demande."
-            }
+            toc: "On this page",
+            emergencyDisclaimer: { title: "Avis d'Urgence", content: "Texte FR..." },
+            howToReport: { title: "Comment Signaler un Problème", content: "Texte FR..." },
+            blockingAndMuting: { title: "Blocage et Masquage", content: "Texte FR..." },
+            lawEnforcement: { title: "Demandes des Forces de l'Ordre", content: "Texte FR..." },
+            footer: { text: "Des questions sur cette politique ? Envoyez un e-mail à" }
         },
         kycIdVerification: {
             title: "Vérification KYC / ID",
             lastUpdated: "Dernière mise à jour",
-            toc: "Sur cette page",
-            whatWeVerify: {
-                title: "Ce que nous vérifions",
-                content: "Placeholder FR: We verify a consultant's identity using a valid, government-issued photo ID (e.g., passport, driver's license). This is a one-time process to confirm that the person is who they say they are."
-            },
-            whenAndWhy: {
-                title: "Quand et pourquoi",
-                content: "Placeholder FR: Verification is mandatory for all consultants before they can offer services on the platform. This helps prevent fraud, increases trust, and ensures a safer environment for everyone."
-            },
-            dataFlow: {
-                title: "Flux de données et sécurité",
-                content: "Placeholder FR: The verification process is handled by a secure, third-party provider. We do not store your ID documents on our servers. We only receive a 'verified' or 'not verified' signal, which is used to display the 'KYC/ID verified' badge on a consultant's profile."
-            },
+            toc: "On this page",
+            whatWeVerify: { title: "Ce que nous vérifions", content: "Texte FR..." },
+            whenAndWhy: { title: "Quand et pourquoi", content: "Texte FR..." },
+            dataFlow: { title: "Flux de données et sécurité", content: "Texte FR..." },
             retentionAndRights: {
                 title: "Rétention et vos droits",
-                content: "Placeholder FR: Because we do not store the original documents, any data rights requests (like deletion) should be directed to our third-party provider, though we will facilitate this process. For more information on your data, please see our",
+                content: "Texte FR... Voir notre",
                 link: "Politique de confidentialité"
-            }
+            },
+            footer: { text: "Des questions sur cette politique ? Envoyez un e-mail à" }
         },
         dataProcessing: {
             title: "Traitement des Données & Sous-traitants",
             lastUpdated: "Dernière mise à jour",
-            toc: "Sur cette page",
-            controllerProcessor: {
-                title: "Responsable du Traitement vs Sous-traitant",
-                content: "En vertu du RGPD, ASTRETHIQUE agit en tant que 'responsable du traitement' pour les données personnelles de nos utilisateurs (par ex. infos de compte, données d'utilisation). Les consultants sont 'responsables du traitement' pour les informations qu'ils recueillent lors des sessions. Nos partenaires, listés ci-dessous, agissent en tant que 'sous-traitants' pour notre compte."
-            },
+            toc: "On this page",
+            controllerProcessor: { title: "Responsable du Traitement vs Sous-traitant", content: "Texte FR..." },
             subprocessors: {
                 title: "Nos Sous-traitants",
-                intro: "Nous utilisons un nombre limité de services tiers pour fournir notre plateforme. Nous avons évalué chacun d'eux pour leurs normes de sécurité et de protection des données.",
-                table: {
-                    category: "Catégorie",
-                    name: "Nom",
-                    region: "Région",
-                    purpose: "Objectif"
-                },
+                intro: "Intro FR...",
+                table: { category: "Catégorie", name: "Nom", region: "Région", purpose: "Objectif" },
                 rows: [
                     { category: "Paiements", name: "Stripe, Inc.", region: "USA/EU", purpose: "Traitement des paiements" },
-                    { category: "Analytique", name: "Google Analytics", region: "USA/EU", purpose: "Analyse du trafic du site" },
-                    { category: "Email", name: "Postmark (ActiveCampaign, LLC)", region: "USA/EU", purpose: "Emails transactionnels et marketing" },
-                    { category: "Vérification ID", name: "Veriff", region: "USA/EU", purpose: "Vérifications KYC/ID des consultants" }
+                    { category: "Analytique", name: "Google Analytics", region: "USA/EU", purpose: "Analyse du trafic" },
+                    { category: "Email", name: "Postmark (ActiveCampaign, LLC)", region: "USA/EU", purpose: "Emails transactionnels" },
+                    { category: "Vérification ID", name: "Veriff", region: "USA/EU", purpose: "Vérifications KYC" }
                 ],
-                note: "Nous mettrons à jour cette liste avant d'engager tout nouveau sous-traitant."
-            }
+                note: "Note FR..."
+            },
+            footer: { text: "Des questions sur cette politique ? Envoyez un e-mail à" }
         },
         copyrightAndTakedown: {
             title: "Politique de Droit d'Auteur et de Retrait",
             lastUpdated: "Dernière mise à jour",
-            toc: "Sur cette page",
-            submitComplaint: {
-                title: "Comment Soumettre une Plainte pour Violation de Droit d'Auteur",
-                content: "Placeholder FR: If you believe your copyrighted work has been infringed upon, please send a detailed notice to our legal team at"
-            },
+            toc: "On this page",
+            submitComplaint: { title: "Comment Soumettre une Plainte", content: "Texte FR..." },
             requiredInfo: {
                 title: "Informations Requises",
-                intro: "Placeholder FR: Your complaint must include the following information:",
-                list: [
-                    "Placeholder FR: A physical or electronic signature of the copyright owner or a person authorized to act on their behalf.",
-                    "Placeholder FR: Identification of the copyrighted work claimed to have been infringed.",
-                    "Placeholder FR: Identification of the material that is claimed to be infringing and where it is located on our platform.",
-                    "Placeholder FR: Your contact information, including your address, telephone number, and an email address.",
-                    "Placeholder FR: A statement that you have a good faith belief that use of the material in the manner complained of is not authorized by the copyright owner, its agent, or the law.",
-                    "Placeholder FR: A statement that the information in the notification is accurate, and, under penalty of perjury, that you are authorized to act on behalf of the copyright owner."
-                ]
+                intro: "Intro FR...",
+                list: [ "Texte FR...", "Texte FR...", "Texte FR...", "Texte FR...", "Texte FR...", "Texte FR..." ]
             },
-            counterNotice: {
-                title: "Procédure de Contre-Notification",
-                content: "Placeholder FR: If you believe your content was removed by mistake, you may send a counter-notice to our legal team. We may reinstate the content upon receipt of a valid counter-notice, unless we receive notice from the complaining party that they have filed a legal action."
-            }
+            counterNotice: { title: "Procédure de Contre-Notification", content: "Texte FR..." },
+            footer: { text: "Des questions sur cette politique ? Envoyez un e-mail à" }
         }
     }
 };
