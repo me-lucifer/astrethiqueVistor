@@ -21,7 +21,7 @@ type CardProps = {
 };
 
 function formatViews(views: number): string {
-    if (views === undefined || views === null) {
+    if (views === undefined || views === null || isNaN(views)) {
         return '0';
     }
     if (views >= 1000) {
@@ -111,10 +111,10 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                         </p>
                         
                         <div className="mt-3 flex flex-wrap gap-1">
-                            {item.tags.slice(0,3).map(topic => (
+                            {item.tags && item.tags.slice(0,3).map(topic => (
                                 <Badge key={topic} variant="outline" className="font-normal">{topic}</Badge>
                             ))}
-                            {item.tags.length > 3 && (
+                            {item.tags && item.tags.length > 3 && (
                                 <Badge variant="outline" className="font-normal">+{item.tags.length - 3}</Badge>
                             )}
                         </div>
