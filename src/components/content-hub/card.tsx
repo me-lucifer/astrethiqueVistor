@@ -31,6 +31,9 @@ function formatViews(views: number): string {
 }
 
 function formatDate(date: string): string {
+    if (!date || isNaN(new Date(date).getTime())) {
+        return '';
+    }
     return formatDistanceToNowStrict(new Date(date), { addSuffix: true });
 }
 
