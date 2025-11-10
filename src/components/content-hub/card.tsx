@@ -42,10 +42,12 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
     }
 
     const isPromotedAndActive = item.promoted && item.promotionDaysRemaining > 0;
+    
+    const detailUrl = `/content-hub/${item.type}/${item.id}`;
 
     return (
         <Card className="group overflow-hidden flex flex-col h-full bg-card/50 hover:bg-card transition-shadow duration-300">
-            <Link href={`/content-hub/${item.type}/${item.id}`} className="flex flex-col h-full">
+            <Link href={detailUrl} className="flex flex-col h-full">
                 <div className="relative">
                     <Image
                         src={item.imageUrl}
@@ -103,8 +105,8 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmarkClick}>
                              <Bookmark className={cn("h-4 w-4", item.bookmarked && "fill-current text-primary")} />
                         </Button>
-                        <Button variant="outline" size="sm">
-                            {isArticle ? 'Read more' : 'Listen now'}
+                        <Button asChild variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(detailUrl); }}>
+                           <Link href={detailUrl}>{isArticle ? 'Read more' : 'Listen now'}</Link>
                         </Button>
                     </div>
                 </div>

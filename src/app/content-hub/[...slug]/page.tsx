@@ -1,63 +1,312 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { getSession } from '@/lib/session';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useParams, useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { getSession, setSession } from '@/lib/session';
 import { ContentHubItem } from '@/lib/content-hub-seeder';
-import { PlaceholderPage } from '@/components/placeholder-page';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ContentHubCard } from '@/components/content-hub/card';
+
+const Placeholder = () => (
+    <div className="container py-12">
+        <div className="max-w-4xl mx-auto">
+            <Skeleton className="h-8 w-48 mb-8" />
+            <Skeleton className="h-12 w-3/4 mb-4" />
+            <div className="flex gap-2 mb-4">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-20" />
+            </div>
+            <div className="flex items-center gap-4 mb-8">
+                 <Skeleton className="h-10 w-10 rounded-full" />
+                 <div className="space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                 </div>
+            </div>
+            <Skeleton className="aspect-video w-full mb-8" />
+            <div className="space-y-4">
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-5/6" />
+            </div>
+        </div>
+    </div>
+);
 
 export default function ContentDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { slug } = params;
+    const pathname = usePathname();
+    const { toast } = useToast();
     
     const [item, setItem] = useState<ContentHubItem | null>(null);
+    const [allItems, setAllItems] = useState<ContentHubItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const slug = params.slug;
         if (slug && slug.length === 2) {
             const itemId = slug[1];
-            const allItems = getSession<ContentHubItem[]>('ch_items') || [];
-            const foundItem = allItems.find(i => i.id === itemId);
-            setItem(foundItem || null);
+            const storedItems = getSession<ContentHubItem[]>('ch_items') || [];
+            setAllItems(storedItems);
+            const foundItem = storedItems.find(i => i.id === itemId);
+
+            if (foundItem && !foundItem.deleted) {
+                setItem(foundItem);
+            } else {
+                setItem(null);
+            }
         }
         setLoading(false);
-    }, [slug]);
+    }, [params.slug]);
+
+    const handleAuthorClick = (authorName: string) => {
+        router.push(`/content-hub?author=${encodeURIComponent(authorName)}`);
+    };
+
+    const handleTopicClick = (topic: string) => {
+        router.push(`/content-hub?topics=${encodeURIComponent(topic)}`);
+    }
+
+    const updateItemInSession = useCallback((updatedItem: ContentHubItem) => {
+        const updatedItems = allItems.map(i => i.id === updatedItem.id ? updatedItem : i);
+        setAllItems(updatedItems);
+        setSession('ch_items', updatedItems);
+    }, [allItems]);
+
+    const handleToggleLike = useCallback(() => {
+        if (!item) return;
+        const newLiked = !item.liked;
+        const newLikes = newLiked ? item.likes + 1 : item.likes - 1;
+        const updatedItem = { ...item, liked: newLiked, likes: newLikes };
+        setItem(updatedItem);
+        updateItemInSession(updatedItem);
+    }, [item, updateItemInSession]);
+
+    const handleToggleBookmark = useCallback(() => {
+        if (!item) return;
+        const updatedItem = { ...item, bookmarked: !item.bookmarked };
+        setItem(updatedItem);
+        updateItemInSession(updatedItem);
+        toast({
+            title: updatedItem.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
+        });
+    }, [item, updateItemInSession]);
+
+    const handleShare = () => {
+        navigator.clipboard.writeText(window.location.href);
+        toast({
+            title: 'Link copied to clipboard!',
+        });
+    };
+
+    const handleReport = () => {
+        toast({
+            title: 'Content reported',
+            description: "Thanks for your feedback. We'll review it shortly.",
+        });
+    };
+    
+    // Key-based navigation
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!item) return;
+
+            const currentIndex = allItems.findIndex(i => i.id === item.id);
+            if (currentIndex === -1) return;
+
+            let nextIndex = -1;
+            if (event.key === 'j') { // Next
+                nextIndex = allItems.findIndex((i, idx) => idx > currentIndex && !i.deleted);
+            } else if (event.key === 'k') { // Previous
+                for (let i = currentIndex - 1; i >= 0; i--) {
+                    if (!allItems[i].deleted) {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (nextIndex !== -1) {
+                const nextItem = allItems[nextIndex];
+                router.push(`/content-hub/${nextItem.type}/${nextItem.id}`);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+
+    }, [item, allItems, router]);
+
+
+    const moreFromAuthor = useMemo(() => {
+        if (!item) return [];
+        return allItems.filter(i => i.author.id === item.author.id && i.id !== item.id && !i.deleted).slice(0, 3);
+    }, [item, allItems]);
+    
+    const relatedContent = useMemo(() => {
+        if (!item) return [];
+        return allItems.filter(i => 
+            i.id !== item.id &&
+            !i.deleted &&
+            i.language === item.language &&
+            i.topics.some(t => item.topics.includes(t))
+        ).slice(0, 4);
+    }, [item, allItems]);
 
     if (loading) {
+        return <Placeholder />;
+    }
+    
+    if (!item) {
         return (
-            <div className="container py-12">
-                <Skeleton className="h-8 w-48 mb-8" />
-                <Skeleton className="h-12 w-3/4 mb-4" />
-                <Skeleton className="h-6 w-1/2 mb-8" />
-                <div className="space-y-4">
-                    <Skeleton className="h-5 w-full" />
-                    <Skeleton className="h-5 w-full" />
-                    <Skeleton className="h-5 w-5/6" />
-                </div>
+            <div className="container py-16 text-center">
+                 <h1 className="font-headline text-2xl font-bold">This content is no longer available.</h1>
+                 <Button onClick={() => router.push('/content-hub')} className="mt-4">Back to Content Hub</Button>
             </div>
         );
     }
     
-    if (!item) {
-        return <PlaceholderPage title="Content not found" description="We couldn't find the content you were looking for." />;
-    }
+    const timeValue = item.type === 'article' ? item.readMinutes : item.durationMinutes;
+    const timeUnit = item.type === 'article' ? 'min read' : 'min';
+    const isPromotedAndActive = item.promoted && item.promotionDaysRemaining > 0;
 
     return (
-        <div className="container py-12 max-w-4xl">
-            <Button variant="ghost" onClick={() => router.push('/content-hub')} className="mb-6">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Content Hub
-            </Button>
-            <article>
-                <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight mb-4">{item.title}</h1>
-                <p className="text-lg text-muted-foreground mb-8">{item.excerpt}</p>
-                <div className="prose prose-invert max-w-none text-foreground/80" dangerouslySetInnerHTML={{ __html: item.body }} />
-            </article>
+        <div className="container py-12">
+            <div className="grid lg:grid-cols-[1fr_300px] gap-12">
+                <main>
+                    <Link href="/content-hub" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Content Hub
+                    </Link>
+                    <article>
+                        <header className="mb-8">
+                            <div className="flex flex-wrap items-center gap-2 mb-4">
+                                {item.topics.map(topic => (
+                                    <Button key={topic} variant="link" className="p-0 h-auto" onClick={() => handleTopicClick(topic)}>
+                                        <Badge variant="secondary">{topic}</Badge>
+                                    </Button>
+                                ))}
+                                <Badge variant="outline">{item.language}</Badge>
+                            </div>
+                            
+                            <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight mb-4">{item.title}</h1>
+                             {item.featured && <Badge variant="default" className="mb-4">Featured</Badge>}
+
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    <button onClick={() => handleAuthorClick(item.author.name)} className="flex items-center gap-2 hover:text-foreground">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={item.author.avatarUrl} alt={item.author.name} />
+                                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="font-medium text-foreground">{item.author.name}</span>
+                                    </button>
+                                    <span>·</span>
+                                    <span>Published {new Date(item.datePublished).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                    <span>·</span>
+                                    <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {timeValue} {timeUnit}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="ghost" size="sm" onClick={handleToggleLike} className={`gap-2 ${item.liked ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                        <Heart className={`h-5 w-5 ${item.liked ? 'fill-current' : ''}`} />
+                                        {item.likes}
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={handleToggleBookmark}>
+                                         <Bookmark className={`h-5 w-5 ${item.bookmarked ? 'fill-current text-primary' : ''}`} />
+                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
+                                                <MoreHorizontal className="h-5 w-5" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={handleShare}><Share2 className="mr-2 h-4 w-4" />Share</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={handleReport}><Flag className="mr-2 h-4 w-4" />Report</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            </div>
+                        </header>
+                        
+                        <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden">
+                             <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />
+                        </div>
+                        
+                        {isPromotedAndActive && (
+                            <div className="mb-8 p-2 text-center text-sm bg-accent/10 text-accent-foreground border-l-4 border-accent rounded">
+                                Promoted Content
+                            </div>
+                        )}
+
+                        <div 
+                            className="prose prose-invert max-w-none text-foreground/80 prose-blockquote:border-primary prose-blockquote:text-foreground" 
+                            dangerouslySetInnerHTML={{ __html: item.body }} 
+                        />
+                    </article>
+
+                    {moreFromAuthor.length > 0 && (
+                        <section className="mt-16">
+                            <Separator />
+                            <h2 className="font-headline text-2xl font-bold my-8">More from {item.author.name}</h2>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {moreFromAuthor.map(related => (
+                                    <ContentHubCard
+                                        key={related.id}
+                                        item={related}
+                                        onAuthorClick={handleAuthorClick}
+                                        onToggleLike={() => {}} // Simplified for this view
+                                        onToggleBookmark={() => {}}
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {relatedContent.length > 0 && (
+                        <section className="mt-16">
+                            <Separator />
+                            <h2 className="font-headline text-2xl font-bold my-8">You might also like</h2>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {relatedContent.map(related => (
+                                    <ContentHubCard
+                                        key={related.id}
+                                        item={related}
+                                        onAuthorClick={handleAuthorClick}
+                                        onToggleLike={() => {}}
+                                        onToggleBookmark={() => {}}
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+                    
+                     <footer className="mt-16 border-t pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <Button onClick={() => router.push('/content-hub')}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Back to Content Hub
+                        </Button>
+                        <Button asChild>
+                            <Link href="/discover">Discover consultants</Link>
+                        </Button>
+                    </footer>
+                </main>
+                <aside className="hidden lg:block sticky top-24 self-start">
+                    {/* Sticky side rail content goes here */}
+                </aside>
+            </div>
         </div>
     );
 }
+
