@@ -104,6 +104,8 @@ const defaultFilters: Filters = {
     onPromo: false,
 };
 
+const INITIAL_VISIBLE_COUNT = 12;
+
 export function FeaturedConsultants({ initialQuery, showFilters = false }: { initialQuery?: string, showFilters?: boolean }) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
 
@@ -112,7 +114,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [query, setQuery] = useState(initialQuery || "");
-    const [visibleCount, setVisibleCount] = useState(showFilters ? 12 : 4);
+    const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
 
     const [isPending, startTransition] = useTransition();
     const isLoading = isPending;
@@ -167,16 +169,22 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
 
 
     const updateFilters = (newFilters: Partial<Filters>, overwrite = false) => {
-        setFilters(prev => {
-            const updated = overwrite ? (newFilters as Filters) : { ...prev, ...newFilters };
-            setSession('discover.filters.v1', updated);
-            return updated;
+        startTransition(() => {
+            setFilters(prev => {
+                const updated = overwrite ? (newFilters as Filters) : { ...prev, ...newFilters };
+                setSession('discover.filters.v1', updated);
+                return updated;
+            });
+            setVisibleCount(INITIAL_VISIBLE_COUNT);
         });
     };
     
     const updateSort = (newSort: SortKey) => {
-        setSort(newSort);
-        setSession('discover.sort.v1', newSort);
+        startTransition(() => {
+            setSort(newSort);
+            setSession('discover.sort.v1', newSort);
+            setVisibleCount(INITIAL_VISIBLE_COUNT);
+        });
     }
 
     const filteredAndSortedConsultants = useMemo(() => {
@@ -275,8 +283,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     const handleResetFilters = () => {
         const newFilters = {...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])};
         updateFilters(newFilters, true);
-        setSort('recommended');
-        setSession('discover.sort.v1', 'recommended');
+        updateSort('recommended');
     };
 
     const handleMultiSelectToggle = (group: 'specialties' | 'types' | 'badges' | 'availability' | 'content', value: string) => {
