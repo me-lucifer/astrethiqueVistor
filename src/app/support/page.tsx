@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, CircleDot, HelpCircle, CalendarClock, User, Wallet, Tv, Languages, Shield, Wrench } from "lucide-react";
+import { CheckCircle, CircleDot, HelpCircle, CalendarClock, User, Wallet, Tv, Languages, Shield, Wrench, Search, Star, FileText, ArrowRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +34,26 @@ const consultantTopics = [
     { href: "#faq-content", title: "Publishing Content", description: "Submit articles/podcasts and understand the approval flow.", icon: HelpCircle },
     { href: "#faq-language", title: "Language & Visibility", description: "Understand how language gating affects your profile visibility.", icon: Languages },
     { href: "#faq-safety", title: "Trust, Safety & Vetting", description: "Our policies on KYC, content moderation, and disputes.", icon: Shield },
-    { href="#faq-technical", title: "Technical Best Practices", description: "Tips for ensuring smooth chat, audio, and video sessions.", icon: Wrench },
+    { href: "#faq-technical", title: "Technical Best Practices", description: "Tips for ensuring smooth chat, audio, and video sessions.", icon: Wrench },
+];
+
+const visitorQuickLinks = [
+    { label: "Discover consultants", href: "/discover"},
+    { label: "Free conferences", href: "/conferences"},
+    { label: "How it works", href: "/how-it-works"},
+    { label: "Pricing", href: "/pricing"},
+    { label: "Privacy (GDPR)", href: "/privacy"},
+    { label: "Terms", href: "/terms"},
+];
+
+const consultantQuickLinks = [
+    { label: "Set availability", href: "/consultant/dashboard/availability"},
+    { label: "Create a promotion", href: "/consultant/dashboard/promotions"},
+    { label: "Download invoices", href: "/consultant/dashboard/payouts"},
+    { label: "How it works (Consultants)", href: "/how-it-works"},
+    { label: "Pricing", href: "/pricing"},
+    { label: "Privacy (GDPR)", href: "/privacy"},
+    { label: "Terms", href: "/terms"},
 ];
 
 
@@ -53,6 +72,7 @@ export default function SupportPage() {
   );
   
   const topics = activeTab === 'visitor' ? visitorTopics : consultantTopics;
+  const quickLinks = activeTab === 'visitor' ? visitorQuickLinks : consultantQuickLinks;
 
 
   return (
@@ -132,6 +152,17 @@ export default function SupportPage() {
               </CardFooter>
             </Card>
           ))}
+        </div>
+        
+        <div className="mb-16">
+            <h3 className="text-center font-headline text-lg font-semibold mb-4">Quick Links</h3>
+            <div className="flex flex-wrap justify-center gap-2">
+                {quickLinks.map(link => (
+                    <Button key={link.label} variant="outline" size="sm" asChild>
+                        <Link href={link.href}>{link.label}</Link>
+                    </Button>
+                ))}
+            </div>
         </div>
 
       {/* Content sections will go here, dependent on activeTab */}
