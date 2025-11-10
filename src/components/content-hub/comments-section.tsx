@@ -121,10 +121,8 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
             <div className="text-center py-6 px-4 border-2 border-dashed rounded-lg">
               <h3 className="font-semibold">Sign in to add a comment.</h3>
               <div className="flex gap-2 justify-center mt-4">
-                <Button onClick={() => setIsAuthModalOpen(true)}>Login</Button>
-                <Button variant="outline" asChild>
-                    <Link href="/register">Create account</Link>
-                </Button>
+                <Button onClick={() => setIsAuthModalOpen(true)} aria-label="Login to comment">Login</Button>
+                <Button variant="outline" onClick={() => setIsAuthModalOpen(true)} aria-label="Create account to comment">Create account</Button>
               </div>
             </div>
           )}
