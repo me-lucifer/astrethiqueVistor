@@ -97,14 +97,14 @@ const defaultFilters: Filters = {
     onPromo: false,
 };
 
-export function FeaturedConsultants({ initialQuery }: { initialQuery?: string }) {
+export function FeaturedConsultants({ initialQuery, showFilters = false }: { initialQuery?: string, showFilters?: boolean }) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
 
     const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
     const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [query, setQuery] = useState(initialQuery || "");
-    const [visibleCount, setVisibleCount] = useState(12);
+    const [visibleCount, setVisibleCount] = useState(showFilters ? 12 : 4);
 
     const [isPending, startTransition] = useTransition();
     const isLoading = isPending;
@@ -427,31 +427,33 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
     
     return (
         <TooltipProvider>
-            {isDesktop ? <FilterControls /> : mobileSheet}
+            {showFilters && (isDesktop ? <FilterControls /> : mobileSheet)}
             
-            <main>
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                    <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
-                        Showing {filteredAndSortedConsultants.length} consultants
-                    </p>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                        <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
-                            <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort by">
-                                <SelectValue placeholder="Sort by..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {Object.entries(sortOptions).map(([key, value]) => (
-                                    <SelectItem key={key} value={key}>{value}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {isDesktop && <Button variant="link" onClick={handleResetFilters} className="text-muted-foreground">Clear all</Button>}
+            <main className={!showFilters ? 'w-full' : ''}>
+                {showFilters && (
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                        <p className="text-sm text-muted-foreground w-full sm:w-auto" aria-live="polite">
+                            Showing {filteredAndSortedConsultants.length} consultants
+                        </p>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <Select value={sort} onValueChange={(v: SortKey) => updateSort(v)}>
+                                <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort by">
+                                    <SelectValue placeholder="Sort by..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(sortOptions).map(([key, value]) => (
+                                        <SelectItem key={key} value={key}>{value}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {isDesktop && <Button variant="link" onClick={handleResetFilters} className="text-muted-foreground">Clear all</Button>}
+                        </div>
                     </div>
-                </div>
+                )}
                 <div role="status" aria-live="polite">
                     {isLoading || allConsultants.length === 0 ? (
                         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {Array.from({ length: 8 }).map((_, i) => (
+                            {Array.from({ length: showFilters ? 8 : 4 }).map((_, i) => (
                                  <div key={i} className="space-y-3">
                                     <Skeleton className="h-[225px] w-full rounded-xl" />
                                     <div className="space-y-2">
@@ -495,5 +497,3 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
         </TooltipProvider>
     );
 }
-
-    

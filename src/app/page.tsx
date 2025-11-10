@@ -232,7 +232,7 @@ export default function Home() {
                     Our consultants are here to provide clarity and support, whenever you need it.
                 </p>
             </div>
-            <FeaturedConsultants />
+            <FeaturedConsultants showFilters={false} />
         </div>
       </section>
       

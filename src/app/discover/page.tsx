@@ -28,7 +28,7 @@ function DiscoverContent() {
             
             <div className="lg:grid lg:grid-cols-[320px_1fr] lg:gap-8">
                 <Suspense fallback={<div>Loading filters...</div>}>
-                    <FeaturedConsultants initialQuery={query} />
+                    <FeaturedConsultants initialQuery={query} showFilters={true} />
                 </Suspense>
             </div>
 
