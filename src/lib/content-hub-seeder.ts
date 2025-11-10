@@ -31,6 +31,7 @@ export type ContentHubItem = {
   durationMinutes: number | null;
   views: number;
   likes: number;
+  commentCount?: number;
   featured: boolean;
   promotedUntil?: string; // ISO string
   liked: boolean;
@@ -94,6 +95,7 @@ const createItem = (index: number): ContentHubItem => {
         featured: index < 2,
         promotedUntil: promotedUntil,
         likes: Math.floor(Math.random() * 200),
+        commentCount: Math.random() > 0.3 ? Math.floor(Math.random() * 15) : 0,
         liked: false,
         bookmarked: false,
         publishedAt: publishedAt.toISOString(),
@@ -105,23 +107,14 @@ const createItem = (index: number): ContentHubItem => {
 const createInitialComments = (items: ContentHubItem[]) => {
     const commentsByContentId: { [key: string]: Comment[] } = {};
     items.forEach(item => {
-        if (item.deleted) return;
-        commentsByContentId[item.id] = [
-            {
-                id: `comment-${item.id}-1`,
-                contentId: item.id,
-                displayName: 'Alex Doe',
-                text: 'This was incredibly insightful, thank you for sharing!',
-                createdAt: new Date(new Date(item.publishedAt).getTime() + 1000 * 60 * 60 * 24).toISOString(),
-            },
-            {
-                id: `comment-${item.id}-2`,
-                contentId: item.id,
-                displayName: 'Jordan Smith',
-                text: 'I never thought about it that way before. This really changed my perspective.',
-                createdAt: new Date(new Date(item.publishedAt).getTime() + 1000 * 60 * 60 * 48).toISOString(),
-            }
-        ];
+        if (item.deleted || !item.commentCount) return;
+        commentsByContentId[item.id] = Array.from({ length: item.commentCount }).map((_, i) => ({
+            id: `comment-${item.id}-${i + 1}`,
+            contentId: item.id,
+            displayName: i % 2 === 0 ? 'Alex Doe' : 'Jordan Smith',
+            text: i % 2 === 0 ? 'This was incredibly insightful, thank you for sharing!' : 'I never thought about it that way before. This really changed my perspective.',
+            createdAt: new Date(new Date(item.publishedAt).getTime() + (1000 * 60 * 60 * 24 * (i + 1))).toISOString(),
+        }));
     });
     return commentsByContentId;
 }
@@ -131,7 +124,7 @@ export const seedContentHub = () => {
     if (typeof window === 'undefined') return;
 
     const existingItems = getSession<ContentHubItem[]>("ch_items");
-    if (!existingItems || existingItems.length === 0) {
+    if (!existingItems || existingItems.length < 14) { // check if new podcasts are added
         const items = Array.from({ length: 10 }, (_, i) => createItem(i));
 
         const now = new Date();
@@ -153,6 +146,7 @@ export const seedContentHub = () => {
                 durationMinutes: 28,
                 views: 3200,
                 likes: 180,
+                commentCount: 5,
                 featured: false,
                 liked: false,
                 bookmarked: false,
@@ -175,6 +169,7 @@ export const seedContentHub = () => {
                 durationMinutes: 18,
                 views: 2100,
                 likes: 150,
+                commentCount: 8,
                 featured: false,
                 liked: false,
                 bookmarked: false,
@@ -197,6 +192,7 @@ export const seedContentHub = () => {
                 durationMinutes: 36,
                 views: 5400,
                 likes: 320,
+                commentCount: 12,
                 featured: true,
                 liked: false,
                 bookmarked: false,
@@ -219,6 +215,7 @@ export const seedContentHub = () => {
                 durationMinutes: 24,
                 views: 1800,
                 likes: 95,
+                commentCount: 3,
                 featured: false,
                 liked: false,
                 bookmarked: false,
@@ -232,5 +229,6 @@ export const seedContentHub = () => {
         const initialComments = createInitialComments(allItems);
         setSession("ch_items", allItems);
         setSession("commentsByContentId", initialComments);
+        setSession("ch_seeded_v2", true);
     }
 };

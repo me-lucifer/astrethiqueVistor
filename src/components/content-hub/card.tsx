@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Bookmark, Mic, BookOpen, Clock, Eye, Calendar, Play, Youtube, MoreHorizontal, Share2 } from "lucide-react";
+import { Heart, Bookmark, Mic, BookOpen, Clock, Eye, Calendar, Play, Youtube, MoreHorizontal, Share2, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
@@ -124,7 +124,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                     />
                 </Link>
                 <div className="absolute top-3 left-3 flex gap-2">
-                    <Badge variant="secondary" className="gap-1.5">
+                    <Badge variant="secondary" className="gap-1.5 capitalize">
                         {isArticle ? <BookOpen className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
                         {item.type}
                     </Badge>
@@ -171,14 +171,20 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                     )}
                 </div>
                 
-                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                    <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md" aria-label={`Filter by author: ${item.author.name}`}>
+                <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+                     <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md" aria-label={`Filter by author: ${item.author.name}`}>
                         <Avatar className="h-6 w-6">
                             <AvatarImage src={item.author.avatar} alt={item.author.name} />
                             <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <span>{item.author.name}</span>
                     </button>
+                    {item.commentCount && item.commentCount > 0 && (
+                        <span className="flex items-center gap-1.5 text-xs">
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            {item.commentCount}
+                        </span>
+                    )}
                 </div>
             </CardContent>
 
@@ -190,68 +196,39 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                     </Button>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="sm:hidden">
-                            <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">More options</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={handleBookmarkClick}>
-                                    <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
-                                    <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleShare}>
-                                    <Share2 className="mr-2 h-4 w-4" />
-                                    <span>Share</span>
-                                </DropdownMenuItem>
-                                {item.youtubeUrl && (
-                                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(item.youtubeUrl, '_blank')}}>
-                                        <Youtube className="mr-2 h-4 w-4" />
-                                        <span>Play on YouTube</span>
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-
                     {isArticle ? (
-                            <Button variant="outline" size="sm" onClick={handleCTAClick}>
-                            Read more
-                            </Button>
+                        <Button variant="outline" size="sm" onClick={handleCTAClick}>Read more</Button>
                     ) : (
                         <Button variant="secondary" size="sm" onClick={handleCTAClick}>
                             <Play className="mr-2 h-4 w-4" /> Open
                         </Button>
                     )}
-                    <div className="hidden sm:flex items-center gap-2">
-                            <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">More options</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={handleBookmarkClick}>
-                                    <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
-                                    <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleShare}>
-                                    <Share2 className="mr-2 h-4 w-4" />
-                                    <span>Share</span>
-                                </DropdownMenuItem>
-                                {item.youtubeUrl && (
-                                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(item.youtubeUrl, '_blank')}}>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">More options</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={handleBookmarkClick} aria-label={item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}>
+                                <Bookmark className={cn("mr-2 h-4 w-4", item.bookmarked && "fill-current text-primary")} />
+                                <span>{item.bookmarked ? 'Remove Bookmark' : 'Bookmark'}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleShare} aria-label="Share this item">
+                                <Share2 className="mr-2 h-4 w-4" />
+                                <span>Share</span>
+                            </DropdownMenuItem>
+                            {!isArticle && item.youtubeUrl && (
+                                <DropdownMenuItem asChild>
+                                    <a href={item.youtubeUrl} target="_blank" rel="noopener noreferrer" onClick={e => {e.stopPropagation()}} aria-label="Play on YouTube">
                                         <Youtube className="mr-2 h-4 w-4" />
-                                        <span>Play on YouTube</span>
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                                        Play on YouTube
+                                    </a>
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
         </Card>
