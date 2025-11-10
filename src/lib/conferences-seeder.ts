@@ -13,7 +13,7 @@ export interface Conference {
   hostAlias: string;
   hostId: string;
   hostRating: number;
-  languages: ("EN" | "FR")[];
+  language: ("EN" | "FR");
   tags: ("Love" | "Work" | "Health" | "Money" | "Life Path")[];
   type: "Workshop" | "Group Reading" | "Webinar" | "Q&A";
   price: number;
@@ -58,15 +58,18 @@ const excerpts = [
 ];
 
 const hosts = [
-    { alias: "Aeliana", id: "aeliana-rose" },
-    { alias: "Kael", id: "kaelen-vance" },
-    { alias: "Seraphina", id: "seraphina-moon" },
-    { alias: "Orion", id: "orion-blackwood" },
-    { alias: "Elara", id: "elara-solstice" },
-    { alias: "Lyra", id: "lyra-meadow" },
-    { alias: "Caspian", id: "caspian-sage" },
-    { alias: "Marcus", id: "marcus-redfield-clone" },
-    { alias: "Eva", id: "eva-green-clone" },
+    { alias: "Aeliana Rose", id: "aeliana-rose" },
+    { alias: "Kaelen Vance", id: "kaelen-vance" },
+    { alias: "Seraphina Moon", id: "seraphina-moon" },
+    { alias: "Orion Blackwood", id: "orion-blackwood" },
+    { alias: "Elara Solstice", id: "elara-solstice" },
+    { alias: "Lyra Meadow", id: "lyra-meadow" },
+    { alias: "Caspian Sage", id: "caspian-sage" },
+    { alias: "Marcus Redfield", id: "marcus-redfield-clone" },
+    { alias: "Eva Green", id: "eva-green-clone" },
+    { alias: "Fiona Glen", id: "fiona-glen" },
+    { alias: "Chloé Dubois", id: "chloe-dubois-clone"},
+    { alias: "Isabelle Leroy", id: "isabelle-leroy-clone"},
 ];
 
 const tags: Conference['tags'] = ["Love", "Work", "Health", "Money", "Life Path"];
@@ -76,7 +79,8 @@ const types: Conference['type'][] = ["Workshop", "Group Reading", "Webinar", "Q&
 const createConference = (id: number): Conference => {
     const now = new Date();
     let date: Date;
-    const price = id % 3 === 0 ? 0 : Math.floor(Math.random() * 80) + 20;
+    const priceOptions = [0, 5, 10, 15, 20, 25];
+    const price = priceOptions[id % priceOptions.length];
     const title = conferenceTitles[(id-1) % conferenceTitles.length];
 
     switch(id) {
@@ -102,7 +106,7 @@ const createConference = (id: number): Conference => {
              date = addDays(now, Math.floor(Math.random() * 28) + 1);
     }
     
-    const capacity = Math.floor(Math.random() * 40) + 10;
+    const capacity = Math.floor(Math.random() * 130) + 20; // 20-150
     const seatsLeft = id % 4 === 0 ? 0 : Math.floor(Math.random() * capacity);
     const host = hosts[(id-1) % hosts.length];
 
@@ -115,7 +119,7 @@ const createConference = (id: number): Conference => {
         hostAlias: host.alias,
         hostId: host.id,
         hostRating: Math.round((4.0 + Math.random()) * 10) / 10,
-        languages: (id % 3 === 0) ? ["FR"] : (id % 4 === 0 ? ["EN", "FR"] : ["EN"]),
+        language: (id % 3 === 0) ? "FR" : "EN",
         tags: tags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 1),
         type: types[id % types.length],
         price,
