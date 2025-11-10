@@ -8,15 +8,18 @@ export interface BaseContentItem {
 }
 export interface ContentItem extends BaseContentItem {
   likes?: number;
+  type: 'Article' | 'Podcast' | 'Video';
 }
 
-export interface Podcast extends BaseContentItem {
-  duration: string;
+export interface Podcast extends ContentItem {
+  duration: number;
 }
 
 export interface Conference extends BaseContentItem {
   date: string;
   time: string;
+  dateISO: string;
+  type: 'Conference';
 }
 
 export interface Review {
@@ -48,8 +51,8 @@ export interface ConsultantProfile {
   nextSlots: string[];
   content: {
     articles: ContentItem[];
-    podcasts: (ContentItem & { duration: number })[];
-    conferences: (BaseContentItem & { dateISO: string })[];
+    podcasts: Podcast[];
+    conferences: Conference[];
   };
   reviews: Review[];
   favorite: boolean;

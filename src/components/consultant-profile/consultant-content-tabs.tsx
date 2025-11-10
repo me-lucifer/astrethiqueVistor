@@ -95,25 +95,37 @@ const ContentSubTabs = ({ content }: { content: ConsultantProfile['content'] }) 
                 {content.conferences?.length > 0 && <TabsTrigger value="conferences">Conferences ({content.conferences.length})</TabsTrigger>}
             </TabsList>
             <TabsContent value="articles" className="py-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {content.articles.map(item => (
-                        <ContentCard key={item.id} item={{...item, type: 'Article'}} />
-                    ))}
-                </div>
+                 {content.articles && content.articles.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {content.articles.map(item => (
+                            <ContentCard key={item.id} item={{...item, type: 'Article'}} />
+                        ))}
+                    </div>
+                ) : (
+                    <PlaceholderContent message="This consultant hasn't published any articles yet." />
+                )}
             </TabsContent>
             <TabsContent value="podcasts" className="py-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {content.podcasts.map(item => (
-                        <ContentCard key={item.id} item={{...item, type: 'Podcast'}} />
-                    ))}
-                </div>
+                 {content.podcasts && content.podcasts.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {content.podcasts.map(item => (
+                            <ContentCard key={item.id} item={{...item, type: 'Podcast'}} />
+                        ))}
+                    </div>
+                 ) : (
+                    <PlaceholderContent message="This consultant hasn't published any podcasts yet." />
+                 )}
             </TabsContent>
             <TabsContent value="conferences" className="py-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {content.conferences.map(item => (
-                        <ContentCard key={item.id} item={{...item, type: 'Conference'}} />
-                    ))}
-                </div>
+                 {content.conferences && content.conferences.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {content.conferences.map(item => (
+                            <ContentCard key={item.id} item={{...item, type: 'Conference'}} />
+                        ))}
+                    </div>
+                ) : (
+                    <PlaceholderContent message="This consultant hasn't published any conferences yet." />
+                )}
             </TabsContent>
         </Tabs>
     );
@@ -121,14 +133,15 @@ const ContentSubTabs = ({ content }: { content: ConsultantProfile['content'] }) 
 
 
 export function ConsultantContentTabs({ consultant }: { consultant: ConsultantProfile }) {
-  const bioHtml = `<p>${consultant.summary}</p>`;
+  const bioHtml = consultant.summary; // The 'summary' field should contain the rich HTML bio
+  const contentCount = (consultant.content?.articles?.length || 0) + (consultant.content?.podcasts?.length || 0) + (consultant.content?.conferences?.length || 0);
     
   return (
     <Tabs defaultValue="about" className="w-full">
       <TabsList className="grid w-full grid-cols-3 sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <TabsTrigger value="about">About</TabsTrigger>
         <TabsTrigger value="reviews">Reviews ({consultant.reviews?.length || 0})</TabsTrigger>
-        <TabsTrigger value="content">Content</TabsTrigger>
+        <TabsTrigger value="content">Content ({contentCount})</TabsTrigger>
       </TabsList>
       <TabsContent value="about" className="py-6">
         <BioContent bio={bioHtml} years={consultant.yearsExperience} country={consultant.country} />

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Mic, BookOpen, Video, Heart } from "lucide-react";
+import { format } from "date-fns";
 
 type ContentType = 'Article' | 'Podcast' | 'Conference' | 'Video';
 
@@ -19,6 +20,7 @@ interface ContentCardProps {
         likes?: number;
         duration?: string | number;
         date?: string;
+        dateISO?: string;
         time?: string;
     };
 }
@@ -32,6 +34,8 @@ const typeInfo = {
 
 export function ContentCard({ item }: ContentCardProps) {
     const { icon: TypeIcon, cta } = typeInfo[item.type];
+
+    const displayDate = item.dateISO ? format(new Date(item.dateISO), "PPP") : item.date;
 
     return (
         // In a real app, this would open a modal or navigate to a content page
@@ -81,9 +85,9 @@ export function ContentCard({ item }: ContentCardProps) {
                                 <span>{typeof item.duration === 'number' ? `${item.duration} min` : item.duration}</span>
                             </div>
                         )}
-                        {item.date && (
+                        {displayDate && (
                              <div className="flex items-center gap-1.5">
-                                <span>{item.date}</span>
+                                <span>{displayDate}</span>
                             </div>
                         )}
                     </div>
