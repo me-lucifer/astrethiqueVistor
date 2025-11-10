@@ -69,7 +69,7 @@ interface Filters {
     myFavorites: boolean;
     specialties: string[];
     types: string[];
-    price: number[];
+    price: [number, number];
     minPrice: string;
     maxPrice: string;
     zodiac: string;
@@ -137,12 +137,12 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             const mergedFilters = { ...defaultFilters, ...savedFilters };
             
             if (!savedFilters || !savedFilters.price) {
-                 const initialPrice = [min, max];
+                 const initialPrice: [number, number] = [min, max];
                  mergedFilters.price = initialPrice;
                  mergedFilters.minPrice = String(initialPrice[0]);
                  mergedFilters.maxPrice = String(initialPrice[1]);
             }
-            updateFilters(mergedFilters);
+            updateFilters(mergedFilters, true);
         }
         const savedQuery = getSession<string>('discover.search.v1');
         if (savedQuery) {
@@ -166,9 +166,9 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     }, [loadState]);
 
 
-    const updateFilters = (newFilters: Partial<Filters>) => {
+    const updateFilters = (newFilters: Partial<Filters>, overwrite = false) => {
         setFilters(prev => {
-            const updated = { ...prev, ...newFilters };
+            const updated = overwrite ? (newFilters as Filters) : { ...prev, ...newFilters };
             setSession('discover.filters.v1', updated);
             return updated;
         });
@@ -273,9 +273,8 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
 
     const handleResetFilters = () => {
         const newFilters = {...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])};
-        setFilters(newFilters);
+        updateFilters(newFilters, true);
         setSort('recommended');
-        setSession('discover.filters.v1', newFilters);
         setSession('discover.sort.v1', 'recommended');
     };
 
@@ -287,17 +286,25 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
 
     const handlePriceInputChange = (type: 'min' | 'max', value: string) => {
         const numericValue = parseFloat(value);
-        const newPrice = [...filters.price];
+        let newPrice: [number, number] = [...filters.price];
         const key = type === 'min' ? 'minPrice' : 'maxPrice';
-        const priceIndex = type === 'min' ? 0 : 1;
 
-        updateFilters({ [key]: value });
-
-        if (!isNaN(numericValue)) {
-            newPrice[priceIndex] = numericValue;
-            updateFilters({ price: newPrice });
+        if (type === 'min') {
+            newPrice[0] = isNaN(numericValue) ? priceBounds[0] : Math.max(priceBounds[0], Math.min(numericValue, filters.price[1] - 0.01));
+            updateFilters({ minPrice: value, price: newPrice });
+        } else { // max
+            newPrice[1] = isNaN(numericValue) ? priceBounds[1] : Math.min(priceBounds[1], Math.max(numericValue, filters.price[0] + 0.01));
+            updateFilters({ maxPrice: value, price: newPrice });
         }
-    }
+    };
+    
+    const handleSliderChange = (newPrice: [number, number]) => {
+        updateFilters({ 
+            price: newPrice,
+            minPrice: String(newPrice[0]),
+            maxPrice: String(newPrice[1])
+        });
+    };
 
     const FilterControls = () => (
         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-4 -mr-4 lg:mr-0">
@@ -340,9 +347,9 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                         <AccordionTrigger className="font-semibold text-sm">Price per minute</AccordionTrigger>
                         <AccordionContent>
                             <div className="flex justify-between items-center mb-2">
-                                <Label className="text-primary font-bold">€{filters.price[0]} &mdash; €{filters.price[1]}/min</Label>
+                                <Label htmlFor="price-slider" className="text-primary font-bold">€{filters.price[0]} &mdash; €{filters.price[1]}/min</Label>
                             </div>
-                            <Slider aria-label="Price range" min={priceBounds[0]} max={priceBounds[1]} step={0.5} value={filters.price} onValueChange={(v) => updateFilters({ price: v, minPrice: String(v[0]), maxPrice: String(v[1]) })} />
+                            <Slider id="price-slider" aria-label="Price range" min={priceBounds[0]} max={priceBounds[1]} step={0.5} value={filters.price} onValueChange={handleSliderChange} />
                              <div className="flex gap-2 mt-2">
                                 <Input type="number" aria-label="Minimum price" placeholder="Min" value={filters.minPrice} onChange={(e) => handlePriceInputChange('min', e.target.value)} />
                                 <Input type="number" aria-label="Maximum price" placeholder="Max" value={filters.maxPrice} onChange={(e) => handlePriceInputChange('max', e.target.value)} />
@@ -557,3 +564,5 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         </TooltipProvider>
     );
 }
+
+    
