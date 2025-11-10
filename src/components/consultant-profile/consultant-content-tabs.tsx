@@ -37,7 +37,7 @@ const ReviewsContent = ({ reviews }: { reviews: ConsultantProfile['reviews'] }) 
     const [visibleCount, setVisibleCount] = useState(3);
 
     if (!reviews || reviews.length === 0) {
-        return <PlaceholderContent message="Reviews for this consultant are not available yet." />;
+        return <PlaceholderContent message="No reviews yet. After your session, you’ll be invited to leave one." />;
     }
 
     const sortedReviews = [...reviews].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
