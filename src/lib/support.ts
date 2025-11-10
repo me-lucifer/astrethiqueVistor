@@ -2,9 +2,6 @@
 "use client";
 
 import { z } from "zod";
-import { getLocal, setLocal } from "./local";
-
-const SUPPORT_TICKETS_KEY = "astrethique_support_tickets_v1";
 
 export const ticketSchema = z.object({
   userType: z.enum(["visitor", "consultant"]),
@@ -28,22 +25,6 @@ export interface SupportTicket extends TicketFormData {
   createdAt: string; // ISO string
 }
 
-type TicketStore = {
-  [email: string]: SupportTicket[];
-};
-
-function getAllTickets(): TicketStore {
-  const allTickets = getLocal<TicketStore>(SUPPORT_TICKETS_KEY) || {};
-  if (!allTickets['anonymous']) {
-      allTickets['anonymous'] = [];
-  }
-  return allTickets;
-}
-
-function saveAllTickets(store: TicketStore): void {
-  setLocal(SUPPORT_TICKETS_KEY, store);
-}
-
 function generateTicketId(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -52,11 +33,12 @@ function generateTicketId(): string {
   return `AST-${year}${month}-${randomDigits}`;
 }
 
+/**
+ * Creates a new ticket object and generates an ID. Does not save to localStorage.
+ * @param data The form data for the ticket.
+ * @returns A new support ticket object.
+ */
 export function addTicket(data: TicketFormData): SupportTicket {
-  const allTickets = getAllTickets();
-  const userKey = data.email || 'anonymous';
-  const userTickets = allTickets[userKey] || [];
-
   const newTicket: SupportTicket = {
     ...data,
     id: generateTicketId(),
@@ -64,32 +46,7 @@ export function addTicket(data: TicketFormData): SupportTicket {
     createdAt: new Date().toISOString(),
   };
 
-  const updatedUserTickets = [newTicket, ...userTickets];
-  allTickets[userKey] = updatedUserTickets;
-
-  saveAllTickets(allTickets);
+  // This function no longer saves to localStorage.
+  // The ticket object is returned for immediate use, like showing in a success modal.
   return newTicket;
-}
-
-export function getTicketsByEmail(email: string): SupportTicket[] {
-  const allTickets = getAllTickets();
-  const userKey = email || 'anonymous';
-  // Also include anonymous tickets if an email is provided, in case user submitted both ways
-  const anonymousTickets = email ? allTickets['anonymous'] || [] : [];
-  const userTickets = allTickets[userKey] || [];
-  return [...userTickets, ...anonymousTickets].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-}
-
-export function updateTicketStatus(email: string, ticketId: string, status: TicketStatus): SupportTicket[] {
-  const allTickets = getAllTickets();
-  const userKey = email || 'anonymous';
-  const userTickets = allTickets[userKey] || [];
-
-  const updatedTickets = userTickets.map(ticket =>
-    ticket.id === ticketId ? { ...ticket, status } : ticket
-  );
-
-  allTickets[userKey] = updatedTickets;
-  saveAllTickets(allTickets);
-  return updatedTickets;
 }

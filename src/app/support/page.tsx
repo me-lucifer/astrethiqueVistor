@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SupportContactForm } from "@/components/support/contact-form";
 import { SystemStatus } from "@/components/support/system-status";
-import { MyRequests } from "@/components/support/my-requests";
 import { ReportingCta } from "@/components/support/reporting-cta";
 
 const visitorTopics = [
@@ -159,7 +158,6 @@ const faqData = {
 export default function SupportPage() {
   const [activeTab, setActiveTab] = useState<"visitor" | "consultant">("visitor");
   const [searchQuery, setSearchQuery] = useState("");
-  const [ticketSubmissionCount, setTicketSubmissionCount] = useState(0);
 
   const topics = activeTab === 'visitor' ? visitorTopics : consultantTopics;
   const quickLinks = activeTab === 'visitor' ? visitorQuickLinks : consultantQuickLinks;
@@ -179,10 +177,6 @@ export default function SupportPage() {
         return { ...section, questions: filteredQuestions };
     }).filter(section => section.questions.length > 0);
   }, [activeTab, searchQuery]);
-
-  const handleTicketSubmitted = () => {
-    setTicketSubmissionCount(prev => prev + 1);
-  };
 
 
   return (
@@ -286,7 +280,7 @@ export default function SupportPage() {
             </div>
         )}
         
-        <ReportingCta onTicketSubmitted={handleTicketSubmitted} />
+        <ReportingCta onTicketSubmitted={() => {}} />
 
         <div id="contact-support" className="mt-24 pt-16 border-t scroll-mt-24">
              <h2 className="text-center font-headline text-3xl font-bold mb-4">
@@ -295,13 +289,8 @@ export default function SupportPage() {
             <p className="text-center text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
                 If you couldn't find your answer in the FAQs, please submit a ticket and our support team will get back to you.
             </p>
-            <SupportContactForm activeTab={activeTab} onTicketSubmitted={handleTicketSubmitted} />
+            <SupportContactForm activeTab={activeTab} onTicketSubmitted={() => {}} />
         </div>
-
-        <div className="mt-24 pt-16 border-t">
-          <MyRequests key={ticketSubmissionCount} />
-        </div>
-
     </div>
   );
 }
