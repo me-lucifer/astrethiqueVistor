@@ -164,7 +164,7 @@ export function UpcomingConferences() {
                             <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
                                 <Badge variant="secondary" className="bg-green-600/10 text-green-400 border-green-600/20">Free</Badge>
                                 <div className="flex gap-2">
-                                    <Button size="sm" onClick={(e) => handleRsvpClick(e, conference)} variant={isRsvpd(conference.id) ? "secondary" : "default"} aria-label={isRsvpd(conference.id) ? `Cancel RSVP for ${conference.title}` : `RSVP for ${conference.title}`}>
+                                    <Button size="sm" onClick={(e) => handleRsvpClick(e, conference)} variant={isRsvpd(conference.id) ? "secondary" : "default"} aria-label={isRsvpd(conference.id) ? `Cancel RSVP for ${conference.title}` : `RSVP for ${conference.title}, a free event`}>
                                         {isRsvpd(conference.id) ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ticket className="mr-2 h-4 w-4" />}
                                         {isRsvpd(conference.id) ? "Going" : "RSVP"}
                                     </Button>

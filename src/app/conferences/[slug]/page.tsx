@@ -288,7 +288,7 @@ export default function ConferenceDetailPage() {
                                     onClick={!hasSeats && !isRsvpd ? handleWaitlistClick : handleRsvpClick} 
                                     variant={isRsvpd ? "outline" : "default"} 
                                     disabled={!hasSeats && (isRsvpd || isOnWaitlist)}
-                                    aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: (hasSeats ? `RSVP for ${conference.title}` : `Join waitlist for ${conference.title}`)}
+                                    aria-label={isRsvpd ? `Cancel RSVP for ${conference.title}`: (hasSeats ? `RSVP for ${conference.title}, a free event` : `Join waitlist for ${conference.title}, a free event`)}
                                 >
                                     {isRsvpd ? <CheckCircle className="mr-2 h-4 w-4"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
                                     {isRsvpd ? 'Going / Cancel' : (hasSeats ? 'RSVP' : (isOnWaitlist ? 'On waitlist' : 'Join waitlist'))}

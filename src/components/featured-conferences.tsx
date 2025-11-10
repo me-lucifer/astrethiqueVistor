@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
@@ -106,7 +107,6 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const isLoading = isPending;
     const [query, setQuery] = useState(initialQuery);
     
-    const [priceBounds, setPriceBounds] = useState<[number, number]>([0, 100]);
     const [selectedConference, setSelectedConference] = useState<Conference | null>(null);
     const [isRsvpModalOpen, setIsRsvpModalOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -133,10 +133,6 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         const storedConferences = getLocal<Conference[]>("conferences");
         if (storedConferences) {
             setAllConferences(storedConferences);
-            const prices = storedConferences.map(c => c.price ?? 0);
-            const min = Math.floor(Math.min(...prices, 0));
-            const max = Math.ceil(Math.max(...prices, 100));
-            setPriceBounds([min, max]);
         }
 
         const storedRsvps = getLocal<Rsvp[]>("rsvps");
@@ -654,7 +650,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                                                         }}
                                                         variant={userIsRsvpd ? "outline" : "default"} 
                                                         disabled={!hasSeats && userOnWaitlist}
-                                                        aria-label={userIsRsvpd ? `Cancel RSVP for ${conference.title}` : (hasSeats ? `RSVP for ${conference.title}` : (userOnWaitlist ? `You are on the waitlist for ${conference.title}` : `Join the waitlist for ${conference.title}`))}
+                                                        aria-label={userIsRsvpd ? `Cancel RSVP for ${conference.title}` : (hasSeats ? `RSVP for ${conference.title}, a free event` : (userOnWaitlist ? `You are on the waitlist for ${conference.title}` : `Join the waitlist for ${conference.title}, a free event`))}
                                                     >
                                                         {userIsRsvpd ? <><CheckCircle className="mr-2 h-4 w-4" /> Going</> : (
                                                             hasSeats ? <><Ticket className="mr-2 h-4 w-4" /> RSVP</> : (
