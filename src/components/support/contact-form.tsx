@@ -84,8 +84,13 @@ ${data.description}
     });
     const firstErrorField = Object.keys(errors)[0];
     if(firstErrorField) {
-      const element = document.getElementsByName(firstErrorField)[0];
-      element?.focus();
+      try {
+        const element = document.getElementsByName(firstErrorField)[0];
+        element?.focus({ preventScroll: true });
+        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (e) {
+        console.warn('Could not focus on invalid field:', firstErrorField)
+      }
     }
   };
   
@@ -107,7 +112,6 @@ ${data.description}
           <ul>
             <li>The name of the consultant or conference involved.</li>
             <li>The date and time the issue occurred.</li>
-            <li>Any relevant IDs (Booking, Conference, or Transaction).</li>
             <li>A screenshot of the issue, if applicable.</li>
           </ul>
         </div>
