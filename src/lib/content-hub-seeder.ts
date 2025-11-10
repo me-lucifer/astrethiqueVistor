@@ -24,7 +24,6 @@ export type ContentHubItem = {
     avatar: string;
   };
   language: "EN" | "FR";
-  zodiac: ("Aries" | "Taurus" | "Gemini" | "Cancer" | "Leo" | "Virgo" | "Libra" | "Scorpio" | "Sagittarius" | "Capricorn" | "Aquarius" | "Pisces")[];
   tags: string[];
   publishedAt: string; // ISO string
   readMinutes: number | null;
@@ -49,7 +48,7 @@ const authors = [
 ];
 
 const allTags = ["Astrology", "Spirituality", "Tarot", "Numerology", "Beginner", "Advanced", "Life Path", "Love", "Work", "Health", "Money"];
-const zodiacSigns : ContentHubItem['zodiac'] = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+const zodiacSigns = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
 
 const sampleTitles = [
     "Unlocking Your Career Potential with Tarot",
@@ -78,6 +77,14 @@ const createItem = (index: number): ContentHubItem => {
         promotedUntil = new Date(now.getTime() + (Math.floor(Math.random() * 7) + 1) * 24 * 60 * 60 * 1000).toISOString();
     }
 
+    const itemTags = [...new Set(allTags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 2))];
+    const itemZodiac = zodiacSigns.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2));
+    itemZodiac.forEach(z => {
+        if (!itemTags.includes(z)) {
+            itemTags.push(z);
+        }
+    });
+
     return {
         id: `ch-item-${index + 1}`,
         type: isPodcast ? "podcast" : "article",
@@ -85,9 +92,8 @@ const createItem = (index: number): ContentHubItem => {
         excerpt: "A brief, engaging summary of the content goes here, designed to capture the reader's interest and encourage them to click.",
         body: "<p>This is placeholder content for the full article or podcast transcript. In a real application, this would be populated with rich text content, including headings, lists, and other formatting to create an engaging reading experience for the user.</p><blockquote>This is a pull-quote style for a blockquote, giving emphasis to a key point in the text.</blockquote><p>More content follows the quote to round out the article.</p>",
         heroImage: `https://picsum.photos/seed/ch${index + 1}/600/400`,
-        tags: [...new Set(allTags.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 2))],
+        tags: itemTags,
         language: index % 4 === 0 ? "FR" : "EN",
-        zodiac: zodiacSigns.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2)),
         author,
         views: Math.floor(Math.random() * 7800) + 200,
         readMinutes: isPodcast ? null : Math.floor(Math.random() * 5) + 3, // 3-7 min read
@@ -139,8 +145,7 @@ export const seedContentHub = () => {
                 heroImage: `https://picsum.photos/seed/ch11/600/400`,
                 author: authors[0],
                 language: 'EN',
-                tags: ["Astrology", "Planets", "Spirituality"],
-                zodiac: ["Pisces"],
+                tags: ["Astrology", "Planets", "Spirituality", "Pisces"],
                 publishedAt: new Date(now.getTime() - 2 * 30 * 24 * 60 * 60 * 1000).toISOString(),
                 readMinutes: null,
                 durationMinutes: 28,
@@ -163,7 +168,6 @@ export const seedContentHub = () => {
                 author: authors[1],
                 language: 'FR',
                 tags: ["Tarot", "Astrology"],
-                zodiac: [],
                 publishedAt: new Date(now.getTime() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString(),
                 readMinutes: null,
                 durationMinutes: 18,
@@ -186,7 +190,6 @@ export const seedContentHub = () => {
                 author: authors[2],
                 language: 'EN',
                 tags: ["Astrology", "Beginner", "Houses"],
-                zodiac: [],
                 publishedAt: new Date(now.getTime() - 5 * 30 * 24 * 60 * 60 * 1000).toISOString(),
                 readMinutes: null,
                 durationMinutes: 36,
@@ -208,8 +211,7 @@ export const seedContentHub = () => {
                 heroImage: `https://picsum.photos/seed/ch14/600/400`,
                 author: authors[3],
                 language: 'FR',
-                tags: ["Astrology", "Nodes", "Advanced"],
-                zodiac: ["Cancer"],
+                tags: ["Astrology", "Nodes", "Advanced", "Cancer"],
                 publishedAt: new Date(now.getTime() - 7 * 30 * 24 * 60 * 60 * 1000).toISOString(),
                 readMinutes: null,
                 durationMinutes: 24,
@@ -229,6 +231,6 @@ export const seedContentHub = () => {
         const initialComments = createInitialComments(allItems);
         setSession("ch_items", allItems);
         setSession("commentsByContentId", initialComments);
-        setSession("ch_seeded_v2", true);
+        setSession("ch_seeded_v3", true);
     }
 };

@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { getSession, setSession } from '@/lib/session';
 import { ContentHubItem, Comment } from '@/lib/content-hub-seeder';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock } from 'lucide-react';
+import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock, Eye, Calendar, BookOpen, Mic, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ContentHubCard } from '@/components/content-hub/card';
 import { CommentsSection } from '@/components/content-hub/comments-section';
 import { YouTubePlayer } from '@/components/content-hub/youtube-player';
+import { format } from 'date-fns';
 
 const Placeholder = () => (
     <div className="container py-12">
@@ -44,6 +45,36 @@ const Placeholder = () => (
         </div>
     </div>
 );
+
+function formatViews(views?: number): string {
+    if (!views || isNaN(views)) {
+        return '0';
+    }
+    if (views >= 100000) {
+        return (views / 1000).toFixed(0) + 'k';
+    }
+    if (views >= 1000) {
+        return (views / 1000).toFixed(1) + 'k';
+    }
+    return views.toString();
+}
+
+function formatDate(date?: string): string {
+    if (!date || isNaN(new Date(date).getTime())) {
+        return '';
+    }
+    return format(new Date(date), 'MMM dd, yyyy');
+}
+
+function formatLength(item: ContentHubItem): string {
+    if (item.type === 'article' && item.readMinutes) {
+        return `${item.readMinutes} min read`;
+    }
+    if (item.type === 'podcast' && item.durationMinutes) {
+        return `${item.durationMinutes} min`;
+    }
+    return '';
+}
 
 export default function ContentDetailPage() {
     const params = useParams();
@@ -216,8 +247,6 @@ export default function ContentDetailPage() {
         );
     }
     
-    const timeValue = item.type === 'article' ? item.readMinutes : item.durationMinutes;
-    const timeUnit = item.type === 'article' ? 'min read' : 'min';
     const isPromotedAndActive = item.promotedUntil && new Date(item.promotedUntil) > new Date();
 
     return (
@@ -229,33 +258,29 @@ export default function ContentDetailPage() {
                         Back to Content Hub
                     </Link>
                     <article>
-                        <header className="mb-8">
-                            <div className="flex flex-wrap items-center gap-2 mb-4">
+                        <header className="mb-8 space-y-4">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="secondary" className="gap-1.5 capitalize">
+                                    {item.type === 'article' ? <BookOpen className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                                    {item.type}
+                                </Badge>
                                 {item.tags.map(topic => (
                                     <Button key={topic} variant="link" className="p-0 h-auto" onClick={() => handleTopicClick(topic)}>
-                                        <Badge variant="secondary">{topic}</Badge>
+                                        <Badge variant="outline">{topic}</Badge>
                                     </Button>
                                 ))}
-                                <Badge variant="outline">{item.language}</Badge>
                             </div>
                             
-                            <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight mb-4">{item.title}</h1>
-                             {item.featured && <Badge variant="default" className="mb-4">Featured</Badge>}
-
-                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <button onClick={() => handleAuthorClick(item.author.name)} className="flex items-center gap-2 hover:text-foreground">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={item.author.avatar} alt={item.author.name} />
-                                            <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="font-medium text-foreground">{item.author.name}</span>
-                                    </button>
-                                    <span>·</span>
-                                    <span>Published {new Date(item.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                    <span>·</span>
-                                    <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {timeValue} {timeUnit}</span>
-                                </div>
+                            <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight">{item.title}</h1>
+                            
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <button onClick={() => handleAuthorClick(item.author.name)} className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={item.author.avatar} alt={item.author.name} />
+                                        <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium text-foreground">{item.author.name}</span>
+                                </button>
                                 <div className="flex items-center gap-2">
                                     <Button variant="ghost" size="sm" onClick={handleToggleLike} className={`gap-2 ${item.liked ? 'text-destructive' : 'text-muted-foreground'}`}>
                                         <Heart className={`h-5 w-5 ${item.liked ? 'fill-current' : ''}`} />
@@ -276,6 +301,13 @@ export default function ContentDetailPage() {
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground border-t border-b py-3">
+                                <span className="flex items-center gap-1.5"><Eye className="h-4 w-4" /> {formatViews(item.views)} views</span>
+                                <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> Published {formatDate(item.publishedAt)}</span>
+                                <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {formatLength(item)}</span>
+                                {item.commentCount && item.commentCount > 0 && <span className="flex items-center gap-1.5"><MessageSquare className="h-4 w-4" /> {item.commentCount} comments</span>}
                             </div>
                         </header>
                         
@@ -313,8 +345,9 @@ export default function ContentDetailPage() {
                                         key={related.id}
                                         item={related}
                                         onAuthorClick={handleAuthorClick}
-                                        onToggleLike={() => {}} // Simplified for this view
-                                        onToggleBookmark={() => {}}
+                                        onTopicClick={handleTopicClick}
+                                        onToggleLike={handleToggleLike}
+                                        onToggleBookmark={handleToggleBookmark}
                                     />
                                 ))}
                             </div>
@@ -331,8 +364,9 @@ export default function ContentDetailPage() {
                                         key={related.id}
                                         item={related}
                                         onAuthorClick={handleAuthorClick}
-                                        onToggleLike={() => {}}
-                                        onToggleBookmark={() => {}}
+                                        onTopicClick={handleTopicClick}
+                                        onToggleLike={handleToggleLike}
+                                        onToggleBookmark={handleToggleBookmark}
                                     />
                                 ))}
                             </div>
