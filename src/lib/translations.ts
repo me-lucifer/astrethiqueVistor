@@ -1,3 +1,4 @@
+
 export const translations = {
     en: {
         // Header
@@ -66,6 +67,71 @@ export const translations = {
         privacy: "Privacy (GDPR)",
         terms: "Terms",
         support: "Support",
+        
+        // Privacy Policy Page
+        privacyPolicy: {
+            title: "Privacy Policy (GDPR)",
+            lastUpdated: "Last updated",
+            printDownload: "Print / Download PDF",
+            toc: "On this page",
+            dataController: {
+                title: "Data Controller",
+                content: ["The entity responsible for your data is:", "ASTRETHIQUE LTD, 221B Baker Street, London NW1 6XE, UK. privacy@astrethique.com"],
+                address: "Address",
+                email: "Email"
+            },
+            dataWeCollect: {
+                title: "Data We Collect",
+                intro: "We collect information necessary to provide our services:",
+                accountInfo: { title: "Account Information", text: "Name, email, and preferences you provide." },
+                kyc: { title: "KYC Signals", text: "Verification status signals for consultants (we do not store the documents)." },
+                usage: { title: "Usage & Device Data", text: "How you interact with our service and technical data about your device." },
+                payments: { title: "Payments", text: "Transaction data is handled by our payment provider; we only store transaction confirmations." },
+                content: { title: "Content/Posts", text: "Any content you publicly post, like comments or reviews." }
+            },
+            whyWeProcess: {
+                title: "Why We Process Your Data (Legal Bases)",
+                intro: "We process your data based on the following legal grounds:",
+                contract: { title: "To Fulfill a Contract", text: "To provide the core services you signed up for." },
+                consent: { title: "Consent", text: "For optional services like marketing emails, where you have given explicit permission." },
+                legitInterests: { title: "Legitimate Interests", text: "To improve our service, prevent fraud, and for analytics, balanced against your rights." },
+                legalObligation: { title: "Legal Obligation", text: "To comply with legal requirements like financial regulations." }
+            },
+            internationalTransfers: {
+                title: "International Transfers",
+                content: ["Your data may be processed outside of your country. We ensure its protection through safeguards like Standard Contractual Clauses (SCCs) and the UK's International Data Transfer Agreement (IDTA)."]
+            },
+            dataRetention: {
+                title: "Data Retention",
+                intro: "We retain data only for as long as necessary.",
+                table: {
+                    category: "Data Category",
+                    window: "Retention Window",
+                    rows: [
+                        { category: "Core Account Data", window: "Duration of account + 1 year" },
+                        { category: "Session Records", window: "7 years for financial records" },
+                        { category: "Support Tickets", window: "3 years after resolution" },
+                        { category: "Usage Logs", window: "1 year (anonymized)" }
+                    ]
+                }
+            },
+            yourRights: {
+                title: "Your Rights",
+                intro: "Under GDPR, you have the right to:",
+                rightsList: ["Access your data", "Rectify incorrect data", "Erase your data ('right to be forgotten')", "Data portability", "Restrict processing", "Object to processing"],
+                howToExercise: {
+                    title: "How to Exercise Your Rights",
+                    text: ["To exercise any of these rights, please contact us at"]
+                }
+            },
+            otherInfo: {
+                title: "Other Information",
+                agePolicy: { title: "Age Policy", text: "Our services are intended for individuals aged 18 and over." },
+                cookies: { title: "Cookies", text: ["We use cookies to operate and improve our site. For details, see our"], linkText: "Cookie Policy" },
+                policyChanges: { title: "Changes to This Policy", text: "We will notify you of any significant changes to this policy via email or a notice on our platform." },
+                contact: { title: "Contact DPO", text: ["For any privacy-specific concerns, you can contact our Data Protection Officer at"] }
+            }
+        }
     },
     fr: {
         // Header
@@ -134,5 +200,70 @@ export const translations = {
         privacy: "Confidentialité (RGPD)",
         terms: "Conditions",
         support: "Support",
+
+        // Privacy Policy Page
+        privacyPolicy: {
+            title: "Politique de Confidentialité (RGPD)",
+            lastUpdated: "Dernière mise à jour",
+            printDownload: "Imprimer / Télécharger PDF",
+            toc: "Sur cette page",
+            dataController: {
+                title: "Responsable du traitement",
+                content: ["L'entité responsable de vos données est :", "ASTRETHIQUE LTD, 221B Baker Street, Londres NW1 6XE, Royaume-Uni. privacy@astrethique.com"],
+                address: "Adresse",
+                email: "Email"
+            },
+            dataWeCollect: {
+                title: "Données que nous collectons",
+                intro: "Texte d'introduction pour les données que nous collectons.",
+                accountInfo: { title: "Informations sur le compte", text: "Texte sur les informations de compte." },
+                kyc: { title: "Signaux KYC", text: "Texte sur les signaux KYC." },
+                usage: { title: "Données d'utilisation et de l'appareil", text: "Texte sur les données d'utilisation." },
+                payments: { title: "Paiements", text: "Texte sur les paiements." },
+                content: { title: "Contenu/Publications", text: "Texte sur le contenu et les publications." }
+            },
+            whyWeProcess: {
+                title: "Pourquoi nous traitons vos données (Bases légales)",
+                intro: "Intro sur les bases légales.",
+                contract: { title: "Pour exécuter un contrat", text: "Texte sur l'exécution d'un contrat." },
+                consent: { title: "Consentement", text: "Texte sur le consentement." },
+                legitInterests: { title: "Intérêts légitimes", text: "Texte sur les intérêts légitimes." },
+                legalObligation: { title: "Obligation légale", text: "Texte sur l'obligation légale." }
+            },
+            internationalTransfers: {
+                title: "Transferts internationaux",
+                content: ["Texte sur les transferts internationaux et les garanties (SCCs/IDTA)."]
+            },
+            dataRetention: {
+                title: "Conservation des données",
+                intro: "Intro sur la conservation des données.",
+                table: {
+                    category: "Catégorie de données",
+                    window: "Durée de conservation",
+                    rows: [
+                        { category: "Données de compte de base", window: "Durée du compte + 1 an" },
+                        { category: "Enregistrements de session", window: "7 ans pour les archives financières" },
+                        { category: "Tickets de support", window: "3 ans après résolution" },
+                        { category: "Journaux d'utilisation", window: "1 an (anonymisé)" }
+                    ]
+                }
+            },
+            yourRights: {
+                title: "Vos droits",
+                intro: "Intro sur vos droits RGPD.",
+                rightsList: ["Accès", "Rectification", "Effacement", "Portabilité", "Limitation", "Objection"],
+                howToExercise: {
+                    title: "Comment exercer vos droits",
+                    text: ["Pour exercer l'un de ces droits, veuillez nous contacter à"]
+                }
+            },
+            otherInfo: {
+                title: "Autres informations",
+                agePolicy: { title: "Politique d'âge", text: "Nos services sont destinés aux personnes de 18 ans et plus." },
+                cookies: { title: "Cookies", text: ["Pour plus de détails, consultez notre"], linkText: "Politique de cookies" },
+                policyChanges: { title: "Modifications de cette politique", text: "Nous vous informerons de tout changement important." },
+                contact: { title: "Contacter le DPO", text: ["Pour toute préoccupation spécifique à la confidentialité, contactez notre Délégué à la Protection des Données à"] }
+            }
+        }
     }
 };
