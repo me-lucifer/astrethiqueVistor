@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -178,7 +179,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 {consultant.promo24h && (
                                     <Badge className="bg-primary text-primary-foreground border-primary-foreground/20">PROMO</Badge>
                                 )}
-                                {consultant.badges.includes("Top Rated") && (
+                                {consultant.badges && consultant.badges.includes("Top Rated") && (
                                     <Badge variant="secondary">Top Rated</Badge>
                                 )}
                             </div>
@@ -192,8 +193,8 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 </div>
                             </div>
                             
-                            <p className="text-sm text-muted-foreground mt-1 truncate" title={consultant.specialties.join(', ')}>
-                                {consultant.specialties.join(', ')}
+                            <p className="text-sm text-muted-foreground mt-1 truncate" title={consultant.specialties?.join(', ')}>
+                                {consultant.specialties?.join(', ')}
                             </p>
 
                             <div className="mt-2 flex items-center justify-between">

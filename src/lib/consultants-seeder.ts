@@ -15,6 +15,27 @@ const names = [
 const readingTypes = ["Astrology","Tarot Reading","Numerology","Clairvoyance","Mediumship"];
 const zodiacSigns = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
 
+const cloneConsultant = (base: Consultant, id: string, name: string, price: number, lang: 'EN' | 'FR' | 'BOTH'): Consultant => {
+    const slug = name.toLowerCase().replace(/\s+/g, '-');
+    let languages: Consultant['languages'];
+    switch(lang) {
+        case 'EN': languages = [{code: 'EN', level: 'native'}]; break;
+        case 'FR': languages = [{code: 'FR', level: 'native'}]; break;
+        case 'BOTH': languages = [{code: 'EN', level: 'native'}, {code: 'FR', level: 'fluent'}]; break;
+    }
+
+    return {
+        ...base,
+        id: slug,
+        slug: slug,
+        name: name,
+        pricePerMin: price,
+        languages: languages,
+        cover: `https://picsum.photos/seed/${slug}/400/300`,
+    };
+}
+
+
 const createConsultant = (index: number): Consultant => {
     const now = new Date();
     const consultantName = names[(index - 1) % names.length];
@@ -74,11 +95,29 @@ export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
   const seededVersion = getSession('discover.seeded.version');
-  const currentVersion = 'v5'; // Increment this version to force re-seeding
+  const currentVersion = 'v6'; // Increment this version to force re-seeding
 
   if (seededVersion !== currentVersion) {
-    const consultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
+    const baseConsultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
     
+    // Create clones
+    const clonedConsultants = [
+        cloneConsultant(baseConsultants[0], 'isabelle-leroy-clone', 'Isabelle Leroy', 3.50, 'FR'),
+        cloneConsultant(baseConsultants[1], 'marcus-redfield-clone', 'Marcus Redfield', 5.00, 'EN'),
+        cloneConsultant(baseConsultants[2], 'chloe-dubois-clone', 'Chloé Dubois', 2.75, 'BOTH'),
+        cloneConsultant(baseConsultants[3], 'samuel-jones-clone', 'Samuel Jones', 7.25, 'EN'),
+        cloneConsultant(baseConsultants[4], 'eva-green-clone', 'Eva Green', 1.99, 'FR'),
+        cloneConsultant(baseConsultants[5], 'liam-chen-clone', 'Liam Chen', 6.50, 'EN'),
+        cloneConsultant(baseConsultants[6], 'sofia-rodriguez-clone',- 'Sofia Rodriguez', 4.00, 'BOTH'),
+        cloneConsultant(baseConsultants[7], 'noah-patel-clone', 'Noah Patel', 8.00, 'EN'),
+        cloneConsultant(baseConsultants[8], 'amelie-lacroix-clone', 'Amélie Lacroix', 3.00, 'FR'),
+        cloneConsultant(baseConsultants[9], 'ethan-williams-clone', 'Ethan Williams', 5.50, 'EN'),
+        cloneConsultant(baseConsultants[10], 'olivia-martin-clone', 'Olivia Martin', 2.25, 'BOTH'),
+        cloneConsultant(baseConsultants[11], 'william-brown-clone', 'William Brown', 7.75, 'EN'),
+    ];
+
+    const consultants = [...baseConsultants, ...clonedConsultants];
+
     setSession('discover.seed.v1', consultants);
     setSession('discover.favorites.v1', []);
     setSession('schedule.holds.v1', []);
