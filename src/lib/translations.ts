@@ -199,7 +199,7 @@ export const translations = {
                 linkText: "Privacy Policy"
             }
         },
-
+        
         // Refunds & Cancellations Page
         refundsAndCancellations: {
             title: "Refunds & Cancellations",
@@ -224,6 +224,37 @@ export const translations = {
             howToRequest: {
                 title: "How to Request a Refund",
                 content: "All refund requests must be sent via email to our support team. Please include the session date, time, and the consultant's name in your request."
+            }
+        },
+
+        // Community Guidelines Page
+        communityGuidelines: {
+            title: "Content & Community Guidelines",
+            lastUpdated: "Last updated",
+            toc: "On this page",
+            respectfulConduct: {
+                title: "Be Respectful",
+                content: "Our community is built on trust and mutual respect. Harassment, hate speech, bullying, or any illegal content is strictly prohibited across all profiles, comments, articles, and sessions."
+            },
+            professionalBoundaries: {
+                title: "Professional Boundaries",
+                content: "Consultants must not present spiritual guidance as medical, legal, or financial fact. Always use appropriate disclaimers and encourage users to seek licensed professional help for such matters."
+            },
+            authenticity: {
+                title: "Authenticity",
+                content: "Do not misrepresent your identity, qualifications, or services. Impersonation, scams, or fraudulent activities will result in immediate and permanent suspension."
+            },
+            commentingRules: {
+                title: "Commenting & Reviews",
+                content: "Comments and reviews should be constructive and on-topic. Do not post malicious links, spam, or personal information about others (doxxing)."
+            },
+            enforcement: {
+                title: "Enforcement",
+                content: "Violations of these guidelines may result in a warning, content removal, or account suspension, depending on the severity of the offense. We reserve the right to take appropriate action at our discretion."
+            },
+            reporting: {
+                title: "Reporting",
+                content: "If you see content or behavior that violates these guidelines, please report it to our support team immediately by emailing"
             }
         }
     },
@@ -452,6 +483,37 @@ export const translations = {
             howToRequest: {
                 title: "Comment Demander un Remboursement",
                 content: "Toutes les demandes de remboursement doivent être envoyées par email à notre équipe de support. Veuillez inclure la date, l'heure de la session et le nom du consultant dans votre demande."
+            }
+        },
+
+        // Community Guidelines Page
+        communityGuidelines: {
+            title: "Directives sur le Contenu et la Communauté",
+            lastUpdated: "Dernière mise à jour",
+            toc: "Sur cette page",
+            respectfulConduct: {
+                title: "Soyez Respectueux",
+                content: "Notre communauté est fondée sur la confiance et le respect mutuel. Le harcèlement, les discours haineux, l'intimidation ou tout contenu illégal sont strictement interdits sur tous les profils, commentaires, articles et sessions."
+            },
+            professionalBoundaries: {
+                title: "Limites Professionnelles",
+                content: "Les consultants ne doivent pas présenter les conseils spirituels comme des faits médicaux, juridiques ou financiers. Utilisez toujours les avertissements appropriés et encouragez les utilisateurs à consulter des professionnels agréés pour ces questions."
+            },
+            authenticity: {
+                title: "Authenticité",
+                content: "Ne déformez pas votre identité, vos qualifications ou vos services. L'usurpation d'identité, les escroqueries ou les activités frauduleuses entraîneront une suspension immédiate et permanente."
+            },
+            commentingRules: {
+                title: "Règles de Commentaire",
+                content: "Les commentaires et avis doivent être constructifs et pertinents. Ne publiez pas de liens malveillants, de spam ou d'informations personnelles sur autrui (doxxing)."
+            },
+            enforcement: {
+                title: "Application",
+                content: "Les violations de ces directives peuvent entraîner un avertissement, la suppression de contenu ou la suspension du compte, selon la gravité de l'infraction. Nous nous réservons le droit de prendre les mesures appropriées à notre discrétion."
+            },
+            reporting: {
+                title: "Signalement",
+                content: "Si vous voyez un contenu ou un comportement qui enfreint ces directives, veuillez le signaler immédiatement à notre équipe de support en envoyant un e-mail à"
             }
         }
     }

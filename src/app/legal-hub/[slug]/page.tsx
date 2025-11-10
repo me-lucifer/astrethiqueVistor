@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
 import { translations } from "@/lib/translations";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, FileText, Shield, User, Database, Globe, Scale, CircleUser, Info, Calendar, Gavel, AlertTriangle, Wallet, Copyright, UserX, Power, Mail, Euro, Cookie, Tv, Wrench, CalendarOff } from "lucide-react";
+import { ArrowLeft, Printer, FileText, Shield, User, Database, Globe, Scale, CircleUser, Info, Calendar, Gavel, AlertTriangle, Wallet, Copyright, UserX, Power, Mail, Euro, Cookie, Tv, Wrench, CalendarOff, Users, Handshake, MessageSquare, Megaphone } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -748,6 +748,135 @@ const RefundsAndCancellationsContent = () => {
     )
 }
 
+const ContentAndCommunityGuidelinesContent = () => {
+    const { language } = useLanguage();
+    const t = translations[language].communityGuidelines;
+
+    const sections = [
+        { id: "respect", title: t.respectfulConduct.title, icon: Users },
+        { id: "boundaries", title: t.professionalBoundaries.title, icon: Handshake },
+        { id: "authenticity", title: t.authenticity.title, icon: Shield },
+        { id: "comments", title: t.commentingRules.title, icon: MessageSquare },
+        { id: "enforcement", title: t.enforcement.title, icon: Gavel },
+        { id: "reporting", title: t.reporting.title, icon: Megaphone },
+    ];
+    
+    const [activeSection, setActiveSection] = useState(sections[0].id);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setActiveSection(entry.target.id);
+                }
+            });
+        }, { rootMargin: "-50% 0px -50% 0px" });
+
+        sections.forEach(section => {
+            const el = document.getElementById(section.id);
+            if (el) observer.observe(el);
+        });
+
+        return () => {
+            sections.forEach(section => {
+                const el = document.getElementById(section.id);
+                if (el) observer.unobserve(el);
+            });
+        };
+    }, [sections]);
+
+    const lastUpdated = new Date("2024-07-26T10:00:00Z");
+
+    return (
+        <div className="container py-12">
+            <div className="flex justify-between items-start mb-6 gap-4">
+                <div>
+                    <Button asChild variant="ghost" className="-ml-4">
+                        <Link href="/legal-hub">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            {translations[language].legalHub}
+                        </Link>
+                    </Button>
+                    <h1 className="font-headline text-3xl md:text-4xl font-bold mt-2">{t.title}</h1>
+                    <div className="flex items-center gap-4 mt-2">
+                        <p className="text-sm text-muted-foreground">
+                            {t.lastUpdated}: {format(lastUpdated, language === 'fr' ? 'dd MMMM yyyy' : 'MMMM dd, yyyy')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="grid lg:grid-cols-[1fr_280px] gap-12 items-start">
+                <div className="prose prose-invert max-w-none text-foreground/80 prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+                    <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="w-full">
+                        
+                        <AccordionItem value="respect" id="respect">
+                            <AccordionTrigger className="text-xl font-headline">{t.respectfulConduct.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.respectfulConduct.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem value="boundaries" id="boundaries">
+                            <AccordionTrigger className="text-xl font-headline">{t.professionalBoundaries.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.professionalBoundaries.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem value="authenticity" id="authenticity">
+                            <AccordionTrigger className="text-xl font-headline">{t.authenticity.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.authenticity.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="comments" id="comments">
+                            <AccordionTrigger className="text-xl font-headline">{t.commentingRules.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.commentingRules.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="enforcement" id="enforcement">
+                            <AccordionTrigger className="text-xl font-headline">{t.enforcement.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.enforcement.content}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem value="reporting" id="reporting">
+                            <AccordionTrigger className="text-xl font-headline">{t.reporting.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <p>{t.reporting.content} <a href="mailto:support@astrethique.com">support@astrethique.com</a>.</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                    </Accordion>
+                </div>
+                <aside className="hidden lg:block sticky top-24 self-start">
+                    <h3 className="font-semibold mb-4">{t.toc}</h3>
+                    <nav>
+                        <ul className="space-y-2">
+                            {sections.map(section => (
+                                <li key={section.id}>
+                                    <a 
+                                        href={`#${section.id}`}
+                                        className={`flex items-center gap-2 p-2 rounded-md text-sm transition-colors ${activeSection === section.id ? 'bg-muted font-semibold' : 'text-muted-foreground hover:bg-muted/50'}`}
+                                    >
+                                        <section.icon className="h-4 w-4" />
+                                        {section.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                </aside>
+            </div>
+        </div>
+    )
+}
+
 
 
 export default function LegalDetailPage() {
@@ -774,6 +903,10 @@ export default function LegalDetailPage() {
         return <RefundsAndCancellationsContent />;
     }
 
+    if (slug === 'community-guidelines') {
+        return <ContentAndCommunityGuidelinesContent />;
+    }
+
 
     const title = slug ? slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Legal Document";
 
@@ -792,4 +925,3 @@ export default function LegalDetailPage() {
         </div>
     );
 }
-
