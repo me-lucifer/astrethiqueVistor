@@ -7,11 +7,22 @@ import { getSession, setSession } from '@/lib/session';
 import { ConsultantProfile } from '@/lib/consultant-profile';
 import { ConsultantProfileHeader } from '@/components/consultant-profile/consultant-profile-header';
 import { ConsultantAvailability } from '@/components/consultant-profile/consultant-availability';
+import { ConsultantContentTabs } from '@/components/consultant-profile/consultant-content-tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlaceholderPage } from '@/components/placeholder-page';
 import { Consultant } from '@/lib/consultants';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 
 // This is the same seeder function from the previous step,
@@ -47,7 +58,9 @@ const seedConsultantProfile = (): ConsultantProfile => {
     reviews: [
       { id:"r1", author:"Jessica M.", stars:5, date:"2024-07-30", text:"An incredibly enlightening session. Elena’s insights were spot on and gave me the clarity I was searching for. Highly recommended!" },
       { id:"r2", author:"David C.", stars:5, date:"2024-07-28", text:"She is the real deal. Her guidance was both profound and practical." },
-      { id:"r3", author:"Sophie R.", stars:4, date:"2024-07-25", text:"Elena was kind and patient; her reading resonated with my situation." }
+      { id:"r3", author:"Sophie R.", stars:4, date:"2024-07-25", text:"Elena was kind and patient; her reading resonated with my situation." },
+      { id:"r4", author:"Marc L.", stars:5, date:"2024-07-22", text:"I've had readings with others before, but Elena has a unique gift. Truly exceptional." },
+      { id:"r5", author:"Isabelle G.", stars:5, date:"2024-07-20", text:"Her advice was not only accurate but also actionable. I feel much more confident about my path forward. Thank you, Elena!" }
     ],
     favorite: getSession<string[]>("consultantFavorites")?.includes("elena-voyance") || false
   };
@@ -59,13 +72,14 @@ export default function Page() {
   const params = useParams();
   const router = useRouter();
   const { id } = params;
+  const { toast } = useToast();
   const [consultant, setConsultant] = useState<ConsultantProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
     let profile = getSession<ConsultantProfile>("consultantProfile");
     
-    // Seed if no profile exists or if the ID doesn't match the demo ID
     if (!profile || profile.id !== id) {
       profile = seedConsultantProfile();
     }
@@ -73,11 +87,25 @@ export default function Page() {
     if (profile && profile.id === id) {
         setConsultant(profile);
     } else {
-        // Fallback for demo purposes if the ID is somehow wrong.
         setConsultant(profile);
     }
     setLoading(false);
   }, [id]);
+
+  const handleReport = () => {
+    setIsReportModalOpen(false);
+    toast({
+      title: "Report received",
+      description: "Thanks, we'll review this profile.",
+    });
+  }
+
+  const scrollToAvailability = () => {
+    const element = document.getElementById('availability-section');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
 
   if (loading) {
     return (
@@ -145,7 +173,33 @@ export default function Page() {
         <div className="space-y-8">
             <ConsultantProfileHeader consultant={consultant} />
             <ConsultantAvailability consultant={mockConsultant} />
+            <ConsultantContentTabs consultant={consultant} />
+
+            <div className="border-t pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
+                <Button variant="link" onClick={scrollToAvailability} className="text-muted-foreground">
+                    <ArrowUp className="mr-2 h-4 w-4" />
+                    See availability
+                </Button>
+                <Button variant="link" onClick={() => setIsReportModalOpen(true)} className="text-muted-foreground">
+                    Report profile
+                </Button>
+            </div>
         </div>
+
+        <AlertDialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Report Profile</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to report this profile for review? This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <Button variant="destructive" onClick={handleReport}>Yes, Report</Button>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { StarRating } from '@/components/star-rating';
+import { ContentCard } from '../content-card';
+import Link from 'next/link';
 
 const BioContent = ({ bio }: { bio: string }) => (
     <div className="prose prose-invert max-w-none text-foreground/80" dangerouslySetInnerHTML={{ __html: bio }} />
@@ -79,21 +81,37 @@ const ContentSubTabs = ({ content }: { content: ConsultantProfile['content'] }) 
                 {content.podcasts.length > 0 && <TabsTrigger value="podcasts">Podcasts ({content.podcasts.length})</TabsTrigger>}
                 {content.conferences.length > 0 && <TabsTrigger value="conferences">Conferences ({content.conferences.length})</TabsTrigger>}
             </TabsList>
-            <TabsContent value="articles" className="py-4">
-                <PlaceholderContent message="Article content would be displayed here." />
+            <TabsContent value="articles" className="py-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {content.articles.map(item => (
+                        <ContentCard key={item.id} item={{...item, type: 'Article'}} />
+                    ))}
+                </div>
             </TabsContent>
-            <TabsContent value="podcasts" className="py-4">
-                 <PlaceholderContent message="Podcast content would be displayed here." />
+            <TabsContent value="podcasts" className="py-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {content.podcasts.map(item => (
+                        <ContentCard key={item.id} item={{...item, type: 'Podcast'}} />
+                    ))}
+                </div>
             </TabsContent>
-            <TabsContent value="conferences" className="py-4">
-                 <PlaceholderContent message="Conference content would be displayed here." />
+            <TabsContent value="conferences" className="py-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {content.conferences.map(item => (
+                        <ContentCard key={item.id} item={{...item, type: 'Conference'}} />
+                    ))}
+                </div>
             </TabsContent>
         </Tabs>
     );
 };
 
 
-export function ConsultantContentTabs({ consultant }: { consultant: ConsultantProfile }) {
+export function ConsultantContentTabs({ consultant }: { consultant: {
+    content: ConsultantProfile['content'],
+    reviews: ConsultantProfile['reviews'],
+    summary: string
+} }) {
   const bioHtml = `<p>${consultant.summary}</p><p>With over 15 years of experience, Elena offers deep insights into life's most pressing questions. Her guidance is practical, compassionate, and tailored to your unique journey.</p>`;
     
   return (

@@ -3,55 +3,91 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ContentItem } from "@/lib/content-seeder";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Mic, BookOpen, Video, Clock } from "lucide-react";
-import { differenceInDays, isFuture } from "date-fns";
+import { ArrowRight, Mic, BookOpen, Video, Heart } from "lucide-react";
 
-export function ContentCard({ item }: { item: ContentItem }) {
-    
-    const typeIconMap = {
-        Article: BookOpen,
-        Podcast: Mic,
-        Video: Video
+type ContentType = 'Article' | 'Podcast' | 'Conference';
+
+interface ContentCardProps {
+    item: {
+        id: string;
+        title: string;
+        type: ContentType;
+        cover: string;
+        tags: string[];
+        likes?: number;
+        duration?: string;
+        date?: string;
+        time?: string;
     };
+}
 
-    const TypeIcon = typeIconMap[item.type];
-    
+const typeInfo = {
+    Article: { icon: BookOpen, cta: 'Read More' },
+    Podcast: { icon: Mic, cta: 'Listen Now' },
+    Conference: { icon: Video, cta: 'View Details' },
+};
+
+export function ContentCard({ item }: ContentCardProps) {
+    const { icon: TypeIcon, cta } = typeInfo[item.type];
+
     return (
+        // In a real app, this would open a modal or navigate to a content page
+        // For this demo, we link to the generic content hub
         <Link href={`/content-hub?item=${item.id}`} className="group">
             <Card className="h-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg motion-safe:hover:scale-[1.01] bg-card/50 hover:bg-card flex flex-col">
-                <CardHeader className="p-0">
-                    <div className="relative aspect-video">
+                <CardContent className="p-0">
+                    <div className="relative aspect-[3/2]">
                         <Image
-                            src={`https://picsum.photos/seed/content${item.id}/400/225`}
+                            src={item.cover}
                             alt={item.title}
                             fill
-                            className="object-cover"
-                            data-ai-hint="abstract texture"
+                            className="object-cover transition-transform group-hover:scale-105"
+                            data-ai-hint="abstract spiritual"
                             loading="lazy"
                         />
-                        {item.featured && <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground border-primary-foreground/20">Featured</Badge>}
+                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                         <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                             <div className="flex items-center gap-1 text-white text-xs font-medium bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
+                                <TypeIcon className="w-3.5 h-3.5" />
+                                <span>{item.type}</span>
+                            </div>
+                         </div>
                     </div>
-                </CardHeader>
-                <CardContent className="p-4 flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                        <TypeIcon className="w-4 h-4 text-primary" />
-                        {item.tags && item.tags.length > 0 && <Badge variant="outline" className="text-xs">{item.tags[0]}</Badge>}
-                        <Badge variant="outline" className="text-xs">{item.language}</Badge>
-                    </div>
-                    <h3 className="font-headline text-lg font-bold leading-tight group-hover:text-primary transition-colors">{item.title}</h3>
-                </CardContent>
-                <CardFooter className="p-4 pt-0 text-sm text-foreground/70 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <span>By {item.author}</span>
-                        <div className="flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>{item.duration} min</span>
+                    <div className="p-4">
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {item.tags.map(tag => (
+                                <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                            ))}
                         </div>
+                        <h3 className="font-headline text-base font-bold leading-tight group-hover:text-primary transition-colors">{item.title}</h3>
                     </div>
-                    <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity motion-safe:translate-x-[-4px] motion-safe:group-hover:translate-x-0"/>
+                </CardContent>
+
+                <CardFooter className="p-4 pt-0 mt-auto text-sm text-foreground/70 flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        {item.likes !== undefined && (
+                            <div className="flex items-center gap-1.5">
+                                <Heart className="w-3.5 h-3.5" />
+                                <span>{item.likes}</span>
+                            </div>
+                        )}
+                         {item.duration && (
+                            <div className="flex items-center gap-1.5">
+                                <span>{item.duration}</span>
+                            </div>
+                        )}
+                        {item.date && (
+                             <div className="flex items-center gap-1.5">
+                                <span>{item.date}</span>
+                            </div>
+                        )}
+                    </div>
+                     <span className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity motion-safe:translate-x-[-4px] motion-safe:group-hover:translate-x-0 text-primary font-semibold">
+                        {cta}
+                        <ArrowRight className="w-4 h-4"/>
+                    </span>
                 </CardFooter>
             </Card>
         </Link>
