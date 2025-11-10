@@ -32,7 +32,6 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
   const checkUser = () => {
     const storedUser = getUser();
@@ -162,11 +161,6 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
           )}
         </div>
       </section>
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onOpenChange={setIsAuthModalOpen}
-        onLoginSuccess={checkUser}
-      />
     </>
   );
 }

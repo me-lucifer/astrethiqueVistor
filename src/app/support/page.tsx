@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, CircleDot, HelpCircle, CalendarClock, User, Wallet, Tv, Languages, Shield, Wrench, Search, Star, FileText, ArrowRight } from "lucide-react";
+import { CheckCircle, CircleDot, HelpCircle, CalendarClock, User, Wallet, Tv, Languages, Shield, Wrench, Search, Star, FileText, ArrowRight, Briefcase } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -114,9 +114,46 @@ const faqData = {
         }
     ],
     consultant: [
-        { id: "faq-availability", title: "Availability & Scheduling", questions: [{ q: "How do I set my availability?", a: "Go to your consultant dashboard under the 'Availability' tab." }] },
-        { id: "faq-account-consultant", title: "Profile & Account", questions: [{ q: "How do I update my profile?", a: "In your dashboard, go to the 'Profile' section." }] },
-        { id: "faq-billing-consultant", title: "Payouts & Invoices", questions: [{ q: "When do I get paid?", a: "Payouts are processed monthly." }] },
+        { 
+            id: "faq-availability", 
+            title: "Availability & Scheduling", 
+            questions: [
+                { q: "How do I set my working hours and blackout dates?", a: "You can manage your entire schedule from the 'Availability' tab in your consultant dashboard. Set recurring weekly hours, add specific one-off slots, and block out dates for vacation or personal time." },
+                { q: "What are some timezone tips?", a: "Set your primary timezone in your profile. All booking requests will be shown to you in your timezone, and to clients in theirs. We handle all conversions automatically to prevent confusion." }
+            ]
+        },
+        { 
+            id: "faq-billing-consultant", 
+            title: "Rates, Wallet & Payouts", 
+            questions: [
+                { q: "How often can I change my per-minute rate?", a: "You can adjust your per-minute rate once every 30 days. This policy ensures price stability for clients while giving you flexibility." },
+                { q: "What is the monthly payout timeline?", a: "On the 1st of each month, an invoice for the previous month's earnings is generated. You must review and approve it in your dashboard by the 15th. Approved funds are then transferred to your wallet for payout." }
+            ] 
+        },
+        { 
+            id: "faq-conferences-consultant", 
+            title: "Promotions & Visibility", 
+            questions: [
+                { q: "How do promotions affect Discover sorting?", a: "Running a promotion gives your profile a temporary boost in our 'Recommended' sort order on the Discover page, increasing your visibility to potential clients." },
+                { q: "Why is my profile hidden in some regions?", a: "Our platform uses 'language gating.' Your profile is only shown to users in regions that speak the languages you have listed in your profile. This ensures clients can connect with consultants they can understand." }
+            ] 
+        },
+        {
+            id: "faq-content-consultant",
+            title: "Content & Conferences",
+            questions: [
+                 { q: "How do I publish articles or podcasts?", a: "You can submit articles and podcast ideas through your dashboard. For podcasts, we require a link to the content hosted on YouTube. All content is reviewed by our team before being published." },
+                 { q: "How do I host a conference?", a: "Propose a conference topic and preferred dates via the 'Conferences' section in your dashboard. Our team will work with you to schedule and promote the event. Replays are optional and can be enabled upon request." },
+            ]
+        },
+        {
+            id: "faq-safety-consultant",
+            title: "Compliance & Trust",
+            questions: [
+                { q: "What are the KYC/ID verification steps?", a: "To ensure a trusted marketplace, all consultants must complete a Know Your Customer (KYC) process by submitting a valid government-issued ID through our secure portal. This is a one-time process." },
+                { q: "How are user reports and content moderation handled?", a: "We have a dedicated team that reviews all user reports for profiles and content. We take action based on our community guidelines, which may include content removal or account suspension." }
+            ]
+        }
     ]
 }
 

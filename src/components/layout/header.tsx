@@ -67,11 +67,15 @@ export function Header() {
   const isDiscoverActive = (path: string) => {
     return path.startsWith('/discover') || path.startsWith('/consultant/');
   }
+  
+  const handleAuthClick = () => {
+    setIsAuthModalOpen(true);
+  }
 
   const AuthButtons = () => (
     <>
-      <Button variant="ghost" onClick={() => setIsAuthModalOpen(true)} aria-label="Login to your account">Login</Button>
-      <Button onClick={() => setIsAuthModalOpen(true)} aria-label="Create a new account">Register</Button>
+      <Button variant="ghost" onClick={handleAuthClick} aria-label="Login to your account">Login</Button>
+      <Button onClick={handleAuthClick} aria-label="Create a new account">Register</Button>
     </>
   );
 
@@ -189,8 +193,8 @@ export function Header() {
                     <Button variant="outline" className="w-full" onClick={handleLogout}>Sign out</Button>
                 ) : (
                     <div className="grid grid-cols-2 gap-2">
-                        <Button variant="ghost" onClick={() => setIsAuthModalOpen(true)}>Login</Button>
-                        <Button onClick={() => setIsAuthModalOpen(true)}>Register</Button>
+                        <Button variant="ghost" onClick={handleAuthClick}>Login</Button>
+                        <Button onClick={handleAuthClick}>Register</Button>
                     </div>
                 )}
                  <Button variant="outline" disabled className="w-full">
