@@ -142,15 +142,17 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                 <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
                     <CardContent className="p-0">
                         <div className="relative">
-                            <Image
-                                src={consultant.cover}
-                                alt={consultant.name}
-                                width={400}
-                                height={300}
-                                className="w-full object-cover aspect-[4/3] group-hover:opacity-90 transition-opacity"
-                                data-ai-hint="portrait person"
-                                loading="lazy"
-                            />
+                            {consultant.cover && (
+                                <Image
+                                    src={consultant.cover}
+                                    alt={consultant.name}
+                                    width={400}
+                                    height={300}
+                                    className="w-full object-cover aspect-[4/3] group-hover:opacity-90 transition-opacity"
+                                    data-ai-hint="portrait person"
+                                    loading="lazy"
+                                />
+                            )}
                             <div className={cn(
                                 "absolute top-3 left-3 flex items-center gap-2 backdrop-blur-sm text-success-foreground px-3 py-1 rounded-full text-xs font-bold border border-success-foreground/20",
                                 availabilityClass
@@ -291,5 +293,3 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         </TooltipProvider>
     );
 }
-
-    
