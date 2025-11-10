@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Comment } from '@/lib/comments';
-import { getUser, AuthUser } from '@/lib/auth';
+import { getUser, AuthUser, logoutUser } from '@/lib/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +17,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { AuthModal } from '../auth-modal';
 
 const commentSchema = z.object({
-  text: z.string().min(3, 'Comment must be at least 3 characters.').max(600, 'Comment must be 600 characters or less.'),
+  text: z.string().trim().min(3, 'Comment must be at least 3 characters.').max(600, 'Comment must be 600 characters or less.'),
 });
 
 type CommentFormData = z.infer<typeof commentSchema>;
@@ -36,8 +36,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  useEffect(() => {
-    // In a real app, this would be context or a hook.
+  const checkUser = () => {
     const storedUser = getUser();
     if (storedUser) {
       setIsLoggedIn(true);
@@ -46,20 +45,26 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
       setIsLoggedIn(false);
       setUser(null);
     }
+  };
+
+  useEffect(() => {
+    checkUser();
   }, []);
   
   const handleLoginSuccess = () => {
-    const storedUser = getUser();
-    if (storedUser) {
-      setIsLoggedIn(true);
-      setUser(storedUser);
-    }
+    checkUser();
   };
+  
+  const handleLogout = () => {
+      logoutUser();
+      checkUser();
+  }
 
 
   const form = useForm<CommentFormData>({
     resolver: zodResolver(commentSchema),
     defaultValues: { text: '' },
+    mode: 'onChange',
   });
 
   const onSubmit = (data: CommentFormData) => {
@@ -73,6 +78,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   }
   
   const visibleComments = comments.slice(0, visibleCount);
+  const commentText = form.watch('text');
 
   return (
     <>
@@ -85,22 +91,22 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
           {isLoggedIn && user ? (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className='text-sm text-muted-foreground flex justify-between items-center'>
+                    <span>Commenting as <span className="font-semibold text-foreground">{user.name}</span></span>
+                    <button type="button" onClick={handleLogout} className="text-xs hover:underline">Sign out</button>
+                </div>
                 <FormField
                   control={form.control}
                   name="text"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                              <AvatarImage src={user.avatar} alt={user.name} />
-                              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                          </Avatar>
-                          <span>Commenting as <span className="font-semibold">{user.name}</span></span>
-                      </FormLabel>
                       <FormControl>
                         <Textarea placeholder="Add a public comment..." {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <div className='flex justify-between items-center'>
+                        <FormMessage />
+                        <span className="text-xs text-muted-foreground ml-auto">{commentText?.length || 0}/600</span>
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -157,3 +163,5 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
     </>
   );
 }
+
+    
