@@ -13,6 +13,7 @@ import { ContentCard } from '../content-card';
 import Link from 'next/link';
 import { Briefcase, MapPin, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import React from 'react';
 
 const CollapsibleBio = ({ bio }: { bio: string }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -74,6 +75,14 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
 }
 
+const formatAuthorName = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+        return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+    }
+    return name;
+}
+
 const ReviewsContent = ({ reviews }: { reviews: ConsultantProfile['reviews'] }) => {
     const [visibleCount, setVisibleCount] = useState(3);
 
@@ -98,7 +107,7 @@ const ReviewsContent = ({ reviews }: { reviews: ConsultantProfile['reviews'] }) 
                         </Avatar>
                         <div className="flex-1">
                             <div className="flex items-center justify-between">
-                                <p className="font-semibold text-foreground">{review.author}</p>
+                                <p className="font-semibold text-foreground">{formatAuthorName(review.author)}</p>
                                 <p className="text-sm text-muted-foreground">{new Date(review.date).toLocaleDateString()}</p>
                             </div>
                             <div className="mt-1">
