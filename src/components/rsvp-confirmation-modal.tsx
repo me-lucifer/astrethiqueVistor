@@ -42,7 +42,7 @@ export function RsvpConfirmationModal({
           </div>
           <DialogTitle className="text-center">Confirm your RSVP</DialogTitle>
           <DialogDescription className="text-center">
-             You are about to register for the following free conference.
+             You are about to register for the following conference.
           </DialogDescription>
         </DialogHeader>
         
@@ -68,7 +68,5 @@ export function RsvpConfirmationModal({
     </Dialog>
   );
 }
-
-    
 
     
