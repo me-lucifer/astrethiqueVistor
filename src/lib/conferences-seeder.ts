@@ -16,7 +16,7 @@ export interface Conference {
   language: ("EN" | "FR");
   tags: ("Love" | "Work" | "Health" | "Money" | "Life Path")[];
   type: "Workshop" | "Group Reading" | "Webinar" | "Q&A";
-  isFree: boolean;
+  isFree: true;
   excerpt: string;
   description: string; // Rich text/HTML for the about tab
   agenda: { time: string; topic: string }[];
