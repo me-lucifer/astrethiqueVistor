@@ -42,7 +42,15 @@ export default function ContentHubPage() {
     useEffect(() => {
         seedContentHub();
         const items = getSession<ContentHubItem[]>('ch_items') || [];
-        setAllItems(items);
+        
+        // Add bookmark status from another session key
+        const savedIds = getSession<string[]>("savedContentIds") || [];
+        const itemsWithBookmarks = items.map(item => ({
+            ...item,
+            bookmarked: savedIds.includes(item.id)
+        }));
+
+        setAllItems(itemsWithBookmarks);
 
         // Check for daily mood for personalization
         const dailyMood = getSession<DailyMood>("daily_mood");
@@ -146,6 +154,11 @@ export default function ContentHubPage() {
         setAuthorFilter(authorName);
         setPage(1);
     }
+
+    const handleTopicClick = (topic: string) => {
+        setTopics(prev => prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic]);
+        setPage(1);
+    }
     
     const handleToggleLike = (itemId: string) => {
         const updatedItems = allItems.map(item => {
@@ -161,14 +174,18 @@ export default function ContentHubPage() {
     }
 
     const handleToggleBookmark = (itemId: string) => {
+        const savedIds = getSession<string[]>("savedContentIds") || [];
+        const isBookmarked = savedIds.includes(itemId);
+        const newSavedIds = isBookmarked ? savedIds.filter(id => id !== itemId) : [...savedIds, itemId];
+        setSession("savedContentIds", newSavedIds);
+
         const updatedItems = allItems.map(item => {
             if (item.id === itemId) {
-                return { ...item, bookmarked: !item.bookmarked };
+                return { ...item, bookmarked: !isBookmarked };
             }
             return item;
         });
         setAllItems(updatedItems);
-        setSession('ch_items', updatedItems);
     }
     
     const handleSuggestedTopicClick = (topic: string) => {
@@ -233,6 +250,7 @@ export default function ContentHubPage() {
                                 key={item.id}
                                 item={item}
                                 onAuthorClick={handleAuthorFilter}
+                                onTopicClick={handleTopicClick}
                                 onToggleLike={handleToggleLike}
                                 onToggleBookmark={handleToggleBookmark}
                             />

@@ -175,7 +175,7 @@ export function ContentHubFilters({
                     {authorFilter && (
                          <Badge variant="secondary" className="gap-1.5 pl-1.5">
                             Author: {authorFilter}
-                            <button onClick={() => setAuthorFilter(null)} className="rounded-full hover:bg-background/50">
+                            <button onClick={() => setAuthorFilter(null)} className="rounded-full hover:bg-background/50" aria-label={`Remove filter for author ${authorFilter}`}>
                                 <X className="h-3 w-3" />
                             </button>
                         </Badge>
@@ -183,7 +183,7 @@ export function ContentHubFilters({
                     {topics.map(topic => (
                          <Badge key={topic} variant="secondary" className="gap-1.5 pl-1.5">
                             {topic}
-                             <button onClick={() => setTopics(topics.filter(t => t !== topic))} className="rounded-full hover:bg-background/50">
+                             <button onClick={() => setTopics(topics.filter(t => t !== topic))} className="rounded-full hover:bg-background/50" aria-label={`Remove filter for topic ${topic}`}>
                                 <X className="h-3 w-3" />
                             </button>
                         </Badge>
@@ -191,7 +191,7 @@ export function ContentHubFilters({
                      {zodiac.map(sign => (
                          <Badge key={sign} variant="secondary" className="gap-1.5 pl-1.5">
                             {sign}
-                             <button onClick={() => setZodiac(zodiac.filter(s => s !== sign))} className="rounded-full hover:bg-background/50">
+                             <button onClick={() => setZodiac(zodiac.filter(s => s !== sign))} className="rounded-full hover:bg-background/50" aria-label={`Remove filter for zodiac sign ${sign}`}>
                                 <X className="h-3 w-3" />
                             </button>
                         </Badge>

@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 type CardProps = {
     item: ContentHubItem;
     onAuthorClick?: (authorName: string) => void;
+    onTopicClick?: (topic: string) => void;
     onToggleLike?: (itemId: string) => void;
     onToggleBookmark?: (itemId: string) => void;
 };
@@ -50,7 +51,7 @@ function formatLength(item: ContentHubItem): string {
     return '';
 }
 
-export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBookmark }: CardProps) {
+export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike, onToggleBookmark }: CardProps) {
     const router = useRouter();
     const isArticle = item.type === 'article';
     const detailUrl = `/content-hub/${item.type}/${item.id}`;
@@ -74,6 +75,14 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
         e.stopPropagation();
         if(onToggleBookmark) onToggleBookmark(item.id);
     }
+
+    const handleTopicClick = (e: React.MouseEvent, topic: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onTopicClick) {
+            onTopicClick(topic);
+        }
+    };
     
     const handleCTAClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -129,7 +138,9 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                         
                         <div className="mt-3 flex flex-wrap gap-1">
                             {item.tags && item.tags.slice(0,3).map(topic => (
-                                <Badge key={topic} variant="outline" className="font-normal">{topic}</Badge>
+                                <button key={topic} onClick={(e) => handleTopicClick(e, topic)} aria-label={`Filter by topic: ${topic}`}>
+                                    <Badge variant="outline" className="font-normal hover:bg-accent/50 cursor-pointer">{topic}</Badge>
+                                </button>
                             ))}
                             {item.tags && item.tags.length > 3 && (
                                 <Badge variant="outline" className="font-normal">+{item.tags.length - 3}</Badge>
@@ -138,7 +149,7 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
                     </div>
                     
                     <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                        <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground">
+                        <button onClick={handleAuthorClick} className="flex items-center gap-2 hover:text-foreground" aria-label={`Filter by author: ${item.author.name}`}>
                             <Avatar className="h-6 w-6">
                                 <AvatarImage src={item.author.avatar} alt={item.author.name} />
                                 <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
@@ -150,11 +161,11 @@ export function ContentHubCard({ item, onAuthorClick, onToggleLike, onToggleBook
 
                 <div className="p-4 pt-0 mt-auto border-t flex justify-between items-center">
                     <div className="flex items-center">
-                        <Button variant="ghost" size="sm" onClick={handleLikeClick} className={cn("gap-2", item.liked && "text-destructive")} aria-label={item.liked ? 'Unlike' : 'Like'}>
+                        <Button variant="ghost" size="sm" onClick={handleLikeClick} className={cn("gap-2", item.liked && "text-destructive")} aria-label={item.liked ? `Unlike this item. It has ${item.likes} likes.` : `Like this item. It has ${item.likes} likes.`}>
                             <Heart className={cn("h-4 w-4", item.liked && "fill-current")} />
                             {item.likes}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmarkClick} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark'}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmarkClick} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark this item'}>
                              <Bookmark className={cn("h-4 w-4", item.bookmarked && "fill-current text-primary")} />
                         </Button>
                     </div>
