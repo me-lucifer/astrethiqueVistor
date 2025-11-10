@@ -6,10 +6,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { getSession, setSession } from '@/lib/session';
 import { ConsultantProfile } from '@/lib/consultant-profile';
 import { ConsultantProfileHeader } from '@/components/consultant-profile/consultant-profile-header';
+import { ConsultantAvailability } from '@/components/consultant-profile/consultant-availability';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlaceholderPage } from '@/components/placeholder-page';
+import { Consultant } from '@/lib/consultants';
+
 
 // This is the same seeder function from the previous step,
 // now used within the page component for self-containment.
@@ -103,6 +106,36 @@ export default function Page() {
     );
   }
 
+  const mockConsultant: Consultant = {
+      id: consultant.id,
+      slug: consultant.id,
+      name: consultant.name,
+      rating: consultant.rating,
+      pricePerMin: consultant.pricePerMin,
+      priceWas: consultant.prevPricePerMin,
+      languages: consultant.languages.map(l => ({ code: l as any, level: 'fluent' })),
+      availability: {
+          online: consultant.isOnline,
+          slots: Array.from({length: 12}, (_, i) => {
+              const now = new Date();
+              return new Date(now.getTime() + (i * 30 + (i > 5 ? 1440 : 120) ) * 60000).toISOString()
+          })
+      },
+      specialties: consultant.specialties as any,
+      types: [],
+      specializesInSigns: [],
+      badges: consultant.badges as any,
+      contentCounts: { articles: 0, podcasts: 0, conferences: 0},
+      cover: '',
+      kycVerified: consultant.verifications.kycVerified,
+      adminApproved: consultant.verifications.adminApproved,
+      lastReviewDate: new Date().toISOString(),
+      bio: '',
+      reviews: [],
+      content: {articles: [], podcasts: [], conferences: []},
+      joinedAt: new Date().toISOString()
+  }
+
   return (
     <div className="container py-8">
         <Button variant="ghost" onClick={() => router.push('/discover')} className="mb-6 rounded-full border border-transparent hover:border-accent hover:text-accent">
@@ -111,7 +144,7 @@ export default function Page() {
         </Button>
         <div className="space-y-8">
             <ConsultantProfileHeader consultant={consultant} />
-            {/* The rest of the page components will go here */}
+            <ConsultantAvailability consultant={mockConsultant} />
         </div>
     </div>
   );

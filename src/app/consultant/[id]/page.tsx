@@ -96,7 +96,7 @@ export default function ConsultantProfilePage() {
   return (
     <div className="container py-8">
         <div className="space-y-8">
-            <ConsultantProfileHeader consultant={consultant} />
+            <ConsultantProfileHeader consultant={consultant as any} />
             <ConsultantAvailability consultant={consultant} />
             <ConsultantContentTabs consultant={consultant} />
 
