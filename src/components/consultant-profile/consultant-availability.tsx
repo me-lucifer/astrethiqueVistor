@@ -23,6 +23,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -33,6 +34,7 @@ const communicationModes = [
 const durations = [15, 30, 45, 60];
 
 export function ConsultantAvailability({ consultant }: { consultant: Consultant }) {
+  const router = useRouter();
   const [selectedMode, setSelectedMode] = useState('chat');
   const [selectedDuration, setSelectedDuration] = useState('30');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -56,12 +58,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   };
 
   const handleScheduleClick = () => {
-    const isLoggedIn = getSession('userRegistered') === 'true';
-    if (!isLoggedIn) {
-        setIsStartNowModalOpen(true);
-        return;
-    }
-    setIsDrawerOpen(true);
+    router.push(`/discover/consultant/${consultant.slug}/schedule`);
   };
   
   const handleStartNowClick = () => {
@@ -128,22 +125,6 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const drawerSlots = consultant.availability.slots.map(s => new Date(s));
   const isOnline = consultant.availability.online;
 
-  const PrimaryButton = () => {
-    if (isOnline) {
-      return <Button onClick={handleStartNowClick} size="lg">Start Now</Button>;
-    }
-    return (
-      <Button 
-          variant={isNotifying ? "secondary" : "default"} 
-          size="lg" 
-          onClick={handleNotifyClick}
-      >
-          {isNotifying ? <CheckCircle className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
-          {isNotifying ? "I'll be notified" : "Notify me"}
-      </Button>
-    );
-  };
-
   return (
     <div id="availability-section" className="scroll-mt-24">
       <Card className="p-6 bg-card/50">
@@ -170,30 +151,34 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
             {/* Right side */}
             <div className="space-y-4 flex-1 md:text-right">
               <h2 className="font-headline text-xl font-bold">2. Choose an availability</h2>
-              <div className="flex flex-col md:flex-row gap-2 md:justify-end items-stretch">
-                <PrimaryButton />
-                <Button onClick={handleScheduleClick} variant="outline" size="lg">
-                    <Clock className="mr-2 h-4 w-4" />
-                    Schedule
-                </Button>
+              <div className="flex flex-col sm:flex-row gap-2 md:justify-end items-stretch">
+                {isOnline ? (
+                    <>
+                        <Button onClick={handleStartNowClick} size="lg">Start Now</Button>
+                        <Button onClick={handleScheduleClick} variant="outline" size="lg">
+                            <Clock className="mr-2 h-4 w-4" />
+                            Schedule
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                         <Button 
+                            variant="outline" 
+                            size="lg" 
+                            onClick={handleNotifyClick}
+                        >
+                            {isNotifying ? <CheckCircle className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
+                            {isNotifying ? "I'll be notified" : "Notify me"}
+                        </Button>
+                        <Button onClick={handleScheduleClick} size="lg">
+                            <Clock className="mr-2 h-4 w-4" />
+                            Schedule
+                        </Button>
+                    </>
+                )}
               </div>
             </div>
           </div>
-          
-          <div className="mt-6 border-t pt-4">
-              <h3 className="font-semibold text-sm mb-2">Next available slots:</h3>
-              <div className="flex gap-2 flex-wrap sm:justify-start overflow-x-auto sm:overflow-visible pb-2 sm:pb-0">
-                  {availableSlots.map((slot, i) => (
-                      <Button key={i} variant="outline" onClick={handleScheduleClick}>
-                          {format(slot, 'p')}
-                      </Button>
-                  ))}
-                  <Button onClick={handleScheduleClick} variant="ghost" className="text-primary hover:text-primary">
-                      More times
-                  </Button>
-              </div>
-          </div>
-
         </CardContent>
       </Card>
       
