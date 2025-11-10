@@ -60,9 +60,58 @@ const consultantQuickLinks = [
 
 const faqData = {
     visitor: [
-        { id: "faq-bookings", title: "Bookings & Sessions", questions: [{ q: "How do I book a session?", a: "Find a consultant on the Discover page and use their calendar." }, { q: "How do I cancel?", a: "Go to your appointments page." }] },
-        { id: "faq-account", title: "Account & Login", questions: [{ q: "How do I reset my password?", a: "Use the 'Forgot Password' link on the login page." }] },
-        { id: "faq-billing", title: "Billing & Pricing", questions: [{ q: "How does per-minute billing work?", a: "You are only charged for the time you are actively in a session." }] },
+        { 
+            id: "faq-bookings", 
+            title: "Bookings & Sessions", 
+            questions: [
+                { q: "Can I cancel or reschedule a booking?", a: "Yes, you can cancel or reschedule up to 24 hours before a session from your 'My Appointments' page. Please check the consultant's specific cancellation policy, as some may differ." },
+                { q: "How does per-minute billing work during a live session?", a: "You are only charged for the time you are actively connected with a consultant. Your prepaid wallet balance is updated in real-time, and the session ends automatically if your balance runs out." },
+                { q: "What if the consultant doesn’t join on time?", a: "If a consultant is more than 5 minutes late, the session is automatically canceled and you will not be charged. You are free to book with another available consultant." },
+                { q: "How do timezones and reminders work?", a: "All times shown on the platform are automatically converted to your local timezone. You can manage your notification preferences for reminders in your account settings or on the specific event page." },
+                { q: "Can I request a specific consultant?", a: "Yes, you can browse and filter consultants on our 'Discover' page to find the one that best suits your needs." }
+            ]
+        },
+        { 
+            id: "faq-account", 
+            title: "Account & Login", 
+            questions: [
+                { q: "I didn’t receive the verification email.", a: "Please check your spam or junk folder. If you still can't find it, try resending the verification email from your account settings. If the issue persists, contact our support team." },
+                { q: "How do I change my email or display name?", a: "You can update your display name and other profile information in your account settings page." },
+                { q: "How do I delete my account?", a: "To delete your account, please go to your account settings and select 'Delete Account'. Please note that this action is irreversible." }
+            ] 
+        },
+        { 
+            id: "faq-billing", 
+            title: "Billing & Pricing", 
+            questions: [
+                { q: "Where can I see my wallet balance and receipts?", a: "Your current wallet balance is visible in your account dashboard. A full history of your transactions and receipts for every session are available in the 'Billing' section." },
+                { q: "How do promotions/discounts apply?", a: "Promotional rates from consultants are applied automatically. Any discount codes can be entered at the time of topping up your wallet." },
+                { q: "What is Budget Lock?", a: "Budget Lock is an optional feature that helps you manage your spending by preventing you from exceeding a monthly amount that you set. You can manage this in your wallet settings." }
+            ] 
+        },
+        {
+            id: "faq-conferences",
+            title: "Conferences & Replays",
+            questions: [
+                 { q: "Are conferences free?", a: "Yes, all live conferences are free to attend. Just RSVP to save your spot!" },
+                 { q: "Are replays available for conferences?", a: "Availability of replays depends on the host and is mentioned on the conference detail page. If available, replays can be accessed for a limited time after the event." },
+            ]
+        },
+        {
+            id: "faq-content",
+            title: "Content Hub",
+            questions: [
+                { q: "How do I comment on articles/podcasts?", a: "You need to be logged into your account to post comments. If you're logged in, a comment box will appear below the content." }
+            ]
+        },
+        {
+            id: "faq-technical",
+            title: "Technical Issues",
+            questions: [
+                { q: "My microphone/camera is not detected.", a: "Please ensure you have granted camera and microphone permissions to your browser for our site. You may need to check your browser settings and refresh the page. Also, ensure no other application is using your camera." },
+                { q: "My messages are not sending in chat.", a: "First, check your internet connection. If your connection is stable, try refreshing the page. If the problem continues, please contact our technical support team through the help widget." }
+            ]
+        }
     ],
     consultant: [
         { id: "faq-availability", title: "Availability & Scheduling", questions: [{ q: "How do I set my availability?", a: "Go to your consultant dashboard under the 'Availability' tab." }] },
