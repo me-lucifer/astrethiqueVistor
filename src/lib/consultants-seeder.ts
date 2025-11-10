@@ -20,9 +20,9 @@ const cloneConsultant = (base: Consultant, id: string, name: string, price: numb
     const slug = name.toLowerCase().replace(/\s+/g, '-');
     let languages: Consultant['languages'];
     switch(lang) {
-        case 'EN': languages = [{code: 'EN', level: 'native'}]; break;
-        case 'FR': languages = [{code: 'FR', level: 'native'}]; break;
-        case 'BOTH': languages = [{code: 'EN', level: 'native'}, {code: 'FR', level: 'fluent'}]; break;
+        case 'EN': languages = ['EN']; break;
+        case 'FR': languages = ['FR']; break;
+        case 'BOTH': languages = ['EN', 'FR']; break;
     }
 
     return {
@@ -52,6 +52,10 @@ const createConsultant = (index: number): Consultant => {
     }
 
     const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
+    const languages = index % 3 === 0 
+            ? ['EN', 'FR']
+            : (index % 3 === 1 ? ['FR'] : ['EN']);
+
 
     return {
         id: consultantName.toLowerCase().replace(/\s+/g, '-'),
@@ -61,9 +65,7 @@ const createConsultant = (index: number): Consultant => {
         pricePerMin: Math.round((1.5 + Math.random() * 8.5) * 2) / 2,
         priceWas: index % 4 === 0 ? Math.round((3 + Math.random() * 3) * 2) / 2 : undefined,
         promo24h: index % 5 === 0,
-        languages: index % 3 === 0 
-            ? [{ code: 'EN', level: 'native' }, { code: 'FR', level: 'fluent' }]
-            : (index % 3 === 1 ? [{ code: 'FR', level: 'native'}] : [{ code: 'EN', level: 'native' }]),
+        languages: languages,
         availability: {
             online: simpleAvailability === 'online',
             slots: [],
@@ -98,7 +100,7 @@ export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
   const seededVersion = getSession('discover.seeded.version');
-  const currentVersion = 'v7'; // Increment this version to force re-seeding
+  const currentVersion = 'v8'; // Increment this version to force re-seeding
 
   if (seededVersion !== currentVersion) {
     const baseConsultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));

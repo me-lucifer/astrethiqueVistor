@@ -63,7 +63,7 @@ export default function Page() {
                     badges: foundConsultant.badges,
                     rating: foundConsultant.rating,
                     reviewsCount: foundConsultant.reviews.length,
-                    languages: foundConsultant.languages.map(l => l.code),
+                    languages: foundConsultant.languages,
                     pricePerMin: foundConsultant.pricePerMin,
                     prevPricePerMin: foundConsultant.priceWas,
                     summary: foundConsultant.bio.replace(/<[^>]*>?/gm, '').substring(0, 140),
@@ -79,7 +79,7 @@ export default function Page() {
                     content: {
                         articles: allContent.filter(c => c.type === 'Article' && (c.author === foundConsultant.name.split(' ')[0] || c.author ==='Eva' || c.author === 'Marcus' )).slice(0,2),
                         podcasts: allContent.filter(c => c.type === 'Podcast' && (c.author === foundConsultant.name.split(' ')[0] || c.author ==='Eva' || c.author === 'Marcus' )).slice(0,1),
-                        conferences: allConferences.filter(c => c.hostAlias === foundConsultant.name.split(' ')[0]).slice(0,1),
+                        conferences: allConferences.filter(c => c.hostAlias === foundConsultant.name.split(' ')[0]).map(c => ({...c, type: 'Conference'})),
                     },
                     reviews: foundConsultant.reviews.map((r, i) => ({
                         id: `${foundConsultant.id}-review-${i}`,

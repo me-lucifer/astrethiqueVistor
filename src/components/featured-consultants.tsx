@@ -76,8 +76,8 @@ interface Filters {
     rating: string;
     badges: string[];
     languages: {
-        EN?: "basic" | "fluent" | "native";
-        FR?: "basic" | "fluent" | "native";
+        EN?: boolean;
+        FR?: boolean;
     };
     availability: string[];
     content: string[];
@@ -199,8 +199,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
 
     const filteredAndSortedConsultants = useMemo(() => {
         const favorites = getSession<string[]>("discover.favorites.v1") || [];
-        const langLevels = { basic: 1, fluent: 2, native: 3 };
-
+        
         let result = allConsultants;
 
         // Search Query Filter
@@ -230,13 +229,10 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
 
             if (filters.badges.length > 0 && !filters.badges.every(b => c.badges && c.badges.includes(b as any))) return false;
 
-            for (const [langCode, minLevel] of Object.entries(filters.languages)) {
-                if (!minLevel) continue;
-                const consultantLang = c.languages.find(l => l.code === langCode);
-                if (!consultantLang || langLevels[consultantLang.level] < langLevels[minLevel]) {
-                    return false;
-                }
+            if (Object.values(filters.languages).some(v => v) && !Object.entries(filters.languages).every(([lang, checked]) => !checked || c.languages.includes(lang as any))) {
+              return false;
             }
+
 
             if (filters.availability.length > 0) {
                 const availabilityString = c.availability.online ? 'Online now' : (getSession<string[]>('busyConsultants')?.includes(c.id) ? 'Busy' : 'Offline');
@@ -256,7 +252,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                 }
             }
 
-            if (filters.frOnlyVisibility && !c.languages.some(l => l.code === 'FR')) return false;
+            if (filters.frOnlyVisibility && !c.languages.some(l => l === 'FR')) return false;
             if (filters.aPlusPlusOnly && c.rating < 4.8) return false;
             if (filters.onPromo && !c.promo24h) return false;
 
@@ -432,28 +428,26 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="languages">
-                        <AccordionTrigger className="font-semibold text-sm">Languages & fluency</AccordionTrigger>
-                        <AccordionContent>
-                            <div className="space-y-2">
-                                {(['EN', 'FR'] as const).map(langCode => (
-                                    <div key={langCode}>
-                                        <Label className="font-semibold">{langCode}</Label>
-                                        <RadioGroup value={filters.languages[langCode]} onValueChange={(v) => updateFilters({ languages: { ...filters.languages, [langCode]: v as any } })}>
-                                            {(['basic', 'fluent', 'native'] as const).map(level => (
-                                                <div key={level} className="flex items-center space-x-2">
-                                                    <RadioGroupItem value={level} id={`lang-${langCode}-${level}`} />
-                                                    <Label htmlFor={`lang-${langCode}-${level}`} className="capitalize font-normal text-foreground/80">{level}</Label>
-                                                </div>
-                                            ))}
-                                        </RadioGroup>
-                                        <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => {
+                        <AccordionTrigger className="font-semibold text-sm">Languages</AccordionTrigger>
+                        <AccordionContent className="space-y-2">
+                             {(['EN', 'FR'] as const).map(langCode => (
+                                <div key={langCode} className="flex items-center space-x-2">
+                                    <Checkbox 
+                                        id={`lang-${langCode}`} 
+                                        checked={!!filters.languages[langCode]} 
+                                        onCheckedChange={(checked) => {
                                             const newLangs = {...filters.languages};
-                                            delete newLangs[langCode];
+                                            if (checked) {
+                                                newLangs[langCode] = true;
+                                            } else {
+                                                delete newLangs[langCode];
+                                            }
                                             updateFilters({languages: newLangs});
-                                        }}>Clear</Button>
-                                    </div>
-                                ))}
-                            </div>
+                                        }}
+                                    />
+                                    <Label htmlFor={`lang-${langCode}`} className="font-normal text-foreground/80">{langCode}</Label>
+                                </div>
+                            ))}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="availability">

@@ -29,8 +29,13 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
         
         const updatedConsultant = { ...consultant, favorite: newIsFavorite };
         setConsultant(updatedConsultant);
-        setSession("consultantProfile", updatedConsultant);
-        
+        // This is a session-only prototype, so we just update the session storage
+        const allConsultants = getSession<any[]>("discover.seed.v1") || [];
+        const updatedConsultants = allConsultants.map(c => 
+            c.id === consultant.id ? { ...c, favorite: newIsFavorite } : c
+        );
+        setSession("discover.seed.v1", updatedConsultants);
+
         let favorites = getSession<string[]>("consultantFavorites") || [];
         if (newIsFavorite) {
             if (!favorites.includes(consultant.id)) {

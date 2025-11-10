@@ -8,10 +8,7 @@ export interface Consultant {
   pricePerMin: number;
   priceWas?: number;
   promo24h?: boolean;
-  languages: {
-    code: 'EN' | 'FR';
-    level: 'basic' | 'fluent' | 'native';
-  }[];
+  languages: string[];
   availability: {
       online: boolean;
       slots: string[]; // array of ISO strings

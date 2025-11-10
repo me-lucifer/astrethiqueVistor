@@ -5,6 +5,7 @@ export interface BaseContentItem {
   title: string;
   tags: string[];
   cover: string;
+  type: 'Article' | 'Podcast' | 'Conference' | 'Video';
 }
 export interface ContentItem extends BaseContentItem {
   likes?: number;
@@ -43,6 +44,7 @@ export interface ConsultantProfile {
   prevPricePerMin?: number;
   summary: string;
   specialties: string[];
+  types: string[];
   verifications: {
     adminApproved: boolean;
     kycVerified: boolean;

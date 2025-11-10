@@ -210,7 +210,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                                 </Tooltip>
                                 <div className="flex flex-wrap gap-2">
                                     {consultant.languages.map(lang => (
-                                        <Badge key={lang.code} variant="outline" className="text-xs">{lang.code}</Badge>
+                                        <Badge key={lang} variant="outline" className="text-xs">{lang}</Badge>
                                     ))}
                                 </div>
                             </div>
