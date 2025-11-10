@@ -1,38 +1,72 @@
 
 "use client";
 
-import { Consultant } from '@/lib/consultants';
+import { useState } from 'react';
+import { ConsultantProfile } from '@/lib/consultant-profile';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlaceholderContent } from './placeholder-content';
-import { ReactNode } from 'react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { StarRating } from '@/components/star-rating';
 
 const BioContent = ({ bio }: { bio: string }) => (
     <div className="prose prose-invert max-w-none text-foreground/80" dangerouslySetInnerHTML={{ __html: bio }} />
 );
 
-const ReviewsContent = ({ reviews }: { reviews: Consultant['reviews'] }) => {
-    if (reviews.length === 0) {
+const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+}
+
+const ReviewsContent = ({ reviews }: { reviews: ConsultantProfile['reviews'] }) => {
+    const [visibleCount, setVisibleCount] = useState(3);
+
+    if (!reviews || reviews.length === 0) {
         return <PlaceholderContent message="Reviews for this consultant are not available yet." />;
     }
-    // Simple review list for now
+
+    const sortedReviews = [...reviews].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const visibleReviews = sortedReviews.slice(0, visibleCount);
+
+    const handleLoadMore = () => {
+        setVisibleCount(prevCount => prevCount + 3);
+    };
+
     return (
-        <div className="space-y-4">
-            {reviews.map((review, i) => (
-                <div key={i} className="border-b pb-4">
-                    <div className="flex justify-between items-center">
-                        <p className="font-semibold">{review.author}</p>
-                        <p className="text-sm text-muted-foreground">{new Date(review.dateISO).toLocaleDateString()}</p>
+        <div className="space-y-6">
+            {visibleReviews.map((review, index) => (
+                <div key={review.id}>
+                    <div className="flex items-start gap-4">
+                        <Avatar>
+                            <AvatarFallback>{getInitials(review.author)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                                <p className="font-semibold text-foreground">{review.author}</p>
+                                <p className="text-sm text-muted-foreground">{new Date(review.date).toLocaleDateString()}</p>
+                            </div>
+                            <div className="mt-1">
+                                <StarRating rating={review.stars} />
+                            </div>
+                            <p className="text-foreground/80 mt-2 text-sm leading-relaxed">{review.text}</p>
+                        </div>
                     </div>
-                    <p className="text-sm mt-1">{`Rating: ${review.rating}/5`}</p>
-                    <p className="text-foreground/80 mt-2">{review.text}</p>
+                    {index < visibleReviews.length - 1 && <Separator className="my-6" />}
                 </div>
             ))}
+            {visibleCount < sortedReviews.length && (
+                <div className="text-center mt-6">
+                    <Button variant="outline" onClick={handleLoadMore}>
+                        Load more reviews
+                    </Button>
+                </div>
+            )}
         </div>
     );
 };
 
 
-const ContentSubTabs = ({ content }: { content: Consultant['content'] }) => {
+const ContentSubTabs = ({ content }: { content: ConsultantProfile['content'] }) => {
     const hasContent = content.articles.length > 0 || content.podcasts.length > 0 || content.conferences.length > 0;
     if (!hasContent) {
         return <PlaceholderContent message="This consultant has not published any content yet." />;
@@ -59,16 +93,18 @@ const ContentSubTabs = ({ content }: { content: Consultant['content'] }) => {
 };
 
 
-export function ConsultantContentTabs({ consultant }: { consultant: Consultant }) {
+export function ConsultantContentTabs({ consultant }: { consultant: ConsultantProfile }) {
+  const bioHtml = `<p>${consultant.summary}</p><p>With over 15 years of experience, Elena offers deep insights into life's most pressing questions. Her guidance is practical, compassionate, and tailored to your unique journey.</p>`;
+    
   return (
     <Tabs defaultValue="about" className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-3 sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <TabsTrigger value="about">About</TabsTrigger>
         <TabsTrigger value="reviews">Reviews ({consultant.reviews.length})</TabsTrigger>
         <TabsTrigger value="content">Content</TabsTrigger>
       </TabsList>
       <TabsContent value="about" className="py-6">
-        <BioContent bio={consultant.bio} />
+        <BioContent bio={bioHtml} />
       </TabsContent>
       <TabsContent value="reviews" className="py-6">
         <ReviewsContent reviews={consultant.reviews} />
