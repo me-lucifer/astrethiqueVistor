@@ -7,13 +7,13 @@ import { addDays, addHours, format, subDays, parseISO } from 'date-fns';
 
 const createConsultant = (index: number): Consultant => {
     const now = new Date();
-    const isOnline = index % 3 === 0;
+    const isOnline = index % 4 === 0; // Better distribution for online status
     const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
     const consultantName = `Consultant ${index}`;
     
     // Create a version of availability compatible with the card and list views.
     // The profile page will add more complex availability data.
-    const simpleAvailability = ['online', 'busy', 'offline'][index % 3] as 'online' | 'busy' | 'offline';
+    const simpleAvailability = ['online', 'busy', 'offline', 'online'][index % 4] as 'online' | 'busy' | 'offline';
 
     const reviews = [
         { author: 'Jane D.', rating: 5, dateISO: subDays(now, 5).toISOString(), text: 'An amazing and insightful reading!'},
@@ -49,7 +49,7 @@ const createConsultant = (index: number): Consultant => {
         cover: `https://picsum.photos/seed/consultant${index}/400/300`,
         kycVerified: Math.random() > 0.2,
         adminApproved: Math.random() > 0.1,
-        lastReviewDate: format(subDays(now, Math.floor(Math.random() * 90)), 'yyyy-MM-dd'),
+        lastReviewDate: subDays(now, Math.floor(Math.random() * 90)).toISOString(),
         bio: `This is a short bio for ${consultantName}. They are an expert in ${specialties.join(', ')} and have been practicing for over ${Math.floor(Math.random()*10)+2} years.`,
         reviews: reviews,
         content: {

@@ -224,7 +224,7 @@ export function FeaturedConsultants({ initialQuery }: { initialQuery?: string })
                 case 'rating_desc':
                     return b.rating - a.rating || a.pricePerMin - b.pricePerMin;
                 case 'newest':
-                    return parseISO(b.joinedAt).getTime() - parseISO(a.joinedAt).getTime();
+                     return parseISO(b.lastReviewDate).getTime() - parseISO(a.lastReviewDate).getTime();
                 case 'online_first':
                     return availabilityOrder[aAvailString as keyof typeof availabilityOrder] - availabilityOrder[bAvailString as keyof typeof availabilityOrder] || b.rating - a.rating;
                 case 'recommended':
