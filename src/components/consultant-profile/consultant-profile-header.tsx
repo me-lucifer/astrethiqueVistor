@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { ConsultantProfile } from '@/lib/consultant-profile';
 import { getSession, setSession } from '@/lib/session';
 import { Badge } from '@/components/ui/badge';
@@ -12,36 +11,68 @@ import { Star, Heart, CheckCircle, ShieldCheck, CalendarCheck } from 'lucide-rea
 import { cn } from '@/lib/utils';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import * as storage from '@/lib/storage';
+import { AuthModal } from '../auth-modal';
 
 export function ConsultantProfileHeader({ consultant: initialConsultant }: { consultant: ConsultantProfile }) {
     const [consultant, setConsultant] = useState(initialConsultant);
     const [isFavorite, setIsFavorite] = useState(consultant.favorite);
+    const [user, setUser] = useState<storage.User | null>(null);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const { toast } = useToast();
     
+    const checkUserAndFavorite = () => {
+        const currentUser = storage.getCurrentUser();
+        setUser(currentUser);
+        if (currentUser) {
+            const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+            const userFavorites = allFavorites[currentUser.id];
+            setIsFavorite(userFavorites?.consultants.includes(consultant.id) || false);
+        } else {
+            setIsFavorite(false);
+        }
+    }
+
     useEffect(() => {
         setConsultant(initialConsultant);
-        setIsFavorite(initialConsultant.favorite);
+        checkUserAndFavorite();
+        
+        window.addEventListener('storage_change', checkUserAndFavorite);
+        return () => window.removeEventListener('storage_change', checkUserAndFavorite);
     }, [initialConsultant]);
 
+    const onLoginSuccess = () => {
+        checkUserAndFavorite();
+        toggleFavorite(); // Re-run the favorite action after login
+    }
+
     const toggleFavorite = () => {
-        const newIsFavorite = !isFavorite;
-        setIsFavorite(newIsFavorite);
+        if (!user) {
+            setIsAuthModalOpen(true);
+            return;
+        }
+
+        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+        const userFavorites = allFavorites[user.id] || { consultants: [], content: [], conferences: [] };
         
-        let favorites = getSession<string[]>("consultantFavorites") || [];
+        const newIsFavorite = !isFavorite;
         if (newIsFavorite) {
-            if (!favorites.includes(consultant.id)) {
-                favorites.push(consultant.id);
+            if (!userFavorites.consultants.includes(consultant.id)) {
+                userFavorites.consultants.push(consultant.id);
             }
             toast({
                 title: "Added to your favorites",
             });
         } else {
-            favorites = favorites.filter(id => id !== consultant.id);
+            userFavorites.consultants = userFavorites.consultants.filter(id => id !== consultant.id);
             toast({
                 title: "Removed from your favorites",
             });
         }
-        setSession("consultantFavorites", favorites);
+        
+        allFavorites[user.id] = userFavorites;
+        storage.setStorageItem('ast_favorites', allFavorites);
+        setIsFavorite(newIsFavorite);
     }
     
     return (
@@ -141,8 +172,7 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                     </div>
                 </div>
             </div>
+             <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={onLoginSuccess} />
         </TooltipProvider>
     );
 }
-
-    

@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import * as storage from '@/lib/storage';
 import { Separator } from "../ui/separator";
 import { Checkbox } from "../ui/checkbox";
+import { AuthModal } from '../auth-modal';
+import { useState } from 'react';
 
 const topicOptions = ["Love", "Work", "Health", "Money", "Life Path", "Astrology", "Tarot", "Numerology", "Spirituality", "Beginner", "Advanced"];
 const zodiacOptions = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
@@ -54,16 +56,13 @@ export function ContentHubFilters({
     type, setType, language, setLanguage, sort, setSort,
     authorFilter, setAuthorFilter, onReset
 }: FilterProps) {
-
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const { toast } = useToast();
 
     const handleSaveSearch = () => {
         const user = storage.getCurrentUser();
         if (!user) {
-            toast({
-                variant: 'destructive',
-                title: "Please log in to save searches.",
-            });
+            setIsAuthModalOpen(true);
             return;
         }
 
@@ -92,115 +91,118 @@ export function ContentHubFilters({
     const hasActiveFilters = query || topics.length > 0 || type !== 'all' || language !== 'all' || authorFilter;
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Search articles, podcasts, or authors…"
-                        className="pl-10 h-11 text-base sm:text-sm"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                    />
-                </div>
-                <div className="flex gap-2">
-                    <Select value={type} onValueChange={setType}>
-                        <SelectTrigger className="w-full sm:w-auto h-11">
-                            <SelectValue placeholder="Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {typeOptions.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                     <Select value={language} onValueChange={setLanguage}>
-                        <SelectTrigger className="w-full sm:w-auto h-11">
-                            <SelectValue placeholder="Language" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {langOptions.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                <div className="flex flex-wrap gap-2 items-center">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className="h-9">
-                                Topics {topics.length > 0 ? `(${topics.length})` : ''}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-56 p-0">
-                            <Command>
-                                <CommandList>
-                                    <CommandGroup>
-                                        {topicOptions.map((topic) => (
-                                            <CommandItem
-                                                key={topic}
-                                                onSelect={() => {
-                                                    const newTopics = topics.includes(topic)
-                                                        ? topics.filter(t => t !== topic)
-                                                        : [...topics, topic];
-                                                    setTopics(newTopics);
-                                                }}
-                                                className="flex items-center"
-                                            >
-                                                <Checkbox checked={topics.includes(topic)} className="mr-2" />
-                                                <span>{topic}</span>
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
-                    
-                    {authorFilter && (
-                         <Badge variant="secondary" className="gap-1.5 pl-1.5">
-                            Author: {authorFilter}
-                            <button onClick={() => setAuthorFilter(null)} className="rounded-full hover:bg-background/50" aria-label={`Remove filter for author ${authorFilter}`}>
-                                <X className="h-3 w-3" />
-                            </button>
-                        </Badge>
-                    )}
-                    {topics.map(topic => (
-                         <Badge key={topic} variant="secondary" className="gap-1.5 pl-1.5">
-                            {topic}
-                             <button onClick={() => setTopics(topics.filter(t => t !== topic))} className="rounded-full hover:bg-background/50" aria-label={`Remove filter for topic ${topic}`}>
-                                <X className="h-3 w-3" />
-                            </button>
-                        </Badge>
-                    ))}
+        <>
+            <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search articles, podcasts, or authors…"
+                            className="pl-10 h-11 text-base sm:text-sm"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <Select value={type} onValueChange={setType}>
+                            <SelectTrigger className="w-full sm:w-auto h-11">
+                                <SelectValue placeholder="Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {typeOptions.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={language} onValueChange={setLanguage}>
+                            <SelectTrigger className="w-full sm:w-auto h-11">
+                                <SelectValue placeholder="Language" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {langOptions.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Select value={sort} onValueChange={setSort}>
-                        <SelectTrigger className="w-full sm:w-[160px] h-9">
-                            <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {sortOptions.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSaveSearch}>
-                        <Star className="h-5 w-5" />
-                        <span className="sr-only">Save search</span>
-                    </Button>
-                    {hasActiveFilters && (
-                        <Button variant="link" onClick={onReset} className="px-2 text-muted-foreground">
-                            Reset all
+                <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="h-9">
+                                    Topics {topics.length > 0 ? `(${topics.length})` : ''}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-56 p-0">
+                                <Command>
+                                    <CommandList>
+                                        <CommandGroup>
+                                            {topicOptions.map((topic) => (
+                                                <CommandItem
+                                                    key={topic}
+                                                    onSelect={() => {
+                                                        const newTopics = topics.includes(topic)
+                                                            ? topics.filter(t => t !== topic)
+                                                            : [...topics, topic];
+                                                        setTopics(newTopics);
+                                                    }}
+                                                    className="flex items-center"
+                                                >
+                                                    <Checkbox checked={topics.includes(topic)} className="mr-2" />
+                                                    <span>{topic}</span>
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        
+                        {authorFilter && (
+                            <Badge variant="secondary" className="gap-1.5 pl-1.5">
+                                Author: {authorFilter}
+                                <button onClick={() => setAuthorFilter(null)} className="rounded-full hover:bg-background/50" aria-label={`Remove filter for author ${authorFilter}`}>
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </Badge>
+                        )}
+                        {topics.map(topic => (
+                            <Badge key={topic} variant="secondary" className="gap-1.5 pl-1.5">
+                                {topic}
+                                <button onClick={() => setTopics(topics.filter(t => t !== topic))} className="rounded-full hover:bg-background/50" aria-label={`Remove filter for topic ${topic}`}>
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </Badge>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Select value={sort} onValueChange={setSort}>
+                            <SelectTrigger className="w-full sm:w-[160px] h-9">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {sortOptions.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSaveSearch}>
+                            <Star className="h-5 w-5" />
+                            <span className="sr-only">Save search</span>
                         </Button>
-                    )}
+                        {hasActiveFilters && (
+                            <Button variant="link" onClick={onReset} className="px-2 text-muted-foreground">
+                                Reset all
+                            </Button>
+                        )}
+                    </div>
                 </div>
+                <Separator />
             </div>
-             <Separator />
-        </div>
+            <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={handleSaveSearch} />
+        </>
     )
 }

@@ -106,6 +106,7 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
         allFavorites[user.id] = userFavorites;
         storage.setStorageItem('ast_favorites', allFavorites);
         setIsFavorite(newIsFavorite);
+        storage.trackMetric('favorites');
 
         toast({
             title: newIsFavorite ? "Added to your favorites" : "Removed from your favorites",
