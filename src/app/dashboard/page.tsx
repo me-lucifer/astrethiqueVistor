@@ -34,8 +34,20 @@ import {
   AlertTriangle,
   Receipt,
   ArrowUp,
+  MoreHorizontal,
 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 // Local Imports
@@ -44,14 +56,13 @@ import {
   getWallet,
   setWallet,
   getMoodLog,
-  setMoodLog,
-  getLocal,
   setLocal,
   getMoodMeta,
   initializeLocalStorage,
   getSpendLog,
   Wallet as WalletType,
   SpendLogEntry,
+  addSpendLogEntry,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -197,7 +208,13 @@ export default function DashboardPage() {
           <div className="col-span-12 lg:col-span-8 space-y-8">
             <WalletCard 
               onBudgetClick={() => setIsBudgetModalOpen(true)}
-              onTopUpClick={() => setIsTopUpModalOpen(true)}
+              onTopUpClick={() => {
+                 if (!getWallet().budget_set) {
+                   setIsBudgetModalOpen(true);
+                 } else {
+                   setIsTopUpModalOpen(true);
+                 }
+              }}
               onEmergencyClick={() => setIsEmergencyModalOpen(true)}
             />
             <MoodCard onFirstCheckin={handleFirstCheckin} />
@@ -219,6 +236,11 @@ export default function DashboardPage() {
 // Sub-components for the Dashboard
 function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudgetClick: () => void, onTopUpClick: () => void, onEmergencyClick: () => void }) {
   const [wallet, setWallet] = useState<WalletType | null>(null);
+  const [isDev, setIsDev] = useState(false);
+
+  useEffect(() => {
+    setIsDev(process.env.NODE_ENV === 'development');
+  }, []);
 
   const fetchWalletData = useCallback(() => {
     setWallet(getWallet());
@@ -230,6 +252,44 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
+  const handleSeed15_30 = () => {
+    const currentWallet = getWallet();
+    const updatedWallet: WalletType = {
+        ...currentWallet,
+        balance_cents: 1500,
+        budget_cents: 3000,
+        budget_set: true
+    };
+    setWallet(updatedWallet);
+  }
+  
+  const handleLockWallet = () => {
+    const currentWallet = getWallet();
+    const updatedWallet: WalletType = {
+        ...currentWallet,
+        budget_lock: {
+            enabled: true,
+            until: format(endOfMonth(new Date()), "yyyy-MM-dd'T'HH:mm:ssXXX"),
+            emergency_used: false,
+        }
+    };
+    setWallet(updatedWallet);
+  }
+
+  const handleResetMonth = () => {
+      const currentWallet = getWallet();
+      const updatedWallet: WalletType = {
+          ...currentWallet,
+          spent_this_month_cents: 0,
+          budget_lock: {
+              enabled: false,
+              until: null,
+              emergency_used: false,
+          },
+          month_key: format(new Date(), "yyyy-MM"),
+      };
+      setWallet(updatedWallet);
+  }
 
   if (!wallet) {
     return (
@@ -268,9 +328,25 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
               <Wallet className="h-5 w-5 text-primary" />
               Wallet & Budget
             </CardTitle>
-             <p className="text-xl font-bold">
-              Balance: €{(balance_cents / 100).toFixed(2)}
-            </p>
+             <div className="flex items-center gap-2">
+                {isDev && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={handleSeed15_30}>Seed €15 & set budget €30</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLockWallet}>Lock wallet</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleResetMonth}>Reset month</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                <p className="text-xl font-bold">
+                  Balance: €{(balance_cents / 100).toFixed(2)}
+                </p>
+            </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -280,7 +356,7 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
                   <span>This month</span>
                   <span>€{spentThisMonth.toFixed(2)} / €{budget.toFixed(2)}</span>
               </div>
-              <Progress value={progress} indicatorClassName={progressBarColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
+              <Progress value={progress} indicatorClassName={cn(progressBarColor, progress < 20 && 'animate-pulse')} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
               <div className="flex gap-2 mt-2">
                 {budgetRemaining !== null && <Badge variant="outline">Remaining: €{budgetRemaining.toFixed(2)}</Badge>}
                 <Badge variant="outline">Days left: {daysLeft}</Badge>
@@ -295,7 +371,7 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
          <div className="flex items-center gap-2">
             {budget_lock?.enabled ? (
                 <Badge variant="secondary">Budget Locked until {endOfMonthFormatted}</Badge>
-            ) : budget_set ? null : null }
+            ) : null }
 
              {budget_lock?.enabled && (
                 <TooltipProvider>
@@ -482,10 +558,12 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
             moodLog.push({ dateISO: today, ...ratings });
           }
 
-          setMoodLog(moodLog, {
+          setLocal('ast_mood_log', moodLog);
+          setLocal('ast_mood_meta', {
             streak: newStreak,
             lastCheckIn: todayDate.toISOString(),
           });
+          window.dispatchEvent(new Event('storage'));
         });
       }
     }, 200);
@@ -869,7 +947,3 @@ const horoscopeData: { [key: string]: string } = {
   Pisces:
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
-
-    
-
-    

@@ -149,6 +149,18 @@ export function initializeLocalStorage() {
 
     // Seed Activity Data
     seedActivityData();
+
+    // Seed Spend Log
+    const spendLog = getSpendLog();
+    if (spendLog.length === 0) {
+        const now = new Date();
+        const initialLog = [
+            { ts: subDays(now, 1).toISOString(), type: 'consultation', amount_cents: -1250, note: "Session with Aeliana Rose", runningBalance: 0 },
+            { ts: subDays(now, 3).toISOString(), type: 'horoscope', amount_cents: -250, note: 'Detailed Horoscope', runningBalance: 0 },
+            { ts: subDays(now, 7).toISOString(), type: 'topup', amount_cents: 2000, note: 'Wallet top-up', runningBalance: 0 },
+        ];
+        setLocal(SPEND_LOG_KEY, initialLog);
+    }
   });
 
   // Monthly Wallet Reset Logic
@@ -175,7 +187,7 @@ export const getWallet = (): Wallet => {
     const wallet = getLocal<Wallet>(WALLET_KEY);
     if (!wallet) {
         const defaultWallet = {
-            balance_cents: 500,
+            balance_cents: 0,
             budget_cents: 0,
             budget_set: false,
             spent_this_month_cents: 0,
@@ -199,10 +211,8 @@ export const setWallet = (wallet: Wallet) => {
 export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string, requireUnlocked = true): boolean {
     const wallet = getWallet();
 
-    if (requireUnlocked && wallet.budget_lock?.enabled) {
+    if (requireUnlocked && wallet.budget_lock?.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
         console.warn("Budget is locked. Transaction blocked.");
-        // Here we would trigger the modal. For now, we just block.
-        // In the UI component, we'll check this return value.
         return false;
     }
     
