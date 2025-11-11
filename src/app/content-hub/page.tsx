@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { seedContentHub, ContentHubItem } from '@/lib/content-hub-seeder';
 import { getLocal, setLocal } from '@/lib/local';
@@ -21,7 +21,7 @@ type DailyMood = {
     [key in "Love" | "Work" | "Health" | "Money"]?: 'low' | 'medium' | 'high';
 }
 
-export default function ContentHubPage() {
+function ContentHubContent() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -279,5 +279,13 @@ export default function ContentHubPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ContentHubPageWrapper() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ContentHubContent />
+        </Suspense>
     );
 }
