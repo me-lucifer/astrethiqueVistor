@@ -14,6 +14,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { SupportContactForm } from "@/components/support/contact-form";
 import { SystemStatus } from "@/components/support/system-status";
 import { ReportingCta } from "@/components/support/reporting-cta";
+import { CompanyContactPanel } from "@/components/layout/company-contact-panel";
 
 const visitorTopics = [
     { id: "faq-bookings", href: "#faq-bookings", title: "Bookings & Sessions", description: "Help with scheduling, session types, and cancellations.", icon: CalendarClock },
@@ -182,117 +183,120 @@ export default function SupportPage() {
 
 
   return (
-    <div className="container py-12">
-      <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-12">
-        <div className="flex-1 space-y-4">
-          <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Support
-          </h1>
-          <p className="text-lg text-foreground/80 max-w-2xl">
-            Get help with bookings, billing, content, or your account. Start with the FAQs or send us a request.
-          </p>
-        </div>
-        <div className="shrink-0">
-          <SystemStatus />
-        </div>
-      </div>
-
-      <div className="flex justify-center mb-12">
-        <div className="inline-flex items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
-          <Button
-            onClick={() => setActiveTab("visitor")}
-            variant={activeTab === "visitor" ? "background" : "ghost"}
-            className={cn("px-6", activeTab === 'visitor' && 'shadow-sm')}
-          >
-            For Visitors
-          </Button>
-          <Button
-            onClick={() => setActiveTab("consultant")}
-            variant={activeTab === "consultant" ? "background" : "ghost"}
-            className={cn("px-6", activeTab === 'consultant' && 'shadow-sm')}
-          >
-            For Consultants
-          </Button>
-        </div>
-      </div>
-      
-       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {topics.map((topic) => (
-            <a key={topic.id} href={topic.href} className="block">
-              <Card className="group h-full hover:shadow-lg hover:shadow-primary/10 transition-shadow bg-card/50 flex flex-col">
-                <CardHeader className="flex-row items-start gap-4">
-                    <div className="bg-primary/10 p-3 rounded-full border border-primary/20 mt-1">
-                        <topic.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="font-headline text-base">{topic.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-sm text-foreground/70">{topic.description}</p>
-                </CardContent>
-                <CardFooter>
-                  <span className="text-sm font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                    Browse FAQs
-                  </span>
-                </CardFooter>
-              </Card>
-            </a>
-          ))}
-        </div>
-        
-        <div className="mb-16">
-            <h3 className="text-center font-headline text-lg font-semibold mb-4">Quick Links</h3>
-            <div className="flex flex-wrap justify-center gap-2">
-                {quickLinks.map(link => (
-                    <Button key={link.label} variant="outline" size="sm" asChild>
-                        <Link href={link.href}>{link.label}</Link>
-                    </Button>
-                ))}
-            </div>
-        </div>
-
-        <div className="mb-12 max-w-2xl mx-auto">
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                    placeholder="Search help topics..."
-                    className="pl-12 h-12 text-base w-full"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-            </div>
-        </div>
-      
-        {faqSections.length > 0 ? (
-            faqSections.map(section => (
-                <div key={section.id} id={section.id} className="mb-12 scroll-mt-24">
-                    <h2 className="font-headline text-2xl font-bold mb-4">{section.title}</h2>
-                    <Accordion type="single" collapsible className="w-full">
-                        {section.questions.map((faq, index) => (
-                            <AccordionItem key={index} value={`item-${index}`}>
-                                <AccordionTrigger>{faq.q}</AccordionTrigger>
-                                <AccordionContent>{faq.a}</AccordionContent>
-                            </AccordionItem>
-                        ))}
-                    </Accordion>
-                </div>
-            ))
-        ) : (
-             <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
-                <p className="text-muted-foreground">No results for "{searchQuery}"—try different keywords.</p>
-            </div>
-        )}
-        
-        <ReportingCta />
-
-        <div id="contact-support" className="mt-24 pt-16 border-t scroll-mt-24">
-             <h2 className="text-center font-headline text-3xl font-bold mb-4">
-                Still need help?
-            </h2>
-            <p className="text-center text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
-                If you couldn't find your answer in the FAQs, please submit a request and our support team will get back to you.
+    <>
+      <div className="container py-12">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-12">
+          <div className="flex-1 space-y-4">
+            <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Support
+            </h1>
+            <p className="text-lg text-foreground/80 max-w-2xl">
+              Get help with bookings, billing, content, or your account. Start with the FAQs or send us a request.
             </p>
-            <SupportContactForm activeTab={activeTab} />
+          </div>
+          <div className="shrink-0">
+            <SystemStatus />
+          </div>
         </div>
-    </div>
+
+        <div className="flex justify-center mb-12">
+          <div className="inline-flex items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+            <Button
+              onClick={() => setActiveTab("visitor")}
+              variant={activeTab === "visitor" ? "background" : "ghost"}
+              className={cn("px-6", activeTab === 'visitor' && 'shadow-sm')}
+            >
+              For Visitors
+            </Button>
+            <Button
+              onClick={() => setActiveTab("consultant")}
+              variant={activeTab === "consultant" ? "background" : "ghost"}
+              className={cn("px-6", activeTab === 'consultant' && 'shadow-sm')}
+            >
+              For Consultants
+            </Button>
+          </div>
+        </div>
+        
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            {topics.map((topic) => (
+              <a key={topic.id} href={topic.href} className="block">
+                <Card className="group h-full hover:shadow-lg hover:shadow-primary/10 transition-shadow bg-card/50 flex flex-col">
+                  <CardHeader className="flex-row items-start gap-4">
+                      <div className="bg-primary/10 p-3 rounded-full border border-primary/20 mt-1">
+                          <topic.icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <CardTitle className="font-headline text-base">{topic.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className="text-sm text-foreground/70">{topic.description}</p>
+                  </CardContent>
+                  <CardFooter>
+                    <span className="text-sm font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      Browse FAQs
+                    </span>
+                  </CardFooter>
+                </Card>
+              </a>
+            ))}
+          </div>
+          
+          <div className="mb-16">
+              <h3 className="text-center font-headline text-lg font-semibold mb-4">Quick Links</h3>
+              <div className="flex flex-wrap justify-center gap-2">
+                  {quickLinks.map(link => (
+                      <Button key={link.label} variant="outline" size="sm" asChild>
+                          <Link href={link.href}>{link.label}</Link>
+                      </Button>
+                  ))}
+              </div>
+          </div>
+
+          <div className="mb-12 max-w-2xl mx-auto">
+              <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                      placeholder="Search help topics..."
+                      className="pl-12 h-12 text-base w-full"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+              </div>
+          </div>
+        
+          {faqSections.length > 0 ? (
+              faqSections.map(section => (
+                  <div key={section.id} id={section.id} className="mb-12 scroll-mt-24">
+                      <h2 className="font-headline text-2xl font-bold mb-4">{section.title}</h2>
+                      <Accordion type="single" collapsible className="w-full">
+                          {section.questions.map((faq, index) => (
+                              <AccordionItem key={index} value={`item-${index}`}>
+                                  <AccordionTrigger>{faq.q}</AccordionTrigger>
+                                  <AccordionContent>{faq.a}</AccordionContent>
+                              </AccordionItem>
+                          ))}
+                      </Accordion>
+                  </div>
+              ))
+          ) : (
+               <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg col-span-full">
+                  <p className="text-muted-foreground">No results for "{searchQuery}"—try different keywords.</p>
+              </div>
+          )}
+          
+          <ReportingCta />
+
+          <div id="contact-support" className="mt-24 pt-16 border-t scroll-mt-24">
+               <h2 className="text-center font-headline text-3xl font-bold mb-4">
+                  Still need help?
+              </h2>
+              <p className="text-center text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
+                  If you couldn't find your answer in the FAQs, please submit a request and our support team will get back to you.
+              </p>
+              <SupportContactForm activeTab={activeTab} />
+          </div>
+      </div>
+      <CompanyContactPanel />
+    </>
   );
 }
