@@ -217,17 +217,19 @@ export const setWallet = (wallet: Wallet) => {
     window.dispatchEvent(new Event('storage'));
 }
 
-export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string, requireUnlocked = true): boolean {
+export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string): { ok: boolean, message: string } {
     const wallet = getWallet();
 
-    if (requireUnlocked && wallet.budget_lock?.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
-        console.warn("Budget is locked. Transaction blocked.");
-        return false;
+    if (amount_cents > 0 && wallet.budget_lock?.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
+        return { ok: false, message: `Budget is locked until ${format(endOfMonth(new Date()), "MMM do")}.` };
+    }
+
+    if ((wallet.spent_this_month_cents + amount_cents) > wallet.budget_cents && wallet.budget_set) {
+         return { ok: false, message: "This transaction exceeds your monthly budget." };
     }
     
     if (wallet.balance_cents < amount_cents) {
-        console.warn("Insufficient funds.");
-        return false;
+        return { ok: false, message: "Insufficient funds in your wallet." };
     }
 
     const newWalletState: Wallet = {
@@ -244,7 +246,7 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
         note: note,
     });
     
-    return true;
+    return { ok: true, message: "Transaction successful." };
 }
 
 

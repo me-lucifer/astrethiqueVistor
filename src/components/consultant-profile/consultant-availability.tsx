@@ -12,9 +12,10 @@ import { StartNowModal } from '../start-now-modal';
 import { getSession, setSession } from '@/lib/session';
 import { AuthModal } from '../auth-modal';
 import * as authLocal from '@/lib/authLocal';
-import { getWallet } from '@/lib/local';
+import { getWallet, spendFromWallet } from '@/lib/local';
 import { BudgetWizardModal } from '../budget/budget-wizard-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
+import { AddFundsModal } from '../dashboard/add-funds-modal';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -28,6 +29,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
+  const [isFundsModalOpen, setIsFundsModalOpen] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
   const { toast } = useToast();
   const [user, setUser] = useState<authLocal.User | null>(null);
@@ -88,9 +90,15 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
           return;
       }
 
-      if (wallet.budget_lock?.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
-          setIsLockModalOpen(true);
-          return;
+      const spendResult = spendFromWallet(0, "consultation", `Start session with ${consultant.name}`);
+      
+      if (!spendResult.ok) {
+        if (spendResult.message.includes("locked")) {
+            setIsLockModalOpen(true);
+        } else {
+            setIsFundsModalOpen(true); // Generic for insufficient funds or other issues
+        }
+        return;
       }
 
       toast({
@@ -204,6 +212,11 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
         </DialogContent>
       </Dialog>
       
+       <AddFundsModal
+            isOpen={isFundsModalOpen}
+            onOpenChange={setIsFundsModalOpen}
+            neededAmount={consultant.pricePerMin}
+        />
     </div>
   );
 }

@@ -158,11 +158,10 @@ export function DetailedHoroscope({ user, onLockError, onEmergencyTopUpNeeded }:
 
             const feeCents = config.detailedHoroscopeFeeEUR * 100;
             
-            const wasSpent = spendFromWallet(feeCents, "horoscope", `Detailed horoscope for ${user.zodiacSign}`);
+            const spendResult = spendFromWallet(feeCents, "horoscope", `Detailed horoscope for ${user.zodiacSign}`);
             
-            if (!wasSpent) {
-                const wallet = getWallet();
-                if(wallet.budget_lock?.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
+            if (!spendResult.ok) {
+                if (spendResult.message.includes("locked")) {
                     onLockError();
                 } else {
                     setIsFundsModalOpen(true);
