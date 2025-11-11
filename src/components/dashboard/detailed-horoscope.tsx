@@ -162,7 +162,7 @@ export function DetailedHoroscope({ user, onLockError, onEmergencyTopUpNeeded }:
             
             if (!wasSpent) {
                 const wallet = getWallet();
-                if(wallet.budget_lock.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
+                if(wallet.budget_lock?.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
                     onLockError();
                 } else {
                     setIsFundsModalOpen(true);

@@ -169,36 +169,21 @@ export function initializeLocalStorage() {
         setLocal(SPEND_LOG_KEY, initialLog);
     }
   });
-
-  // Monthly Wallet Reset Logic
-  const wallet = getLocal<Wallet>(WALLET_KEY);
-  const currentMonthKey = format(new Date(), 'yyyy-MM');
-  if (wallet && wallet.month_key !== currentMonthKey) {
-      const updatedWallet: Wallet = {
-          ...wallet,
-          spent_this_month_cents: 0,
-          month_key: currentMonthKey,
-          budget_lock: {
-              enabled: wallet.budget_lock?.enabled || false,
-              until: wallet.budget_lock?.enabled ? format(endOfMonth(new Date()), 'yyyy-MM-dd\'T\'HH:mm:ssXXX') : null,
-              emergency_used: false,
-          }
-      };
-      setLocal(WALLET_KEY, updatedWallet);
-  }
 }
 
 
 // --- Wallet Specific Helpers ---
 export const getWallet = (): Wallet => {
-    const wallet = getLocal<Wallet>(WALLET_KEY);
+    let wallet = getLocal<Wallet>(WALLET_KEY);
+    const currentMonthKey = format(new Date(), 'yyyy-MM');
+
     if (!wallet) {
         const defaultWallet = {
             balance_cents: 0,
             budget_cents: 0,
             budget_set: false,
             spent_this_month_cents: 0,
-            month_key: format(new Date(), 'yyyy-MM'),
+            month_key: currentMonthKey,
             budget_lock: {
                 enabled: false,
                 until: null,
@@ -208,6 +193,23 @@ export const getWallet = (): Wallet => {
         setLocal(WALLET_KEY, defaultWallet);
         return defaultWallet;
     }
+
+    // Monthly Reset Logic
+    if (wallet.month_key !== currentMonthKey) {
+        wallet = {
+            ...wallet,
+            spent_this_month_cents: 0,
+            month_key: currentMonthKey,
+            budget_lock: {
+                ...wallet.budget_lock,
+                enabled: false, // Turn off lock on new month
+                until: null,
+                emergency_used: false,
+            }
+        };
+        setLocal(WALLET_KEY, wallet);
+    }
+
     return wallet;
 };
 export const setWallet = (wallet: Wallet) => {
@@ -315,5 +317,3 @@ export const incrementMetric = (key: keyof Metrics) => {
     metrics[key] += 1;
     setLocal(METRICS_KEY, metrics);
 }
-
-    
