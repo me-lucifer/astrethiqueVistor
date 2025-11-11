@@ -299,10 +299,12 @@ function QuickTrends() {
   return (
     <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground p-3 rounded-lg bg-card/40 backdrop-blur-lg border border-white/10">
         <div className="flex items-center gap-2">
-            <Badge variant={streak > 0 ? "secondary" : "outline"} className="gap-1.5">
-                <Flame className={cn("h-4 w-4", streak > 0 ? "text-amber-400" : "text-muted-foreground")} />
-                {streak} day streak
-            </Badge>
+            {streak > 1 && (
+                <Badge variant="secondary" className="gap-1.5">
+                    <Flame className="h-4 w-4 text-amber-400" />
+                    {streak} day streak
+                </Badge>
+            )}
             {lastCheckIn && <span>Last check-in: {lastCheckIn}</span>}
         </div>
         <Button variant="link" asChild>
@@ -510,7 +512,7 @@ function FavoritesTab() {
                                 <div>
                                     <p className="font-semibold group-hover:underline">{fav.name}</p>
                                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                        <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                                        <div className={cn("w-2 h-2 rounded-full", isOnline ? 'bg-green-500' : 'bg-gray-400')}></div>
                                         {isOnline ? "Online" : "Offline"}
                                     </div>
                                 </div>
@@ -544,5 +546,6 @@ const horoscopeData: { [key: string]: string } = {
     Aquarius: "Connect with your community. A group activity could spark a brilliant new idea or friendship.",
     Pisces: "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+
 
 

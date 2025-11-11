@@ -83,12 +83,12 @@ export default function MoodTrendsPage() {
       return <PlaceholderPage title="Loading Mood Trends..." />;
   }
   
-  if (log.length === 0) {
+  if (log.length < 3) {
     return (
         <div className="container py-16 text-center">
             <LineChart className="mx-auto h-12 w-12 text-muted-foreground" />
-             <h1 className="mt-4 font-headline text-2xl font-bold">No mood data recorded yet.</h1>
-             <p className="mt-2 text-muted-foreground">Log today’s mood on your dashboard to start seeing your trends.</p>
+             <h1 className="mt-4 font-headline text-2xl font-bold">Not enough data yet.</h1>
+             <p className="mt-2 text-muted-foreground">Log your mood for at least 3 days to see your trends.</p>
              <Button asChild className="mt-4">
                 <Link href="/dashboard">Back to Dashboard</Link>
              </Button>
