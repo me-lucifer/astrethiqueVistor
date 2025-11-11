@@ -142,6 +142,8 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 
 
   const watchedCreatePassword = useWatch({ control: createForm.control, name: "password" });
   const watchedResetPassword = useWatch({ control: resetPasswordForm.control, name: "password" });
+  const watchedAgreeToTerms = useWatch({ control: createForm.control, name: "agreeToTerms" });
+  const watchedIs18OrOlder = useWatch({ control: createForm.control, name: "is18OrOlder" });
 
   async function handleCreateAccount(values: CreateAccountFormData) {
     if (storage.findUserByEmail(values.email)) {
@@ -221,6 +223,9 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 
         const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
         favorites[user.id] = { consultants: [], content: [], conferences: [] };
         storage.setStorageItem('ast_favorites', favorites);
+        
+        const firstName = user.name.split(' ')[0];
+        toast({ title: `Welcome, ${firstName}!` });
     }
     
     storage.setCurrentUser(user.id);
@@ -335,7 +340,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 
               </div>
 
               <FormField control={createForm.control} name="agreeToTerms" render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the <Link href="/legal-hub/terms-of-service" target="_blank" className="text-primary hover:underline">Terms</Link> and <Link href="/legal-hub/privacy-policy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.</FormLabel><FormMessage /></div></FormItem>
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the <Link href="/legal-hub/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms</Link> and <Link href="/legal-hub/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</Link>.</FormLabel><FormMessage /></div></FormItem>
               )} />
               <FormField control={createForm.control} name="is18OrOlder" render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I confirm I am 18 years of age or older.</FormLabel><FormMessage /></div></FormItem>
@@ -343,9 +348,13 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 
               <FormField control={createForm.control} name="marketingOptIn" render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Send me tips and updates (optional).</FormLabel></div></FormItem>
               )} />
+              
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                Prototype only — accounts are stored locally on your device (no server). Don’t use real passwords.
+              </p>
 
               <DialogFooter className="pt-4 sticky bottom-0 bg-background/90 backdrop-blur-sm">
-                <Button type="submit" className="w-full" disabled={createForm.formState.isSubmitting}>Create Account</Button>
+                <Button type="submit" className="w-full" disabled={createForm.formState.isSubmitting || !watchedAgreeToTerms || !watchedIs18OrOlder}>Create Account</Button>
               </DialogFooter>
             </form>
           </Form>
