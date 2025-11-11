@@ -92,8 +92,8 @@ export default function DashboardPage() {
 
     return (
         <div className="container py-12">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                <main className="lg:col-span-2 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_384px] gap-8 items-start">
+                <main className="space-y-8">
                     <WalletCard />
                     <MoodCard />
                 </main>

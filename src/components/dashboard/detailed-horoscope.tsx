@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { getLocal, setLocal, getWallet, getAdminConfig } from "@/lib/local";
 import { User } from "@/lib/authLocal";
 import { AddFundsModal } from "./add-funds-modal";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface AdminConfig {
     detailedHoroscopeFeeEUR: number;
@@ -133,6 +134,7 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
     const [config, setConfig] = useState<AdminConfig | null>(null);
     const [isFundsModalOpen, setIsFundsModalOpen] = useState(false);
     const { toast } = useToast();
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
         const adminConfig = getAdminConfig();
@@ -150,34 +152,36 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
     }, [user]);
 
     const handlePurchase = () => {
-        if (!user?.zodiacSign || !config) return;
+        startTransition(() => {
+            if (!user?.zodiacSign || !config) return;
 
-        const wallet = getWallet();
-        if (!wallet || wallet.balanceEUR < config.detailedHoroscopeFeeEUR) {
-            setIsFundsModalOpen(true);
-            return;
-        }
+            const wallet = getWallet();
+            if (!wallet || wallet.balanceEUR < config.detailedHoroscopeFeeEUR) {
+                setIsFundsModalOpen(true);
+                return;
+            }
 
-        // Deduct fee
-        const newBalance = wallet.balanceEUR - config.detailedHoroscopeFeeEUR;
-        setLocal('ast_wallet', { balanceEUR: newBalance });
-        window.dispatchEvent(new Event('storage')); // Notify other components of wallet change
-        
-        toast({
-            title: "Purchase Successful",
-            description: `€${config.detailedHoroscopeFeeEUR.toFixed(2)} deducted for detailed horoscope.`,
+            // Deduct fee
+            const newBalance = wallet.balanceEUR - config.detailedHoroscopeFeeEUR;
+            setLocal('ast_wallet', { balanceEUR: newBalance });
+            window.dispatchEvent(new Event('storage')); // Notify other components of wallet change
+            
+            toast({
+                title: "Purchase Successful",
+                description: `€${config.detailedHoroscopeFeeEUR.toFixed(2)} deducted for detailed horoscope.`,
+            });
+
+            // Generate and save horoscope
+            const newText = generateDetailedHoroscope(user.zodiacSign);
+            const newHoroscope: DetailedHoroscopeData = {
+                sign: user.zodiacSign,
+                lastGeneratedAt: new Date().toISOString(),
+                text: newText,
+                refreshCount: (horoscope?.refreshCount || 0) + 1,
+            };
+            setLocal('ast_detailed_horoscope', newHoroscope);
+            setHoroscope(newHoroscope);
         });
-
-        // Generate and save horoscope
-        const newText = generateDetailedHoroscope(user.zodiacSign);
-        const newHoroscope: DetailedHoroscopeData = {
-            sign: user.zodiacSign,
-            lastGeneratedAt: new Date().toISOString(),
-            text: newText,
-            refreshCount: (horoscope?.refreshCount || 0) + 1,
-        };
-        setLocal('ast_detailed_horoscope', newHoroscope);
-        setHoroscope(newHoroscope);
     };
 
     if (!user?.zodiacSign || !config) {
@@ -199,12 +203,18 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
                             <div className="p-4 bg-muted/50 rounded-lg space-y-4">
                                 <p className="text-sm whitespace-pre-wrap">{horoscope.text}</p>
                                 <div className="flex justify-between items-center pt-2 border-t">
-                                    <Button size="sm" onClick={handlePurchase}>Refresh</Button>
+                                    <Button size="sm" onClick={handlePurchase} disabled={isPending}>
+                                        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Refresh
+                                    </Button>
                                     <p className="text-xs text-muted-foreground">You've refreshed {horoscope.refreshCount - 1}×</p>
                                 </div>
                             </div>
                         ) : (
-                            <Button className="w-full" onClick={handlePurchase}>View Detailed Horoscope</Button>
+                            <Button className="w-full" onClick={handlePurchase} disabled={isPending}>
+                                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                View Detailed Horoscope
+                            </Button>
                         )}
                     </AccordionContent>
                 </AccordionItem>
