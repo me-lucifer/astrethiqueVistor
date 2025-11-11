@@ -176,8 +176,11 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     wallets[user.id] = { balance: 0, currency: '€' };
     storage.setStorageItem('ast_wallets', wallets);
 
-    storage.trackMetric('registrations.visitor');
     setTempUserEmail(user.email);
+    toast({
+      title: "Account created",
+      description: "Verify your email to continue.",
+    });
     setView('verify');
   }
 
@@ -203,7 +206,6 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     storage.setCurrentUser(user.id);
     const firstName = user.name.split(' ')[0];
     toast({ title: `Welcome back, ${firstName}!` });
-    storage.trackMetric('logins');
     onLoginSuccess();
     onOpenChange(false);
   }
@@ -223,8 +225,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     storage.saveUsers(updatedUsers);
 
     storage.setCurrentUser(user.id);
-    const firstName = user.name.split(' ')[0];
-    toast({ title: `Welcome, ${firstName}!` });
+    toast({ title: "Email verified." });
 
     onLoginSuccess();
     onOpenChange(false);
@@ -325,6 +326,13 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
   const goBackToTabs = () => {
     setView('tabs');
     setTempUserEmail(null);
+  }
+
+  const onInvalidSubmit = () => {
+    toast({
+        variant: "destructive",
+        title: "Please fix the errors highlighted on the form.",
+    });
   }
 
   const VerificationView = ({ onVerify }: { onVerify: (values: VerificationFormData) => void }) => {
@@ -435,7 +443,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
             <TabsContent value="create">
               <DialogTitle className="sr-only">Create Account</DialogTitle>
               <Form {...createForm}>
-                <form onSubmit={createForm.handleSubmit(handleCreateAccount)} className="space-y-4 max-h-[60vh] overflow-y-auto px-6 py-4">
+                <form onSubmit={createForm.handleSubmit(handleCreateAccount, onInvalidSubmit)} className="space-y-4 max-h-[60vh] overflow-y-auto px-6 py-4">
                     <FormField control={createForm.control} name="fullName" render={({ field }) => (
                     <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your full name" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
@@ -475,7 +483,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
             <TabsContent value="signin">
                 <DialogTitle className="sr-only">Sign In</DialogTitle>
                 <Form {...signInForm}>
-                <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4 px-6 py-4">
+                <form onSubmit={signInForm.handleSubmit(handleSignIn, onInvalidSubmit)} className="space-y-4 px-6 py-4">
                   <FormField control={signInForm.control} name="email" render={({ field }) => (
                     <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />

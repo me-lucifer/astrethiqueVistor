@@ -56,7 +56,7 @@ export function Header() {
       storage.setCurrentUser(null);
       checkUser();
       window.dispatchEvent(new Event('storage_change'));
-      toast({ title: "You've been signed out." });
+      toast({ title: "Signed out." });
   }
 
   const getInitials = (name: string) => {
