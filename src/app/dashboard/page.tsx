@@ -147,9 +147,10 @@ function WalletCard() {
     }, []);
 
     const handleTopUp = (amount: number) => {
-        const newBalance = wallet.balanceEUR + amount;
+        const currentWallet = getWallet() || { balanceEUR: 0, history: [] };
+        const newBalance = currentWallet.balanceEUR + amount;
         const newHistoryItem = { type: 'topup' as const, amount, ts: new Date().toISOString() };
-        const updatedHistory = [...(wallet.history || []), newHistoryItem];
+        const updatedHistory = [...(currentWallet.history || []), newHistoryItem];
         
         const newWallet: Wallet = {
             balanceEUR: newBalance,
@@ -455,7 +456,7 @@ function RecommendationsTab() {
                     recommendations.map(item => <ContentHubCard key={item.id} item={item} onTopicClick={handleTopicClick} />)
                 ) : (
                     <div className="text-center text-muted-foreground p-4">
-                        <p>No recommendations right now. Explore the Content Hub to find something new!</p>
+                        <p>You're doing great! Check back later for new recommendations.</p>
                     </div>
                 )}
             </CardContent>
@@ -546,6 +547,7 @@ const horoscopeData: { [key: string]: string } = {
     Aquarius: "Connect with your community. A group activity could spark a brilliant new idea or friendship.",
     Pisces: "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+
 
 
 
