@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Gem, User, LogOut, Globe, Wallet, Heart, Calendar } from 'lucide-react';
+import { Menu, Gem, User, LogOut, Globe } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import {
   DropdownMenu,
@@ -112,15 +112,6 @@ export function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/account/profile"><User className="mr-2 h-4 w-4"/><span>Profile</span></Link>
-            </DropdownMenuItem>
-             <DropdownMenuItem asChild>
-              <Link href="/account/wallet"><Wallet className="mr-2 h-4 w-4"/><span>Wallet</span></Link>
-            </DropdownMenuItem>
-             <DropdownMenuItem asChild>
-              <Link href="/appointments"><Calendar className="mr-2 h-4 w-4"/><span>Appointments</span></Link>
-            </DropdownMenuItem>
-             <DropdownMenuItem asChild>
-              <Link href="/discover?myFavorites=true"><Heart className="mr-2 h-4 w-4"/><span>Favorites</span></Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
