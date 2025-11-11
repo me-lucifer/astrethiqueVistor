@@ -2,7 +2,7 @@
 "use client";
 
 // --- DATA STRUCTURES ---
-interface User {
+export interface User {
     id: string;
     role: 'visitor' | 'consultant';
     firstName: string;
@@ -15,8 +15,17 @@ interface User {
     createdAt: string; // ISO Date
     updatedAt: string; // ISO Date
     emailVerified: boolean;
-    wallet: { balanceCents: number };
+    wallet: { balanceCents: number, budgetLock?: number };
     favorites: { consultants: string[]; content: string[] };
+}
+
+export interface Comment {
+    id: string;
+    userId: string;
+    contentId: string;
+    type: 'article' | 'podcast';
+    body: string;
+    createdAt: string;
 }
 
 interface Session {
@@ -32,6 +41,8 @@ interface AstroStore {
 
 
 // --- STORAGE HELPERS ---
+// These now use getLocal/setLocal but are kept for semantic clarity
+// and to ensure a single namespace is used for the store.
 
 function getStore(): AstroStore {
     if (typeof window === 'undefined') {
@@ -116,7 +127,7 @@ export async function registerVisitor(payload: {
         marketingOptIn: payload.marketingOptIn,
         createdAt: now,
         updatedAt: now,
-        emailVerified: false,
+        emailVerified: false, // Default to false
         wallet: { balanceCents: 0 },
         favorites: { consultants: [], content: [] },
     };
@@ -140,6 +151,11 @@ export function getCurrentUser(): User | null {
     if (!store.session) return null;
     return store.users.find(u => u.id === store.session!.userId) || null;
 }
+
+export function getUsers(): User[] {
+    return getStore().users;
+}
+
 
 export function createSession(user: User): void {
     const store = getStore();
@@ -186,4 +202,73 @@ export function deleteUser(userId: string): void {
     }
     
     saveStore(store);
+}
+
+export async function login(email: string, plainPassword: string):Promise<User> {
+    const user = findUserByEmail(email);
+    if (!user) {
+        throw new Error("No account found with this email.");
+    }
+    
+    const passwordHash = await hashPassword(plainPassword);
+    if (passwordHash !== user.passwordHash) {
+        // Fallback for legacy passwords
+        if (`legacy:${btoa(plainPassword)}` !== user.passwordHash) {
+            throw new Error("Incorrect password.");
+        }
+    }
+
+    createSession(user);
+    return user;
+}
+
+
+export async function changePassword(
+    userId: string, 
+    currentPassword: string | null, 
+    newPassword: string,
+    isAdminReset: boolean = false
+): Promise<void> {
+    const store = getStore();
+    const userIndex = store.users.findIndex(u => u.id === userId);
+
+    if (userIndex === -1) {
+        throw new Error("User not found.");
+    }
+
+    const user = store.users[userIndex];
+
+    if (!isAdminReset && currentPassword) {
+        const currentPasswordHash = await hashPassword(currentPassword);
+        if (currentPasswordHash !== user.passwordHash && `legacy:${btoa(currentPassword)}` !== user.passwordHash) {
+            throw new Error("Your current password does not match.");
+        }
+    }
+    
+    const newPasswordHash = await hashPassword(newPassword);
+    store.users[userIndex] = { ...user, passwordHash: newPasswordHash, updatedAt: new Date().toISOString() };
+    saveStore(store);
+}
+
+// --- HELPERS FROM DEPRECATED local.ts for comments ---
+// These are included to avoid breaking the comments feature.
+// They should be refactored to use the new store if comments are kept.
+export function getLocal<T>(key: string): T | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
+  } catch (error) {
+    console.error(`Error reading from localStorage for key "${key}":`, error);
+    return null;
+  }
+}
+
+export function setLocal<T>(key: string, value: T): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Error writing to localStorage for key "${key}":`, error);
+  }
 }

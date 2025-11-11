@@ -41,6 +41,7 @@ function HeaderContent() {
 
   useEffect(() => {
     checkUser();
+    // Listen for storage changes to sync login state across tabs
     const handleStorageChange = () => checkUser();
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
@@ -55,6 +56,7 @@ function HeaderContent() {
       authLocal.clearSession();
       checkUser();
       toast({ title: "Signed out." });
+      router.push('/');
   }
 
   const getInitials = (firstName: string = "", lastName: string = "") => {
@@ -111,6 +113,9 @@ function HeaderContent() {
             <DropdownMenuItem asChild>
               <Link href="/account/profile"><User className="mr-2 h-4 w-4"/><span>Profile</span></Link>
             </DropdownMenuItem>
+             <DropdownMenuItem asChild>
+              <Link href="/appointments"><span>My Appointments</span></Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4"/>
@@ -163,11 +168,11 @@ function HeaderContent() {
             <Button variant="ghost" size="icon" onClick={toggleLanguage} aria-label={`Switch to ${language === 'en' ? 'French' : 'English'}`}>
                 <Globe className="h-5 w-5" />
             </Button>
-            <NotificationBell />
+            {user && <NotificationBell />}
         </div>
 
         <div className="lg:hidden flex items-center gap-2">
-           <NotificationBell />
+           {user && <NotificationBell />}
            <Button variant="ghost" size="icon" onClick={toggleLanguage} aria-label={`Switch to ${language === 'en' ? 'French' : 'English'}`}>
               <Globe className="h-5 w-5" />
            </Button>

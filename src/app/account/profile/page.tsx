@@ -84,18 +84,13 @@ export default function ProfilePage() {
     const onPasswordSubmit = async (data: PasswordFormData) => {
         if (!user) return;
         
-        const currentPasswordHash = await authLocal.hashPassword(data.currentPassword);
-        if (currentPasswordHash !== user.passwordHash) {
-            passwordForm.setError("currentPassword", { message: "Incorrect current password." });
-            return;
+        try {
+            await authLocal.changePassword(user.id, data.currentPassword, data.newPassword);
+            toast({ title: "Password changed successfully." });
+            passwordForm.reset();
+        } catch (error: any) {
+            passwordForm.setError("currentPassword", { message: error.message });
         }
-
-        const newPasswordHash = await authLocal.hashPassword(data.newPassword);
-        const updatedUser = { ...user, passwordHash: newPasswordHash, updatedAt: new Date().toISOString() };
-        authLocal.updateUser(updatedUser);
-
-        toast({ title: "Password changed successfully." });
-        passwordForm.reset();
     };
 
     if (!user) {

@@ -30,25 +30,46 @@ export default function SecurityPage() {
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Security</CardTitle>
-                <CardDescription>Manage your account's security settings.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center justify-between p-4 rounded-lg border">
-                    <div>
-                        <p className="font-medium">Email Address</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Login & Security</CardTitle>
+                    <CardDescription>Manage your account's security settings.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between p-4 rounded-lg border">
+                        <div>
+                            <p className="font-medium">Email Address</p>
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                        <div>
+                            {user.emailVerified ? (
+                                <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
+                                    <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                                    Verified
+                                </Badge>
+                            ) : (
+                                 <Badge variant="destructive">
+                                    <MailWarning className="mr-1 h-3.5 w-3.5" />
+                                    Unverified
+                                </Badge>
+                            )}
+                        </div>
                     </div>
-                    <div>
-                        <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-                            <CheckCircle className="mr-1 h-3.5 w-3.5" />
-                            Verified
-                        </Badge>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Two-Factor Authentication</CardTitle>
+                    <CardDescription>Add an extra layer of security to your account.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50 opacity-60">
+                        <p>Authenticator App</p>
+                        <Button disabled>Enable</Button>
                     </div>
-                </div>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        </div>
     );
 }
