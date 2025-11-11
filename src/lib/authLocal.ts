@@ -7,6 +7,8 @@ export interface User {
     role: 'visitor' | 'consultant';
     firstName: string;
     lastName: string;
+    pseudonym?: string;
+    displayNamePreference: 'realName' | 'pseudonym';
     email: string;
     passwordHash: string;
     language: "EN" | "FR";
@@ -101,6 +103,8 @@ export function createId(prefix: string): string {
 export async function registerVisitor(payload: {
     firstName: string;
     lastName: string;
+    pseudonym?: string;
+    displayNamePreference: 'realName' | 'pseudonym';
     email: string;
     password: string;
     language: "EN" | "FR";
@@ -120,6 +124,8 @@ export async function registerVisitor(payload: {
         role: 'visitor',
         firstName: payload.firstName,
         lastName: payload.lastName,
+        pseudonym: payload.pseudonym,
+        displayNamePreference: payload.displayNamePreference,
         email: payload.email,
         passwordHash,
         language: payload.language,

@@ -8,7 +8,7 @@ import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Gem, LogIn, UserPlus } from "lucide-react";
+import { Gem, LogIn, UserPlus, User, Mask, Info } from "lucide-react";
 import * as authLocal from "@/lib/authLocal";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,15 +23,30 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { AuthModal } from "@/components/auth-modal";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters")
   .refine((password) => /[a-zA-Z]/.test(password), { message: "Password must contain at least one letter" })
   .refine((password) => /[0-9]/.test(password), { message: "Password must contain at least one number" });
 
+const pseudonymSchema = z.string()
+    .refine((val) => val.length === 0 || (val.length >= 3 && val.length <= 24), {
+        message: "Must be between 3 and 24 characters.",
+    })
+    .refine((val) => val.length === 0 || /^[a-zA-Z0-9._-]+$/.test(val), {
+        message: "Can only contain letters, numbers, and . _ -",
+    })
+    .optional();
+
 const createAccountSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
+  pseudonym: pseudonymSchema,
+  displayNamePreference: z.enum(['pseudonym', 'realName']).default('realName'),
   email: z.string().email("Invalid email address"),
   password: passwordSchema,
   language: z.enum(["EN", "FR"]),
@@ -71,6 +86,7 @@ export default function RegisterPage() {
             firstName: "", lastName: "", email: "", password: "",
             language: language.toUpperCase() as "EN" | "FR",
             timezone: '', agreeToTerms: false, marketingOptIn: false,
+            pseudonym: "", displayNamePreference: "realName",
         },
         mode: "onBlur"
     });
@@ -133,6 +149,28 @@ export default function RegisterPage() {
     const heroImage = PlaceHolderImages.find(p => p.id === 'hero-background');
     const watchedPassword = form.watch("password");
     const watchedAgreeToTerms = form.watch("agreeToTerms");
+
+    const watchedPseudonym = form.watch("pseudonym");
+    const watchedFirstName = form.watch("firstName");
+    const watchedLastName = form.watch("lastName");
+    const watchedPreference = form.watch("displayNamePreference");
+
+    const {formState: {errors}} = form;
+    const isPseudonymValid = !!watchedPseudonym && watchedPseudonym.length >= 3 && !errors.pseudonym;
+    
+    useEffect(() => {
+        if (isPseudonymValid) {
+            form.setValue('displayNamePreference', 'pseudonym', { shouldValidate: true });
+        } else if (watchedPreference === 'pseudonym' && !isPseudonymValid) {
+            form.setValue('displayNamePreference', 'realName', { shouldValidate: true });
+        }
+    }, [watchedPseudonym, isPseudonymValid, watchedPreference, form]);
+
+
+    const publicName = watchedPreference === 'pseudonym' && isPseudonymValid
+        ? watchedPseudonym
+        : `${watchedFirstName || ''} ${watchedLastName || ''}`.trim();
+
 
     if (!isClient) {
         return null; // Render nothing on the server
@@ -218,7 +256,7 @@ export default function RegisterPage() {
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 bg-card text-muted-foreground text-xs">OR</div>
                             </div>
                             <Form {...form}>
-                            <form onSubmit={form.handleSubmit(handleCreateAccount, onInvalidSubmit)} className="space-y-4">
+                            <form onSubmit={form.handleSubmit(handleCreateAccount, onInvalidSubmit)} className="space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                      <FormField control={form.control} name="firstName" render={({ field }) => (
                                         <FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="Your first name" {...field} /></FormControl><FormMessage /></FormItem>
@@ -227,6 +265,79 @@ export default function RegisterPage() {
                                         <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Your last name" {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
                                 </div>
+
+                                <div className="space-y-2">
+                                    <h3 className="text-sm font-medium leading-none">Public identity</h3>
+                                    <FormField control={form.control} name="pseudonym" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Pseudonym (public name)</FormLabel>
+                                            <FormControl><Input placeholder="e.g., StarSeeker, LunaPath, Orion-27" {...field} /></FormControl>
+                                            <p className="text-xs text-muted-foreground">This is the name others will see. 3–24 chars; letters, numbers, . _ - only.</p>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="displayNamePreference"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                        <FormLabel>Choose what others see</FormLabel>
+                                        <FormControl>
+                                            <RadioGroup
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                                            >
+                                            <FormItem>
+                                                <FormControl>
+                                                <RadioGroupItem value="pseudonym" id="pseudonym" className="sr-only" disabled={!isPseudonymValid} />
+                                                </FormControl>
+                                                <Label htmlFor="pseudonym" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'pseudonym' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50', !isPseudonymValid && 'opacity-50 cursor-not-allowed')}>
+                                                    <div className="flex items-center gap-2 font-semibold">
+                                                        <Mask className="w-4 h-4" />
+                                                        Pseudonym (recommended)
+                                                    </div>
+                                                    <span className="text-sm font-normal text-muted-foreground mt-1">Use your pseudonym everywhere.</span>
+                                                </Label>
+                                            </FormItem>
+                                            <FormItem>
+                                                <FormControl>
+                                                    <RadioGroupItem value="realName" id="realName" className="sr-only" />
+                                                </FormControl>
+                                                <Label htmlFor="realName" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'realName' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
+                                                     <div className="flex items-center gap-2 font-semibold">
+                                                        <User className="w-4 h-4" />
+                                                        Real name
+                                                    </div>
+                                                     <span className="text-sm font-normal text-muted-foreground mt-1">Show: {watchedFirstName || 'First'} {watchedLastName || 'Last'}</span>
+                                                </Label>
+                                            </FormItem>
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className="flex justify-between items-center text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="outline">Preview</Badge>
+                                        <span>{publicName || "Your Public Name"}</span>
+                                    </div>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>You can change this later in Settings.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                                
                                 <FormField control={form.control} name="email" render={({ field }) => (
                                 <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
@@ -235,6 +346,7 @@ export default function RegisterPage() {
                                     <FormLabel>Password</FormLabel>
                                     <FormControl><PasswordInput {...field} /></FormControl>
                                     <PasswordStrength password={watchedPassword} />
+                                    <p className="text-xs text-muted-foreground">Use 8+ characters with at least 1 letter & 1 number.</p>
                                     <FormMessage />
                                 </FormItem>
                                 )} />
@@ -280,5 +392,3 @@ export default function RegisterPage() {
         </>
     );
 }
-
-    
