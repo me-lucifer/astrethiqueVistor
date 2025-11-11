@@ -371,7 +371,14 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
           <Card className="bg-primary/10 border-primary/20 text-center p-4">
             <Sparkles className="h-6 w-6 text-primary mx-auto mb-2" />
             <CardDescription className="text-foreground/90 font-medium">Set a monthly budget to stay in control.</CardDescription>
-            <Button variant="link" onClick={onBudgetClick} className="mt-1">Set up now</Button>
+            <div className="mt-4 flex flex-col sm:flex-row justify-center gap-2">
+                <Button onClick={onBudgetClick}>Set up now</Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" disabled>Top up €5</Button>
+                    <Button variant="outline" size="sm" disabled>Top up €10</Button>
+                    <Button variant="outline" size="sm" disabled>Top up €25</Button>
+                </div>
+            </div>
           </Card>
         )}
          <div className="flex items-center gap-2">
@@ -972,3 +979,5 @@ const horoscopeData: { [key: string]: string } = {
 };
 
     
+
+      
