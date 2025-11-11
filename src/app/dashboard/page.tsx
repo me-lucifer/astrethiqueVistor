@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { StarRating } from "@/components/star-rating";
 import { ContentHubCard } from "@/components/content-hub/card";
 import * as authLocal from "@/lib/authLocal";
-import { getWallet, setWallet, getMoodLog, setMoodLog } from "@/lib/local";
+import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame } from "lucide-react";
 import Link from "next/link";
@@ -21,11 +20,11 @@ import { getSession } from "@/lib/session";
 import { ZodiacSignModal } from "@/components/dashboard/zodiac-sign-modal";
 import { DetailedHoroscope } from "@/components/dashboard/detailed-horoscope";
 import { useRouter } from 'next/navigation';
-import { getLocal } from "@/lib/local";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { AuthModal } from "@/components/auth-modal";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
+import { StarRating } from "@/components/star-rating";
 
 const Starfield = () => (
   <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -326,9 +325,18 @@ function HoroscopeCard({ user }: { user: authLocal.User | null }) {
 }
 
 function SidebarTabs() {
+    const [activeTab, setActiveTab] = useState(() => {
+        if (typeof window === 'undefined') return 'activity';
+        return getLocal<string>('dash.activeTab') || 'activity';
+    });
+
+    useEffect(() => {
+        setLocal('dash.activeTab', activeTab);
+    }, [activeTab]);
+
     return (
         <GlassCard>
-        <Tabs defaultValue="activity" className="w-full">
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="activity"><Activity className="w-4 h-4 mr-2"/>Activity</TabsTrigger>
                 <TabsTrigger value="recommendations"><StarIcon className="w-4 h-4 mr-2"/>For You</TabsTrigger>
