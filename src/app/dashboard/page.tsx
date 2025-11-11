@@ -32,6 +32,7 @@ import {
 import * as authLocal from "@/lib/authLocal";
 import {
   getWallet,
+  setWallet,
   getMoodLog,
   setMoodLog,
   getLocal,
@@ -220,7 +221,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
         ...wallet,
         balance_cents: wallet.balance_cents + 1000 // Add €10
     };
-    authLocal.setWallet(newWalletState);
+    setWallet(newWalletState);
     toast({
       title: "Funds Added",
       description: "€10.00 has been added to your wallet.",
@@ -276,7 +277,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
          <div className="flex items-center gap-2">
             {wallet.budget_set && budget_lock?.enabled ? (
                 <Badge variant="secondary">Budget Locked until {endOfMonthFormatted}</Badge>
-            ) : (
+            ) : wallet.budget_set ? null : (
                  <Badge variant="outline">Budget not set</Badge>
             )}
         </div>
@@ -756,3 +757,5 @@ const horoscopeData: { [key: string]: string } = {
   Pisces:
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+
+    
