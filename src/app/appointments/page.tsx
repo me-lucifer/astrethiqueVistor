@@ -22,6 +22,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge";
+import * as storage from '@/lib/storage';
+import { AuthModal } from "@/components/auth-modal";
 
 interface Appointment {
     id: string;
@@ -53,8 +55,28 @@ const modeIcons = {
 export default function AppointmentsPage() {
     const [appointments, setAppointments] = useState<CombinedAppointment[]>([]);
     const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<storage.User | null>(null);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+    const checkUser = () => {
+        const currentUser = storage.getCurrentUser();
+        setUser(currentUser);
+    };
 
     useEffect(() => {
+        checkUser();
+        window.addEventListener('storage_change', checkUser);
+        return () => {
+            window.removeEventListener('storage_change', checkUser);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+
         // Fetch direct appointments from session storage
         const storedAppointments = (getSession<Appointment[]>('schedule.holds.v1') || []).map(a => ({...a, itemType: 'session' as const}));
         
@@ -72,7 +94,7 @@ export default function AppointmentsPage() {
 
         setAppointments(combined);
         setLoading(false);
-    }, []);
+    }, [user]);
 
     const handleCancelAppointment = (id: string, type: 'session' | 'conference') => {
         let updatedAppointments = appointments.filter(apt => {
@@ -99,6 +121,18 @@ export default function AppointmentsPage() {
         return <PlaceholderPage title="Appointments" description="Loading your appointments..." />
     }
 
+    if (!user) {
+         return (
+            <>
+                <PlaceholderPage 
+                    title="Appointments" 
+                    description="Please log in to see your appointments." 
+                />
+                <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={checkUser} />
+            </>
+        );
+    }
+    
     if (appointments.length === 0) {
         return <PlaceholderPage title="Appointments" description="You have no upcoming appointments." />;
     }

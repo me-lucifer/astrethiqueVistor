@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,15 +10,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Star, Bell, Heart, BookOpen, Mic, Video, CheckCircle } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
+import { AuthModal } from './auth-modal';
+import * as storage from '@/lib/storage';
 import {
     Tooltip,
     TooltipContent,
@@ -53,24 +46,51 @@ const zodiacIconMap: Record<string, string> = {
 };
 
 
-export function ConsultantCard({ consultant, onStartNow }: { consultant: Consultant, onStartNow: () => void }) {
+export function ConsultantCard({ consultant }: { consultant: Consultant }) {
     const router = useRouter();
     const { toast } = useToast();
-    const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isNotifying, setIsNotifying] = useState(false);
+    const [user, setUser] = useState<storage.User | null>(null);
+    const [intendedAction, setIntendedAction] = useState<(() => void) | null>(null);
+    
+    const checkUser = useCallback(() => {
+        const currentUser = storage.getCurrentUser();
+        setUser(currentUser);
+        if (currentUser) {
+            const favs = getSession<string[]>("discover.favorites.v1") || [];
+            setIsFavorite(favs.includes(consultant.id));
+        } else {
+            setIsFavorite(false);
+        }
+         const notifyList = getSession<string[]>("notify.me.v1") || [];
+         setIsNotifying(notifyList.includes(consultant.id));
+    }, [consultant.id]);
 
     useEffect(() => {
-        const favs = getSession<string[]>("discover.favorites.v1") || [];
-        setIsFavorite(favs.includes(consultant.id));
-        
-        const notifyList = getSession<string[]>("notify.me.v1") || [];
-        setIsNotifying(notifyList.includes(consultant.id));
-    }, [consultant.id]);
+        checkUser();
+        window.addEventListener('storage_change', checkUser);
+        return () => window.removeEventListener('storage_change', checkUser);
+    }, [checkUser]);
+    
+    const onLoginSuccess = () => {
+        checkUser();
+        if (intendedAction) {
+            intendedAction();
+            setIntendedAction(null);
+        }
+    }
 
     const toggleFavorite = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (!user) {
+            setIntendedAction(() => () => toggleFavorite(e));
+            setIsAuthModalOpen(true);
+            return;
+        }
         
         const favs = getSession<string[]>("discover.favorites.v1") || [];
         const newFavorites = !isFavorite
@@ -94,10 +114,20 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
     const handleScheduleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+         if (!user) {
+            setIntendedAction(() => () => router.push(`/discover/consultant/${consultant.slug}#availability-section`));
+            setIsAuthModalOpen(true);
+            return;
+        }
         router.push(`/discover/consultant/${consultant.slug}#availability-section`);
     };
 
     const handleNotifyClick = () => {
+        if (!user) {
+            setIntendedAction(() => handleNotifyClick);
+            setIsAuthModalOpen(true);
+            return;
+        }
         if (isNotifying) {
             toast({
                 title: `You are already set to be notified when ${consultant.name} is online.`,
@@ -110,11 +140,20 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
         
         setIsNotifying(true);
         setSession("notify.me.v1", newNotifyList);
-        setIsNotifyModalOpen(true);
+        toast({ title: `Notification set!`, description: `We'll let you know when ${consultant.name} is back online.` });
     };
+    
+    const handleStartNow = () => {
+        if (!user) {
+            setIntendedAction(() => handleStartNow);
+            setIsAuthModalOpen(true);
+            return;
+        }
+        toast({ title: `Starting session with ${consultant.name}...`})
+    }
 
     const StartNowButton = () => (
-        <Button size="sm" onClick={(e) => handleActionClick(e, onStartNow)} aria-label={`Start now with ${consultant.name}`}>Start now</Button>
+        <Button size="sm" onClick={(e) => handleActionClick(e, handleStartNow)} aria-label={`Start now with ${consultant.name}`}>Start now</Button>
     );
     const ScheduleButton = () => (
         <Button variant="outline" size="sm" onClick={handleScheduleClick} aria-label={`Schedule a session with ${consultant.name}`}>
@@ -278,19 +317,7 @@ export function ConsultantCard({ consultant, onStartNow }: { consultant: Consult
                 </Card>
             </Link>
 
-            <AlertDialog open={isNotifyModalOpen} onOpenChange={setIsNotifyModalOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Notification set!</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        We'll let you know when {consultant.name} is back online.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Close</AlertDialogCancel>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={onLoginSuccess} />
         </TooltipProvider>
     );
 }

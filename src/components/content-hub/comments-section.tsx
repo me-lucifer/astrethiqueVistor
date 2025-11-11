@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Comment } from '@/lib/comments';
-import { getUser, AuthUser, logoutUser } from '@/lib/auth';
+import * as storage from '@/lib/storage';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,42 +30,48 @@ const ITEMS_PER_PAGE = 5;
 
 export function CommentsSection({ contentId, comments, onAddComment }: CommentsSectionProps) {
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<AuthUser | null>(null);
-  
+  const [user, setUser] = useState<storage.User | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   const checkUser = () => {
-    const storedUser = getUser();
-    if (storedUser) {
-      setIsLoggedIn(true);
-      setUser(storedUser);
-    } else {
-      setIsLoggedIn(false);
-      setUser(null);
-    }
+    const currentUser = storage.getCurrentUser();
+    setUser(currentUser);
   };
 
   useEffect(() => {
     checkUser();
-    // Add a listener to update on storage events from other tabs
-    window.addEventListener('storage', checkUser);
+    window.addEventListener('storage_change', checkUser);
     return () => {
-      window.removeEventListener('storage', checkUser);
+      window.removeEventListener('storage_change', checkUser);
     }
   }, []);
   
   const handleLogout = () => {
-      logoutUser();
+      storage.setCurrentUser(null);
       checkUser();
   }
-
 
   const form = useForm<CommentFormData>({
     resolver: zodResolver(commentSchema),
     defaultValues: { text: '' },
     mode: 'onChange',
   });
+  
+  const onLoginSuccess = () => {
+    checkUser();
+  }
+
+  const handleCommentAttempt = () => {
+    if (!user) {
+        setIsAuthModalOpen(true);
+    }
+  }
 
   const onSubmit = (data: CommentFormData) => {
+    if (!user || !user.emailVerified) {
+        setIsAuthModalOpen(true);
+        return;
+    }
     onAddComment(data.text);
     form.reset();
   };
@@ -86,7 +92,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
         </h2>
         
         <div className="mb-8">
-          {isLoggedIn && user ? (
+          {user && user.emailVerified ? (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className='text-sm text-muted-foreground flex justify-between items-center'>
@@ -118,7 +124,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
           ) : (
             <div className="text-center py-6 px-4 border-2 border-dashed rounded-lg">
               <h3 className="font-semibold">Sign in to add a comment.</h3>
-              <p className="text-sm text-muted-foreground mt-1">Use the main login in the site header.</p>
+              <Button onClick={() => setIsAuthModalOpen(true)} className="mt-2">Sign In</Button>
             </div>
           )}
         </div>
@@ -161,6 +167,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
           )}
         </div>
       </section>
+      <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={onLoginSuccess} />
     </>
   );
 }

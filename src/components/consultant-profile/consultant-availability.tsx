@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Consultant } from '@/lib/consultants';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { MessageSquare, Video, Phone, Clock, Bell, CheckCircle } from 'lucide-react';
 import { StartNowModal } from '../start-now-modal';
 import { getSession, setSession } from '@/lib/session';
+import { AuthModal } from '../auth-modal';
+import * as storage from '@/lib/storage';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -20,9 +22,22 @@ const communicationModes = [
 export function ConsultantAvailability({ consultant }: { consultant: Consultant }) {
   const router = useRouter();
   const [selectedMode, setSelectedMode] = useState('chat');
-  const [isStartNowModalOpen, setIsStartNowModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
   const { toast } = useToast();
+  const [user, setUser] = useState<storage.User | null>(null);
+  const [intendedAction, setIntendedAction] = useState<(() => void) | null>(null);
+
+  const checkUser = useCallback(() => {
+    setUser(storage.getCurrentUser());
+  }, []);
+
+  useEffect(() => {
+    checkUser();
+    window.addEventListener('storage_change', checkUser);
+    return () => window.removeEventListener('storage_change', checkUser);
+  }, [checkUser]);
+
 
   useEffect(() => {
     const lastMode = getSession<string>('consultant.selectedMode');
@@ -33,19 +48,32 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
     setIsNotifying(!!notifyList);
   }, [consultant.id]);
 
+  const onLoginSuccess = () => {
+    checkUser();
+    if(intendedAction) {
+        intendedAction();
+        setIntendedAction(null);
+    }
+  }
+
   const handleModeChange = (mode: string) => {
     setSelectedMode(mode);
     setSession('consultant.selectedMode', mode);
   };
 
   const handleScheduleClick = () => {
+    if(!user) {
+        setIntendedAction(() => () => router.push(`/discover/consultant/${consultant.slug}/schedule`));
+        setIsAuthModalOpen(true);
+        return;
+    }
     router.push(`/discover/consultant/${consultant.slug}/schedule`);
   };
   
   const handleStartNowClick = () => {
-      const isLoggedIn = getSession('userRegistered') === 'true';
-      if (!isLoggedIn) {
-          setIsStartNowModalOpen(true);
+      if (!user) {
+          setIntendedAction(() => handleStartNowClick);
+          setIsAuthModalOpen(true);
           return;
       }
       toast({
@@ -55,6 +83,11 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   }
   
   const handleNotifyClick = () => {
+    if (!user) {
+        setIntendedAction(() => handleNotifyClick);
+        setIsAuthModalOpen(true);
+        return;
+    }
     if (isNotifying) {
         toast({
             title: `You'll be notified when ${consultant.name} is online.`,
@@ -135,7 +168,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
         </CardFooter>
       </Card>
       
-      <StartNowModal isOpen={isStartNowModalOpen} onOpenChange={setIsStartNowModalOpen} />
+      <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={onLoginSuccess} />
       
     </div>
   );

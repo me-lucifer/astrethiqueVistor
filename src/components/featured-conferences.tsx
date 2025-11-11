@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
@@ -34,6 +33,8 @@ import Link from "next/link";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { RsvpConfirmationModal } from "./rsvp-confirmation-modal";
 import { StartNowModal } from "./start-now-modal";
+import { AuthModal } from './auth-modal';
+import * as storage from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
 
 interface Rsvp {
@@ -105,6 +106,8 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const [selectedConference, setSelectedConference] = useState<Conference | null>(null);
     const [isRsvpModalOpen, setIsRsvpModalOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [user, setUser] = useState<storage.User | null>(null);
+    const [intendedAction, setIntendedAction] = useState<(() => void) | null>(null);
 
     const [timeZone, setTimeZone] = useState<string>("");
     useEffect(() => {
@@ -122,6 +125,16 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         const savedSort = sessionStorage.getItem('discover.conferences.sort');
         return savedSort ? (savedSort as SortKey) : 'recommended';
     });
+
+    const checkUser = useCallback(() => {
+        setUser(storage.getCurrentUser());
+    }, []);
+
+    useEffect(() => {
+        checkUser();
+        window.addEventListener('storage_change', checkUser);
+        return () => window.removeEventListener('storage_change', checkUser);
+    }, [checkUser]);
 
      useEffect(() => {
         seedOnce("conferences_seeded_v3", seedConferences); // Use a new seed key to ensure data update
@@ -147,6 +160,14 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         setQuery(initialQuery);
       })
     }, [initialQuery]);
+
+    const onLoginSuccess = () => {
+        checkUser();
+        if(intendedAction) {
+            intendedAction();
+            setIntendedAction(null);
+        }
+    }
 
     const updateFilters = (newFilters: Partial<Filters>) => {
         startTransition(() => {
@@ -241,8 +262,8 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     }, [allConferences, filters, query, sort]);
     
     const handleRsvpClick = (conf: Conference) => {
-        const isLoggedIn = getSession('userRegistered') === 'true';
-        if (!isLoggedIn) {
+        if (!user) {
+            setIntendedAction(() => () => handleRsvpClick(conf));
             setIsAuthModalOpen(true);
             return;
         }
@@ -656,9 +677,10 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
                 />
             )}
             
-            <StartNowModal
+            <AuthModal
                 isOpen={isAuthModalOpen}
                 onOpenChange={setIsAuthModalOpen}
+                onLoginSuccess={onLoginSuccess}
             />
         </>
     );
