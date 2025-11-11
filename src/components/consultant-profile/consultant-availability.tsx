@@ -88,7 +88,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
           return;
       }
 
-      if (wallet.budget_lock?.enabled) {
+      if (wallet.budget_lock?.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
           setIsLockModalOpen(true);
           return;
       }

@@ -81,8 +81,8 @@ export function seedOnce(flagKey: string, seedFn: () => void): void {
 // --- Specific Data Models & Constants ---
 
 export const EMERGENCY_TOPUP_LIMIT_EUR = 20;
-export const SUGGEST_MIN_EUR = 5;
-export const SUGGEST_MAX_EUR = 150;
+export const SUGGEST_MIN_EUR = 10;
+export const SUGGEST_MAX_EUR = 500;
 
 export interface BudgetLock {
     enabled: boolean;

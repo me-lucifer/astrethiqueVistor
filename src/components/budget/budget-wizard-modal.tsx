@@ -38,7 +38,7 @@ const wizardSchema = z.object({
   savingsGoalPercent: z.number().min(0).max(30),
 
   // Step 3
-  finalBudget: z.coerce.number().min(5, "Budget must be at least €5."),
+  finalBudget: z.coerce.number().min(10, "Budget must be at least €10.").max(data => (data.monthlyNetIncome + (data.otherHouseholdIncomeAmount || 0)) * 0.3, "Budget cannot exceed 30% of total income."),
   enableBudgetLock: z.boolean(),
 }).refine(data => !data.otherHouseholdIncome || (data.otherHouseholdIncomeAmount !== undefined && data.otherHouseholdIncomeAmount >= 0), {
   message: "Please enter the other income amount.",
@@ -121,10 +121,12 @@ const Step3 = () => {
                 <p className="text-4xl font-bold">€{suggestedBudget}</p>
             </div>
              <FormField control={control} name="finalBudget" render={({ field }) => (
-                <FormItem><FormLabel>Set monthly budget (€)</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={control} name="enableBudgetLock" render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Enable Budget Lock</FormLabel><p className="text-xs text-muted-foreground">Automatically lock spending when budget is met.</p></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                <FormItem>
+                    <FormLabel>Set your budget (€)</FormLabel>
+                    <FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl>
+                    <p className="text-xs text-muted-foreground">You can adjust this anytime.</p>
+                    <FormMessage />
+                </FormItem>
             )} />
         </div>
     );
@@ -133,7 +135,7 @@ const Step3 = () => {
 const steps = [
     { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["whereYouLive", "monthlyNetIncome", "householdSize", "otherHouseholdIncome", "otherHouseholdIncomeAmount"] },
     { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentialsRent", "essentialsUtilities", "essentialsGroceries", "essentialsTransport", "debts", "savingsGoalPercent"] },
-    { title: "Your Budget", description: "Review our suggestion and set your final budget.", component: Step3, fields: ["finalBudget", "enableBudgetLock"] },
+    { title: "Suggestion", description: "Review our suggestion and set your final budget.", component: Step3, fields: ["finalBudget"] },
 ];
 
 
@@ -195,10 +197,6 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
             ...wallet,
             budget_cents: data.finalBudget! * 100,
             budget_set: true,
-            budget_lock: {
-                ...wallet.budget_lock,
-                enabled: data.enableBudgetLock,
-            }
         };
         setWallet(updatedWallet);
 
@@ -223,9 +221,12 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
                 <FormProvider {...methods}>
                     <form onSubmit={methods.handleSubmit(handleSave)}>
                         <DialogHeader>
-                            <DialogTitle className="font-headline text-2xl">{steps[currentStep].title}</DialogTitle>
+                            <DialogTitle className="font-headline text-2xl">{"Let's personalize your budget"}</DialogTitle>
+                             <div className="space-y-2 mb-4 pt-4">
+                                <Progress value={((currentStep + 1) / steps.length) * 100} className="h-1" />
+                                <p className="text-sm text-muted-foreground">Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}</p>
+                            </div>
                             <DialogDescription>{steps[currentStep].description}</DialogDescription>
-                            <Progress value={((currentStep + 1) / steps.length) * 100} className="mt-2 h-1" />
                         </DialogHeader>
 
                         <div className="py-6 min-h-[300px]">
@@ -260,5 +261,3 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         </Dialog>
     );
 }
-
-    

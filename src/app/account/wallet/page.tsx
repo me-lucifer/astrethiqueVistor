@@ -11,12 +11,14 @@ import * as authLocal from "@/lib/authLocal";
 import { getWallet, setWallet, Wallet } from "@/lib/local";
 import { BudgetWizardModal } from "@/components/budget/budget-wizard-modal";
 import { useLanguage } from "@/contexts/language-context";
+import { TopUpModal } from "@/components/dashboard/top-up-modal";
 
 export default function WalletPage() {
     const { toast } = useToast();
     const [user, setUser] = useState<authLocal.User | null>(null);
     const [wallet, setWallet] = useState<Wallet | null>(null);
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+    const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
     const { language } = useLanguage();
 
     const fetchWalletData = () => {
@@ -34,26 +36,6 @@ export default function WalletPage() {
             window.removeEventListener('storage', fetchWalletData);
         };
     }, []);
-
-    const handleAddCredit = () => {
-        if (!wallet) return;
-
-        if (!wallet.budget_set) {
-            setIsBudgetModalOpen(true);
-            return;
-        }
-
-        const newWalletState: Wallet = {
-          ...wallet,
-          balance_cents: wallet.balance_cents + 1000,
-        };
-        setWallet(newWalletState); // optimistic update & persist
-
-        toast({
-            title: "Funds Added",
-            description: `€10.00 has been added to your wallet.`,
-        });
-    };
 
     const formatCurrency = (amountCents: number) => {
         const locale = language === 'fr' ? 'fr-FR' : 'en-IE';
@@ -78,7 +60,7 @@ export default function WalletPage() {
                         <p className="text-sm text-muted-foreground">Current Balance</p>
                         <p className="text-4xl font-bold">{formatCurrency(wallet.balance_cents)}</p>
                     </div>
-                    <Button onClick={handleAddCredit} className="w-full">Add €10 Demo Credit</Button>
+                    <Button onClick={() => setIsTopUpModalOpen(true)} className="w-full">Add Funds</Button>
                 </CardContent>
                 <CardFooter>
                     <p className="text-xs text-muted-foreground">This is a demo wallet. No real money is involved.</p>
@@ -108,6 +90,7 @@ export default function WalletPage() {
                 </CardFooter>
             </Card>
             <BudgetWizardModal isOpen={isBudgetModalOpen} onOpenChange={setIsBudgetModalOpen} />
+            <TopUpModal isOpen={isTopUpModalOpen} onOpenChange={setIsTopUpModalOpen} />
         </div>
     );
 }

@@ -56,9 +56,7 @@ import * as authLocal from "@/lib/authLocal";
 import {
   getWallet,
   getMoodLog,
-  getLocal,
   setLocal,
-  getMoodMeta,
   initializeLocalStorage,
   getSpendLog,
   Wallet as WalletType,
@@ -79,8 +77,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ActivityTab } from "@/components/dashboard/activity-tab";
 import { BudgetWizardModal } from "@/components/budget/budget-wizard-modal";
-import { TopUpModal } from "@/components/dashboard/top-up-modal";
-import { EmergencyTopUpModal } from "@/components/dashboard/emergency-top-up-modal";
 
 
 // Type Imports
@@ -125,8 +121,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
-  const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
-  const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const router = useRouter();
 
@@ -208,17 +202,7 @@ export default function DashboardPage() {
         </AnimatePresence>
         <div className="grid grid-cols-12 gap-8 items-start">
           <div className="col-span-12 lg:col-span-8 space-y-8">
-            <WalletCard 
-              onBudgetClick={() => setIsBudgetModalOpen(true)}
-              onTopUpClick={() => {
-                 if (!getWallet().budget_set) {
-                   setIsBudgetModalOpen(true);
-                 } else {
-                   setIsTopUpModalOpen(true);
-                 }
-              }}
-              onEmergencyClick={() => setIsEmergencyModalOpen(true)}
-            />
+            <WalletCard onBudgetClick={() => setIsBudgetModalOpen(true)} />
             <MoodCard onFirstCheckin={handleFirstCheckin} />
             <QuickTrends />
           </div>
@@ -229,20 +213,13 @@ export default function DashboardPage() {
         </div>
       </div>
       <BudgetWizardModal isOpen={isBudgetModalOpen} onOpenChange={setIsBudgetModalOpen} />
-      <TopUpModal isOpen={isTopUpModalOpen} onOpenChange={setIsTopUpModalOpen} />
-      <EmergencyTopUpModal isOpen={isEmergencyModalOpen} onOpenChange={setIsEmergencyModalOpen} />
     </div>
   );
 }
 
 // Sub-components for the Dashboard
-function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudgetClick: () => void, onTopUpClick: () => void, onEmergencyClick: () => void }) {
+function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [wallet, setWallet] = useState<WalletType | null>(null);
-  const [isDev, setIsDev] = useState(false);
-
-  useEffect(() => {
-    setIsDev(process.env.NODE_ENV === 'development');
-  }, []);
 
   const fetchWalletData = useCallback(() => {
     setWallet(getWallet());
@@ -254,65 +231,6 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
-  const handleSimulateFirstTime = () => {
-    const defaultWallet = {
-        balance_cents: 0,
-        budget_cents: 0,
-        budget_set: false,
-        spent_this_month_cents: 0,
-        month_key: format(new Date(), 'yyyy-MM'),
-        budget_lock: {
-            enabled: false,
-            until: null,
-            emergency_used: false
-        }
-    };
-    setLocal('ast_wallet', defaultWallet);
-    window.dispatchEvent(new Event('storage'));
-  }
-
-  const handleSeed15_30 = () => {
-    const currentWallet = getWallet();
-    const updatedWallet: WalletType = {
-        ...currentWallet,
-        balance_cents: 1500,
-        budget_cents: 3000,
-        budget_set: true
-    };
-    setLocal('ast_wallet', updatedWallet);
-    window.dispatchEvent(new Event('storage'));
-  }
-  
-  const handleLockWallet = () => {
-    const currentWallet = getWallet();
-    const updatedWallet: WalletType = {
-        ...currentWallet,
-        budget_lock: {
-            enabled: true,
-            until: format(endOfMonth(new Date()), "yyyy-MM-dd'T'HH:mm:ssXXX"),
-            emergency_used: false,
-        }
-    };
-    setLocal('ast_wallet', updatedWallet);
-    window.dispatchEvent(new Event('storage'));
-  }
-
-  const handleResetMonth = () => {
-      const currentWallet = getWallet();
-      const updatedWallet: WalletType = {
-          ...currentWallet,
-          spent_this_month_cents: 0,
-          budget_lock: {
-              enabled: false,
-              until: null,
-              emergency_used: false,
-          },
-          month_key: format(new Date(), "yyyy-MM"),
-      };
-      setLocal('ast_wallet', updatedWallet);
-      window.dispatchEvent(new Event('storage'));
-  }
-
   if (!wallet) {
     return (
       <GlassCard>
@@ -323,24 +241,10 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
     );
   }
 
-  const { balance_cents = 0, budget_lock, spent_this_month_cents, budget_cents, budget_set } = wallet;
+  const { balance_cents = 0, spent_this_month_cents, budget_cents, budget_set } = wallet;
   const spentThisMonth = spent_this_month_cents / 100;
   const budget = budget_cents / 100;
   const progress = budget_set && budget > 0 ? (spentThisMonth / budget) * 100 : 0;
-  const budgetRemaining = budget_set && budget > 0 ? budget - spentThisMonth : null;
-  const daysInMonth = getDaysInMonth(new Date());
-  const dayOfMonth = getDate(new Date());
-  const daysLeft = daysInMonth - dayOfMonth;
-
-
-  let progressBarColor = "bg-success";
-  if (progress > 90) {
-    progressBarColor = "bg-destructive";
-  } else if (progress > 60) {
-    progressBarColor = "bg-yellow-500";
-  }
-  
-  const endOfMonthFormatted = budget_lock?.until ? format(new Date(budget_lock.until), "MMM dd") : format(endOfMonth(new Date()), "MMM dd");
   
   return (
     <GlassCard>
@@ -350,26 +254,9 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
               <Wallet className="h-5 w-5 text-primary" />
               Wallet & Budget
             </CardTitle>
-             <div className="flex items-center gap-2">
-                {isDev && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={handleSimulateFirstTime}>Simulate first-time view</DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleSeed15_30}>Seed €15 & set budget €30</DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleLockWallet}>Lock wallet</DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleResetMonth}>Reset month</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-                <p className="text-xl font-bold">
-                  Balance: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(balance_cents / 100)}
-                </p>
-            </div>
+            <p className="text-xl font-bold">
+              Balance: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(balance_cents / 100)}
+            </p>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -379,113 +266,30 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
                   <span>This month</span>
                   <span>{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(spentThisMonth)} / {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(budget)}</span>
               </div>
-              <Progress value={progress} indicatorClassName={cn(progressBarColor, progress < 20 && progress > 0 && 'animate-pulse')} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
-              <div className="flex gap-2 mt-2">
-                {budgetRemaining !== null && <Badge variant="outline">Remaining: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(budgetRemaining)}</Badge>}
-                <Badge variant="outline">Days left: {daysLeft}</Badge>
-              </div>
+              <Progress value={progress} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
           </div>
         ) : (
           <Card className="bg-primary/10 border-primary/20 text-center p-4">
-            <Sparkles className="h-6 w-6 text-primary mx-auto mb-2" />
-            <CardDescription className="text-foreground/90 font-medium">Set a monthly budget to stay in control.</CardDescription>
-            <div className="mt-4 flex flex-col sm:flex-row justify-center gap-2">
-                <Button onClick={onBudgetClick}>Set up now</Button>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" disabled>Top up €5</Button>
-                    <Button variant="outline" size="sm" disabled>Top up €10</Button>
-                    <Button variant="outline" size="sm" disabled>Top up €25</Button>
-                </div>
-            </div>
+            <CardDescription className="text-foreground/90">Set a monthly budget to stay in control of your spending.</CardDescription>
+            <Button variant="link" onClick={onBudgetClick} className="mt-1">Set up now</Button>
           </Card>
         )}
-         <div className="flex items-center gap-2">
-            {budget_lock?.enabled ? (
-                <Badge variant="secondary">Budget Locked until {endOfMonthFormatted}</Badge>
-            ) : null }
-
-             {budget_lock?.enabled && (
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1" onClick={onEmergencyClick} disabled={budget_lock.emergency_used}>
-                             <Zap className="h-3 w-3"/> Emergency top-up
-                           </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                           <p className="max-w-[200px]">{budget_lock.emergency_used ? "Emergency top-up already used for this month." : "A mindful pause. We’ll protect your wallet until month end. One emergency top-up available."}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            )}
-        </div>
       </CardContent>
-      <CardFooter className="flex flex-col items-start gap-4">
-         <div className="flex items-center gap-2">
-            <Button onClick={onTopUpClick}>Top up</Button>
-            <Button variant="outline" onClick={onBudgetClick}>{budget_set ? 'Change budget' : 'Set budget'}</Button>
-            <HistoryDrawer onTopUpClick={onTopUpClick} />
-        </div>
-        <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 w-full">
-            Spending uses wallet balance only. Locks reset monthly.
+      <CardFooter>
+        <p className="text-xs text-muted-foreground">
+            Spending uses wallet balance only. Budgets reset monthly.
         </p>
       </CardFooter>
     </GlassCard>
   );
 }
 
-function HistoryDrawer({onTopUpClick}: {onTopUpClick: () => void}) {
+function HistoryDrawer() {
   const [log, setLog] = useState<SpendLogEntry[]>([]);
-  const [initialBalance, setInitialBalance] = useState(0);
-
-  const iconMap: { [key in SpendLogEntry['type']]: React.ElementType } = {
-    topup: ArrowDown,
-    emergency: Zap,
-    horoscope: Sparkles,
-    consultation: Receipt,
-    other: Wallet,
-  };
-
-  const colorMap: { [key in SpendLogEntry['type']]: string } = {
-    topup: "text-success",
-    emergency: "text-amber-500",
-    horoscope: "text-primary",
-    consultation: "text-destructive",
-    other: "text-muted-foreground",
-  }
-
-  const calculateRunningBalance = (spendLog: Omit<SpendLogEntry, 'runningBalance'>[]): SpendLogEntry[] => {
-    let runningBalance = initialBalance;
-    const logWithBalance: SpendLogEntry[] = [];
-    
-    // Reverse to calculate from oldest to newest
-    const reversedLog = [...spendLog].reverse();
-    const tempLog: (SpendLogEntry & { startBalance: number })[] = [];
-    
-    for(const entry of reversedLog) {
-      const startBalance = runningBalance;
-      runningBalance += entry.amount_cents;
-      tempLog.push({ ...entry, runningBalance: runningBalance, startBalance: startBalance });
-    }
-
-    // Now reverse back to show newest first
-    return tempLog.reverse();
-  };
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
-      const spendLog = getSpendLog();
-      const currentBalance = getWallet().balance_cents;
-      setInitialBalance(currentBalance);
-      
-      let runningBalance = currentBalance;
-      const logWithBalance = spendLog.map(entry => {
-          const entryWithBalance = { ...entry, runningBalance: runningBalance };
-          runningBalance -= entry.amount_cents; // work backwards
-          return entryWithBalance;
-      }).reverse(); // now they are in chronological order with correct running balance
-      
-      setLog(logWithBalance.reverse()); // reverse back to newest first
+      setLog(getSpendLog() as SpendLogEntry[]);
     }
   };
 
@@ -501,32 +305,12 @@ function HistoryDrawer({onTopUpClick}: {onTopUpClick: () => void}) {
           <SheetTitle>Transaction History</SheetTitle>
         </SheetHeader>
         <div className="py-4 space-y-4">
-          {log.length > 0 ? log.map(entry => {
-            const Icon = iconMap[entry.type];
-            const color = colorMap[entry.type];
-            const amountIsPositive = entry.amount_cents > 0;
-            return (
-              <div key={entry.ts} className="flex items-center gap-4">
-                <div className={cn("p-2 rounded-full bg-muted", color)}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{entry.note}</p>
-                  <p className="text-xs text-muted-foreground">{format(new Date(entry.ts), "MMM dd, yyyy 'at' p")}</p>
-                </div>
-                <div className="text-right">
-                    <p className={cn("font-semibold text-sm", amountIsPositive ? "text-success" : "text-foreground")}>
-                      {amountIsPositive ? '+' : ''}{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(entry.amount_cents / 100)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(entry.runningBalance / 100)}</p>
-                </div>
-              </div>
-            )
-          }) : (
-            <div className="text-center text-muted-foreground py-8">
-              <p>No transactions yet.</p>
-              <Button variant="link" onClick={onTopUpClick}>Make your first top up</Button>
+          {log.length > 0 ? log.map(entry => (
+            <div key={entry.ts}>
+              <p>{entry.note}: {entry.amount_cents / 100}</p>
             </div>
+          )) : (
+            <p>No transactions yet.</p>
           )}
         </div>
       </SheetContent>

@@ -1,4 +1,6 @@
 
+"use client";
+
 import { useMemo } from 'react';
 import { z } from 'zod';
 import { SUGGEST_MIN_EUR, SUGGEST_MAX_EUR } from '@/lib/local';
@@ -35,19 +37,10 @@ export function useBudgetCalculator(data: BudgetWizardFormData) {
     const discretionary = totalIncome - totalExpenses;
     if (discretionary <= 0) return SUGGEST_MIN_EUR;
 
-    // Step 4: Calculate base budget (5% of discretionary)
-    let base = Math.round(0.05 * discretionary);
-
-    // Step 5: Apply adjustments
-    if (data.whereYouLive === 'rent') {
-      base *= 0.9;
-    }
-    const dependents = data.householdSize - 1;
-    if (dependents > 0) {
-      base *= Math.pow(0.95, dependents);
-    }
+    // Step 4: Calculate base budget (35% of discretionary, rounded to nearest 5)
+    let base = Math.round((0.35 * discretionary) / 5) * 5;
     
-    // Step 6: Clamp to min/max and round
+    // Step 5: Clamp to min/max
     const clamped = Math.max(SUGGEST_MIN_EUR, Math.min(base, SUGGEST_MAX_EUR));
 
     return Math.round(clamped);
