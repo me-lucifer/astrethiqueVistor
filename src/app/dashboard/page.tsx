@@ -68,7 +68,8 @@ import {
   addSpendLogEntry,
   spendFromWallet,
   getMoodMeta,
-  EMERGENCY_TOPUP_LIMIT_EUR
+  EMERGENCY_TOPUP_LIMIT_EUR,
+  setWallet,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -229,19 +230,24 @@ export default function DashboardPage() {
 
 // Sub-components for the Dashboard
 function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
-  const [wallet, setWallet] = useState<WalletType | null>(null);
+  const [wallet, _setWallet] = useState<WalletType | null>(null);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
   const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDev, setIsDev] = useState(false);
   const { toast } = useToast();
 
+  const setWallet = (newWallet: WalletType) => {
+    setLocal('ast_wallet', newWallet);
+    _setWallet(newWallet);
+  }
+
   useEffect(() => {
     setIsDev(process.env.NODE_ENV === 'development');
   }, []);
 
   const fetchWalletData = useCallback(() => {
-    setWallet(getWallet());
+    _setWallet(getWallet());
   }, []);
 
   useEffect(() => {
@@ -251,19 +257,20 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   }, [fetchWalletData]);
 
   const handleDemoAction = (action: 'seed' | 'reset_month' | 'lock') => {
-    let wallet = getWallet();
+    let currentWallet = getWallet();
+    let newWalletState: WalletType;
     switch (action) {
         case 'seed':
-            wallet = {...wallet, balance_cents: 1500, budget_cents: 3000, budget_set: true };
+            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, budget_set: true };
             break;
         case 'lock':
-             wallet = {...wallet, budget_lock: { enabled: true, until: endOfMonth(new Date()).toISOString(), emergency_used: false }};
+             newWalletState = {...currentWallet, budget_lock: { enabled: true, until: endOfMonth(new Date()).toISOString(), emergency_used: false }};
             break;
         case 'reset_month':
-             wallet = {...wallet, spent_this_month_cents: 0, month_key: format(new Date(), 'yyyy-MM'), budget_lock: { enabled: false, until: null, emergency_used: false }};
+             newWalletState = {...currentWallet, spent_this_month_cents: 0, month_key: format(new Date(), 'yyyy-MM'), budget_lock: { enabled: false, until: null, emergency_used: false }};
             break;
     }
-    setWallet(wallet); // This updates local storage and triggers re-render via listener
+    setWallet(newWalletState);
   }
   
   const handleToggleLock = (lock: boolean) => {
@@ -998,3 +1005,6 @@ const horoscopeData: { [key: string]: string } = {
 
 
 
+
+
+    
