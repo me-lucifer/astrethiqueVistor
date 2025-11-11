@@ -212,8 +212,6 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
 
-
-    // Load initial state
     useEffect(() => {
         const moodLog = getMoodLog();
         const today = format(new Date(), 'yyyy-MM-dd');
@@ -301,7 +299,6 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
         </GlassCard>
     );
 }
-
 
 function QuickTrends() {
   const [lastCheckIn, setLastCheckIn] = useState<string | null>(null);
@@ -415,7 +412,7 @@ function SidebarTabs() {
 
     return (
         <GlassCard>
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="activity"><Activity className="w-4 h-4 mr-2"/>Activity</TabsTrigger>
                 <TabsTrigger value="recommendations"><StarIcon className="w-4 h-4 mr-2"/>For You</TabsTrigger>

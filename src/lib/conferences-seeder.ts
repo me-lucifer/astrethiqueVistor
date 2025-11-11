@@ -1,7 +1,7 @@
 
 "use client";
 
-import { setLocal } from "@/lib/local";
+import { setLocal, getLocal } from "@/lib/local";
 import { addDays, addMinutes, subMinutes, addHours, subDays } from "date-fns";
 
 export interface Conference {
@@ -144,15 +144,36 @@ export const seedConferences = () => {
   const conferences: Conference[] = Array.from({ length: 12 }, (_, i) => createConference(i + 1));
   setLocal("conferences", conferences);
 
-  // Seed some RSVPs for the demo user
   const existingRsvps = getLocal<any[]>("rsvps") || [];
-  if(existingRsvps.length === 0) {
-      const demoRsvps = [
-          // Upcoming event
-          { eventId: conferences[0].id, title: conferences[0].title, dateISO: conferences[0].dateISO, type: 'conference', remind24h: true, remind1h: true, remind10m: true },
-          // Past event with replay
-          { eventId: conferences[2].id, title: conferences[2].title, dateISO: conferences[2].dateISO, type: 'conference', remind24h: true, remind1h: true, remind10m: true },
-      ];
+  if (existingRsvps.length === 0) {
+      // Find the specific conferences for seeding
+      const upcomingConf = conferences.find(c => c.id === '1');
+      const pastConfWithReplay = conferences.find(c => c.id === '3');
+      
+      const demoRsvps = [];
+      if (upcomingConf) {
+          demoRsvps.push({ 
+              eventId: upcomingConf.id, 
+              title: upcomingConf.title, 
+              dateISO: upcomingConf.dateISO, 
+              type: 'conference', 
+              remind24h: true, 
+              remind1h: true, 
+              remind10m: true 
+          });
+      }
+      if (pastConfWithReplay) {
+          demoRsvps.push({ 
+              eventId: pastConfWithReplay.id, 
+              title: pastConfWithReplay.title, 
+              dateISO: pastConfWithReplay.dateISO, 
+              type: 'conference', 
+              remind24h: true, 
+              remind1h: true, 
+              remind10m: true 
+          });
+      }
+      
       setLocal("rsvps", demoRsvps);
   }
 };
