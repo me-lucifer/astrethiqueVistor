@@ -64,15 +64,31 @@ const verificationSchema = z.object({
   code: z.string().length(6, "Code must be 6 digits"),
 });
 
+const forgotPasswordEmailSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+const forgotPasswordResetSchema = z.object({
+    password: passwordSchema,
+    confirmPassword: passwordSchema,
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+});
+
+
 type CreateAccountFormData = z.infer<typeof createAccountSchema>;
 type SignInFormData = z.infer<typeof signInSchema>;
 type VerificationFormData = z.infer<typeof verificationSchema>;
+type ForgotPasswordEmailFormData = z.infer<typeof forgotPasswordEmailSchema>;
+type ForgotPasswordResetFormData = z.infer<typeof forgotPasswordResetSchema>;
 
+type AuthView = 'tabs' | 'verify' | 'forgot-password-email' | 'forgot-password-otp' | 'forgot-password-reset';
 
 export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalProps) {
   const { toast } = useToast();
   const { language } = useLanguage();
-  const [view, setView] = useState<'tabs' | 'verify'>('tabs');
+  const [view, setView] = useState<AuthView>('tabs');
   const [activeTab, setActiveTab] = useState("create");
   const [tempUserEmail, setTempUserEmail] = useState<string | null>(null);
   const [defaultTimezone, setDefaultTimezone] = useState('');
@@ -86,14 +102,9 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
   const createForm = useForm<CreateAccountFormData>({
     resolver: zodResolver(createAccountSchema),
     defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
+      fullName: "", email: "", password: "",
       language: language.toUpperCase() as "EN" | "FR",
-      timezone: '',
-      agreeToTerms: false,
-      is18OrOlder: false,
-      marketingOptIn: false,
+      timezone: '', agreeToTerms: false, is18OrOlder: false, marketingOptIn: false,
     },
   });
   
@@ -106,6 +117,17 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     resolver: zodResolver(verificationSchema),
     defaultValues: { code: "" },
   });
+  
+  const forgotPasswordEmailForm = useForm<ForgotPasswordEmailFormData>({
+    resolver: zodResolver(forgotPasswordEmailSchema),
+    defaultValues: { email: "" },
+  });
+
+  const forgotPasswordResetForm = useForm<ForgotPasswordResetFormData>({
+    resolver: zodResolver(forgotPasswordResetSchema),
+    defaultValues: { password: "", confirmPassword: "" },
+  });
+
 
   useEffect(() => {
     if (defaultTimezone) {
@@ -114,6 +136,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
   }, [defaultTimezone, createForm]);
 
   const watchedCreatePassword = useWatch({ control: createForm.control, name: "password" });
+  const watchedResetPassword = useWatch({ control: forgotPasswordResetForm.control, name: "password" });
   const watchedAgreeToTerms = useWatch({ control: createForm.control, name: "agreeToTerms" });
   const watchedIs18OrOlder = useWatch({ control: createForm.control, name: "is18OrOlder" });
 
@@ -140,12 +163,17 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     
     const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
     prefs[user.id] = { language: values.language, timezone: values.timezone, marketingOptIn: values.marketingOptIn };
-    storage.setStorageItem('ast_prefs', prefs);
+    storage.setStorageItem(KEYS.PREFERENCES, prefs);
     
-    const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+    const favorites = storage.getStorageItem<Record<string, storage.Favorites>>(KEYS.FAVORITES) || {};
     favorites[user.id] = { consultants: [], content: [], conferences: [] };
-    storage.setStorageItem('ast_favorites', favorites);
-    
+    storage.setStorageItem(KEYS.FAVORITES, favorites);
+
+    const wallets = storage.getStorageItem<Record<string, storage.Wallet>>(KEYS.WALLETS) || {};
+    wallets[user.id] = { balance: 0, currency: '€' };
+    storage.setStorageItem(KEYS.WALLETS, wallets);
+
+    storage.trackMetric('registrations.visitor');
     setTempUserEmail(user.email);
     setView('verify');
   }
@@ -172,6 +200,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     storage.setCurrentUser(user.id);
     const firstName = user.name.split(' ')[0];
     toast({ title: `Welcome back, ${firstName}!` });
+    storage.trackMetric('logins');
     onLoginSuccess();
     onOpenChange(false);
   }
@@ -199,6 +228,41 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     setView('tabs');
   }
 
+  const handleForgotPasswordEmail = (values: ForgotPasswordEmailFormData) => {
+    const user = storage.findUserByEmail(values.email);
+    if (!user) {
+        forgotPasswordEmailForm.setError("email", { message: "No account found with this email." });
+        return;
+    }
+    setTempUserEmail(user.email);
+    setView('forgot-password-otp');
+  };
+
+  const handleForgotPasswordOtp = (values: VerificationFormData) => {
+    if (values.code !== '123456') {
+        verificationForm.setError("code", { message: "Invalid verification code." });
+        return;
+    }
+    setView('forgot-password-reset');
+  };
+  
+  const handleForgotPasswordReset = async (values: ForgotPasswordResetFormData) => {
+    if (!tempUserEmail) return;
+    const user = storage.findUserByEmail(tempUserEmail);
+    if (!user) return;
+    
+    const newPasswordHash = await storage.hashPassword(values.password);
+    const updatedUsers = storage.getUsers().map(u => u.id === user.id ? { ...u, passwordHash: newPasswordHash } : u);
+    storage.saveUsers(updatedUsers);
+
+    toast({ title: "Password successfully reset!", description: "You can now sign in with your new password." });
+    setView('tabs');
+    setActiveTab('signin');
+    signInForm.setValue('email', tempUserEmail);
+    signInForm.setValue('password', '');
+    setTempUserEmail(null);
+  };
+
   const handleClose = (open: boolean) => {
     if(!open) {
       setTimeout(() => {
@@ -206,12 +270,19 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
         createForm.reset();
         signInForm.reset();
         verificationForm.reset();
+        forgotPasswordEmailForm.reset();
+        forgotPasswordResetForm.reset();
       }, 300);
     }
     onOpenChange(open);
   }
+  
+  const goBackToTabs = () => {
+    setView('tabs');
+    setTempUserEmail(null);
+  }
 
-  const VerificationView = () => {
+  const VerificationView = ({ onVerify }: { onVerify: (values: VerificationFormData) => void }) => {
     return (
         <>
             <DialogHeader className="p-6 pb-4">
@@ -224,7 +295,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
                 </DialogDescription>
             </DialogHeader>
             <Form {...verificationForm}>
-                <form onSubmit={verificationForm.handleSubmit(handleVerify)} className="space-y-4 px-6">
+                <form onSubmit={verificationForm.handleSubmit(onVerify)} className="space-y-4 px-6">
                     <FormField control={verificationForm.control} name="code" render={({ field }) => (
                         <FormItem>
                             <FormLabel className="sr-only">Verification Code</FormLabel>
@@ -245,8 +316,8 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
                     </div>
 
                      <DialogFooter className="pt-4 flex-col gap-2">
-                        <Button type="submit" className="w-full" disabled={verificationForm.formState.isSubmitting}>Verify Email</Button>
-                        <Button type="button" variant="ghost" onClick={() => setView('tabs')} className="w-full text-muted-foreground flex items-center gap-2">
+                        <Button type="submit" className="w-full" disabled={verificationForm.formState.isSubmitting}>Verify</Button>
+                        <Button type="button" variant="ghost" onClick={goBackToTabs} className="w-full text-muted-foreground flex items-center gap-2">
                             <ArrowLeft className="h-4 w-4" /> Go back
                         </Button>
                     </DialogFooter>
@@ -255,12 +326,59 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
         </>
     )
   };
+  
+  const ForgotPasswordEmailView = () => (
+    <>
+        <DialogHeader className="p-6 pb-4">
+            <DialogTitle>Forgot Password</DialogTitle>
+            <DialogDescription>Enter your email address and we'll send you a code to reset your password.</DialogDescription>
+        </DialogHeader>
+        <Form {...forgotPasswordEmailForm}>
+            <form onSubmit={forgotPasswordEmailForm.handleSubmit(handleForgotPasswordEmail)} className="space-y-4 px-6">
+                <FormField control={forgotPasswordEmailForm.control} name="email" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl><Input placeholder="you@example.com" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <DialogFooter className="pt-4 flex-col gap-2">
+                    <Button type="submit" className="w-full" disabled={forgotPasswordEmailForm.formState.isSubmitting}>Send Code</Button>
+                    <Button type="button" variant="ghost" onClick={goBackToTabs} className="w-full text-muted-foreground">Cancel</Button>
+                </DialogFooter>
+            </form>
+        </Form>
+    </>
+  );
+
+  const ForgotPasswordResetView = () => (
+    <>
+      <DialogHeader className="p-6 pb-4">
+        <DialogTitle>Reset Your Password</DialogTitle>
+        <DialogDescription>Enter a new password for {tempUserEmail}.</DialogDescription>
+      </DialogHeader>
+      <Form {...forgotPasswordResetForm}>
+        <form onSubmit={forgotPasswordResetForm.handleSubmit(handleForgotPasswordReset)} className="space-y-4 px-6">
+          <FormField control={forgotPasswordResetForm.control} name="password" render={({ field }) => (
+            <FormItem><FormLabel>New Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><PasswordStrength password={watchedResetPassword} /><FormMessage /></FormItem>
+          )} />
+          <FormField control={forgotPasswordResetForm.control} name="confirmPassword" render={({ field }) => (
+            <FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <DialogFooter className="pt-4 flex-col gap-2">
+            <Button type="submit" className="w-full" disabled={forgotPasswordResetForm.formState.isSubmitting}>Set New Password</Button>
+            <Button type="button" variant="ghost" onClick={goBackToTabs} className="w-full text-muted-foreground">Cancel</Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </>
+  );
 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-        {view === 'tabs' ? (
+        {view === 'tabs' && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <DialogHeader>
               <TabsList className="grid w-full grid-cols-2">
@@ -319,6 +437,9 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
                     <FormField control={signInForm.control} name="password" render={({ field }) => (
                     <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
+                  <div className="text-right">
+                    <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setView('forgot-password-email')}>Forgot password?</Button>
+                  </div>
                   <DialogFooter className="pt-4">
                     <Button type="submit" className="w-full" disabled={signInForm.formState.isSubmitting}>Sign In</Button>
                   </DialogFooter>
@@ -326,16 +447,34 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
               </Form>
             </TabsContent>
           </Tabs>
-        ) : (
-          <VerificationView />
         )}
 
-        <div className="p-4 bg-muted text-center">
-            <p className="text-xs text-muted-foreground">
-                Prototype only — accounts are stored locally on your device (no server). Don’t use real passwords.
-            </p>
-        </div>
+        {view === 'verify' && <VerificationView onVerify={handleVerify} />}
+        {view === 'forgot-password-email' && <ForgotPasswordEmailView />}
+        {view === 'forgot-password-otp' && <VerificationView onVerify={handleForgotPasswordOtp} />}
+        {view === 'forgot-password-reset' && <ForgotPasswordResetView />}
+
+
+        {view === 'tabs' && (
+          <div className="p-4 bg-muted text-center">
+              <p className="text-xs text-muted-foreground">
+                  Prototype only — accounts are stored locally on your device (no server). Don’t use real passwords.
+              </p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
+
+const KEYS = {
+    USERS: 'ast_users',
+    CURRENT_USER_ID: 'ast_currentUserId',
+    PREFERENCES: 'ast_prefs',
+    FAVORITES: 'ast_favorites',
+    WALLETS: 'ast_wallets',
+    COMMENTS: 'ast_comments',
+    METRICS: 'ast_metrics',
+};
+
+      
