@@ -32,13 +32,6 @@ export default function DataPage() {
             return;
         }
 
-        const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-        const wallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
-        const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-        const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
-        
-        const userComments = allComments.filter(c => c.userId === user.id);
-
         const dataToExport = {
             profile: {
                 id: user.id,
@@ -46,13 +39,13 @@ export default function DataPage() {
                 lastName: user.lastName,
                 email: user.email,
                 role: user.role,
+                language: user.language,
+                timezone: user.timezone,
+                marketingOptIn: user.marketingOptIn,
                 createdAt: user.createdAt,
-                emailVerified: user.emailVerified,
             },
-            preferences: prefs[user.id] || {},
-            wallet: wallets[user.id] || {},
-            favorites: favorites[user.id] || {},
-            comments: userComments,
+            wallet: user.wallet,
+            favorites: user.favorites,
         };
 
         const jsonString = JSON.stringify(dataToExport, null, 2);
@@ -77,31 +70,9 @@ export default function DataPage() {
         const users = storage.getUsers().filter(u => u.id !== user.id);
         storage.saveUsers(users);
 
-        // 2. Soft-delete comments
-        const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
-        const updatedComments = allComments.map(c => 
-            c.userId === user.id 
-            ? { ...c, body: "[deleted by user]", userId: "deleted" }
-            : c
-        );
-        storage.setStorageItem('ast_comments', updatedComments);
-
-        // 3. Remove user-specific data from maps
-        const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-        delete prefs[user.id];
-        storage.setStorageItem('ast_prefs', prefs);
+        // 2. Clear session
+        storage.clearSession();
         
-        const wallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
-        delete wallets[user.id];
-        storage.setStorageItem('ast_wallets', wallets);
-
-        const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-        delete favorites[user.id];
-        storage.setStorageItem('ast_favorites', favorites);
-
-        // 4. Sign out
-        storage.setCurrentUser(null);
-        window.dispatchEvent(new Event('storage_change'));
         toast({ title: "Account deleted", description: "Your account and associated data have been removed."});
         router.push('/');
     };
@@ -132,7 +103,7 @@ export default function DataPage() {
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This will permanently delete your account and anonymize your comments. To proceed, please type "DELETE" in the box below.
+                                    This will permanently delete your account and all associated data. To proceed, please type "DELETE" in the box below.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <Input 

@@ -1,66 +1,35 @@
 
 "use client";
 
-// --- STORAGE KEYS ---
-const KEYS = {
-    USERS: 'ast_users',
-    CURRENT_USER_ID: 'ast_currentUserId',
-    PREFERENCES: 'ast_prefs',
-    FAVORITES: 'ast_favorites',
-    WALLETS: 'ast_wallets',
-    COMMENTS: 'ast_comments',
-    METRICS: 'ast_metrics',
-};
-
 // --- DATA STRUCTURES ---
 export interface User {
     id: string;
-    email: string;
-    passwordHash: string;
+    role: 'visitor' | 'consultant';
     firstName: string;
     lastName: string;
-    role: 'visitor' | 'consultant';
-    createdAt: string; // ISO Date
-    emailVerified: boolean;
-    kycStatus: "pending" | "verified" | "rejected" | "n/a";
-}
-
-export interface Preferences {
+    email: string;
+    passwordHash: string;
     language: "EN" | "FR";
     timezone: string;
     marketingOptIn: boolean;
+    createdAt: string; // ISO Date
+    updatedAt: string; // ISO Date
+    wallet: { balanceCents: number };
+    favorites: { consultants: string[]; content: [] };
 }
 
-export interface Favorites {
-    consultants: string[];
-    content: string[];
-    conferences: string[];
-}
-
-export interface Wallet {
-    balance: number;
-    currency: '€';
-    budgetLock?: number;
-}
-
-export interface Comment {
-    id: string;
+export interface Session {
     userId: string;
-    contentId: string;
-    type: 'article' | 'podcast';
-    body: string;
-    createdAt: string; // ISO date
+    role: 'visitor' | 'consultant';
+    createdAt: string; // ISO Date
 }
 
-export interface Metrics {
-    registrations: {
-        visitor: number;
-        consultant: number;
-    };
-    logins: number;
-    comments: number;
-    favorites: number;
-}
+
+// --- STORAGE KEYS ---
+const KEYS = {
+    USERS: 'astro.users',
+    SESSION: 'astro.session',
+};
 
 
 // --- CORE STORAGE HELPERS ---
@@ -85,7 +54,7 @@ function createInMemoryStorage(): Storage {
     };
 }
 
-export function getStorageItem<T>(key: string): T | null {
+function getStorageItem<T>(key: string): T | null {
   try {
     const item = storage.getItem(key);
     return item ? JSON.parse(item) : null;
@@ -95,7 +64,7 @@ export function getStorageItem<T>(key: string): T | null {
   }
 }
 
-export function setStorageItem<T>(key: string, value: T): void {
+function setStorageItem<T>(key: string, value: T): void {
   try {
     storage.setItem(key, JSON.stringify(value));
   } catch (error) {
@@ -142,50 +111,36 @@ export function findUserByEmail(email: string): User | undefined {
     return getUsers().find(u => u.email.toLowerCase() === email.toLowerCase());
 }
 
-export function getCurrentUserId(): string | null {
-    return getStorageItem<string>(KEYS.CURRENT_USER_ID);
+
+// --- SESSION MANAGEMENT ---
+
+export function createSession(user: User): void {
+    const session: Session = {
+        userId: user.id,
+        role: user.role,
+        createdAt: new Date().toISOString(),
+    };
+    setStorageItem(KEYS.SESSION, session);
+    window.dispatchEvent(new Event('storage'));
 }
 
-export function setCurrentUser(userId: string | null): void {
-    if (userId === null) {
-        storage.removeItem(KEYS.CURRENT_USER_ID);
-    } else {
-        setStorageItem(KEYS.CURRENT_USER_ID, userId);
-    }
+export function getSession(): Session | null {
+    return getStorageItem<Session>(KEYS.SESSION);
+}
+
+export function clearSession(): void {
+    storage.removeItem(KEYS.SESSION);
+    window.dispatchEvent(new Event('storage'));
 }
 
 export function getCurrentUser(): User | null {
-    const userId = getCurrentUserId();
-    if (!userId) return null;
-    return getUsers().find(u => u.id === userId) || null;
+    const session = getSession();
+    if (!session) return null;
+    return getUsers().find(u => u.id === session.userId) || null;
 }
 
 export function isLoggedIn(): boolean {
-    return !!getCurrentUser();
-}
-
-// --- METRICS ---
-export function getMetrics(): Metrics {
-    const defaultMetrics: Metrics = {
-        registrations: { visitor: 0, consultant: 0 },
-        logins: 0,
-        comments: 0,
-        favorites: 0
-    };
-    return getStorageItem<Metrics>(KEYS.METRICS) || defaultMetrics;
-}
-
-export function trackMetric(
-    key: 'registrations.visitor' | 'registrations.consultant' | 'logins' | 'comments' | 'favorites'
-) {
-    const metrics = getMetrics();
-    const keys = key.split('.');
-    if (keys.length === 2) {
-        (metrics[keys[0] as 'registrations'] as any)[keys[1]]++;
-    } else {
-        (metrics[key as keyof Metrics] as number)++;
-    }
-    setStorageItem(KEYS.METRICS, metrics);
+    return !!getSession();
 }
 
 
@@ -194,21 +149,6 @@ export function trackMetric(
 function seedInitialData() {
     if (getStorageItem(KEYS.USERS) === null) {
         setStorageItem(KEYS.USERS, []);
-    }
-    if (getStorageItem(KEYS.PREFERENCES) === null) {
-        setStorageItem(KEYS.PREFERENCES, {});
-    }
-    if (getStorageItem(KEYS.FAVORITES) === null) {
-        setStorageItem(KEYS.FAVORITES, {});
-    }
-    if (getStorageItem(KEYS.WALLETS) === null) {
-        setStorageItem(KEYS.WALLETS, {});
-    }
-     if (getStorageItem(KEYS.COMMENTS) === null) {
-        setStorageItem(KEYS.COMMENTS, []);
-    }
-     if (getStorageItem(KEYS.METRICS) === null) {
-        setStorageItem(KEYS.METRICS, { registrations: { visitor: 0, consultant: 0 }, logins: 0, comments: 0, favorites: 0 });
     }
 }
 

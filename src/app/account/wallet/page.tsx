@@ -12,33 +12,30 @@ import * as storage from "@/lib/storage";
 export default function WalletPage() {
     const { toast } = useToast();
     const [user, setUser] = useState<storage.User | null>(null);
-    const [wallet, setWallet] = useState<storage.Wallet | null>(null);
     const [budgetLockValue, setBudgetLockValue] = useState([50]);
 
     useEffect(() => {
         const currentUser = storage.getCurrentUser();
         if (currentUser) {
             setUser(currentUser);
-            const allWallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
-            const userWallet = allWallets[currentUser.id] || { balance: 0, currency: '€' };
-            setWallet(userWallet);
-            if (userWallet.budgetLock) {
-                setBudgetLockValue([userWallet.budgetLock]);
+            if (currentUser.wallet.budgetLock) {
+                setBudgetLockValue([currentUser.wallet.budgetLock]);
             }
         }
     }, []);
 
     const handleAddCredit = () => {
-        if (!user || !wallet) return;
+        if (!user) return;
 
-        const newBalance = wallet.balance + 10;
-        const newWallet = { ...wallet, balance: newBalance };
+        const updatedUser = { 
+            ...user,
+            wallet: { ...user.wallet, balanceCents: user.wallet.balanceCents + 1000 }
+        };
         
-        setWallet(newWallet);
+        setUser(updatedUser);
 
-        const allWallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
-        allWallets[user.id] = newWallet;
-        storage.setStorageItem('ast_wallets', allWallets);
+        const allUsers = storage.getUsers();
+        storage.saveUsers(allUsers.map(u => u.id === user.id ? updatedUser : u));
 
         toast({
             title: "Funds Added",
@@ -47,14 +44,17 @@ export default function WalletPage() {
     };
 
     const handleSaveBudgetLock = () => {
-        if (!user || !wallet) return;
+        if (!user) return;
 
-        const newWallet = { ...wallet, budgetLock: budgetLockValue[0] };
-        setWallet(newWallet);
+        const updatedUser = { 
+            ...user,
+            wallet: { ...user.wallet, budgetLock: budgetLockValue[0] }
+        };
         
-        const allWallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
-        allWallets[user.id] = newWallet;
-        storage.setStorageItem('ast_wallets', allWallets);
+        setUser(updatedUser);
+        
+        const allUsers = storage.getUsers();
+        storage.saveUsers(allUsers.map(u => u.id === user.id ? updatedUser : u));
 
         toast({
             title: "Budget Lock Updated",
@@ -62,7 +62,7 @@ export default function WalletPage() {
         });
     }
 
-    if (!user || !wallet) {
+    if (!user) {
         return <div>Loading wallet...</div>
     }
 
@@ -76,7 +76,7 @@ export default function WalletPage() {
                 <CardContent className="space-y-4">
                     <div className="p-6 rounded-lg bg-muted text-center">
                         <p className="text-sm text-muted-foreground">Current Balance</p>
-                        <p className="text-4xl font-bold">€{wallet.balance.toFixed(2)}</p>
+                        <p className="text-4xl font-bold">€{(user.wallet.balanceCents / 100).toFixed(2)}</p>
                     </div>
                     <Button onClick={handleAddCredit} className="w-full">Add €10 Demo Credit</Button>
                 </CardContent>

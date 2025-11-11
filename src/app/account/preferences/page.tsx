@@ -12,29 +12,26 @@ import * as storage from "@/lib/storage";
 export default function PreferencesPage() {
     const { toast } = useToast();
     const [user, setUser] = useState<storage.User | null>(null);
-    const [prefs, setPrefs] = useState<storage.Preferences | null>(null);
 
     useEffect(() => {
         const currentUser = storage.getCurrentUser();
         if (currentUser) {
             setUser(currentUser);
-            const allPrefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-            setPrefs(allPrefs[currentUser.id] || null);
         }
     }, []);
 
     const handleMarketingOptInChange = (checked: boolean) => {
-        if (!user || !prefs) return;
-        const newPrefs = { ...prefs, marketingOptIn: checked };
-        setPrefs(newPrefs);
+        if (!user) return;
+        const updatedUser = { ...user, marketingOptIn: checked, updatedAt: new Date().toISOString() };
+        setUser(updatedUser);
     };
 
     const handleSaveChanges = () => {
-        if (!user || !prefs) return;
+        if (!user) return;
         
-        const allPrefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-        allPrefs[user.id] = prefs;
-        storage.setStorageItem('ast_prefs', allPrefs);
+        const users = storage.getUsers();
+        const updatedUsers = users.map(u => u.id === user.id ? user : u);
+        storage.saveUsers(updatedUsers);
 
         toast({
             title: "Preferences saved",
@@ -42,7 +39,7 @@ export default function PreferencesPage() {
         });
     };
     
-    if (!user || !prefs) {
+    if (!user) {
         return <div>Loading preferences...</div>
     }
 
@@ -60,7 +57,7 @@ export default function PreferencesPage() {
                     </div>
                     <Switch
                         id="marketing-opt-in"
-                        checked={prefs.marketingOptIn}
+                        checked={user.marketingOptIn}
                         onCheckedChange={handleMarketingOptInChange}
                     />
                 </div>

@@ -42,30 +42,25 @@ function HeaderContent() {
   useEffect(() => {
     checkUser();
     const handleStorageChange = () => checkUser();
-    window.addEventListener('storage_change', handleStorageChange);
-    return () => window.removeEventListener('storage_change', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
   
   const handleLoginSuccess = () => {
     checkUser();
-    window.dispatchEvent(new Event('storage_change'));
     router.push('/discover');
   };
   
   const handleLogout = () => {
-      storage.setCurrentUser(null);
+      storage.clearSession();
       checkUser();
-      window.dispatchEvent(new Event('storage_change'));
-      toast({ title: "You've been signed out." });
+      toast({ title: "Signed out." });
   }
 
-  const getInitials = (name: string = "") => {
-    if (!name || name.trim() === '') return "G";
-    const names = name.split(' ');
-    if (names.length > 1) {
-        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
+  const getInitials = (firstName: string = "", lastName: string = "") => {
+    const first = firstName.charAt(0);
+    const last = lastName.charAt(0);
+    return `${first}${last}`.toUpperCase();
   }
 
 
@@ -104,7 +99,7 @@ function HeaderContent() {
             <Button variant="ghost" className="gap-2">
                 <Avatar className="h-6 w-6">
                     <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} alt={name} />
-                    <AvatarFallback>{getInitials(name)}</AvatarFallback>
+                    <AvatarFallback>{getInitials(user.firstName, user.lastName)}</AvatarFallback>
                 </Avatar>
                 Hi, {user.firstName}
                 <ChevronDown className="h-4 w-4" />
@@ -161,9 +156,9 @@ function HeaderContent() {
         
         <div className="hidden lg:flex items-center gap-2">
             {user ? <UserMenu /> : (
-              pathname === '/register' ? 
-              <Button variant="link" onClick={() => setIsAuthModalOpen(true)}>Login</Button>
-              : <AuthButtons />
+                pathname === '/register' ? 
+                <Button variant="link" onClick={() => setIsAuthModalOpen(true)}>Login</Button> :
+                <AuthButtons />
             )}
             <Button variant="ghost" size="icon" onClick={toggleLanguage} aria-label={`Switch to ${language === 'en' ? 'French' : 'English'}`}>
                 <Globe className="h-5 w-5" />

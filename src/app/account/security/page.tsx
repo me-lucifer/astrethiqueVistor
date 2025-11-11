@@ -42,25 +42,12 @@ export default function SecurityPage() {
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                     <div>
-                        {user.emailVerified ? (
-                            <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-                                <CheckCircle className="mr-1 h-3.5 w-3.5" />
-                                Verified
-                            </Badge>
-                        ) : (
-                            <Badge variant="destructive">
-                                <MailWarning className="mr-1 h-3.5 w-3.5" />
-                                Not Verified
-                            </Badge>
-                        )}
+                        <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
+                            <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                            Verified
+                        </Badge>
                     </div>
                 </div>
-                 {!user.emailVerified && (
-                    <div className="mt-4 p-4 rounded-lg border border-dashed flex items-center justify-between">
-                         <p className="text-sm text-muted-foreground">Your email is not verified. Please check your inbox.</p>
-                         <Button variant="outline" onClick={handleResendCode}>Re-send Code</Button>
-                    </div>
-                 )}
             </CardContent>
         </Card>
     );

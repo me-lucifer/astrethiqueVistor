@@ -104,14 +104,13 @@ export default function ContentDetailPage() {
         const storedItems = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
         const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
         const user = storage.getCurrentUser();
-        const allFavorites = user ? (storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {})[user.id] : null;
-
+        
         const updatedItems = storedItems.map(i => {
             const itemComments = allComments.filter(c => c.contentId === i.id);
             return {
                 ...i,
                 liked: false, // Likes are ephemeral for now
-                bookmarked: allFavorites?.content.includes(i.id) || false,
+                bookmarked: user?.favorites.content.includes(i.id) || false,
                 commentCount: itemComments.length,
             };
         });
@@ -133,7 +132,7 @@ export default function ContentDetailPage() {
                     createdAt: c.createdAt,
                     author: {
                         id: author?.id || 'guest',
-                        name: author?.name || 'Guest',
+                        name: author ? `${author.firstName} ${author.lastName}` : "Guest",
                         avatar: `https://i.pravatar.cc/40?u=${author?.id || 'guest'}`,
                     }
                 };
@@ -189,25 +188,30 @@ export default function ContentDetailPage() {
             return;
         }
 
-        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-        const userFavorites = allFavorites[user.id] || { consultants: [], content: [], conferences: [] };
-        
-        const isBookmarked = userFavorites.content.includes(itemIdToBookmark);
-        
-        if (isBookmarked) {
-            userFavorites.content = userFavorites.content.filter(id => id !== itemIdToBookmark);
-        } else {
-            userFavorites.content.push(itemIdToBookmark);
-        }
-        
-        allFavorites[user.id] = userFavorites;
-        storage.setStorageItem('ast_favorites', allFavorites);
+        const allUsers = storage.getUsers();
+        const updatedUsers = allUsers.map(u => {
+            if (u.id === user.id) {
+                const isBookmarked = u.favorites.content.includes(itemIdToBookmark);
+                let newContentFavorites: string[];
+
+                if (isBookmarked) {
+                    newContentFavorites = u.favorites.content.filter(id => id !== itemIdToBookmark);
+                } else {
+                    newContentFavorites = [...u.favorites.content, itemIdToBookmark];
+                }
+                
+                return { ...u, favorites: { ...u.favorites, content: newContentFavorites } };
+            }
+            return u;
+        });
+
+        storage.saveUsers(updatedUsers);
         window.dispatchEvent(new Event('storage_change'));
 
         toast({
-            title: !isBookmarked ? 'Bookmarked!' : 'Bookmark removed',
+            title: !item?.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
         });
-    }, [toast]);
+    }, [toast, item]);
 
     const handleAddComment = useCallback((text: string) => {
         const user = storage.getCurrentUser();

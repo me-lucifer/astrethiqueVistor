@@ -201,8 +201,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
 
     const filteredAndSortedConsultants = useMemo(() => {
         const user = storage.getCurrentUser();
-        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-        const favorites = user ? (allFavorites[user.id]?.consultants || []) : [];
+        const favorites = user?.favorites.consultants || [];
         
         let result = allConsultants;
 
@@ -348,20 +347,22 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             return;
         }
 
-        const allPrefs = storage.getStorageItem<Record<string, any>>('ast_prefs') || {};
-        const userPrefs = allPrefs[user.id] || {};
-        
-        const savedSearches = userPrefs.savedSearches || [];
-        savedSearches.push({
-            type: 'consultant',
-            query: query,
-            filters: filters,
-            createdAt: new Date().toISOString()
+        const allUsers = storage.getUsers();
+        const updatedUsers = allUsers.map(u => {
+            if (u.id === user.id) {
+                const savedSearches = (u as any).savedSearches || [];
+                 savedSearches.push({
+                    type: 'consultant',
+                    query: query,
+                    filters: filters,
+                    createdAt: new Date().toISOString()
+                });
+                return { ...u, savedSearches };
+            }
+            return u;
         });
 
-        userPrefs.savedSearches = savedSearches;
-        allPrefs[user.id] = userPrefs;
-        storage.setStorageItem('ast_prefs', allPrefs);
+        storage.saveUsers(updatedUsers);
         
         toast({
             title: "Search saved!",

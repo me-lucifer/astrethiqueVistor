@@ -43,11 +43,10 @@ function ContentHubContent() {
         seedContentHub();
         const items = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
         const user = storage.getCurrentUser();
-        const allFavorites = user ? (storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {})[user.id] : null;
-
+        
         const updatedItems = items.map(item => ({
             ...item,
-            bookmarked: allFavorites?.content.includes(item.id) || false
+            bookmarked: user?.favorites.content.includes(item.id) || false
         }));
 
         setAllItems(updatedItems);
@@ -179,17 +178,24 @@ function ContentHubContent() {
         const user = storage.getCurrentUser();
         if (!user) return; // Should be handled by card, but as a safeguard.
 
-        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-        const userFavorites = allFavorites[user.id] || { consultants: [], content: [], conferences: [] };
+        const allUsers = storage.getUsers();
+        const updatedUsers = allUsers.map(u => {
+            if (u.id === user.id) {
+                const isBookmarked = u.favorites.content.includes(itemId);
+                let newContentFavorites: string[];
 
-        const isBookmarked = userFavorites.content.includes(itemId);
-        if (isBookmarked) {
-            userFavorites.content = userFavorites.content.filter(id => id !== itemId);
-        } else {
-            userFavorites.content.push(itemId);
-        }
-        allFavorites[user.id] = userFavorites;
-        storage.setStorageItem('ast_favorites', allFavorites);
+                if (isBookmarked) {
+                    newContentFavorites = u.favorites.content.filter(id => id !== itemId);
+                } else {
+                    newContentFavorites = [...u.favorites.content, itemId];
+                }
+                
+                return { ...u, favorites: { ...u.favorites, content: newContentFavorites } };
+            }
+            return u;
+        });
+
+        storage.saveUsers(updatedUsers);
         window.dispatchEvent(new Event('storage_change'));
     }
     

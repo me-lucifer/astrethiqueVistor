@@ -59,9 +59,7 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
         const currentUser = storage.getCurrentUser();
         setUser(currentUser);
         if (currentUser) {
-            const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-            const userFavorites = allFavorites[currentUser.id];
-            setIsFavorite(userFavorites?.consultants.includes(consultant.id) || false);
+            setIsFavorite(currentUser.favorites?.consultants.includes(consultant.id) || false);
         } else {
             setIsFavorite(false);
         }
@@ -93,20 +91,25 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
             return;
         }
         
-        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-        const userFavorites = allFavorites[user.id] || { consultants: [], content: [], conferences: [] };
-        
         const newIsFavorite = !isFavorite;
-        if (newIsFavorite) {
-            userFavorites.consultants.push(consultant.id);
-        } else {
-            userFavorites.consultants = userFavorites.consultants.filter(id => id !== consultant.id);
-        }
-
-        allFavorites[user.id] = userFavorites;
-        storage.setStorageItem('ast_favorites', allFavorites);
+        
+        const allUsers = storage.getUsers();
+        const updatedUsers = allUsers.map(u => {
+            if (u.id === user.id) {
+                const updatedFavorites = { ...u.favorites };
+                if (newIsFavorite) {
+                    updatedFavorites.consultants = [...new Set([...updatedFavorites.consultants, consultant.id])];
+                } else {
+                    updatedFavorites.consultants = updatedFavorites.consultants.filter(id => id !== consultant.id);
+                }
+                return { ...u, favorites: updatedFavorites };
+            }
+            return u;
+        });
+        
+        storage.saveUsers(updatedUsers);
         setIsFavorite(newIsFavorite);
-        storage.trackMetric('favorites');
+        window.dispatchEvent(new Event('storage'));
 
         toast({
             title: newIsFavorite ? "Added to your favorites" : "Removed from your favorites",

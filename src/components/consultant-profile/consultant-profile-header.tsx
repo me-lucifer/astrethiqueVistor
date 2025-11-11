@@ -25,9 +25,7 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
         const currentUser = storage.getCurrentUser();
         setUser(currentUser);
         if (currentUser) {
-            const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-            const userFavorites = allFavorites[currentUser.id];
-            setIsFavorite(userFavorites?.consultants.includes(consultant.id) || false);
+            setIsFavorite(currentUser.favorites.consultants.includes(consultant.id) || false);
         } else {
             setIsFavorite(false);
         }
@@ -39,7 +37,7 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
         
         window.addEventListener('storage_change', checkUserAndFavorite);
         return () => window.removeEventListener('storage_change', checkUserAndFavorite);
-    }, [initialConsultant]);
+    }, [initialConsultant, consultant.id]);
 
     const onLoginSuccess = () => {
         checkUserAndFavorite();
@@ -52,27 +50,30 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
             return;
         }
 
-        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-        const userFavorites = allFavorites[user.id] || { consultants: [], content: [], conferences: [] };
-        
         const newIsFavorite = !isFavorite;
-        if (newIsFavorite) {
-            if (!userFavorites.consultants.includes(consultant.id)) {
-                userFavorites.consultants.push(consultant.id);
-            }
-            toast({
-                title: "Added to your favorites",
-            });
-        } else {
-            userFavorites.consultants = userFavorites.consultants.filter(id => id !== consultant.id);
-            toast({
-                title: "Removed from your favorites",
-            });
-        }
         
-        allFavorites[user.id] = userFavorites;
-        storage.setStorageItem('ast_favorites', allFavorites);
+        const allUsers = storage.getUsers();
+        const updatedUsers = allUsers.map(u => {
+            if (u.id === user.id) {
+                const updatedFavorites = { ...u.favorites };
+                if (newIsFavorite) {
+                    updatedFavorites.consultants = [...new Set([...updatedFavorites.consultants, consultant.id])];
+                } else {
+                    updatedFavorites.consultants = updatedFavorites.consultants.filter(id => id !== consultant.id);
+                }
+                return { ...u, favorites: updatedFavorites };
+            }
+            return u;
+        });
+
+        storage.saveUsers(updatedUsers);
+        
         setIsFavorite(newIsFavorite);
+        window.dispatchEvent(new Event('storage'));
+
+        toast({
+            title: newIsFavorite ? "Added to your favorites" : "Removed from your favorites",
+        });
     }
     
     return (

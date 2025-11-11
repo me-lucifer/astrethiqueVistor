@@ -34,21 +34,17 @@ export default function ProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
     const [user, setUser] = useState<storage.User | null>(null);
-    const [prefs, setPrefs] = useState<storage.Preferences | null>(null);
     const [defaultTimezone, setDefaultTimezone] = useState('');
 
     useEffect(() => {
         const currentUser = storage.getCurrentUser();
         if (currentUser) {
             setUser(currentUser);
-            const allPrefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-            const userPrefs = allPrefs[currentUser.id];
-            setPrefs(userPrefs || null);
             profileForm.reset({
                 firstName: currentUser.firstName,
                 lastName: currentUser.lastName,
-                language: userPrefs?.language || 'EN',
-                timezone: userPrefs?.timezone || '',
+                language: currentUser?.language || 'EN',
+                timezone: currentUser?.timezone || '',
             });
         } else {
             router.push('/');
@@ -68,22 +64,27 @@ export default function ProfilePage() {
     });
 
     const onProfileSubmit = (data: ProfileFormData) => {
-        if (!user || !prefs) return;
+        if (!user) return;
         
-        // Update user name
         const users = storage.getUsers();
-        const updatedUsers = users.map(u => u.id === user.id ? { ...u, firstName: data.firstName, lastName: data.lastName } : u);
+        const updatedUsers = users.map(u => 
+            u.id === user.id ? { 
+                ...u, 
+                firstName: data.firstName, 
+                lastName: data.lastName,
+                language: data.language,
+                timezone: data.timezone,
+                updatedAt: new Date().toISOString()
+            } : u
+        );
         storage.saveUsers(updatedUsers);
         
-        // Update preferences
-        const allPrefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-        allPrefs[user.id] = { ...prefs, language: data.language, timezone: data.timezone };
-        storage.setStorageItem('ast_prefs', allPrefs);
-        
         // Update user state locally
-        setUser({ ...user, firstName: data.firstName, lastName: data.lastName });
-        setPrefs(allPrefs[user.id]);
-        window.dispatchEvent(new Event('storage_change')); // To update header
+        const updatedUser = updatedUsers.find(u => u.id === user.id);
+        if (updatedUser) {
+            setUser(updatedUser);
+        }
+        window.dispatchEvent(new Event('storage')); // To update header
 
         toast({ title: "Profile updated successfully." });
     };
@@ -99,7 +100,7 @@ export default function ProfilePage() {
 
         const newPasswordHash = await storage.hashPassword(data.newPassword);
         const users = storage.getUsers();
-        const updatedUsers = users.map(u => u.id === user.id ? { ...u, passwordHash: newPasswordHash } : u);
+        const updatedUsers = users.map(u => u.id === user.id ? { ...u, passwordHash: newPasswordHash, updatedAt: new Date().toISOString() } : u);
         storage.saveUsers(updatedUsers);
 
         toast({ title: "Password changed successfully." });
