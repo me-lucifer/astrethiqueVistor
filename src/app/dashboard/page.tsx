@@ -210,6 +210,8 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
     type Ratings = { money: number; health: number; work: number; love: number };
     const [ratings, setRatings] = useState<Ratings>({ money: 0, health: 0, work: 0, love: 0 });
     const { toast } = useToast();
+    const [isPending, startTransition] = useTransition();
+
 
     // Load initial state
     useEffect(() => {
@@ -226,52 +228,52 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
         }
     }, []);
 
-    const debouncedSave = useCallback(() => {
-        const handler = setTimeout(() => {
-            const today = format(new Date(), 'yyyy-MM-dd');
-            const moodLog = getMoodLog();
-            const moodMeta = getMoodMeta() || { streak: 0, lastCheckIn: '' };
-            
-            let newStreak = moodMeta.streak;
-            const lastDate = moodMeta.lastCheckIn ? new Date(moodMeta.lastCheckIn) : null;
-            const todayDate = new Date();
-            const isFirstCheckinToday = !lastDate || !isToday(lastDate);
+    const handleRating = (dimension: keyof Ratings, value: number) => {
+        setRatings(prevRatings => ({ ...prevRatings, [dimension]: value }));
+    };
 
-            if (isFirstCheckinToday) {
-                if (lastDate && isYesterday(lastDate)) {
-                    newStreak = (newStreak || 0) + 1;
-                } else if (lastDate && !isToday(lastDate)) {
-                    newStreak = 1;
-                } else if (!lastDate) {
-                    newStreak = 1;
-                }
-                onFirstCheckin();
-                toast({
-                    title: "Mood saved ✓",
-                    duration: 2500,
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            if (Object.values(ratings).some(r => r > 0)) {
+                startTransition(() => {
+                    const today = format(new Date(), 'yyyy-MM-dd');
+                    const moodLog = getMoodLog();
+                    const moodMeta = getMoodMeta() || { streak: 0, lastCheckIn: '' };
+                    
+                    let newStreak = moodMeta.streak;
+                    const lastDate = moodMeta.lastCheckIn ? new Date(moodMeta.lastCheckIn) : null;
+                    const todayDate = new Date();
+                    const isFirstCheckinToday = !lastDate || !isToday(lastDate);
+
+                    if (isFirstCheckinToday) {
+                        if (lastDate && isYesterday(lastDate)) {
+                            newStreak = (newStreak || 0) + 1;
+                        } else if (lastDate && !isToday(lastDate)) {
+                            newStreak = 1;
+                        } else if (!lastDate) {
+                            newStreak = 1;
+                        }
+                        onFirstCheckin();
+                        toast({
+                            title: "Mood saved ✓",
+                            duration: 2500,
+                        });
+                    }
+
+                    const todayIndex = moodLog.findIndex(entry => entry.dateISO === today);
+                    if (todayIndex > -1) {
+                        moodLog[todayIndex] = { ...moodLog[todayIndex], ...ratings, dateISO: today };
+                    } else {
+                        moodLog.push({ dateISO: today, ...ratings });
+                    }
+                    
+                    setMoodLog(moodLog, { streak: newStreak, lastCheckIn: todayDate.toISOString() });
                 });
             }
-
-            const todayIndex = moodLog.findIndex(entry => entry.dateISO === today);
-            if (todayIndex > -1) {
-                moodLog[todayIndex] = { ...moodLog[todayIndex], ...ratings, dateISO: today };
-            } else {
-                moodLog.push({ dateISO: today, ...ratings });
-            }
-            
-            setMoodLog(moodLog, { streak: newStreak, lastCheckIn: todayDate.toISOString() });
         }, 200);
 
         return () => clearTimeout(handler);
     }, [ratings, onFirstCheckin, toast]);
-
-    useEffect(() => {
-        debouncedSave();
-    }, [ratings, debouncedSave]);
-
-    const handleRating = (dimension: keyof Ratings, value: number) => {
-        setRatings(prevRatings => ({ ...prevRatings, [dimension]: value }));
-    };
 
     return (
         <GlassCard>
@@ -435,7 +437,7 @@ function SidebarTabs() {
 
 interface ActivityItem {
     id: string;
-    type: 'upcoming_conference' | 'replay_available' | 'appointment';
+    type: 'upcoming_conference' | 'replay_available';
     title: string;
     description: string;
     date: Date;
@@ -486,30 +488,28 @@ function ActivityTab() {
     }, []);
 
     return (
-        <Card>
-            <CardContent className="pt-6">
-                {activities.length > 0 ? (
-                    <div className="space-y-4">
-                        {activities.map(activity => (
-                            <div key={activity.id} className="flex items-center justify-between gap-4">
-                                <div className="flex items-start gap-3">
-                                    <activity.icon className="h-4 w-4 text-muted-foreground mt-1" />
-                                    <div className="text-sm">
-                                        <p className="font-medium">{activity.title}</p>
-                                        <p className="text-xs text-muted-foreground">{activity.description}</p>
-                                    </div>
+        <CardContent className="pt-6">
+            {activities.length > 0 ? (
+                <div className="space-y-4">
+                    {activities.map(activity => (
+                        <div key={activity.id} className="flex items-center justify-between gap-4">
+                            <div className="flex items-start gap-3">
+                                <activity.icon className="h-4 w-4 text-muted-foreground mt-1" />
+                                <div className="text-sm">
+                                    <p className="font-medium">{activity.title}</p>
+                                    <p className="text-xs text-muted-foreground">{activity.description}</p>
                                 </div>
-                                <Button asChild variant="outline" size="sm">
-                                    <Link href={activity.cta.href}>{activity.cta.label}</Link>
-                                </Button>
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center">No recent activity yet.</p>
-                )}
-            </CardContent>
-        </Card>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={activity.cta.href}>{activity.cta.label}</Link>
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p className="text-sm text-muted-foreground text-center p-4">No recent activity yet.</p>
+            )}
+        </CardContent>
     );
 }
 
@@ -557,17 +557,15 @@ function RecommendationsTab() {
     };
 
     return (
-        <Card>
-            <CardContent className="pt-6 space-y-4">
-                {recommendations.length > 0 ? (
-                    recommendations.map(item => <ContentHubCard key={item.id} item={item} onTopicClick={handleTopicClick} />)
-                ) : (
-                    <div className="text-center text-muted-foreground p-4">
-                        <p>You’re doing great! New content will appear when your check-ins suggest it.</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+        <CardContent className="pt-6 space-y-4">
+            {recommendations.length > 0 ? (
+                recommendations.map(item => <ContentHubCard key={item.id} item={item} onTopicClick={handleTopicClick} />)
+            ) : (
+                <div className="text-center text-muted-foreground p-4">
+                    <p>You’re doing great! New content will appear when your check-ins suggest it.</p>
+                </div>
+            )}
+        </CardContent>
     )
 }
 
@@ -610,41 +608,39 @@ function FavoritesTab() {
     const onlineFavorites = favorites.filter(fav => fav.availability.online);
 
     return (
-        <Card>
-            <CardContent className="pt-6 space-y-4">
-                {onlineFavorites.length > 0 ? (
-                    onlineFavorites.map((fav, index) => (
-                        <div key={fav.id} className="flex items-center justify-between">
-                            <Link href={`/discover/consultant/${fav.slug}`} className="flex items-center gap-3 group">
-                                <Avatar>
-                                    <AvatarImage src={fav.cover} />
-                                    <AvatarFallback>{fav.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold group-hover:underline">{fav.name}</p>
-                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                        <div className={cn("w-2 h-2 rounded-full", isOnline ? 'bg-green-500' : 'bg-gray-400')}></div>
-                                        {isOnline ? "Online" : "Offline"}
-                                    </div>
+        <CardContent className="pt-6 space-y-4">
+            {onlineFavorites.length > 0 ? (
+                onlineFavorites.map((fav, index) => (
+                    <div key={fav.id} className="flex items-center justify-between">
+                        <Link href={`/discover/consultant/${fav.slug}`} className="flex items-center gap-3 group">
+                            <Avatar>
+                                <AvatarImage src={fav.cover} />
+                                <AvatarFallback>{fav.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-semibold group-hover:underline">{fav.name}</p>
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                    <div className={cn("w-2 h-2 rounded-full", isOnline ? 'bg-green-500' : 'bg-gray-400')}></div>
+                                    {isOnline ? "Online" : "Offline"}
                                 </div>
-                            </Link>
-                             <div className="flex gap-2">
-                                <Button size="sm" variant="default" asChild>
-                                    <Link href={`/discover/consultant/${fav.slug}#availability-section`}>Start</Link>
-                                </Button>
-                                <Button size="sm" asChild variant="outline">
-                                    <Link href={`/discover/consultant/${fav.slug}/schedule`}>Schedule</Link>
-                                </Button>
                             </div>
+                        </Link>
+                         <div className="flex gap-2">
+                            <Button size="sm" variant="default" asChild>
+                                <Link href={`/discover/consultant/${fav.slug}#availability-section`}>Start</Link>
+                            </Button>
+                            <Button size="sm" asChild variant="outline">
+                                <Link href={`/discover/consultant/${fav.slug}/schedule`}>Schedule</Link>
+                            </Button>
                         </div>
-                    ))
-                ) : (
-                     <div className="text-center text-muted-foreground p-4">
-                        <p>Your favorites aren’t online yet.</p>
                     </div>
-                )}
-            </CardContent>
-        </Card>
+                ))
+            ) : (
+                 <div className="text-center text-muted-foreground p-4">
+                    <p>Your favorites aren’t online yet.</p>
+                </div>
+            )}
+        </CardContent>
     )
 }
 

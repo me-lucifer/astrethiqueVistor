@@ -81,8 +81,8 @@ const createConference = (id: number): Conference => {
     let recordingAvailable = false;
 
     switch(id) {
-        case 1: // Starting in 5 minutes
-            date = addMinutes(now, 5);
+        case 1: // Upcoming event for demo RSVP
+            date = addDays(now, 2);
             break;
         case 2: // Today
             date = addHours(now, 3);
@@ -145,9 +145,14 @@ export const seedConferences = () => {
   setLocal("conferences", conferences);
 
   // Seed some RSVPs for the demo user
-  const demoRsvps = [
-      { eventId: "1", title: conferences[0].title, dateISO: conferences[0].dateISO, type: 'conference', remind24h: true, remind1h: true, remind10m: true }, // Upcoming
-      { eventId: "3", title: conferences[2].title, dateISO: conferences[2].dateISO, type: 'conference', remind24h: true, remind1h: true, remind10m: true }, // Past with replay
-  ];
-  setLocal("rsvps", demoRsvps);
+  const existingRsvps = getLocal<any[]>("rsvps") || [];
+  if(existingRsvps.length === 0) {
+      const demoRsvps = [
+          // Upcoming event
+          { eventId: conferences[0].id, title: conferences[0].title, dateISO: conferences[0].dateISO, type: 'conference', remind24h: true, remind1h: true, remind10m: true },
+          // Past event with replay
+          { eventId: conferences[2].id, title: conferences[2].title, dateISO: conferences[2].dateISO, type: 'conference', remind24h: true, remind1h: true, remind10m: true },
+      ];
+      setLocal("rsvps", demoRsvps);
+  }
 };
