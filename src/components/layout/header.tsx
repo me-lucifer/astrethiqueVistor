@@ -59,10 +59,12 @@ function HeaderContent() {
       router.push('/');
   }
 
-  const getInitials = (firstName: string = "", lastName: string = "") => {
-    const first = firstName.charAt(0);
-    const last = lastName.charAt(0);
-    return `${first}${last}`.toUpperCase();
+  const getInitials = (name: string = "") => {
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   }
 
 
@@ -94,16 +96,17 @@ function HeaderContent() {
 
   const UserMenu = () => {
     if (!user) return null;
-    const name = `${user.firstName} ${user.lastName}`;
+    const displayName = user.publicName || user.firstName;
+
     return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2">
                 <Avatar className="h-6 w-6">
-                    <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} alt={name} />
-                    <AvatarFallback>{getInitials(user.firstName, user.lastName)}</AvatarFallback>
+                    <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} alt={displayName} />
+                    <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
                 </Avatar>
-                Hi, {user.firstName}
+                Hi, {displayName}
                 <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

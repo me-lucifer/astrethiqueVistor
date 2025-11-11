@@ -104,7 +104,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <div className='text-sm text-muted-foreground flex justify-between items-center'>
-                    <span>Commenting as <span className="font-semibold text-foreground">{user.firstName} {user.lastName}</span></span>
+                    <span>Commenting as <span className="font-semibold text-foreground">{user.publicName}</span></span>
                     <button type="button" onClick={handleLogout} className="text-xs hover:underline">Sign out</button>
                 </div>
                 <FormField

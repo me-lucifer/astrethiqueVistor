@@ -14,12 +14,37 @@ import { useToast } from "@/hooks/use-toast";
 import * as authLocal from "@/lib/authLocal";
 import PasswordStrength from "@/components/auth/password-strength";
 import { useRouter } from "next/navigation";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { Shield, User as UserIcon } from "lucide-react";
+
+const pseudonymSchema = z.string()
+    .min(3, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
+    .max(24, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
+    .regex(/^[a-zA-Z0-9._-]+$/, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
+    .refine(val => !authLocal.reservedPseudonyms.includes(val.toLowerCase()), "This word isn’t allowed as a pseudonym.");
+
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().min(1, "Last name is required."),
+  pseudonym: z.string().optional(),
+  displayNamePreference: z.enum(['pseudonym', 'realName']).default('realName'),
   language: z.enum(["EN", "FR"]),
   timezone: z.string().min(1, "Timezone is required."),
+}).superRefine((data, ctx) => {
+    if (data.displayNamePreference === 'pseudonym') {
+        const result = pseudonymSchema.safeParse(data.pseudonym);
+        if (!result.success) {
+            result.error.issues.forEach(issue => {
+                ctx.addIssue({
+                    ...issue,
+                    path: ['pseudonym'],
+                });
+            });
+        }
+    }
 });
 
 const passwordSchema = z.object({
@@ -33,7 +58,7 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 export default function ProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
-    const [user, setUser] = useState<any | null>(null);
+    const [user, setUser] = useState<authLocal.User | null>(null);
     const [defaultTimezone, setDefaultTimezone] = useState('');
 
     useEffect(() => {
@@ -43,6 +68,8 @@ export default function ProfilePage() {
             profileForm.reset({
                 firstName: currentUser.firstName,
                 lastName: currentUser.lastName,
+                pseudonym: currentUser.pseudonym || '',
+                displayNamePreference: currentUser.displayNamePreference || 'realName',
                 language: currentUser?.language || 'EN',
                 timezone: currentUser?.timezone || '',
             });
@@ -66,12 +93,9 @@ export default function ProfilePage() {
     const onProfileSubmit = (data: ProfileFormData) => {
         if (!user) return;
         
-        const updatedUser = { 
+        const updatedUser: authLocal.User = { 
             ...user, 
-            firstName: data.firstName, 
-            lastName: data.lastName,
-            language: data.language,
-            timezone: data.timezone,
+            ...data,
             updatedAt: new Date().toISOString()
         };
         
@@ -92,6 +116,11 @@ export default function ProfilePage() {
             toast({ variant: "destructive", title: "Error", description: error.message });
         }
     };
+    
+    const {formState: {errors}} = profileForm;
+    const watchedPseudonym = profileForm.watch("pseudonym");
+    const isPseudonymValid = !!watchedPseudonym && watchedPseudonym.length >= 3 && !errors.pseudonym;
+
 
     if (!user) {
         return <div>Loading...</div>;
@@ -106,7 +135,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <Form {...profileForm}>
                     <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                <FormField control={profileForm.control} name="firstName" render={({ field }) => (
                                     <FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -115,6 +144,56 @@ export default function ProfilePage() {
                                     <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                             </div>
+
+                             <FormField control={profileForm.control} name="pseudonym" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Pseudonym (public name)</FormLabel>
+                                    <FormControl><Input placeholder="e.g., StarSeeker" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+
+                            <FormField
+                                control={profileForm.control}
+                                name="displayNamePreference"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-3">
+                                    <FormLabel>Public Identity</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup
+                                        onValueChange={field.onChange}
+                                        value={field.value}
+                                        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                                        >
+                                        <FormItem>
+                                            <FormControl>
+                                                <RadioGroupItem value="pseudonym" id="pseudonym" className="sr-only" disabled={!isPseudonymValid} />
+                                            </FormControl>
+                                            <Label htmlFor="pseudonym" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'pseudonym' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50', !isPseudonymValid && 'opacity-50 cursor-not-allowed')}>
+                                                <div className="flex items-center gap-2 font-semibold">
+                                                    <Shield className="w-4 h-4" />
+                                                    Pseudonym
+                                                </div>
+                                            </Label>
+                                        </FormItem>
+                                        <FormItem>
+                                            <FormControl>
+                                                <RadioGroupItem value="realName" id="realName" className="sr-only" />
+                                            </FormControl>
+                                            <Label htmlFor="realName" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'realName' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
+                                                    <div className="flex items-center gap-2 font-semibold">
+                                                    <UserIcon className="w-4 h-4" />
+                                                    Real name
+                                                </div>
+                                            </Label>
+                                        </FormItem>
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField control={profileForm.control} name="language" render={({ field }) => (
                                     <FormItem><FormLabel>Language</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="EN">English</SelectItem><SelectItem value="FR">Français</SelectItem></SelectContent></Select><FormMessage /></FormItem>

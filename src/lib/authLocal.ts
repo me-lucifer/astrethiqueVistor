@@ -19,6 +19,8 @@ export interface User {
     emailVerified: boolean;
     wallet: { balanceCents: number, budgetLock?: number };
     favorites: { consultants: string[]; content: string[] };
+    publicName: string;
+    nameHistory: string[];
 }
 
 export interface Comment {
@@ -72,6 +74,7 @@ function saveStore(store: AstroStore): void {
 
 
 // --- CORE AUTH FUNCTIONS ---
+export const reservedPseudonyms = ["admin", "moderator", "support", "astrethique", "owner", "null", "undefined"];
 
 export function emailExists(email: string): boolean {
     const store = getStore();
@@ -126,13 +129,20 @@ export async function registerVisitor(payload: {
     const usePseudonym = payload.displayNamePreference === 'pseudonym';
     const pseudonym = (payload.pseudonym || '').trim() || undefined;
 
-    if (usePseudonym && pseudonym && pseudonymExists(pseudonym)) {
-        throw new Error("That pseudonym is taken. Try another.");
+    if (usePseudonym && pseudonym) {
+        if (pseudonymExists(pseudonym)) {
+             throw new Error("That pseudonym is taken. Try another.");
+        }
+        if (reservedPseudonyms.includes(pseudonym.toLowerCase())) {
+            throw new Error("This word isn’t allowed as a pseudonym.");
+        }
     }
     
     const store = getStore();
     const passwordHash = await hashPassword(payload.password);
     const now = new Date().toISOString();
+
+    const publicName = usePseudonym && pseudonym ? pseudonym : `${payload.firstName} ${payload.lastName}`.trim();
 
     const newUser: User = {
         id: createId("usr"),
@@ -151,6 +161,8 @@ export async function registerVisitor(payload: {
         emailVerified: false,
         wallet: { balanceCents: 0 },
         favorites: { consultants: [], content: [] },
+        publicName: publicName,
+        nameHistory: [publicName],
     };
 
     store.users.push(newUser);
@@ -207,7 +219,23 @@ export function updateUser(updatedUser: User): void {
     const store = getStore();
     const userIndex = store.users.findIndex(u => u.id === updatedUser.id);
     if (userIndex !== -1) {
-        store.users[userIndex] = updatedUser;
+        
+        // Recompute publicName
+        const usePseudonym = updatedUser.displayNamePreference === 'pseudonym';
+        const pseudonym = (updatedUser.pseudonym || '').trim() || undefined;
+        const publicName = usePseudonym && pseudonym ? pseudonym : `${updatedUser.firstName} ${updatedUser.lastName}`.trim();
+        
+        let nameHistory = updatedUser.nameHistory || [store.users[userIndex].publicName];
+        if (nameHistory[nameHistory.length - 1] !== publicName) {
+            nameHistory.push(publicName);
+        }
+
+        store.users[userIndex] = {
+            ...updatedUser,
+            publicName,
+            nameHistory
+        };
+        
         saveStore(store);
     }
 }

@@ -23,7 +23,7 @@ export function getComments(contentId: string): Comment[] {
   
   const enrichedComments: Comment[] = itemComments.map(c => {
     const author = users.find(u => u.id === c.userId);
-    const authorName = author ? `${author.firstName} ${author.lastName}` : "Guest";
+    const authorName = author ? author.publicName : "Guest";
 
     return {
       id: c.id,
@@ -66,7 +66,7 @@ export function addComment(contentId: string, text: string, itemType: 'article' 
     createdAt: newComment.createdAt,
     author: {
         id: user.id,
-        name: `${user.firstName} ${user.lastName}`,
+        name: user.publicName,
         avatar: `https://i.pravatar.cc/40?u=${user.id}`
     }
   };
