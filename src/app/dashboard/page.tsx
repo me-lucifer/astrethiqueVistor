@@ -11,7 +11,7 @@ import { ContentHubCard } from "@/components/content-hub/card";
 import * as authLocal from "@/lib/authLocal";
 import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal, Wallet, getMoodMeta, MoodMeta, initializeLocalStorage } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame, Calendar, Video as VideoIcon, CalendarPlus } from "lucide-react";
+import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame, Calendar, Video as VideoIcon, CalendarPlus, MoreHorizontal, EyeOff, Eye, Download } from "lucide-react";
 import Link from "next/link";
 import { format, formatDistanceToNow, isToday, isYesterday, isPast, isFuture, differenceInMinutes, addMinutes, isTomorrow } from 'date-fns';
 import { ContentHubItem, seedContentHub } from "@/lib/content-hub-seeder";
@@ -27,6 +27,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { StarRating } from "@/components/star-rating";
 import { Conference } from "@/lib/conferences-seeder";
 import type { ActivityData, ActivityItem, ActivityReplay } from "@/lib/activity";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import * as ics from 'ics';
+import { saveAs } from 'file-saver';
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { YouTubePlayerModal } from "@/components/youtube-player-modal";
 
 const Starfield = () => (
   <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -454,13 +460,19 @@ function useCountdown(targetDate: string) {
             const target = new Date(targetDate);
             const diff = target.getTime() - now.getTime();
 
-            if (diff <= 0) {
+            if (diff <= 15 * 60 * 1000) { // 15 minutes
                 setIsJoinable(true);
-                setCountdown('Now');
+                if (diff <= 0) {
+                    setCountdown('Now');
+                } else {
+                    const minutes = Math.floor(diff / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    setCountdown(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+                }
                 return;
             }
             
-            setIsJoinable(diff <= 15 * 60 * 1000);
+            setIsJoinable(false);
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -472,7 +484,7 @@ function useCountdown(targetDate: string) {
         };
         
         calculate();
-        const interval = setInterval(calculate, 60000); // Update every minute
+        const interval = setInterval(calculate, 1000); // Update every second
 
         return () => clearInterval(interval);
     }, [targetDate]);
@@ -481,24 +493,83 @@ function useCountdown(targetDate: string) {
 }
 
 function formatRelativeDate(date: Date) {
+    const now = new Date();
     if (isToday(date)) return `Today at ${format(date, 'p')}`;
     if (isTomorrow(date)) return `Tomorrow at ${format(date, 'p')}`;
     if (isYesterday(date)) return 'Yesterday';
-    const diffDays = differenceInMinutes(date, new Date()) / 1440;
-    if (diffDays > 0 && diffDays < 7) return `in ${Math.ceil(diffDays)} days`;
+    const diffDays = Math.ceil(differenceInMinutes(date, now) / 1440);
+    if (diffDays > 0 && diffDays <= 7) return `in ${diffDays} days`;
+    if (diffDays < 0 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
     return format(date, 'EEE, MMM dd · p');
 }
 
+interface ActivityMeta {
+    hidden: string[];
+    watched: { [id: string]: string }; // id: watchedAt ISO string
+}
 
 function ActivityTab() {
     const [activities, setActivities] = useState<{ upcoming: ActivityItem[], replays: ActivityReplay[] }>({ upcoming: [], replays: [] });
+    const [activityMeta, setActivityMeta] = useState<ActivityMeta>({ hidden: [], watched: {} });
+    const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+    const [playerUrl, setPlayerUrl] = useState('');
+    const isDesktop = useMediaQuery("(min-width: 768px)");
 
+    const updateMeta = (newMeta: Partial<ActivityMeta>) => {
+        const updated = { ...activityMeta, ...newMeta };
+        setActivityMeta(updated);
+        setLocal('ast.activityMeta', updated);
+    };
+
+    const handleHide = (id: string) => {
+        updateMeta({ hidden: [...activityMeta.hidden, id] });
+    };
+
+    const handleMarkWatched = (id: string) => {
+        const newWatched = { ...activityMeta.watched, [id]: new Date().toISOString() };
+        updateMeta({ watched: newWatched });
+    };
+
+    const handleAddToCalendar = (item: ActivityItem) => {
+        const start = new Date(item.startISO);
+        const end = addMinutes(start, parseInt(item.length));
+
+        const event: ics.EventAttributes = {
+            title: item.title,
+            description: `Host: ${item.host}\nPlatform: ${item.platform}`,
+            start: [start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes()],
+            end: [end.getFullYear(), end.getMonth() + 1, end.getDate(), end.getHours(), end.getMinutes()],
+            url: item.joinUrl,
+        };
+
+        ics.createEvent(event, (error, value) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
+            saveAs(blob, `${item.title.replace(/ /g, '_')}.ics`);
+        });
+    };
+
+    const handleWatchReplay = (item: ActivityReplay) => {
+        if (isDesktop) {
+            setPlayerUrl(item.watchUrl);
+            setIsPlayerOpen(true);
+        } else {
+            window.open(item.watchUrl, '_blank');
+        }
+    };
+    
     useEffect(() => {
         const data = getLocal<ActivityData>('ast.activity');
+        const meta = getLocal<ActivityMeta>('ast.activityMeta') || { hidden: [], watched: {} };
+        setActivityMeta(meta);
+
         if (data) {
             const now = new Date();
             const upcoming = data.upcoming
-                .filter(item => isFuture(addMinutes(new Date(item.startISO), parseInt(item.length))))
+                .filter(item => !meta.hidden.includes(item.id) && isFuture(addMinutes(new Date(item.startISO), parseInt(item.length))))
                 .sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime());
 
             const completed = data.upcoming
@@ -509,6 +580,7 @@ function ActivityTab() {
                 .filter((r): r is ActivityReplay => !!r);
 
             const allReplays = [...data.replays.filter(r => !completed.some(c => c.id === r.id)), ...completedReplays]
+                .filter(item => !meta.hidden.includes(item.id))
                 .sort((a, b) => new Date(b.recordedISO).getTime() - new Date(a.recordedISO).getTime());
                 
             setActivities({ upcoming, replays: allReplays });
@@ -527,13 +599,28 @@ function ActivityTab() {
                     <p className="text-xs text-muted-foreground">
                         {formatRelativeDate(date)} • {item.length} • Host: {item.host}
                     </p>
+                    {!isJoinable && <Badge variant="outline" className="text-xs font-normal mt-1">Starts in {countdown}</Badge>}
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <Button size="sm" asChild disabled={!isJoinable}>
-                        <Link href={item.joinUrl} target="_blank">Join</Link>
-                    </Button>
-                    {!isJoinable && <Badge variant="outline" className="text-xs font-normal">Starts in {countdown}</Badge>}
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs">Add to calendar</Button>
+                    {isJoinable ? (
+                        <Button size="sm" asChild>
+                            <Link href={item.joinUrl} target="_blank">Join</Link>
+                        </Button>
+                    ) : (
+                        <Tooltip>
+                            <TooltipTrigger asChild><span tabIndex={0}><Button size="sm" disabled>Join</Button></span></TooltipTrigger>
+                            <TooltipContent><p>Join available 15 minutes before start.</p></TooltipContent>
+                        </Tooltip>
+                    )}
+                    <div className="flex items-center">
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleAddToCalendar(item)}><Download className="h-3 w-3 mr-1" />Add to calendar</Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
             </Card>
         );
@@ -541,8 +628,9 @@ function ActivityTab() {
     
     const ActivityRowReplay = ({ item }: { item: ActivityReplay }) => {
         const date = new Date(item.recordedISO);
+        const isWatched = !!activityMeta.watched[item.id];
         return (
-            <Card className="p-4 flex items-start gap-4 bg-card/50">
+            <Card className={cn("p-4 flex items-start gap-4 bg-card/50", isWatched && "opacity-60")}>
                 <VideoIcon className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
                 <div className="flex-1 space-y-1">
                     <p className="font-semibold leading-tight">{item.title}</p>
@@ -551,14 +639,24 @@ function ActivityTab() {
                     </p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <Button size="sm" asChild><Link href={item.watchUrl} target="_blank">Watch recording</Link></Button>
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs">Details</Button>
+                    <Button size="sm" onClick={() => handleWatchReplay(item)}>Watch recording</Button>
+                    <div className="flex items-center">
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild><Link href="/conferences">Details</Link></Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleMarkWatched(item.id)}>{isWatched ? <Eye className="mr-2 h-4 w-4" />Mark as unwatched : <EyeOff className="mr-2 h-4 w-4" />Mark as watched}</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
             </Card>
         );
     }
 
     return (
+        <>
         <CardContent className="pt-6">
             <div className="space-y-6">
                 {activities.upcoming.length > 0 && (
@@ -588,6 +686,8 @@ function ActivityTab() {
                 )}
             </div>
         </CardContent>
+        <YouTubePlayerModal isOpen={isPlayerOpen} onOpenChange={setIsPlayerOpen} url={playerUrl} />
+        </>
     );
 }
 
