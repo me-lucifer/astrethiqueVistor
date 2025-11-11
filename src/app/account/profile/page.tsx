@@ -99,16 +99,6 @@ export default function ProfilePage() {
     const {formState: {errors}} = form;
     const watchedPseudonym = form.watch("pseudonym");
     const isPseudonymValid = !!watchedPseudonym && watchedPseudonym.length >= 3 && !errors.pseudonym;
-    const watchedPreference = form.watch("displayNamePreference");
-    
-    useEffect(() => {
-        if (isPseudonymValid && watchedPreference !== 'pseudonym') {
-            form.setValue('displayNamePreference', 'pseudonym', { shouldValidate: true });
-        } else if (watchedPreference === 'pseudonym' && !isPseudonymValid) {
-            form.setValue('displayNamePreference', 'realName', { shouldValidate: true });
-        }
-    }, [watchedPseudonym, isPseudonymValid, watchedPreference, form]);
-
 
     if (!user) {
         return <div>Loading...</div>;

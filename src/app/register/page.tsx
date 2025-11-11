@@ -34,12 +34,12 @@ const passwordSchema = z.string()
   .refine((password) => /[a-zA-Z]/.test(password), { message: "Password must contain at least one letter" })
   .refine((password) => /[0-9]/.test(password), { message: "Password must contain at least one number" });
 
-const pseudonymSchema = z.string()
+const pseudonymSchema = (currentUserId?: string) => z.string()
     .min(3, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
     .max(24, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
     .regex(/^[a-zA-Z0-9._-]+$/, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
     .refine(val => !authLocal.reservedPseudonyms.includes(val.toLowerCase()), "This word isn’t allowed as a pseudonym.")
-    .refine(val => !authLocal.pseudonymExists(val), "That pseudonym is taken. Try another.");
+    .refine(val => !authLocal.pseudonymExists(val, currentUserId), "That pseudonym is taken. Try another.");
 
 const createAccountSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -56,7 +56,7 @@ const createAccountSchema = z.object({
   marketingOptIn: z.boolean().default(false),
 }).superRefine((data, ctx) => {
     if (data.displayNamePreference === 'pseudonym') {
-        const result = pseudonymSchema.safeParse(data.pseudonym);
+        const result = pseudonymSchema().safeParse(data.pseudonym);
         if (!result.success) {
             result.error.issues.forEach(issue => {
                 ctx.addIssue({
@@ -173,14 +173,6 @@ export default function RegisterPage() {
     const {formState: {errors}} = form;
     const isPseudonymValid = !!watchedPseudonym && watchedPseudonym.length >= 3 && !errors.pseudonym;
     
-    useEffect(() => {
-        if (isPseudonymValid && watchedPreference !== 'pseudonym') {
-            form.setValue('displayNamePreference', 'pseudonym', { shouldValidate: true });
-        } else if (watchedPreference === 'pseudonym' && !isPseudonymValid) {
-            form.setValue('displayNamePreference', 'realName', { shouldValidate: true });
-        }
-    }, [watchedPseudonym, isPseudonymValid, watchedPreference, form]);
-
     const publicName = watchedPreference === 'pseudonym' && isPseudonymValid
         ? watchedPseudonym
         : `${watchedFirstName || ''} ${watchedLastName || ''}`.trim();
@@ -408,5 +400,3 @@ export default function RegisterPage() {
         </>
     );
 }
-
-    
