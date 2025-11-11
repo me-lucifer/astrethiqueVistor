@@ -7,6 +7,9 @@ const KEYS = {
     CURRENT_USER_ID: 'ast_currentUserId',
     PREFERENCES: 'ast_prefs',
     FAVORITES: 'ast_favorites',
+    WALLETS: 'ast_wallets',
+    COMMENTS: 'ast_comments',
+    METRICS: 'ast_metrics',
 };
 
 // --- DATA STRUCTURES ---
@@ -32,6 +35,32 @@ export interface Favorites {
     content: string[];
     conferences: string[];
 }
+
+export interface Wallet {
+    balance: number;
+    currency: '€';
+    budgetLock?: number;
+}
+
+export interface Comment {
+    id: string;
+    userId: string;
+    contentId: string;
+    type: 'article' | 'podcast';
+    body: string;
+    createdAt: string; // ISO date
+}
+
+export interface Metrics {
+    registrations: {
+        visitor: number;
+        consultant: number;
+    };
+    logins: number;
+    comments: number;
+    favorites: number;
+}
+
 
 // --- CORE STORAGE HELPERS ---
 
@@ -134,7 +163,30 @@ export function isLoggedIn(): boolean {
     return !!getCurrentUser();
 }
 
-// requireAuth functionality will be implemented in the AuthModal component logic.
+// --- METRICS ---
+export function getMetrics(): Metrics {
+    const defaultMetrics: Metrics = {
+        registrations: { visitor: 0, consultant: 0 },
+        logins: 0,
+        comments: 0,
+        favorites: 0
+    };
+    return getStorageItem<Metrics>(KEYS.METRICS) || defaultMetrics;
+}
+
+export function trackMetric(
+    key: 'registrations.visitor' | 'registrations.consultant' | 'logins' | 'comments' | 'favorites'
+) {
+    const metrics = getMetrics();
+    const keys = key.split('.');
+    if (keys.length === 2) {
+        (metrics[keys[0] as 'registrations'] as any)[keys[1]]++;
+    } else {
+        (metrics[key as keyof Metrics] as number)++;
+    }
+    setStorageItem(KEYS.METRICS, metrics);
+}
+
 
 // --- INITIAL SEEDING ---
 
@@ -147,6 +199,15 @@ function seedInitialData() {
     }
     if (getStorageItem(KEYS.FAVORITES) === null) {
         setStorageItem(KEYS.FAVORITES, {});
+    }
+    if (getStorageItem(KEYS.WALLETS) === null) {
+        setStorageItem(KEYS.WALLETS, {});
+    }
+     if (getStorageItem(KEYS.COMMENTS) === null) {
+        setStorageItem(KEYS.COMMENTS, []);
+    }
+     if (getStorageItem(KEYS.METRICS) === null) {
+        setStorageItem(KEYS.METRICS, { registrations: { visitor: 0, consultant: 0 }, logins: 0, comments: 0, favorites: 0 });
     }
 }
 
