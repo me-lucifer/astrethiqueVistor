@@ -22,6 +22,8 @@ import { ZodiacSignModal } from "@/components/dashboard/zodiac-sign-modal";
 import { DetailedHoroscope } from "@/components/dashboard/detailed-horoscope";
 import { useRouter } from 'next/navigation';
 import { getLocal } from "@/lib/local";
+import { PlaceholderPage } from "@/components/placeholder-page";
+import { AuthModal } from "@/components/auth-modal";
 
 
 interface MoodLogEntry {
@@ -49,6 +51,47 @@ const horoscopeData: { [key: string]: string } = {
 
 // Main Component
 export default function DashboardPage() {
+    const { toast } = useToast();
+    const [user, setUser] = useState<authLocal.User | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+    const checkUser = () => {
+        const currentUser = authLocal.getCurrentUser();
+        setUser(currentUser);
+        if (!currentUser) {
+            toast({
+                title: "Authentication Required",
+                description: "Please sign in to access your dashboard.",
+            });
+        }
+    };
+
+    useEffect(() => {
+        checkUser();
+        setLoading(false);
+        window.addEventListener('storage', checkUser);
+        return () => {
+            window.removeEventListener('storage', checkUser);
+        };
+    }, []);
+
+    if (loading) {
+        return <PlaceholderPage title="Loading Dashboard..." />;
+    }
+
+    if (!user) {
+        return (
+            <>
+                <PlaceholderPage 
+                    title="Access Denied" 
+                    description="Please log in to view your dashboard." 
+                />
+                <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={checkUser} />
+            </>
+        )
+    }
+
     return (
         <div className="container py-12">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">

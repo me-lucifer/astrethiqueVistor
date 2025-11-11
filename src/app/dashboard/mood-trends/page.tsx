@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getLocal } from "@/lib/local";
@@ -11,17 +12,25 @@ import { MoodChart } from "./mood-chart";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import Link from "next/link";
 import { LineChart } from "lucide-react";
+import * as authLocal from "@/lib/authLocal";
 
 type TimeRange = "7d" | "30d" | "90d";
 
 export default function MoodTrendsPage() {
+  const router = useRouter();
   const [log, setLog] = useState<MoodLogEntry[]>([]);
   const [range, setRange] = useState<TimeRange>("7d");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!authLocal.getCurrentUser()) {
+        router.push('/dashboard');
+        return;
+    }
     const moodLog = getLocal<MoodLogEntry[]>("ast_mood_log") || [];
     setLog(moodLog);
-  }, []);
+    setLoading(false);
+  }, [router]);
 
   const filteredData = useMemo(() => {
     const now = new Date();
@@ -69,6 +78,10 @@ export default function MoodTrendsPage() {
 
     return chartData;
   }, [log, range]);
+  
+  if (loading) {
+      return <PlaceholderPage title="Loading Mood Trends..." />;
+  }
   
   if (log.length === 0) {
     return (
