@@ -126,7 +126,7 @@ export default function DashboardPage() {
                     <MoodCard onFirstCheckin={handleFirstCheckin} />
                     <QuickTrends />
                 </div>
-                <div className="col-span-12 lg:col-span-4 space-y-8">
+                <div className="col-span-12 lg:col-span-4 space-y-8 lg:w-[384px]">
                     <HoroscopeCard user={user} />
                     <SidebarTabs />
                 </div>
@@ -146,7 +146,7 @@ function WalletCard() {
         const checkWallet = () => {
             const user = authLocal.getCurrentUser();
             if (user) {
-                const userWallet: Wallet = { balanceEUR: user.wallet.balanceCents / 100, history: (user as any).wallet.history || [] };
+                const userWallet: Wallet = { balanceEUR: (user.wallet.balanceCents || 0) / 100, history: (user as any).wallet.history || [] };
                 setWalletState(userWallet);
             }
         };
@@ -159,7 +159,7 @@ function WalletCard() {
         const user = authLocal.getCurrentUser();
         if (!user) return;
 
-        const newBalanceCents = user.wallet.balanceCents + (amount * 100);
+        const newBalanceCents = (user.wallet.balanceCents || 0) + (amount * 100);
         const newHistoryItem = { type: 'topup', amount: amount, ts: new Date().toISOString() };
         
         authLocal.updateUser(user.id, {
@@ -269,7 +269,8 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
                             rating={ratings[dim.toLowerCase() as keyof Ratings]} 
                             onRating={(r) => handleRating(dim.toLowerCase() as keyof Ratings, r)} 
                             size={24} 
-                            interactive 
+                            interactive
+                            ariaLabel={`Rate your mood for ${dim}`}
                             className="[&>svg:hover]:text-yellow-300 [&>svg:hover]:drop-shadow-[0_0_5px_rgba(252,211,77,0.7)]"
                         />
                     </div>

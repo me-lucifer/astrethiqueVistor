@@ -230,7 +230,7 @@ export default function RegisterPage() {
             </div>
             <div className="flex items-center justify-center p-4 sm:p-8 lg:p-12">
                  <div className="w-full max-w-lg">
-                    <Card className="shadow-lg rounded-lg lg:rounded-[12px] p-0 sm:p-6 lg:p-[24px]">
+                    <Card className="shadow-lg rounded-lg p-0 sm:p-6 lg:p-8">
                         <CardHeader>
                             <CardTitle className="font-headline text-2xl">Create an account</CardTitle>
                         </CardHeader>
