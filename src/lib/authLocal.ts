@@ -15,6 +15,7 @@ export interface User {
     passwordHash: string;
     language: "EN" | "FR";
     timezone: string;
+    zodiacSign?: "Aries" | "Taurus" | "Gemini" | "Cancer" | "Leo" | "Virgo" | "Libra" | "Scorpio" | "Sagittarius" | "Capricorn" | "Aquarius" | "Pisces";
     marketingOptIn: boolean;
     createdAt: string; // ISO Date
     updatedAt: string; // ISO Date
@@ -211,7 +212,7 @@ export function getCurrentUser(): User | null {
         console.log(`Migrating user: ${user.id}`);
         // Set default display preference and compute public name
         const migratedUser = updateUser(user.id, {
-            displayNamePreference: 'pseudonym', // Defaulting to pseudonym as requested
+            displayNamePreference: 'realName', 
         });
         return migratedUser;
     }
