@@ -1,16 +1,10 @@
 
 "use client";
 
-import type { ActivityData, ActivityItem, ActivityReplay } from "@/lib/activity";
-import type { ActivityMeta } from "@/lib/activity";
-import { useState, useEffect, useCallback, useTransition } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { formatDistanceToNow, isFuture, addMinutes, isToday, isTomorrow, isYesterday, differenceInMinutes, differenceInHours } from "date-fns";
-import * as ics from "ics";
-import { saveAs } from "file-saver";
-
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { getLocal, setLocal } from "@/lib/local";
+import { getLocal, setLocal, removeLocal } from "@/lib/local";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,15 +12,16 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { YouTubePlayerModal } from "@/components/youtube-player-modal";
 import { cn } from "@/lib/utils";
-import { Calendar, Video as VideoIcon, MoreHorizontal, EyeOff, Eye, Download, Mail } from "lucide-react";
+import { Calendar, Video as VideoIcon, MoreHorizontal, EyeOff, Eye, Download, Mail, RefreshCcw } from "lucide-react";
+import * as ics from "ics";
+import { saveAs } from "file-saver";
+import { addMinutes } from "date-fns";
+import type { ActivityData, ActivityItem, ActivityReplay, ActivityMeta } from "@/lib/activity";
+import { seedActivityData, toRelativeTime, isJoinOpen, migratePastEvents } from "@/lib/activity";
 
-
-// --- HELPER COMPONENTS ---
-
-// Countdown hook
+// --- Helper hook for countdown ---
 function useCountdown(targetDate: string) {
   const [countdown, setCountdown] = useState("");
-  const [isJoinable, setIsJoinable] = useState(false);
 
   useEffect(() => {
     const calculate = () => {
@@ -36,29 +31,20 @@ function useCountdown(targetDate: string) {
       
       const fifteenMinutes = 15 * 60 * 1000;
 
-      if (diff <= fifteenMinutes) {
-        setIsJoinable(true);
-        if (diff <= 0) {
-          setCountdown("Now");
-        } else {
-          const minutes = Math.floor(diff / (1000 * 60));
-          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-          setCountdown(
-            `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-              2,
-              "0"
-            )}`
-          );
-        }
+      if (diff <= 0) {
+        setCountdown("Now");
         return;
       }
-
-      setIsJoinable(false);
+      
+      if (diff <= fifteenMinutes) {
+          const minutes = Math.floor(diff / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+          setCountdown(`${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2,"0")}`);
+          return;
+      }
 
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-      );
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
       if (days > 0) setCountdown(`${days}d ${hours}h`);
@@ -68,26 +54,14 @@ function useCountdown(targetDate: string) {
 
     calculate();
     const interval = setInterval(calculate, 1000);
-
     return () => clearInterval(interval);
   }, [targetDate]);
 
-  return { countdown, isJoinable };
+  return countdown;
 }
 
-// Relative date formatter
-function formatRelativeDate(date: Date) {
-    const now = new Date();
-    if (isToday(date)) return `Today at ${new Date(date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
-    if (isTomorrow(date)) return `Tomorrow at ${new Date(date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
-    if (isYesterday(date)) return "Yesterday";
-    const diffMins = differenceInMinutes(date, now);
-    const diffDays = Math.ceil(diffMins / 1440);
-    if (diffDays > 0 && diffDays <= 7) return `in ${diffDays} days`;
-    if (diffDays < 0 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
-    return new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-}
 
+// --- Sub-components ---
 interface ActivityRowUpcomingProps {
     item: ActivityItem;
     onHide: (id: string) => void;
@@ -95,10 +69,11 @@ interface ActivityRowUpcomingProps {
 }
 
 function ActivityRowUpcoming({ item, onHide, onAddToCalendar }: ActivityRowUpcomingProps) {
-    const { countdown, isJoinable } = useCountdown(item.startISO);
+    const countdown = useCountdown(item.startISO);
+    const joinable = isJoinOpen(item.startISO);
+    const relativeTime = toRelativeTime(item.startISO);
     const date = new Date(item.startISO);
-    const now = new Date();
-    const hoursUntilStart = differenceInHours(date, now);
+    const hoursUntilStart = (date.getTime() - new Date().getTime()) / (1000 * 60 * 60);
 
     return (
         <Card className="p-4 flex items-start gap-4 bg-card/50 rounded-lg transition-transform hover:-translate-y-0.5 duration-150">
@@ -106,16 +81,16 @@ function ActivityRowUpcoming({ item, onHide, onAddToCalendar }: ActivityRowUpcom
             <div className="flex-1 space-y-1">
                 <p className="font-semibold leading-tight">{item.title}</p>
                 <p className="text-xs text-muted-foreground">
-                    {formatRelativeDate(date)} • {item.length} • Host: {item.host}
+                    {relativeTime} • {item.length} • Host: {item.host}
                 </p>
                 <div className="flex gap-2 pt-1">
-                    {!isJoinable && <Badge variant="outline" className="text-xs font-normal">Starts in {countdown}</Badge>}
-                    {hoursUntilStart <= 1 && <Badge variant="secondary" className="bg-primary/20 text-primary-foreground">Starting soon</Badge>}
+                    {!joinable && <Badge variant="outline" className="text-xs font-normal">Starts in {countdown}</Badge>}
+                    {hoursUntilStart > 0 && hoursUntilStart <= 1 && <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/20">Starting soon</Badge>}
                     {hoursUntilStart > 1 && hoursUntilStart <= 24 && <Badge variant="outline" className="font-normal text-xs">Soon</Badge>}
                 </div>
             </div>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
-                {isJoinable ? (
+                {joinable ? (
                     <Button size="sm" asChild>
                         <a href={item.joinUrl} target="_blank" rel="noopener noreferrer">Join</a>
                     </Button>
@@ -150,14 +125,14 @@ interface ActivityRowReplayProps {
 }
 
 function ActivityRowReplay({ item, isWatched, onWatchReplay, onMarkWatched, onHide }: ActivityRowReplayProps) {
-    const date = new Date(item.recordedISO);
+    const relativeTime = toRelativeTime(item.recordedISO);
     return (
         <Card className={cn("p-4 flex items-start gap-4 bg-card/50 rounded-lg transition-transform hover:-translate-y-0.5 duration-150", isWatched && "opacity-60")}>
             <VideoIcon className="h-5 w-5 text-primary mt-1 shrink-0" />
             <div className="flex-1 space-y-1">
                 <p className="font-semibold leading-tight">{item.title}</p>
                 <p className="text-xs text-muted-foreground">
-                    {item.duration} • Host: {item.host} • {formatDistanceToNow(date, { addSuffix: true })}
+                    {item.duration} • Host: {item.host} • {relativeTime}
                 </p>
             </div>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -181,63 +156,59 @@ function ActivityRowReplay({ item, isWatched, onWatchReplay, onMarkWatched, onHi
 // --- MAIN COMPONENT ---
 
 export function ActivityTab() {
-  const [activities, setActivities] = useState<{
-    upcoming: ActivityItem[];
-    replays: ActivityReplay[];
-  }>({ upcoming: [], replays: [] });
+  const [activities, setActivities] = useState<ActivityData>({ upcoming: [], replays: [] });
   const [activityMeta, setActivityMeta] = useState<ActivityMeta>({ hidden: [], watched: {} });
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [playerUrl, setPlayerUrl] = useState("");
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [showAllReplays, setShowAllReplays] = useState(false);
+  const [isDev, setIsDev] = useState(false);
+
+  useEffect(() => {
+    setIsDev(process.env.NODE_ENV === 'development');
+  }, []);
 
   const processActivities = useCallback(() => {
-    const data = getLocal<ActivityData>("ast.activity");
+    let data = getLocal<ActivityData>("ast.activity");
+    if (!data) {
+        data = seedActivityData();
+    }
     const meta = getLocal<ActivityMeta>("ast.activityMeta") || { hidden: [], watched: {} };
+    
+    const migratedData = migratePastEvents(data);
+
     setActivityMeta(meta);
 
-    if (data) {
-      const now = new Date();
-      
-      const upcomingItems = data.upcoming.filter(item => {
-        const endTime = addMinutes(new Date(item.startISO), parseInt(item.length));
-        return isFuture(endTime) && !meta.hidden.includes(item.id);
-      });
-
-      const pastAndNowEvents = data.upcoming.filter(item => {
-        const endTime = addMinutes(new Date(item.startISO), parseInt(item.length));
-        return !isFuture(endTime);
-      });
-      
-      const completedReplays = pastAndNowEvents
-        .map(item => data.replays.find(r => r.id === item.id))
-        .filter((r): r is ActivityReplay => !!r);
-
-      const allReplays = [...data.replays.filter(r => !pastAndNowEvents.some(c => c.id === r.id)), ...completedReplays];
-      
-      const visibleReplays = allReplays.filter(item => !meta.hidden.includes(item.id));
-      
-      setActivities({
-        upcoming: upcomingItems.sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime()),
-        replays: visibleReplays.sort((a, b) => new Date(b.recordedISO).getTime() - new Date(a.recordedISO).getTime()),
-      });
-    }
+    const visibleUpcoming = migratedData.upcoming.filter(item => !meta.hidden.includes(item.id));
+    const visibleReplays = migratedData.replays.filter(item => !meta.hidden.includes(item.id));
+    
+    setActivities({
+      upcoming: visibleUpcoming.sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime()),
+      replays: visibleReplays.sort((a, b) => new Date(b.recordedISO).getTime() - new Date(a.recordedISO).getTime()),
+    });
   }, []);
 
   useEffect(() => {
     processActivities();
+    window.addEventListener('storage', processActivities);
+    return () => window.removeEventListener('storage', processActivities);
   }, [processActivities]);
 
   const updateMeta = (newMeta: Partial<ActivityMeta>) => {
     const currentMeta = getLocal<ActivityMeta>("ast.activityMeta") || { hidden: [], watched: {} };
     const updated = { ...currentMeta, ...newMeta };
-    setActivityMeta(updated);
     setLocal("ast.activityMeta", updated);
     processActivities();
   };
+  
+  const handleResetDemo = () => {
+    removeLocal("ast.activity");
+    removeLocal("ast.activityMeta");
+    processActivities();
+  }
 
-  const handleHide = (id: string) => updateMeta({ hidden: [...activityMeta.hidden, id] });
+  const handleHide = (id: string) => updateMeta({ hidden: [...new Set([...activityMeta.hidden, id])] });
 
   const handleMarkWatched = (id: string) => {
     const newWatched = { ...activityMeta.watched };
@@ -251,9 +222,9 @@ export function ActivityTab() {
     const end = addMinutes(start, parseInt(item.length));
     const event: ics.EventAttributes = {
       title: item.title,
-      description: `Host: ${item.host}\nPlatform: ${item.platform}`,
-      start: [start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes()],
-      end: [end.getFullYear(), end.getMonth() + 1, end.getDate(), end.getHours(), end.getMinutes()],
+      description: `Host: ${item.host} • Platform: ${item.platform}`,
+      start: [start.getUTCFullYear(), start.getUTCMonth() + 1, start.getUTCDate(), start.getUTCHours(), start.getUTCMinutes()],
+      end: [end.getUTCFullYear(), end.getUTCMonth() + 1, end.getUTCDate(), end.getUTCHours(), end.getUTCMinutes()],
       url: item.joinUrl,
     };
     ics.createEvent(event, (error, value) => {
@@ -269,7 +240,9 @@ export function ActivityTab() {
     } else {
       window.open(item.watchUrl, "_blank");
     }
-    handleMarkWatched(item.id);
+    if (!activityMeta.watched[item.id]) {
+      handleMarkWatched(item.id);
+    }
   };
 
   const visibleUpcoming = showAllUpcoming ? activities.upcoming : activities.upcoming.slice(0, 3);
@@ -296,9 +269,12 @@ export function ActivityTab() {
         <div className="space-y-6">
           {activities.upcoming.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-sm">Upcoming</h4>
-                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">{activities.upcoming.length}</Badge>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-sm">Upcoming</h4>
+                  <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">{activities.upcoming.length}</Badge>
+                </div>
+                {isDev && <Button variant="link" size="sm" className="text-xs" onClick={handleResetDemo}><RefreshCcw className="h-3 w-3 mr-1"/>Reset demo activity</Button>}
               </div>
               <div className="space-y-2">
                 {visibleUpcoming.map((item) => (
