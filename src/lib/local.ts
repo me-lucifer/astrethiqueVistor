@@ -25,7 +25,10 @@ function createInMemoryStorage(): Storage {
 
 let storage: Storage;
 try {
+  const testKey = 'localStorage_test';
   storage = typeof window !== "undefined" ? window.localStorage : createInMemoryStorage();
+  storage.setItem(testKey, 'test');
+  storage.removeItem(testKey);
 } catch (error) {
   console.warn("localStorage is not available. Falling back to in-memory storage.", error);
   storage = createInMemoryStorage();
@@ -36,7 +39,8 @@ export function getLocal<T>(key: string): T | null {
     const item = storage.getItem(key);
     return item ? JSON.parse(item) : null;
   } catch (error) {
-    console.error(`Error reading from localStorage for key "${key}":`, error);
+    // This can happen if JSON parsing fails
+    console.error(`Error reading from storage for key "${key}":`, error);
     return null;
   }
 }
@@ -45,7 +49,8 @@ export function setLocal<T>(key: string, value: T): void {
   try {
     storage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error(`Error writing to localStorage for key "${key}":`, error);
+    // This can happen if storage is full or the object is too large
+    console.error(`Error writing to storage for key "${key}":`, error);
   }
 }
 
@@ -53,7 +58,7 @@ export function removeLocal(key: string): void {
     try {
         storage.removeItem(key);
     } catch (error) {
-        console.error(`Error removing from localStorage for key "${key}":`, error);
+        console.error(`Error removing from storage for key "${key}":`, error);
     }
 }
 

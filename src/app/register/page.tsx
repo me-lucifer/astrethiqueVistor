@@ -57,6 +57,7 @@ export default function RegisterPage() {
 
     useEffect(() => {
         setIsClient(true);
+        console.log("register_viewed");
         const currentUser = authLocal.getCurrentUser();
         setUser(currentUser);
         if (typeof window !== 'undefined') {
@@ -87,9 +88,11 @@ export default function RegisterPage() {
     };
 
     async function handleCreateAccount(values: CreateAccountFormData) {
+        console.log("register_submitted");
         startTransition(async () => {
             try {
                 const newUser = await authLocal.registerVisitor(values);
+                console.log("register_success");
                 toast({
                   title: `Welcome, ${newUser.firstName}!`,
                   description: "Account created. You can now log in.",
@@ -97,6 +100,7 @@ export default function RegisterPage() {
                 router.push('/discover');
             } catch (error: any) {
                 if (error.message.includes("email already exists")) {
+                    console.log("register_duplicate_email");
                     form.setError("email", { type: "manual", message: error.message });
                 } else {
                     toast({

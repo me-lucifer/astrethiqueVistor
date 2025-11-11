@@ -25,7 +25,10 @@ function createInMemoryStorage(): Storage {
 
 let storage: Storage;
 try {
+  const testKey = 'sessionStorage_test';
   storage = typeof window !== "undefined" ? window.sessionStorage : createInMemoryStorage();
+  storage.setItem(testKey, 'test');
+  storage.removeItem(testKey);
 } catch (error) {
   console.warn("sessionStorage is not available. Falling back to in-memory storage.", error);
   storage = createInMemoryStorage();
