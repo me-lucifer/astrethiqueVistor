@@ -56,6 +56,7 @@ import {
   getWallet,
   setWallet,
   getMoodLog,
+  getLocal,
   setLocal,
   getMoodMeta,
   initializeLocalStorage,
@@ -63,6 +64,7 @@ import {
   Wallet as WalletType,
   SpendLogEntry,
   addSpendLogEntry,
+  spendFromWallet,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -947,3 +949,5 @@ const horoscopeData: { [key: string]: string } = {
   Pisces:
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+
+    
