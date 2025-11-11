@@ -1,41 +1,21 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { getSession, setSession } from "@/lib/session";
+import { useState, useEffect, useMemo } from "react";
+import { getLocal } from "@/lib/local";
 import { ContentHubItem, seedContentHub } from "@/lib/content-hub-seeder";
 import { ContentHubCard } from "@/components/content-hub/card";
-import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { Filter, BookOpen, Mic, Video } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { Button } from "./ui/button";
+import Link from "next/link";
 
-const sortOptions = {
-    newest: "Newest",
-    most_read: "Most Read",
-    editors_picks: "Editor's Picks",
-};
-
-type SortKey = keyof typeof sortOptions;
-
-interface Filters {
-    sort: SortKey;
-}
-
-const defaultFilters: Filters = {
-    sort: "newest",
-};
-
-export function FeaturedContent({ displayFilters = false }: { displayFilters?: boolean }) {
+export function FeaturedContent() {
     const [allContent, setAllContent] = useState<ContentHubItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         seedContentHub();
-        const storedContent = getSession<ContentHubItem[]>("ch_items");
+        const storedContent = getLocal<ContentHubItem[]>("ch_items");
         if (storedContent) {
             setAllContent(storedContent);
         }
@@ -45,7 +25,6 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
     const featuredContent = useMemo(() => {
         return allContent.filter(item => item.featured && !item.deleted).slice(0, 3);
     }, [allContent]);
-
 
     if (isLoading) {
         return (
@@ -63,7 +42,11 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
         );
     }
     
-    if (!featuredContent.length) return null;
+    if (!featuredContent.length) return (
+        <div className="text-center py-10 border-2 border-dashed rounded-lg">
+            <p className="text-muted-foreground">No featured content available right now.</p>
+        </div>
+    );
 
     return (
        <>
@@ -79,6 +62,11 @@ export function FeaturedContent({ displayFilters = false }: { displayFilters?: b
                         <h3 className="font-headline text-2xl font-bold">No matching content.</h3>
                     </div>
                 )}
+           </div>
+           <div className="mt-12 text-center">
+               <Button asChild>
+                   <Link href="/content-hub">View All Content</Link>
+               </Button>
            </div>
        </>
     );
