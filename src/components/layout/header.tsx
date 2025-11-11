@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Gem, Search, User, LogOut, Globe } from 'lucide-react';
+import { Menu, Gem, User, LogOut, Globe, Wallet, Heart, Calendar } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown } from 'lucide-react';
@@ -70,8 +71,11 @@ export function Header() {
     { href: '/conferences', label: t.navConferences },
     { href: '/how-it-works', label: t.navHowItWorks },
     { href: '/content-hub', label: t.navContentHub },
-    { href: '/appointments', label: 'My Appointments' },
     { href: '/support', label: t.navSupport },
+  ];
+  
+  const userNavLinks = [
+    { href: '/appointments', label: 'My Appointments' },
   ];
 
   const isDiscoverActive = (path: string) => {
@@ -103,10 +107,20 @@ export function Header() {
                 <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem disabled>
-                <User className="mr-2 h-4 w-4"/>
-                <span>Profile</span>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/account/profile"><User className="mr-2 h-4 w-4"/><span>Profile</span></Link>
+            </DropdownMenuItem>
+             <DropdownMenuItem asChild>
+              <Link href="/account/wallet"><Wallet className="mr-2 h-4 w-4"/><span>Wallet</span></Link>
+            </DropdownMenuItem>
+             <DropdownMenuItem asChild>
+              <Link href="/appointments"><Calendar className="mr-2 h-4 w-4"/><span>Appointments</span></Link>
+            </DropdownMenuItem>
+             <DropdownMenuItem asChild>
+              <Link href="/discover?myFavorites=true"><Heart className="mr-2 h-4 w-4"/><span>Favorites</span></Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
@@ -128,7 +142,7 @@ export function Header() {
             <span className="hidden sm:inline">ASTRETHIQUE</span>
           </Link>
           <nav className="hidden xl:flex items-center gap-4 text-sm font-medium">
-            {navLinks.map((link) => {
+            {[...navLinks, ...(user ? userNavLinks : [])].map((link) => {
               const isActive = link.href === '/discover' 
                 ? isDiscoverActive(pathname)
                 : (link.href === '/' ? pathname === '/' : pathname.startsWith(link.href));
@@ -191,7 +205,7 @@ export function Header() {
                  </Link>
               </SheetHeader>
               <nav className="flex-1 px-4 flex flex-col gap-2 pt-4">
-                {navLinks.map((link) => {
+                {[...navLinks, ...(user ? userNavLinks : [])].map((link) => {
                    const isActive = link.href === '/discover'
                     ? isDiscoverActive(pathname)
                     : (link.href === '/' ? pathname === '/' : pathname.startsWith(link.href));

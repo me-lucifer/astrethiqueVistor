@@ -1,0 +1,112 @@
+
+"use client";
+
+import { useState, useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
+import * as storage from "@/lib/storage";
+
+export default function WalletPage() {
+    const { toast } = useToast();
+    const [user, setUser] = useState<storage.User | null>(null);
+    const [wallet, setWallet] = useState<storage.Wallet | null>(null);
+    const [budgetLockValue, setBudgetLockValue] = useState([50]);
+
+    useEffect(() => {
+        const currentUser = storage.getCurrentUser();
+        if (currentUser) {
+            setUser(currentUser);
+            const allWallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
+            const userWallet = allWallets[currentUser.id] || { balance: 0, currency: '€' };
+            setWallet(userWallet);
+            if (userWallet.budgetLock) {
+                setBudgetLockValue([userWallet.budgetLock]);
+            }
+        }
+    }, []);
+
+    const handleAddCredit = () => {
+        if (!user || !wallet) return;
+
+        const newBalance = wallet.balance + 10;
+        const newWallet = { ...wallet, balance: newBalance };
+        
+        setWallet(newWallet);
+
+        const allWallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
+        allWallets[user.id] = newWallet;
+        storage.setStorageItem('ast_wallets', allWallets);
+
+        toast({
+            title: "Funds Added",
+            description: `€10.00 has been added to your wallet.`,
+        });
+    };
+
+    const handleSaveBudgetLock = () => {
+        if (!user || !wallet) return;
+
+        const newWallet = { ...wallet, budgetLock: budgetLockValue[0] };
+        setWallet(newWallet);
+        
+        const allWallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
+        allWallets[user.id] = newWallet;
+        storage.setStorageItem('ast_wallets', allWallets);
+
+        toast({
+            title: "Budget Lock Updated",
+            description: `Your monthly budget is now set to €${budgetLockValue[0]}.`,
+        });
+    }
+
+    if (!user || !wallet) {
+        return <div>Loading wallet...</div>
+    }
+
+    return (
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Wallet Balance</CardTitle>
+                    <CardDescription>Your current balance and transaction history.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="p-6 rounded-lg bg-muted text-center">
+                        <p className="text-sm text-muted-foreground">Current Balance</p>
+                        <p className="text-4xl font-bold">€{wallet.balance.toFixed(2)}</p>
+                    </div>
+                    <Button onClick={handleAddCredit} className="w-full">Add €10 Demo Credit</Button>
+                </CardContent>
+                <CardFooter>
+                    <p className="text-xs text-muted-foreground">This is a demo wallet. No real money is involved.</p>
+                </CardFooter>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Budget Lock</CardTitle>
+                    <CardDescription>Set a monthly spending limit to stay in control.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="budget-slider" className="text-lg font-bold text-primary">€{budgetLockValue[0]}</Label>
+                        <p className="text-sm text-muted-foreground">Per calendar month</p>
+                    </div>
+                    <Slider
+                        id="budget-slider"
+                        max={200}
+                        step={10}
+                        value={budgetLockValue}
+                        onValueChange={setBudgetLockValue}
+                    />
+                </CardContent>
+                <CardFooter>
+                    <Button onClick={handleSaveBudgetLock}>Save Budget Limit</Button>
+                </CardFooter>
+            </Card>
+        </div>
+    );
+}
