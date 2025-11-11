@@ -97,13 +97,27 @@ export interface Wallet {
 }
 const WALLET_KEY = 'ast_wallet';
 export const getWallet = (): Wallet | null => getLocal<Wallet>(WALLET_KEY);
-export const setWallet = (wallet: Wallet) => setLocal(WALLET_KEY, wallet);
+export const setWallet = (wallet: Wallet) => {
+    setLocal(WALLET_KEY, wallet);
+    window.dispatchEvent(new Event('storage'));
+}
 
 
 // Mood Log
+export interface MoodMeta {
+    streak: number;
+    lastCheckIn: string;
+}
 const MOOD_LOG_KEY = 'ast_mood_log';
+const MOOD_META_KEY = 'ast_mood_meta';
 export const getMoodLog = (): MoodLogEntry[] => getLocal<MoodLogEntry[]>(MOOD_LOG_KEY) || [];
-export const setMoodLog = (log: MoodLogEntry[]) => setLocal(MOOD_LOG_KEY, log);
+export const setMoodLog = (log: MoodLogEntry[], meta: MoodMeta) => {
+    setLocal(MOOD_LOG_KEY, log);
+    setLocal(MOOD_META_KEY, meta);
+    window.dispatchEvent(new Event('storage'));
+}
+export const getMoodMeta = (): MoodMeta | null => getLocal<MoodMeta>(MOOD_META_KEY);
+
 
 // Favorites
 const FAVORITES_KEY = 'ast_favorites';

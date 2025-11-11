@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,11 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ContentHubCard } from "@/components/content-hub/card";
 import * as authLocal from "@/lib/authLocal";
-import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal, Wallet } from "@/lib/local";
+import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal, Wallet, getMoodMeta, MoodMeta } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame } from "lucide-react";
 import Link from "next/link";
-import { format, formatDistanceToNow, isToday } from 'date-fns';
+import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { ContentHubItem, seedContentHub } from "@/lib/content-hub-seeder";
 import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
 import { getSession } from "@/lib/session";
@@ -61,7 +61,11 @@ export default function DashboardPage() {
     useEffect(() => {
         checkUser();
         setLoading(false);
-        const handleStorageChange = () => checkUser();
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === 'astro') {
+                checkUser();
+            }
+        };
         window.addEventListener('storage', handleStorageChange);
         return () => {
             window.removeEventListener('storage', handleStorageChange);
@@ -133,13 +137,18 @@ function WalletCard() {
             setWalletState(storedWallet);
         };
         checkWallet();
-        window.addEventListener('storage', checkWallet);
-        return () => window.removeEventListener('storage', checkWallet);
+        const handleStorageChange = (event: StorageEvent) => {
+             if (event.key === 'ast_wallet') {
+                checkWallet();
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
     const handleTopUp = (amount: number) => {
         const newBalance = wallet.balanceEUR + amount;
-        const newHistoryItem = { type: 'topup', amount, ts: new Date().toISOString() };
+        const newHistoryItem = { type: 'topup' as const, amount, ts: new Date().toISOString() };
         const updatedHistory = [...(wallet.history || []), newHistoryItem];
         
         const newWallet: Wallet = {
@@ -174,35 +183,66 @@ function WalletCard() {
 }
 
 function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
-    const [ratings, setRatings] = useState({ money: 0, health: 0, work: 0, love: 0 });
+    type Ratings = { money: number; health: number; work: number; love: number };
+    const [ratings, setRatings] = useState<Ratings>({ money: 0, health: 0, work: 0, love: 0 });
     const { toast } = useToast();
+    const [isSavedToday, setIsSavedToday] = useState(false);
 
-    const handleRating = (dimension: keyof typeof ratings, value: number) => {
-        setRatings(prev => ({ ...prev, [dimension]: value }));
-    };
+    useEffect(() => {
+        const moodLog = getMoodLog();
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const todayEntry = moodLog.find(entry => entry.dateISO === today);
+        if (todayEntry) {
+            setRatings({
+                money: todayEntry.money,
+                health: todayEntry.health,
+                work: todayEntry.work,
+                love: todayEntry.love
+            });
+            setIsSavedToday(true);
+        }
+    }, []);
 
-    const handleSave = () => {
+    const handleRating = (dimension: keyof Ratings, value: number) => {
+        const newRatings = { ...ratings, [dimension]: value };
+        setRatings(newRatings);
+
         const today = format(new Date(), 'yyyy-MM-dd');
         const moodLog = getMoodLog();
+        const moodMeta = getMoodMeta() || { streak: 0, lastCheckIn: '' };
         
+        let newStreak = moodMeta.streak;
+        const lastDate = moodMeta.lastCheckIn ? new Date(moodMeta.lastCheckIn) : null;
+        const todayDate = new Date();
+
+        if (!lastDate || !isToday(lastDate)) { // First check-in of the day
+            if (lastDate && isYesterday(lastDate)) {
+                newStreak = (newStreak || 0) + 1;
+            } else {
+                newStreak = 1;
+            }
+            onFirstCheckin();
+            toast({
+                title: "Mood saved!",
+                description: newStreak > 1 ? `You're on a ${newStreak}-day streak! 🔥` : "Come back tomorrow to build your streak.",
+            });
+        } else if (!isSavedToday) {
+             toast({
+                title: "Mood updated for today!",
+            });
+        }
+
+
         const todayIndex = moodLog.findIndex(entry => entry.dateISO === today);
-        const newEntry = { dateISO: today, ...ratings };
-        
-        if (todayIndex === -1) {
-            onFirstCheckin(); // Trigger confetti on first save of the day
-        }
-
         if (todayIndex > -1) {
-            moodLog[todayIndex] = newEntry;
+            moodLog[todayIndex] = { ...moodLog[todayIndex], ...newRatings };
         } else {
-            moodLog.push(newEntry);
+            moodLog.push({ dateISO: today, ...newRatings });
         }
-
-        setMoodLog(moodLog);
-        toast({ title: "Mood saved for today!", description: "Check your recommendations for personalized content." });
+        
+        setMoodLog(moodLog, { streak: newStreak, lastCheckIn: todayDate.toISOString() });
+        setIsSavedToday(true);
     };
-
-    const isSaveDisabled = Object.values(ratings).some(r => r === 0);
 
     return (
         <GlassCard>
@@ -214,8 +254,8 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
                     <div key={dim} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                         <p className="font-medium mb-2 sm:mb-0">{dim}</p>
                         <StarRating 
-                            rating={ratings[dim.toLowerCase() as keyof typeof ratings]} 
-                            onRating={(r) => handleRating(dim.toLowerCase() as keyof typeof ratings, r)} 
+                            rating={ratings[dim.toLowerCase() as keyof Ratings]} 
+                            onRating={(r) => handleRating(dim.toLowerCase() as keyof Ratings, r)} 
                             size={24} 
                             interactive 
                             className="[&>svg:hover]:text-yellow-300 [&>svg:hover]:drop-shadow-[0_0_5px_rgba(252,211,77,0.7)]"
@@ -223,47 +263,37 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
                     </div>
                 ))}
             </CardContent>
-            <CardFooter className="justify-between items-center">
-                <Button onClick={handleSave} disabled={isSaveDisabled}>Save today’s mood</Button>
-            </CardFooter>
         </GlassCard>
     );
 }
+
 
 function QuickTrends() {
   const [lastCheckIn, setLastCheckIn] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
 
   useEffect(() => {
-    const moodLog = getMoodLog();
-    if (moodLog.length > 0) {
-      const lastEntry = moodLog[moodLog.length - 1];
-      setLastCheckIn(formatDistanceToNow(new Date(lastEntry.dateISO), { addSuffix: true }));
-
-      // Calculate streak
-      let currentStreak = 0;
-      if (moodLog.length > 0) {
-        const sortedLog = [...moodLog].sort((a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime());
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        if (isToday(new Date(sortedLog[0].dateISO))) {
-          currentStreak = 1;
-          for (let i = 0; i < sortedLog.length - 1; i++) {
-            const currentDay = new Date(sortedLog[i].dateISO);
-            const prevDay = new Date(sortedLog[i+1].dateISO);
-            const diff = (currentDay.getTime() - prevDay.getTime()) / (1000 * 3600 * 24);
-            if (diff === 1) {
-              currentStreak++;
+    const updateTrends = () => {
+        const moodMeta = getMoodMeta();
+        if (moodMeta && moodMeta.lastCheckIn) {
+            setLastCheckIn(formatDistanceToNow(new Date(moodMeta.lastCheckIn), { addSuffix: true }));
+            const today = new Date();
+            if (isToday(new Date(moodMeta.lastCheckIn))) {
+              setStreak(moodMeta.streak || 1);
+            } else if (isYesterday(new Date(moodMeta.lastCheckIn))) {
+              setStreak(moodMeta.streak || 0);
             } else {
-              break;
+              setStreak(0); // Streak broken
             }
-          }
+        } else {
+            setStreak(0);
+            setLastCheckIn(null);
         }
-      }
-      setStreak(currentStreak);
-    }
+    };
+
+    updateTrends();
+    window.addEventListener('storage', updateTrends);
+    return () => window.removeEventListener('storage', updateTrends);
   }, []);
 
   return (
@@ -375,35 +405,42 @@ function ActivityTab() {
 
 function RecommendationsTab() {
     const [recommendations, setRecommendations] = useState<ContentHubItem[]>([]);
-    const [allContent, setAllContent] = useState<ContentHubItem[]>([]);
     const router = useRouter();
 
     useEffect(() => {
-        seedContentHub();
-        setAllContent(getLocal<ContentHubItem[]>("ch_items") || []);
+        const getRecs = () => {
+            seedContentHub();
+            const allContent = getLocal<ContentHubItem[]>("ch_items") || [];
+            const moodLog = getMoodLog();
+            if (moodLog.length === 0) {
+                setRecommendations(allContent.filter(item => item.featured).slice(0, 3));
+                return;
+            };
 
-        const moodLog = getMoodLog();
-        if (moodLog.length === 0) return;
+            const last7Days = moodLog.slice(-7);
+            const averages = {
+                money: last7Days.reduce((sum, entry) => sum + entry.money, 0) / last7Days.length,
+                health: last7Days.reduce((sum, entry) => sum + entry.health, 0) / last7Days.length,
+                work: last7Days.reduce((sum, entry) => sum + entry.work, 0) / last7Days.length,
+                love: last7Days.reduce((sum, entry) => sum + entry.love, 0) / last7Days.length,
+            };
 
-        const last7Days = moodLog.slice(-7);
-        const averages = {
-            money: last7Days.reduce((sum, entry) => sum + entry.money, 0) / last7Days.length,
-            health: last7Days.reduce((sum, entry) => sum + entry.health, 0) / last7Days.length,
-            work: last7Days.reduce((sum, entry) => sum + entry.work, 0) / last7Days.length,
-            love: last7Days.reduce((sum, entry) => sum + entry.love, 0) / last7Days.length,
-        };
+            const lowDimensions = (Object.keys(averages) as (keyof typeof averages)[])
+                .filter(dim => averages[dim] <= 3);
 
-        const lowDimensions = (Object.keys(averages) as (keyof typeof averages)[])
-            .filter(dim => averages[dim] <= 3);
-
-        if (lowDimensions.length > 0) {
-            const recommendedContent = allContent
-                .filter(item => lowDimensions.some(dim => item.tags.includes(dim.charAt(0).toUpperCase() + dim.slice(1))))
-                .slice(0, 3);
-            setRecommendations(recommendedContent);
+            if (lowDimensions.length > 0) {
+                const recommendedContent = allContent
+                    .filter(item => !item.deleted && lowDimensions.some(dim => item.tags.includes(dim.charAt(0).toUpperCase() + dim.slice(1))))
+                    .slice(0, 3);
+                setRecommendations(recommendedContent);
+            } else {
+                 setRecommendations(allContent.filter(item => item.featured && !item.deleted).slice(0, 3));
+            }
         }
-
-    }, [allContent]);
+        getRecs();
+        window.addEventListener('storage', getRecs);
+        return () => window.removeEventListener('storage', getRecs);
+    }, []);
     
     const handleTopicClick = (topic: string) => {
         router.push(`/content-hub?topics=${encodeURIComponent(topic)}`);
@@ -416,7 +453,7 @@ function RecommendationsTab() {
                     recommendations.map(item => <ContentHubCard key={item.id} item={item} onTopicClick={handleTopicClick} />)
                 ) : (
                     <div className="text-center text-muted-foreground p-4">
-                        <p>You’re doing great! New content will appear here when your check-ins suggest it.</p>
+                        <p>No recommendations right now. Explore the Content Hub to find something new!</p>
                     </div>
                 )}
             </CardContent>
@@ -429,25 +466,34 @@ function FavoritesTab() {
     const [isOnline, setIsOnline] = useState(new Date().getMinutes() % 2 === 0);
 
     useEffect(() => {
-        seedConsultants();
-        const allConsultants = getSession<Consultant[]>('discover.seed.v1') || [];
-        const user = authLocal.getCurrentUser();
-        const favoriteIds = user?.favorites.consultants || [];
+        const loadFavorites = () => {
+            seedConsultants();
+            const allConsultants = getSession<Consultant[]>('discover.seed.v1') || [];
+            const user = authLocal.getCurrentUser();
+            const favoriteIds = user?.favorites.consultants || [];
 
-        if (favoriteIds.length === 0) {
-            const demoFavorites = ["Aeliana Rose", "Seraphina Moon"]
-                .map(name => allConsultants.find(c => c.name === name))
-                .filter((c): c is Consultant => !!c);
-            setFavorites(demoFavorites);
-        } else {
-            setFavorites(allConsultants.filter(c => favoriteIds.includes(c.id)));
-        }
+            if (favoriteIds.length === 0) {
+                const demoFavorites = ["Aeliana Rose", "Seraphina Moon"]
+                    .map(name => allConsultants.find(c => c.name === name))
+                    .filter((c): c is Consultant => !!c);
+                setFavorites(demoFavorites);
+            } else {
+                setFavorites(allConsultants.filter(c => favoriteIds.includes(c.id)));
+            }
+        };
+
+        loadFavorites();
 
         const timer = setInterval(() => {
             setIsOnline(new Date().getMinutes() % 2 === 0);
         }, 60000);
+        
+        window.addEventListener('storage', loadFavorites);
 
-        return () => clearInterval(timer);
+        return () => {
+            clearInterval(timer)
+            window.removeEventListener('storage', loadFavorites);
+        };
     }, []);
 
     return (
@@ -456,21 +502,21 @@ function FavoritesTab() {
                 {favorites.length > 0 ? (
                     favorites.map((fav, index) => (
                         <div key={fav.id} className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
+                            <Link href={`/discover/consultant/${fav.slug}`} className="flex items-center gap-3 group">
                                 <Avatar>
                                     <AvatarImage src={fav.cover} />
                                     <AvatarFallback>{fav.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{fav.name}</p>
+                                    <p className="font-semibold group-hover:underline">{fav.name}</p>
                                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                         <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                                         {isOnline ? "Online" : "Offline"}
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                             <Button size="sm" asChild variant="outline">
-                                <Link href={`/discover/consultant/${fav.slug}`}>View</Link>
+                                <Link href={`/discover/consultant/${fav.slug}#availability-section`}>Schedule</Link>
                             </Button>
                         </div>
                     ))
@@ -498,4 +544,5 @@ const horoscopeData: { [key: string]: string } = {
     Aquarius: "Connect with your community. A group activity could spark a brilliant new idea or friendship.",
     Pisces: "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+
 
