@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ContentHubItem } from '@/lib/content-hub-seeder';
 import * as storage from '@/lib/storage';
-import type { Comment } from '@/lib/comments';
+import { Comment } from '@/lib/comments';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock, Eye, Calendar, BookOpen, Mic, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

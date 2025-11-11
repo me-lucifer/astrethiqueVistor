@@ -15,8 +15,6 @@ export interface Comment {
   createdAt: string;
 }
 
-export type CommentsStore = Record<string, Comment[]>;
-
 export function getComments(contentId: string): Comment[] {
   const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
   const users = storage.getUsers();
@@ -32,7 +30,7 @@ export function getComments(contentId: string): Comment[] {
       createdAt: c.createdAt,
       author: {
         id: author?.id || 'guest',
-        name: author?.name || 'Guest',
+        name: author ? (c.userId === 'deleted' ? '[deleted]' : author.name) : 'Guest',
         avatar: `https://i.pravatar.cc/40?u=${author?.id || 'guest'}`,
       }
     };
@@ -41,7 +39,7 @@ export function getComments(contentId: string): Comment[] {
   return enrichedComments;
 }
 
-export function addComment(contentId: string, text: string): Comment | null {
+export function addComment(contentId: string, text: string, itemType: 'article' | 'podcast'): Comment | null {
   const user = storage.getCurrentUser();
   if (!user) {
     return null;
@@ -52,7 +50,7 @@ export function addComment(contentId: string, text: string): Comment | null {
     id: storage.createId('comment'),
     userId: user.id,
     contentId: contentId,
-    type: 'article', // Assuming article for now, this could be dynamic
+    type: itemType,
     body: text,
     createdAt: new Date().toISOString(),
   };

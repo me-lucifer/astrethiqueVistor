@@ -92,6 +92,9 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
         }
         if(onToggleBookmark) {
             onToggleBookmark(item.id);
+            toast({
+                title: !item.bookmarked ? "Bookmarked!" : "Bookmark removed.",
+            });
         }
     }
 

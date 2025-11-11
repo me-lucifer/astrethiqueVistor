@@ -32,6 +32,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [user, setUser] = useState<storage.User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [intendedAction, setIntendedAction] = useState<(() => void) | null>(null);
 
   const checkUser = () => {
     const currentUser = storage.getCurrentUser();
@@ -59,21 +60,23 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   
   const onLoginSuccess = () => {
     checkUser();
-  }
-
-  const handleCommentAttempt = () => {
-    if (!user) {
-        setIsAuthModalOpen(true);
+    if (intendedAction) {
+      intendedAction();
+      setIntendedAction(null);
     }
   }
 
-  const onSubmit = (data: CommentFormData) => {
-    if (!user || !user.emailVerified) {
+  const handleSubmit = (data: CommentFormData) => {
+    if (!storage.isLoggedIn() || !user?.emailVerified) {
+        setIntendedAction(() => () => onSubmit(data));
         setIsAuthModalOpen(true);
         return;
     }
+    onSubmit(data);
+  }
+
+  const onSubmit = (data: CommentFormData) => {
     onAddComment(data.text);
-    storage.trackMetric('comments');
     form.reset();
   };
   
@@ -95,7 +98,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
         <div className="mb-8">
           {user && user.emailVerified ? (
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <div className='text-sm text-muted-foreground flex justify-between items-center'>
                     <span>Commenting as <span className="font-semibold text-foreground">{user.name}</span></span>
                     <button type="button" onClick={handleLogout} className="text-xs hover:underline">Sign out</button>
