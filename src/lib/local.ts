@@ -3,6 +3,7 @@
 
 import type { User } from './authLocal';
 import type { MoodLogEntry } from './mood-log';
+import { subDays, format } from 'date-fns';
 
 // --- Storage Abstraction ---
 
@@ -75,6 +76,40 @@ export function seedOnce(flagKey: string, seedFn: () => void): void {
     }
 }
 
+// --- INITIALIZATION ---
+export function initializeLocalStorage() {
+  seedOnce('ast_db_seeded_v1', () => {
+    // Seed Admin Config
+    setLocal('ast_admin_config', { detailedHoroscopeFeeEUR: 2.5 });
+
+    // Seed Guest Wallet
+    const existingWallet = getLocal<Wallet>(WALLET_KEY);
+    if (!existingWallet || isNaN(existingWallet.balanceEUR)) {
+      setLocal(WALLET_KEY, { balanceEUR: 5.00, history: [] });
+    }
+
+    // Seed Mood Log with historical data
+    const existingMoodLog = getLocal<MoodLogEntry[]>(MOOD_LOG_KEY);
+    if (!existingMoodLog || existingMoodLog.length === 0) {
+      const today = new Date();
+      const yesterday = subDays(today, 1);
+      const twoDaysAgo = subDays(today, 2);
+      const seedLog: MoodLogEntry[] = [
+        { dateISO: format(twoDaysAgo, 'yyyy-MM-dd'), money: 3, health: 4, work: 2, love: 5 },
+        { dateISO: format(yesterday, 'yyyy-MM-dd'), money: 4, health: 3, work: 3, love: 4 },
+      ];
+      setLocal(MOOD_LOG_KEY, seedLog);
+      setLocal(MOOD_META_KEY, { streak: 2, lastCheckIn: yesterday.toISOString() });
+    }
+    
+    // Guest Favorites (will be overridden by user favorites on login)
+    const existingGuestFavorites = getLocal(FAVORITES_KEY);
+    if (!existingGuestFavorites) {
+        setFavorites(['aeliana-rose', 'seraphina-moon']);
+    }
+
+  });
+}
 
 // --- Specific Data Accessors ---
 
@@ -96,7 +131,13 @@ export interface Wallet {
     }[];
 }
 const WALLET_KEY = 'ast_wallet';
-export const getWallet = (): Wallet | null => getLocal<Wallet>(WALLET_KEY);
+export const getWallet = (): Wallet | null => {
+    const wallet = getLocal<Wallet>(WALLET_KEY);
+    if (wallet && isNaN(wallet.balanceEUR)) {
+        return { ...wallet, balanceEUR: 0 };
+    }
+    return wallet;
+};
 export const setWallet = (wallet: Wallet) => {
     setLocal(WALLET_KEY, wallet);
     window.dispatchEvent(new Event('storage'));

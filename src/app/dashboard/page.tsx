@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ContentHubCard } from "@/components/content-hub/card";
 import * as authLocal from "@/lib/authLocal";
-import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal, Wallet, getMoodMeta, MoodMeta } from "@/lib/local";
+import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal, Wallet, getMoodMeta, MoodMeta, initializeLocalStorage } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame } from "lucide-react";
 import Link from "next/link";
@@ -63,6 +63,9 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
+        // Ensure data is seeded on first visit
+        initializeLocalStorage();
+        
         const currentUser = authLocal.getCurrentUser();
         if (!currentUser) {
           router.push('/login');
@@ -493,8 +496,8 @@ function FavoritesTab() {
                 setFavorites(allConsultants.filter(c => favoriteIds.includes(c.id)));
             } else {
                 // Seed with demo favorites if user has none
-                const demoFavorites = ["Aeliana Rose", "Seraphina Moon"]
-                    .map(name => allConsultants.find(c => c.name === name))
+                const demoFavorites = ["aeliana-rose", "seraphina-moon"]
+                    .map(id => allConsultants.find(c => c.id === id))
                     .filter((c): c is Consultant => !!c);
                 setFavorites(demoFavorites);
             }
