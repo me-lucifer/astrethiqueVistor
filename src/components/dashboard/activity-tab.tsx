@@ -5,7 +5,7 @@ import type { ActivityData, ActivityItem, ActivityReplay } from "@/lib/activity"
 import type { ActivityMeta } from "@/lib/activity";
 import { useState, useEffect, useCallback, useTransition } from "react";
 import Link from "next/link";
-import { formatDistanceToNow, isFuture, addMinutes, isToday, isTomorrow, isYesterday, differenceInMinutes } from "date-fns";
+import { formatDistanceToNow, isFuture, addMinutes, isToday, isTomorrow, isYesterday, differenceInMinutes, differenceInHours } from "date-fns";
 import * as ics from "ics";
 import { saveAs } from "file-saver";
 
@@ -97,16 +97,22 @@ interface ActivityRowUpcomingProps {
 function ActivityRowUpcoming({ item, onHide, onAddToCalendar }: ActivityRowUpcomingProps) {
     const { countdown, isJoinable } = useCountdown(item.startISO);
     const date = new Date(item.startISO);
+    const now = new Date();
+    const hoursUntilStart = differenceInHours(date, now);
 
     return (
-        <Card className="p-4 flex items-start gap-4 bg-card/50">
-            <Calendar className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
+        <Card className="p-4 flex items-start gap-4 bg-card/50 rounded-lg transition-transform hover:-translate-y-0.5 duration-150">
+            <Calendar className="h-5 w-5 text-primary mt-1 shrink-0" />
             <div className="flex-1 space-y-1">
                 <p className="font-semibold leading-tight">{item.title}</p>
                 <p className="text-xs text-muted-foreground">
                     {formatRelativeDate(date)} • {item.length} • Host: {item.host}
                 </p>
-                {!isJoinable && <Badge variant="outline" className="text-xs font-normal mt-1">Starts in {countdown}</Badge>}
+                <div className="flex gap-2 pt-1">
+                    {!isJoinable && <Badge variant="outline" className="text-xs font-normal">Starts in {countdown}</Badge>}
+                    {hoursUntilStart <= 1 && <Badge variant="secondary" className="bg-primary/20 text-primary-foreground">Starting soon</Badge>}
+                    {hoursUntilStart > 1 && hoursUntilStart <= 24 && <Badge variant="outline" className="font-normal text-xs">Soon</Badge>}
+                </div>
             </div>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
                 {isJoinable ? (
@@ -122,7 +128,7 @@ function ActivityRowUpcoming({ item, onHide, onAddToCalendar }: ActivityRowUpcom
                     </TooltipProvider>
                 )}
                 <div className="flex items-center">
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => onAddToCalendar(item)}><Download className="h-3 w-3 mr-1" />Add to calendar</Button>
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground" onClick={() => onAddToCalendar(item)}><Download className="h-3 w-3 mr-1" />Add to calendar</Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -146,8 +152,8 @@ interface ActivityRowReplayProps {
 function ActivityRowReplay({ item, isWatched, onWatchReplay, onMarkWatched, onHide }: ActivityRowReplayProps) {
     const date = new Date(item.recordedISO);
     return (
-        <Card className={cn("p-4 flex items-start gap-4 bg-card/50", isWatched && "opacity-60")}>
-            <VideoIcon className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
+        <Card className={cn("p-4 flex items-start gap-4 bg-card/50 rounded-lg transition-transform hover:-translate-y-0.5 duration-150", isWatched && "opacity-60")}>
+            <VideoIcon className="h-5 w-5 text-primary mt-1 shrink-0" />
             <div className="flex-1 space-y-1">
                 <p className="font-semibold leading-tight">{item.title}</p>
                 <p className="text-xs text-muted-foreground">
@@ -157,7 +163,7 @@ function ActivityRowReplay({ item, isWatched, onWatchReplay, onMarkWatched, onHi
             <div className="flex flex-col items-end gap-1.5 shrink-0">
                 <Button size="sm" onClick={() => onWatchReplay(item)}>Watch recording</Button>
                 <div className="flex items-center">
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild><Link href="/conferences">Details</Link></Button>
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground" asChild><Link href="/conferences">Details</Link></Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -185,7 +191,6 @@ export function ActivityTab() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [showAllReplays, setShowAllReplays] = useState(false);
-
 
   const processActivities = useCallback(() => {
     const data = getLocal<ActivityData>("ast.activity");
@@ -293,7 +298,7 @@ export function ActivityTab() {
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <h4 className="font-semibold text-sm">Upcoming</h4>
-                <Badge variant="secondary">{activities.upcoming.length}</Badge>
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">{activities.upcoming.length}</Badge>
               </div>
               <div className="space-y-2">
                 {visibleUpcoming.map((item) => (
@@ -319,7 +324,7 @@ export function ActivityTab() {
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <h4 className="font-semibold text-sm">Replays</h4>
-                <Badge variant="secondary">{activities.replays.length}</Badge>
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">{activities.replays.length}</Badge>
               </div>
               <div className="space-y-2">
                 {visibleReplays.map((item) => (
