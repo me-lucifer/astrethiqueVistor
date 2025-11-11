@@ -188,7 +188,10 @@ function WalletCard() {
     return (
         <GlassCard>
             <CardHeader>
-                <CardTitle>Wallet & Budget</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    Wallet & Budget
+                </CardTitle>
             </CardHeader>
             <CardContent>
                 <p className="text-3xl font-bold">Balance: €{(wallet.balanceEUR || 0).toFixed(2)}</p>
@@ -262,7 +265,10 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
     return (
         <GlassCard>
             <CardHeader>
-                <CardTitle>How do you feel right now?</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    How do you feel right now?
+                </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 {(['Money', 'Health', 'Work', 'Love'] as const).map(dim => (
@@ -274,7 +280,7 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
                             size={24} 
                             interactive
                             ariaLabel={`Rate your mood for ${dim}`}
-                            className="[&>svg:hover]:text-yellow-300 [&>svg:hover]:drop-shadow-[0_0_5px_rgba(252,211,77,0.7)]"
+                            className="[&>button>svg]:transition-all [&>button>svg:hover]:text-yellow-300 [&>button>svg:hover]:drop-shadow-[0_0_5px_rgba(252,211,77,0.7)]"
                         />
                     </div>
                 ))}
@@ -350,7 +356,10 @@ function HoroscopeCard({ user }: { user: authLocal.User | null }) {
             <GlassCard>
                 <CardHeader>
                     <CardTitle className="flex justify-between items-center">
-                        Daily Horoscope
+                        <span className="flex items-center gap-2">
+                            <Sparkles className="h-5 w-5 text-primary" />
+                            Daily Horoscope
+                        </span>
                         <Badge variant="outline">Free</Badge>
                     </CardTitle>
                 </CardHeader>
@@ -572,3 +581,4 @@ const horoscopeData: { [key: string]: string } = {
     Aquarius: "Connect with your community. A group activity could spark a brilliant new idea or friendship.",
     Pisces: "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+

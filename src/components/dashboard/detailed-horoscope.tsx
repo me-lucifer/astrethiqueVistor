@@ -9,7 +9,8 @@ import { getLocal, setLocal, getWallet, getAdminConfig, setWallet } from "@/lib/
 import { User } from "@/lib/authLocal";
 import { AddFundsModal } from "./add-funds-modal";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface AdminConfig {
     detailedHoroscopeFeeEUR: number;
@@ -203,7 +204,21 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
         <>
             <Accordion type="single" collapsible>
                 <AccordionItem value="detailed-horoscope">
-                    <AccordionTrigger>Detailed Horoscope (Paid)</AccordionTrigger>
+                    <AccordionTrigger>
+                        <span className="flex items-center gap-1.5">
+                            Detailed Horoscope (Paid)
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                        <Info className="h-4 w-4 text-muted-foreground" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Price is set by admin. In this prototype: €{config.detailedHoroscopeFeeEUR.toFixed(2)} per view/refresh.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </span>
+                    </AccordionTrigger>
                     <AccordionContent className="space-y-4">
                         <div className="flex justify-between items-center">
                             <p className="text-sm">Get a deeper, personalized reading for today.</p>
