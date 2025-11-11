@@ -4,7 +4,7 @@
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format, formatDistanceToNow, isToday, isYesterday, endOfMonth } from "date-fns";
+import { format, formatDistanceToNow, isToday, isYesterday, endOfMonth, getDaysInMonth, getDate } from "date-fns";
 
 // UI Component Imports
 import {
@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AnimatePresence, motion } from "framer-motion";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   Heart,
   Activity,
@@ -28,6 +29,10 @@ import {
   Wallet,
   Info,
   BadgeInfo,
+  ArrowDown,
+  AlertTriangle,
+  Receipt,
+  ArrowUp,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -43,7 +48,9 @@ import {
   setLocal,
   getMoodMeta,
   initializeLocalStorage,
+  getSpendLog,
   Wallet as WalletType,
+  SpendLogEntry,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -237,6 +244,11 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
   const spentThisMonth = spent_this_month_cents / 100;
   const budget = budget_cents / 100;
   const progress = budget_set && budget > 0 ? (spentThisMonth / budget) * 100 : 0;
+  const budgetRemaining = budget_set && budget > 0 ? budget - spentThisMonth : null;
+  const daysInMonth = getDaysInMonth(new Date());
+  const dayOfMonth = getDate(new Date());
+  const daysLeft = daysInMonth - dayOfMonth;
+
 
   let progressBarColor = "bg-success";
   if (progress > 90) {
@@ -261,19 +273,28 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-            <div className="flex justify-between text-sm text-muted-foreground mb-1">
-                <span>This month</span>
-                <span>€{spentThisMonth.toFixed(2)} / {budget_set && budget > 0 ? `€${budget.toFixed(2)}` : 'No budget'}</span>
-            </div>
-            <Progress value={progress} indicatorClassName={progressBarColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
-        </div>
+        {budget_set ? (
+          <div>
+              <div className="flex justify-between text-sm text-muted-foreground mb-1">
+                  <span>This month</span>
+                  <span>€{spentThisMonth.toFixed(2)} / €{budget.toFixed(2)}</span>
+              </div>
+              <Progress value={progress} indicatorClassName={progressBarColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
+              <div className="flex gap-2 mt-2">
+                {budgetRemaining !== null && <Badge variant="outline">Remaining: €{budgetRemaining.toFixed(2)}</Badge>}
+                <Badge variant="outline">Days left: {daysLeft}</Badge>
+              </div>
+          </div>
+        ) : (
+          <Card className="bg-primary/10 border-primary/20 text-center p-4">
+            <CardDescription className="text-foreground/90">Set a monthly budget to stay in control of your spending.</CardDescription>
+            <Button variant="link" onClick={onBudgetClick} className="mt-1">Set up now</Button>
+          </Card>
+        )}
          <div className="flex items-center gap-2">
             {budget_lock?.enabled ? (
                 <Badge variant="secondary">Budget Locked until {endOfMonthFormatted}</Badge>
-            ) : !budget_set ? (
-                 <Badge variant="outline">Budget not set</Badge>
-            ) : null }
+            ) : budget_set ? null : null }
 
              {budget_lock?.enabled && (
                 <TooltipProvider>
@@ -284,7 +305,7 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
                            </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                           <p>{budget_lock.emergency_used ? "Emergency top-up already used for this month." : "Add a small, one-time amount for emergencies."}</p>
+                           <p className="max-w-[200px]">{budget_lock.emergency_used ? "Emergency top-up already used for this month." : "A mindful pause. We’ll protect your wallet until month end. One emergency top-up available."}</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -295,9 +316,7 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
          <div className="flex items-center gap-2">
             <Button onClick={onTopUpClick}>Top up</Button>
             <Button variant="outline" onClick={onBudgetClick}>{budget_set ? 'Change budget' : 'Set budget'}</Button>
-            <Button variant="link" asChild className="text-xs text-muted-foreground">
-                <Link href="/account/wallet">History</Link>
-            </Button>
+            <HistoryDrawer />
         </div>
         <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 w-full">
             Spending uses wallet balance only. Locks reset monthly.
@@ -305,6 +324,89 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
       </CardFooter>
     </GlassCard>
   );
+}
+
+function HistoryDrawer() {
+  const [log, setLog] = useState<SpendLogEntry[]>([]);
+
+  const iconMap: { [key in SpendLogEntry['type']]: React.ElementType } = {
+    topup: ArrowDown,
+    emergency: AlertTriangle,
+    horoscope: Sparkles,
+    consultation: Receipt,
+    other: Wallet,
+  };
+
+  const colorMap: { [key in SpendLogEntry['type']]: string } = {
+    topup: "text-success",
+    emergency: "text-amber-500",
+    horoscope: "text-primary",
+    consultation: "text-destructive",
+    other: "text-muted-foreground",
+  }
+
+  const calculateRunningBalance = (spendLog: SpendLogEntry[], initialBalance: number): SpendLogEntry[] => {
+    let runningBalance = initialBalance;
+    const logWithBalance: SpendLogEntry[] = [];
+
+    // Iterate backwards to calculate running balance correctly
+    for (let i = spendLog.length - 1; i >= 0; i--) {
+        const entry = spendLog[i];
+        logWithBalance.unshift({ ...entry, runningBalance });
+        runningBalance -= entry.amount_cents;
+    }
+    return logWithBalance;
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      const spendLog = getSpendLog();
+      const currentBalance = getWallet().balance_cents;
+      const logWithRunningBalance = calculateRunningBalance(spendLog, currentBalance);
+      setLog(logWithRunningBalance);
+    }
+  };
+
+  return (
+    <Sheet onOpenChange={handleOpenChange}>
+      <SheetTrigger asChild>
+        <Button variant="link" className="text-xs text-muted-foreground">
+          History
+        </Button>
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Transaction History</SheetTitle>
+        </SheetHeader>
+        <div className="py-4 space-y-4">
+          {log.length > 0 ? log.map(entry => {
+            const Icon = iconMap[entry.type];
+            const color = colorMap[entry.type];
+            const amountIsPositive = entry.amount_cents > 0;
+            return (
+              <div key={entry.ts} className="flex items-center gap-4">
+                <div className={cn("p-2 rounded-full bg-muted", color)}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{entry.note}</p>
+                  <p className="text-xs text-muted-foreground">{format(new Date(entry.ts), "MMM dd, yyyy 'at' p")}</p>
+                </div>
+                <div className="text-right">
+                    <p className={cn("font-semibold text-sm", amountIsPositive ? "text-success" : "text-foreground")}>
+                      {amountIsPositive ? '+' : ''}{(entry.amount_cents / 100).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">€{(entry.runningBalance / 100).toFixed(2)}</p>
+                </div>
+              </div>
+            )
+          }) : (
+            <p className="text-center text-muted-foreground py-8">No transactions yet.</p>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
 }
 
 function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {

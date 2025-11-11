@@ -110,6 +110,7 @@ export interface SpendLogEntry {
     type: "consultation" | "horoscope" | "topup" | "emergency" | "other";
     amount_cents: number;
     note: string;
+    runningBalance: number;
 }
 
 const WALLET_KEY = 'ast_wallet';
@@ -213,14 +214,13 @@ export function spendFromWallet(amount_cents: number, note: string): boolean {
     setWallet(newWalletState);
 
     // Log the transaction
-    const spendLog = getLocal<SpendLogEntry[]>('ast_spend_log') || [];
-    const newLogEntry: SpendLogEntry = {
+    addSpendLogEntry({
         ts: new Date().toISOString(),
         type: "horoscope", // For now, this is the only spend type
         amount_cents: -amount_cents,
-        note: note
-    };
-    setLocal('ast_spend_log', [newLogEntry, ...spendLog]);
+        note: note,
+        runningBalance: 0, // This will be calculated on read
+    });
     
     return true;
 }
@@ -232,9 +232,10 @@ export const setBudgetProfile = (profile: BudgetProfile) => setLocal(BUDGET_PROF
 
 // --- Spend Log Helpers ---
 export const getSpendLog = (): SpendLogEntry[] => getLocal<SpendLogEntry[]>(SPEND_LOG_KEY) || [];
-export const addSpendLogEntry = (entry: SpendLogEntry) => {
+export const addSpendLogEntry = (entry: Omit<SpendLogEntry, 'runningBalance'>) => {
     const log = getSpendLog();
-    log.unshift(entry); // Add to the beginning
+    const newEntry = { ...entry, runningBalance: 0 };
+    log.unshift(newEntry); // Add to the beginning
     setLocal(SPEND_LOG_KEY, log);
 }
 
