@@ -85,7 +85,8 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!user) {
+        const currentUser = authLocal.getCurrentUser();
+        if (!currentUser) {
             setIntendedAction(() => () => toggleFavorite(e));
             setIsAuthModalOpen(true);
             return;
@@ -93,13 +94,16 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
         
         const newIsFavorite = !isFavorite;
         
-        const updatedUser = { ...user };
-        if (newIsFavorite) {
-            updatedUser.favorites.consultants = [...new Set([...updatedUser.favorites.consultants, consultant.id])];
-        } else {
-            updatedUser.favorites.consultants = updatedUser.favorites.consultants.filter(id => id !== consultant.id);
-        }
-        authLocal.updateUser(updatedUser);
+        const updatedFavorites = newIsFavorite
+            ? [...currentUser.favorites.consultants, consultant.id]
+            : currentUser.favorites.consultants.filter(id => id !== consultant.id);
+        
+        authLocal.updateUser(currentUser.id, {
+            favorites: {
+                ...currentUser.favorites,
+                consultants: updatedFavorites
+            }
+        });
 
         setIsFavorite(newIsFavorite);
 
@@ -117,7 +121,8 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
     const handleScheduleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-         if (!user) {
+        const currentUser = authLocal.getCurrentUser();
+        if (!currentUser) {
             setIntendedAction(() => () => router.push(`/discover/consultant/${consultant.slug}#availability-section`));
             setIsAuthModalOpen(true);
             return;
@@ -126,7 +131,8 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
     };
 
     const handleNotifyClick = () => {
-        if (!user) {
+        const currentUser = authLocal.getCurrentUser();
+        if (!currentUser) {
             setIntendedAction(() => handleNotifyClick);
             setIsAuthModalOpen(true);
             return;
@@ -147,7 +153,8 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
     };
     
     const handleStartNow = () => {
-        if (!user) {
+        const currentUser = authLocal.getCurrentUser();
+        if (!currentUser) {
             setIntendedAction(() => handleStartNow);
             setIsAuthModalOpen(true);
             return;

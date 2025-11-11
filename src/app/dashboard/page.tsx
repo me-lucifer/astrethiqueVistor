@@ -60,19 +60,17 @@ export default function DashboardPage() {
         const currentUser = authLocal.getCurrentUser();
         setUser(currentUser);
         if (!currentUser) {
-            toast({
-                title: "Authentication Required",
-                description: "Please sign in to access your dashboard.",
-            });
+            // The redirection/placeholder is handled in the return statement
         }
     };
 
     useEffect(() => {
         checkUser();
         setLoading(false);
-        window.addEventListener('storage', checkUser);
+        const handleStorageChange = () => checkUser();
+        window.addEventListener('storage', handleStorageChange);
         return () => {
-            window.removeEventListener('storage', checkUser);
+            window.removeEventListener('storage', handleStorageChange);
         };
     }, []);
 
@@ -87,7 +85,7 @@ export default function DashboardPage() {
                     title="Access Denied" 
                     description="Please log in to view your dashboard." 
                 />
-                <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={checkUser} />
+                <AuthModal isOpen={true} onOpenChange={setIsAuthModalOpen} onLoginSuccess={checkUser} />
             </>
         )
     }
@@ -372,8 +370,11 @@ function FavoritesTab() {
         const favoriteIds = user?.favorites.consultants || [];
 
         if (favoriteIds.length === 0) {
-            // Seed with demo favorites if none exist
-            setFavorites(allConsultants.slice(0, 2));
+            // Seed with demo favorites if none exist, based on specific names
+            const demoFavorites = ["Aeliana Rose", "Seraphina Moon"]
+                .map(name => allConsultants.find(c => c.name === name))
+                .filter((c): c is Consultant => !!c);
+            setFavorites(demoFavorites);
         } else {
             setFavorites(allConsultants.filter(c => favoriteIds.includes(c.id)));
         }

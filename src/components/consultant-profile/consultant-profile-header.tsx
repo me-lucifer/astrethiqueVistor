@@ -44,21 +44,24 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
     }
 
     const toggleFavorite = () => {
-        if (!user) {
+        const currentUser = authLocal.getCurrentUser();
+        if (!currentUser) {
             setIsAuthModalOpen(true);
             return;
         }
 
         const newIsFavorite = !isFavorite;
         
-        const updatedUser = { ...user };
-        if (newIsFavorite) {
-            updatedUser.favorites.consultants = [...new Set([...updatedUser.favorites.consultants, consultant.id])];
-        } else {
-            updatedUser.favorites.consultants = updatedUser.favorites.consultants.filter(id => id !== consultant.id);
-        }
+        const updatedFavorites = newIsFavorite
+            ? [...currentUser.favorites.consultants, consultant.id]
+            : currentUser.favorites.consultants.filter(id => id !== consultant.id);
         
-        authLocal.updateUser(updatedUser);
+        authLocal.updateUser(currentUser.id, { 
+            favorites: {
+                ...currentUser.favorites,
+                consultants: updatedFavorites
+            }
+        });
         
         setIsFavorite(newIsFavorite);
         window.dispatchEvent(new Event('storage'));
