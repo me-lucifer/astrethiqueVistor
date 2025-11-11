@@ -34,7 +34,7 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/t
 import { RsvpConfirmationModal } from "./rsvp-confirmation-modal";
 import { StartNowModal } from "./start-now-modal";
 import { AuthModal } from './auth-modal';
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { useToast } from "@/hooks/use-toast";
 
 interface Rsvp {
@@ -106,7 +106,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     const [selectedConference, setSelectedConference] = useState<Conference | null>(null);
     const [isRsvpModalOpen, setIsRsvpModalOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-    const [user, setUser] = useState<storage.User | null>(null);
+    const [user, setUser] = useState<authLocal.User | null>(null);
     const [intendedAction, setIntendedAction] = useState<(() => void) | null>(null);
 
     const [timeZone, setTimeZone] = useState<string>("");
@@ -127,7 +127,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
     });
 
     const checkUser = useCallback(() => {
-        setUser(storage.getCurrentUser());
+        setUser(authLocal.getCurrentUser());
     }, []);
 
     useEffect(() => {
