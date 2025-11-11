@@ -22,6 +22,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { getSession, setSession } from "@/lib/session";
 import { parseISO } from 'date-fns';
+import * as storage from '@/lib/storage';
+import { useToast } from "@/hooks/use-toast";
 
 const specialties = [
     { id: "Love", name: "Love", icon: Heart },
@@ -108,6 +110,7 @@ const INITIAL_VISIBLE_COUNT = 9;
 
 export function FeaturedConsultants({ initialQuery, showFilters = false }: { initialQuery?: string, showFilters?: boolean }) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
+    const { toast } = useToast();
 
     const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
     const [readingTypes, setReadingTypes] = useState<string[]>([]);
@@ -198,7 +201,9 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     }, [initialQuery])
 
     const filteredAndSortedConsultants = useMemo(() => {
-        const favorites = getSession<string[]>("discover.favorites.v1") || [];
+        const user = storage.getCurrentUser();
+        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+        const favorites = user ? (allFavorites[user.id]?.consultants || []) : [];
         
         let result = allConsultants;
 
@@ -335,6 +340,34 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     const handleClearAndApply = () => {
         handleResetFilters();
         setIsSheetOpen(false);
+    }
+
+    const handleSaveSearch = () => {
+        const user = storage.getCurrentUser();
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Please log in to save searches.' });
+            return;
+        }
+
+        const allPrefs = storage.getStorageItem<Record<string, any>>('ast_prefs') || {};
+        const userPrefs = allPrefs[user.id] || {};
+        
+        const savedSearches = userPrefs.savedSearches || [];
+        savedSearches.push({
+            type: 'consultant',
+            query: query,
+            filters: filters,
+            createdAt: new Date().toISOString()
+        });
+
+        userPrefs.savedSearches = savedSearches;
+        allPrefs[user.id] = userPrefs;
+        storage.setStorageItem('ast_prefs', allPrefs);
+        
+        toast({
+            title: "Search saved!",
+            description: "You can find your saved searches in your profile.",
+        });
     }
 
     const FilterControls = () => (
@@ -539,6 +572,10 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                                     ))}
                                 </SelectContent>
                             </Select>
+                            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSaveSearch}>
+                                <Star className="h-5 w-5" />
+                                <span className="sr-only">Save search</span>
+                            </Button>
                             {isDesktop && <Button variant="link" onClick={handleResetFilters} className="text-muted-foreground">Clear all</Button>}
                         </div>
                     </div>
@@ -563,7 +600,6 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                                     <ConsultantCard 
                                         key={consultant.id}
                                         consultant={consultant}
-                                        onStartNow={() => setIsStartNowModalOpen(true)}
                                     />
                                 ))}
                             </div>
@@ -590,5 +626,3 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         </TooltipProvider>
     );
 }
-
-    

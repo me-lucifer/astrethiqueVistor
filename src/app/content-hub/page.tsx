@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { seedContentHub, ContentHubItem } from '@/lib/content-hub-seeder';
-import { getLocal, setLocal } from '@/lib/local';
+import * as storage from '@/lib/storage';
 import { ContentHubCard } from '@/components/content-hub/card';
 import { ContentHubFilters } from '@/components/content-hub/filters';
 import { EmptyState } from '@/components/content-hub/empty-state';
@@ -39,10 +39,18 @@ function ContentHubContent() {
     const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
     const [authorFilter, setAuthorFilter] = useState<string | null>(searchParams.get('author'));
 
-    useEffect(() => {
+    const loadAllData = useCallback(() => {
         seedContentHub();
-        const items = getLocal<ContentHubItem[]>('ch_items') || [];
-        setAllItems(items);
+        const items = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
+        const user = storage.getCurrentUser();
+        const allFavorites = user ? (storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {})[user.id] : null;
+
+        const updatedItems = items.map(item => ({
+            ...item,
+            bookmarked: allFavorites?.content.includes(item.id) || false
+        }));
+
+        setAllItems(updatedItems);
 
         // Check for daily mood for personalization
         const dailyMood = getSession<DailyMood>("daily_mood");
@@ -55,6 +63,12 @@ function ContentHubContent() {
 
         setIsLoading(false);
     }, []);
+
+    useEffect(() => {
+        loadAllData();
+        window.addEventListener('storage_change', loadAllData);
+        return () => window.removeEventListener('storage_change', loadAllData);
+    }, [loadAllData]);
 
     const updateURL = useCallback(() => {
         const params = new URLSearchParams();
@@ -156,17 +170,27 @@ function ContentHubContent() {
             return item;
         });
         setAllItems(updatedItems);
-        setLocal('ch_items', updatedItems);
+        const originalItems = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
+        const updatedOriginalItems = originalItems.map(item => item.id === itemId ? {...item, likes: updatedItems.find(i => i.id === itemId)?.likes} : item);
+        storage.setStorageItem('ch_items', updatedOriginalItems);
     }
 
     const handleToggleBookmark = (itemId: string) => {
-        const updatedItems = allItems.map(item => {
-            if (item.id === itemId) {
-                return { ...item, bookmarked: !item.bookmarked };
-            }
-            return item;
-        });
-        setAllItems(updatedItems);
+        const user = storage.getCurrentUser();
+        if (!user) return; // Should be handled by card, but as a safeguard.
+
+        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+        const userFavorites = allFavorites[user.id] || { consultants: [], content: [], conferences: [] };
+
+        const isBookmarked = userFavorites.content.includes(itemId);
+        if (isBookmarked) {
+            userFavorites.content = userFavorites.content.filter(id => id !== itemId);
+        } else {
+            userFavorites.content.push(itemId);
+        }
+        allFavorites[user.id] = userFavorites;
+        storage.setStorageItem('ast_favorites', allFavorites);
+        window.dispatchEvent(new Event('storage_change'));
     }
     
     const handleSuggestedTopicClick = (topic: string) => {

@@ -59,8 +59,9 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
         const currentUser = storage.getCurrentUser();
         setUser(currentUser);
         if (currentUser) {
-            const favs = getSession<string[]>("discover.favorites.v1") || [];
-            setIsFavorite(favs.includes(consultant.id));
+            const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+            const userFavorites = allFavorites[currentUser.id];
+            setIsFavorite(userFavorites?.consultants.includes(consultant.id) || false);
         } else {
             setIsFavorite(false);
         }
@@ -92,16 +93,22 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
             return;
         }
         
-        const favs = getSession<string[]>("discover.favorites.v1") || [];
-        const newFavorites = !isFavorite
-            ? [...favs, consultant.id]
-            : favs.filter(id => id !== consultant.id);
+        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+        const userFavorites = allFavorites[user.id] || { consultants: [], content: [], conferences: [] };
         
-        setIsFavorite(!isFavorite);
-        setSession("discover.favorites.v1", newFavorites);
+        const newIsFavorite = !isFavorite;
+        if (newIsFavorite) {
+            userFavorites.consultants.push(consultant.id);
+        } else {
+            userFavorites.consultants = userFavorites.consultants.filter(id => id !== consultant.id);
+        }
+
+        allFavorites[user.id] = userFavorites;
+        storage.setStorageItem('ast_favorites', allFavorites);
+        setIsFavorite(newIsFavorite);
 
         toast({
-            title: !isFavorite ? "Added to your favorites" : "Removed from your favorites",
+            title: newIsFavorite ? "Added to your favorites" : "Removed from your favorites",
         });
     }
 
@@ -321,5 +328,3 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
         </TooltipProvider>
     );
 }
-
-    

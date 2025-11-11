@@ -14,6 +14,9 @@ import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import * as storage from '@/lib/storage';
+import { AuthModal } from '../auth-modal';
+import { useState } from 'react';
 
 type CardProps = {
     item: ContentHubItem;
@@ -56,6 +59,7 @@ function formatLength(item: ContentHubItem): string {
 export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike, onToggleBookmark }: CardProps) {
     const router = useRouter();
     const { toast } = useToast();
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const isArticle = item.type === 'article';
     const detailUrl = `/content-hub/${item.type}/${item.id}`;
 
@@ -70,17 +74,24 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
     const handleLikeClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        const user = storage.getCurrentUser();
+        if (!user) {
+            setIsAuthModalOpen(true);
+            return;
+        }
         if(onToggleLike) onToggleLike(item.id);
     }
 
     const handleBookmarkClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        const user = storage.getCurrentUser();
+        if (!user) {
+            setIsAuthModalOpen(true);
+            return;
+        }
         if(onToggleBookmark) {
             onToggleBookmark(item.id);
-            toast({
-                title: !item.bookmarked ? "Bookmarked!" : "Bookmark removed",
-            });
         }
     }
 
@@ -111,6 +122,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
     const metaAriaLabel = `Views: ${formatViews(item.views)}. Published on: ${formatDate(item.publishedAt)}. Length: ${formatLength(item)}.`;
 
     return (
+        <>
         <Card className="group overflow-hidden flex flex-col h-full bg-card/50 hover:bg-card transition-shadow duration-300">
             <div className="relative">
                 <Link href={detailUrl} aria-hidden="true" tabIndex={-1}>
@@ -232,5 +244,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
                 </div>
             </div>
         </Card>
+        <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={() => {}} />
+        </>
     );
 }

@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { getSession, setSession } from "@/lib/session";
+import * as storage from '@/lib/storage';
 import { Separator } from "../ui/separator";
 import { Checkbox } from "../ui/checkbox";
 
@@ -58,10 +58,31 @@ export function ContentHubFilters({
     const { toast } = useToast();
 
     const handleSaveSearch = () => {
+        const user = storage.getCurrentUser();
+        if (!user) {
+            toast({
+                variant: 'destructive',
+                title: "Please log in to save searches.",
+            });
+            return;
+        }
+
         const currentFilters = { query, topics, type, language, sort };
-        let savedSearches = getSession<any[]>("ch_saved_searches") || [];
-        savedSearches.push(currentFilters);
-        setSession("ch_saved_searches", savedSearches);
+        const allPrefs = storage.getStorageItem<Record<string, any>>('ast_prefs') || {};
+        const userPrefs = allPrefs[user.id] || {};
+        
+        const savedSearches = userPrefs.savedSearches || [];
+        savedSearches.push({
+            type: 'content',
+            query,
+            filters: { topics, type, language, sort },
+            createdAt: new Date().toISOString()
+        });
+
+        userPrefs.savedSearches = savedSearches;
+        allPrefs[user.id] = userPrefs;
+        storage.setStorageItem('ast_prefs', allPrefs);
+        
         toast({
             title: "Search saved",
             description: "You can find your saved searches in your profile.",

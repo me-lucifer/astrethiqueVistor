@@ -5,9 +5,8 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getLocal, setLocal } from '@/lib/local';
 import { ContentHubItem } from '@/lib/content-hub-seeder';
-import { addComment as addCommentToStore, getComments } from '@/lib/comments';
+import * as storage from '@/lib/storage';
 import type { Comment } from '@/lib/comments';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock, Eye, Calendar, BookOpen, Mic, MessageSquare } from 'lucide-react';
@@ -21,6 +20,7 @@ import { ContentHubCard } from '@/components/content-hub/card';
 import { CommentsSection } from '@/components/content-hub/comments-section';
 import { YouTubePlayer } from '@/components/content-hub/youtube-player';
 import { format } from 'date-fns';
+import { AuthModal } from '@/components/auth-modal';
 
 const Placeholder = () => (
     <div className="container py-12">
@@ -83,6 +83,7 @@ export default function ContentDetailPage() {
     const router = useRouter();
     const pathname = usePathname();
     const { toast } = useToast();
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     
     const [item, setItem] = useState<ContentHubItem | null>(null);
     const [allItems, setAllItems] = useState<ContentHubItem[]>([]);
@@ -94,24 +95,63 @@ export default function ContentDetailPage() {
         return (slug && slug.length === 2) ? slug[1] : null;
     }, [params.slug]);
 
+    const loadAllData = useCallback(() => {
+        if (!itemId) {
+            setLoading(false);
+            return;
+        };
 
-    useEffect(() => {
-        if (itemId) {
-            const storedItems = getLocal<ContentHubItem[]>('ch_items') || [];
-            setAllItems(storedItems);
-            const foundItem = storedItems.find(i => i.id === itemId);
+        const storedItems = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
+        const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
+        const user = storage.getCurrentUser();
+        const allFavorites = user ? (storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {})[user.id] : null;
 
-            if (foundItem && !foundItem.deleted) {
-                setItem(foundItem);
-                const itemComments = getComments(itemId);
-                setComments(itemComments);
-            } else {
-                setItem(null);
-                setComments([]);
-            }
+        const updatedItems = storedItems.map(i => {
+            const itemComments = allComments.filter(c => c.contentId === i.id);
+            return {
+                ...i,
+                liked: false, // Likes are ephemeral for now
+                bookmarked: allFavorites?.content.includes(i.id) || false,
+                commentCount: itemComments.length,
+            };
+        });
+
+        setAllItems(updatedItems);
+        const foundItem = updatedItems.find(i => i.id === itemId);
+
+        if (foundItem && !foundItem.deleted) {
+            setItem(foundItem);
+            const itemComments = allComments.filter(c => c.contentId === itemId);
+            const users = storage.getUsers();
+            
+            const enrichedComments: Comment[] = itemComments.map(c => {
+                const author = users.find(u => u.id === c.userId);
+                return {
+                    id: c.id,
+                    contentId: c.contentId,
+                    text: c.body,
+                    createdAt: c.createdAt,
+                    author: {
+                        id: author?.id || 'guest',
+                        name: author?.name || 'Guest',
+                        avatar: `https://i.pravatar.cc/40?u=${author?.id || 'guest'}`,
+                    }
+                };
+            }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+            setComments(enrichedComments);
+        } else {
+            setItem(null);
+            setComments([]);
         }
         setLoading(false);
     }, [itemId]);
+
+    useEffect(() => {
+        loadAllData();
+        window.addEventListener('storage_change', loadAllData);
+        return () => window.removeEventListener('storage_change', loadAllData);
+    }, [loadAllData]);
 
     const handleAuthorClick = (authorName: string) => {
         router.push(`/content-hub?author=${encodeURIComponent(authorName)}`);
@@ -121,12 +161,12 @@ export default function ContentDetailPage() {
         router.push(`/content-hub?topics=${encodeURIComponent(topic)}`);
     }
 
-    const updateItemInSession = useCallback((updatedItem: ContentHubItem) => {
-        const updatedItems = allItems.map(i => i.id === updatedItem.id ? updatedItem : i);
-        setAllItems(updatedItems);
-        setItem(updatedItem); // also update the local state for the detail page
-        setLocal('ch_items', updatedItems);
-    }, [allItems]);
+    const updateItemInLocalStorage = useCallback((updatedItem: ContentHubItem) => {
+        const currentItems = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
+        const updatedItems = currentItems.map(i => i.id === updatedItem.id ? updatedItem : i);
+        storage.setStorageItem('ch_items', updatedItems);
+        window.dispatchEvent(new Event('storage_change')); // Notify other components
+    }, []);
 
     const handleToggleLike = useCallback((itemIdToLike: string) => {
         let targetItem = item && item.id === itemIdToLike ? item : allItems.find(i => i.id === itemIdToLike);
@@ -135,44 +175,66 @@ export default function ContentDetailPage() {
         const newLiked = !targetItem.liked;
         const newLikes = newLiked ? (targetItem.likes ?? 0) + 1 : (targetItem.likes ?? 1) - 1;
         const updatedItem = { ...targetItem, liked: newLiked, likes: newLikes };
-        updateItemInSession(updatedItem);
-    }, [item, allItems, updateItemInSession]);
-
-    const handleToggleBookmark = useCallback((itemIdToBookmark: string) => {
-        let targetItem = item && item.id === itemIdToBookmark ? item : allItems.find(i => i.id === itemIdToBookmark);
-        if (!targetItem) return;
         
-        const updatedItem = { ...targetItem, bookmarked: !targetItem.bookmarked };
-        updateItemInSession(updatedItem);
-
-        toast({
-            title: updatedItem.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
-        });
-    }, [item, allItems, updateItemInSession, toast]);
-
-    const handleAddComment = useCallback((text: string) => {
-        if (!item) return;
-
-        const newComment = addCommentToStore(item.id, text);
-
-        if (newComment) {
-            setComments(prev => [newComment, ...prev]);
-
-            const updatedItem = { ...item, commentCount: (item.commentCount || 0) + 1 };
-            updateItemInSession(updatedItem);
-
-            toast({
-                title: "Comment posted",
-            });
-        } else {
-             toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: "You must be logged in to comment.",
-            });
+        // This is ephemeral for now, so we only update component state
+        setItem(updatedItem);
+        setAllItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i));
+        
+    }, [item, allItems]);
+    
+    const handleToggleBookmark = useCallback((itemIdToBookmark: string) => {
+        const user = storage.getCurrentUser();
+        if (!user) {
+            setIsAuthModalOpen(true);
+            return;
         }
 
-    }, [item, updateItemInSession, toast]);
+        const allFavorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+        const userFavorites = allFavorites[user.id] || { consultants: [], content: [], conferences: [] };
+        
+        const isBookmarked = userFavorites.content.includes(itemIdToBookmark);
+        
+        if (isBookmarked) {
+            userFavorites.content = userFavorites.content.filter(id => id !== itemIdToBookmark);
+        } else {
+            userFavorites.content.push(itemIdToBookmark);
+        }
+        
+        allFavorites[user.id] = userFavorites;
+        storage.setStorageItem('ast_favorites', allFavorites);
+        window.dispatchEvent(new Event('storage_change'));
+
+        toast({
+            title: !isBookmarked ? 'Bookmarked!' : 'Bookmark removed',
+        });
+    }, [toast]);
+
+    const handleAddComment = useCallback((text: string) => {
+        const user = storage.getCurrentUser();
+        if (!user || !user.emailVerified) {
+            setIsAuthModalOpen(true);
+            return;
+        }
+        if (!item) return;
+
+        const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
+        const newComment: storage.Comment = {
+            id: storage.createId('comment'),
+            userId: user.id,
+            contentId: item.id,
+            type: item.type,
+            body: text,
+            createdAt: new Date().toISOString(),
+        };
+        
+        storage.setStorageItem('ast_comments', [newComment, ...allComments]);
+        window.dispatchEvent(new Event('storage_change'));
+
+        toast({
+            title: "Comment posted",
+        });
+
+    }, [item, toast]);
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -393,6 +455,7 @@ export default function ContentDetailPage() {
                     {/* Sticky side rail content goes here */}
                 </aside>
             </div>
+            <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={loadAllData} />
         </div>
     );
 }
