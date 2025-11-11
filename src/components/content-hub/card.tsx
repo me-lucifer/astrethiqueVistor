@@ -103,6 +103,8 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
         e.stopPropagation();
         if (onTopicClick) {
             onTopicClick(topic);
+        } else {
+            router.push(`/content-hub?topics=${encodeURIComponent(topic)}`);
         }
     };
     

@@ -20,6 +20,7 @@ import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
 import { getSession } from "@/lib/session";
 import { ZodiacSignModal } from "@/components/dashboard/zodiac-sign-modal";
 import { DetailedHoroscope } from "@/components/dashboard/detailed-horoscope";
+import { useRouter } from 'next/navigation';
 
 
 interface MoodLogEntry {
@@ -243,6 +244,7 @@ function ActivityTab() {
 function RecommendationsTab() {
     const [recommendations, setRecommendations] = useState<ContentHubItem[]>([]);
     const [allContent, setAllContent] = useState<ContentHubItem[]>([]);
+    const router = useRouter();
 
     useEffect(() => {
         seedContentHub();
@@ -271,12 +273,16 @@ function RecommendationsTab() {
 
     }, [allContent]);
     
+    const handleTopicClick = (topic: string) => {
+        router.push(`/content-hub?topics=${encodeURIComponent(topic)}`);
+    };
+
     return (
         <Card>
             <CardHeader><CardTitle>Personalized Content</CardTitle></CardHeader>
             <CardContent className="space-y-4">
                 {recommendations.length > 0 ? (
-                    recommendations.map(item => <ContentHubCard key={item.id} item={item} />)
+                    recommendations.map(item => <ContentHubCard key={item.id} item={item} onTopicClick={handleTopicClick} />)
                 ) : (
                     <div className="text-center text-muted-foreground p-4">
                         <p>You’re doing great! New content will appear here when your check-ins suggest it.</p>
