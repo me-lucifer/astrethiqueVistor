@@ -57,12 +57,15 @@ import {
   getWallet,
   getMoodLog,
   setLocal,
+  getLocal,
   initializeLocalStorage,
   getSpendLog,
   Wallet as WalletType,
   SpendLogEntry,
   addSpendLogEntry,
   spendFromWallet,
+  getMoodMeta,
+  EMERGENCY_TOPUP_LIMIT_EUR
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -77,6 +80,10 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ActivityTab } from "@/components/dashboard/activity-tab";
 import { BudgetWizardModal } from "@/components/budget/budget-wizard-modal";
+import { TopUpModal } from "@/components/dashboard/top-up-modal";
+import { EmergencyTopUpModal } from "@/components/dashboard/emergency-top-up-modal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+
 
 
 // Type Imports
@@ -220,6 +227,14 @@ export default function DashboardPage() {
 // Sub-components for the Dashboard
 function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [wallet, setWallet] = useState<WalletType | null>(null);
+  const [isTopUpOpen, setIsTopUpOpen] = useState(false);
+  const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isDev, setIsDev] = useState(false);
+
+  useEffect(() => {
+    setIsDev(process.env.NODE_ENV === 'development');
+  }, []);
 
   const fetchWalletData = useCallback(() => {
     setWallet(getWallet());
@@ -231,6 +246,31 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
+  const handleDemoAction = (action: 'seed' | 'lock' | 'reset') => {
+    let wallet = getWallet();
+    switch (action) {
+        case 'seed':
+            wallet = {...wallet, balance_cents: 1500, budget_cents: 3000, budget_set: true };
+            break;
+        case 'lock':
+             wallet = {...wallet, budget_lock: { enabled: true, until: endOfMonth(new Date()).toISOString(), emergency_used: false }};
+            break;
+        case 'reset':
+             wallet = {...wallet, spent_this_month_cents: 0, month_key: format(new Date(), 'yyyy-MM'), budget_lock: { enabled: false, until: null, emergency_used: false }};
+            break;
+    }
+    setWallet(wallet);
+    fetchWalletData(); // re-fetch to update UI
+  }
+  
+  const handleTopUpClick = () => {
+    if(!wallet?.budget_set) {
+      onBudgetClick();
+    } else {
+      setIsTopUpOpen(true);
+    }
+  }
+
   if (!wallet) {
     return (
       <GlassCard>
@@ -241,57 +281,139 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     );
   }
 
-  const { balance_cents = 0, spent_this_month_cents, budget_cents, budget_set } = wallet;
+  const { balance_cents = 0, spent_this_month_cents = 0, budget_cents, budget_set, budget_lock } = wallet;
   const spentThisMonth = spent_this_month_cents / 100;
   const budget = budget_cents / 100;
+  const remaining = budget - spentThisMonth;
   const progress = budget_set && budget > 0 ? (spentThisMonth / budget) * 100 : 0;
+  const daysInMonth = getDaysInMonth(new Date());
+  const daysLeft = daysInMonth - getDate(new Date());
+
+  const progressColor = progress > 80 ? "bg-destructive" : progress > 50 ? "bg-amber-500" : "bg-success";
   
   return (
-    <GlassCard>
-      <CardHeader>
-        <div className="flex justify-between items-center">
+    <>
+      <GlassCard>
+        <CardHeader>
+          <div className="flex justify-between items-center">
             <CardTitle className="flex items-center gap-2">
               <Wallet className="h-5 w-5 text-primary" />
               Wallet & Budget
             </CardTitle>
-            <p className="text-xl font-bold">
-              Balance: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(balance_cents / 100)}
-            </p>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {budget_set ? (
-          <div>
-              <div className="flex justify-between text-sm text-muted-foreground mb-1">
-                  <span>This month</span>
-                  <span>{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(spentThisMonth)} / {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(budget)}</span>
-              </div>
-              <Progress value={progress} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
+            <div className="flex items-center gap-1">
+                <Badge variant="outline" className="text-lg font-bold">
+                    Balance: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(balance_cents / 100)}
+                </Badge>
+                {isDev && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4"/></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDemoAction('reset')}>Reset Month</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+            </div>
           </div>
-        ) : (
-          <Card className="bg-primary/10 border-primary/20 text-center p-4">
-            <CardDescription className="text-foreground/90">Set a monthly budget to stay in control of your spending.</CardDescription>
-            <Button variant="link" onClick={onBudgetClick} className="mt-1">Set up now</Button>
-          </Card>
-        )}
-      </CardContent>
-      <CardFooter>
-        <p className="text-xs text-muted-foreground">
-            Spending uses wallet balance only. Budgets reset monthly.
-        </p>
-      </CardFooter>
-    </GlassCard>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {budget_set ? (
+            <div>
+              <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
+                <span>This month</span>
+                {budget_lock.enabled ? (
+                    <Badge variant="secondary" className="gap-1.5"><Zap className="h-3 w-3 text-amber-500" /> Locked</Badge>
+                ) : (
+                    <span>{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(spentThisMonth)} / {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(budget)}</span>
+                )}
+              </div>
+              <Progress value={progress} indicatorClassName={progressColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
+               <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                   <Badge variant="outline" className="font-normal">Remaining: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(remaining)}</Badge>
+                   <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
+               </div>
+            </div>
+          ) : (
+             <Card className="bg-primary/10 border-primary/20 text-center p-4">
+               <CardDescription className="text-foreground/90">Set a monthly budget to stay in control of your spending.</CardDescription>
+               <Button variant="link" onClick={onBudgetClick} className="mt-1">Set up now</Button>
+             </Card>
+          )}
+        </CardContent>
+        <CardFooter className="flex justify-between items-center">
+          <div className="flex gap-2">
+              <Button onClick={handleTopUpClick} size="sm">Top up</Button>
+              <Button onClick={onBudgetClick} variant="outline" size="sm">Change budget</Button>
+              <HistoryDrawer />
+          </div>
+          {budget_lock.enabled ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0}>
+                     <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={budget_lock.emergency_used}>
+                        <Zap className="h-4 w-4"/> Emergency
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {budget_lock.emergency_used ? <p>Emergency top-up already used for this period.</p> : <p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p>}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+             <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="flex items-center space-x-2">
+                            <Switch id="budget-lock-cta" />
+                            <Label htmlFor="budget-lock-cta" className="text-xs text-muted-foreground cursor-pointer">Lock budget</Label>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="max-w-xs">A mindful pause. We’ll protect your wallet until month end. One emergency top-up available.</p>
+                    </TooltipContent>
+                </Tooltip>
+             </TooltipProvider>
+          )}
+        </CardFooter>
+      </GlassCard>
+      <TopUpModal isOpen={isTopUpOpen} onOpenChange={setIsTopUpOpen} />
+      <EmergencyTopUpModal isOpen={isEmergencyTopUpOpen} onOpenChange={setIsEmergencyTopUpOpen} />
+    </>
   );
 }
+
 
 function HistoryDrawer() {
   const [log, setLog] = useState<SpendLogEntry[]>([]);
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
-      setLog(getSpendLog() as SpendLogEntry[]);
+        let runningBalance = getWallet().balance_cents;
+        const rawLog = getSpendLog();
+        const processedLog: SpendLogEntry[] = [];
+
+        rawLog.forEach(entry => {
+            processedLog.push({ ...entry, runningBalance });
+            const amount = entry.type === 'topup' ? -entry.amount_cents : Math.abs(entry.amount_cents);
+            runningBalance += amount;
+        });
+
+        setLog(processedLog);
     }
   };
+
+  const iconMap: Record<SpendLogEntry['type'], React.ReactNode> = {
+    topup: <ArrowUp className="h-4 w-4 text-success" />,
+    emergency: <Zap className="h-4 w-4 text-amber-500" />,
+    horoscope: <StarIcon className="h-4 w-4 text-primary" />,
+    consultation: <Receipt className="h-4 w-4 text-muted-foreground" />,
+    other: <Info className="h-4 w-4 text-muted-foreground" />,
+  }
 
   return (
     <Sheet onOpenChange={handleOpenChange}>
@@ -305,18 +427,39 @@ function HistoryDrawer() {
           <SheetTitle>Transaction History</SheetTitle>
         </SheetHeader>
         <div className="py-4 space-y-4">
-          {log.length > 0 ? log.map(entry => (
-            <div key={entry.ts}>
-              <p>{entry.note}: {entry.amount_cents / 100}</p>
+          {log.length > 0 ? (
+            <div className="space-y-4">
+                {log.map(entry => (
+                <div key={entry.ts} className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        {iconMap[entry.type]}
+                        <div>
+                            <p className="font-medium text-sm">{entry.note}</p>
+                            <p className="text-xs text-muted-foreground">{format(new Date(entry.ts), "MMM dd, yyyy")}</p>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                       <p className={cn("font-semibold text-sm", entry.amount_cents > 0 ? 'text-success' : 'text-foreground')}>
+                            {entry.amount_cents > 0 ? '+' : ''}{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(entry.amount_cents / 100)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            Bal: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(entry.runningBalance / 100)}
+                        </p>
+                    </div>
+                </div>
+            ))}
             </div>
-          )) : (
-            <p>No transactions yet.</p>
+          ) : (
+            <div className="text-center py-10 text-muted-foreground">
+                <p>No transactions yet.</p>
+            </div>
           )}
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }
+
 
 function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
   type Ratings = { money: number; health: number; work: number; love: number };
@@ -485,6 +628,9 @@ function QuickTrends() {
 
 function HoroscopeCard({ user }: { user: authLocal.User | null }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLockModalOpen, setIsLockModalOpen] = useState(false);
+  const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
+
 
   const handleZodiacSave = (sign: authLocal.User["zodiacSign"]) => {
     if (user) {
@@ -526,7 +672,11 @@ function HoroscopeCard({ user }: { user: authLocal.User | null }) {
             </div>
           )}
           <div className="mt-6 border-t pt-4">
-            <DetailedHoroscope user={user} />
+            <DetailedHoroscope 
+              user={user} 
+              onLockError={() => setIsLockModalOpen(true)} 
+              onEmergencyTopUpNeeded={() => setIsEmergencyTopUpOpen(true)} 
+            />
           </div>
         </CardContent>
       </GlassCard>
@@ -536,9 +686,26 @@ function HoroscopeCard({ user }: { user: authLocal.User | null }) {
         onSave={handleZodiacSave}
         currentSign={user?.zodiacSign}
       />
+      <Dialog open={isLockModalOpen} onOpenChange={setIsLockModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Budget Locked</DialogTitle>
+            <DialogDescription>
+              Your budget is locked. You can't make this purchase now.
+              Would you like to use your one-time emergency top-up?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsLockModalOpen(false)}>Cancel</Button>
+            <Button onClick={() => { setIsLockModalOpen(false); setIsEmergencyTopUpOpen(true); }}>Use Emergency Funds</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <EmergencyTopUpModal isOpen={isEmergencyTopUpOpen} onOpenChange={setIsEmergencyTopUpOpen} />
     </>
   );
 }
+
 
 function SidebarTabs() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -786,3 +953,4 @@ const horoscopeData: { [key: string]: string } = {
 
 
     
+

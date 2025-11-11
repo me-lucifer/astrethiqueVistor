@@ -130,7 +130,7 @@ ${mainText}
 };
 
 
-export function DetailedHoroscope({ user }: { user: User | null }) {
+export function DetailedHoroscope({ user, onLockError, onEmergencyTopUpNeeded }: { user: User | null, onLockError: () => void, onEmergencyTopUpNeeded: () => void }) {
     const [horoscope, setHoroscope] = useState<DetailedHoroscopeData | null>(null);
     const [config, setConfig] = useState<AdminConfig | null>(null);
     const [isFundsModalOpen, setIsFundsModalOpen] = useState(false);
@@ -161,10 +161,12 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
             const wasSpent = spendFromWallet(feeCents, "horoscope", `Detailed horoscope for ${user.zodiacSign}`);
             
             if (!wasSpent) {
-                // spendFromWallet returns false if funds are insufficient or budget is locked.
-                // We'll assume for now it's a funds issue and open the modal.
-                // A more robust solution might have spendFromWallet return a specific reason.
-                setIsFundsModalOpen(true);
+                const wallet = getWallet();
+                if(wallet.budget_lock.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
+                    onLockError();
+                } else {
+                    setIsFundsModalOpen(true);
+                }
                 return;
             }
             
