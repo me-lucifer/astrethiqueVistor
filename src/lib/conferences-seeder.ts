@@ -2,7 +2,7 @@
 "use client";
 
 import { setLocal } from "@/lib/local";
-import { addDays, addMinutes, subMinutes, addHours } from "date-fns";
+import { addDays, addMinutes, subMinutes, addHours, subDays } from "date-fns";
 
 export interface Conference {
   id: string;
@@ -78,6 +78,7 @@ const createConference = (id: number): Conference => {
     const now = new Date();
     let date: Date;
     const title = conferenceTitles[(id-1) % conferenceTitles.length];
+    let recordingAvailable = false;
 
     switch(id) {
         case 1: // Starting in 5 minutes
@@ -86,8 +87,9 @@ const createConference = (id: number): Conference => {
         case 2: // Today
             date = addHours(now, 3);
             break;
-        case 3: // This week
-            date = addDays(now, 3);
+        case 3: // Yesterday, with replay
+            date = subDays(now, 1);
+            recordingAvailable = true;
             break;
         case 4: // This week
             date = addDays(now, 5);
@@ -134,12 +136,18 @@ const createConference = (id: number): Conference => {
             { question: "How do I join the session?", answer: "A unique link to join the virtual conference room will be sent to your email address 1 hour before the event begins. Please check your spam folder if you don't see it." },
             { question: "What is the cancellation policy?", answer: "You can receive a full refund up to 24 hours before the conference starts. Within 24 hours, tickets are non-refundable but can be transferred to a friend." }
         ],
-        recordingAvailable: Math.random() > 0.5,
+        recordingAvailable: recordingAvailable,
     }
 };
 
 export const seedConferences = () => {
   const conferences: Conference[] = Array.from({ length: 12 }, (_, i) => createConference(i + 1));
   setLocal("conferences", conferences);
-  setLocal("waitlist", []);
+
+  // Seed some RSVPs for the demo user
+  const demoRsvps = [
+      { eventId: "1", title: conferences[0].title, dateISO: conferences[0].dateISO, type: 'conference', remind24h: true, remind1h: true, remind10m: true }, // Upcoming
+      { eventId: "3", title: conferences[2].title, dateISO: conferences[2].dateISO, type: 'conference', remind24h: true, remind1h: true, remind10m: true }, // Past with replay
+  ];
+  setLocal("rsvps", demoRsvps);
 };

@@ -11,9 +11,9 @@ import { ContentHubCard } from "@/components/content-hub/card";
 import * as authLocal from "@/lib/authLocal";
 import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal, Wallet, getMoodMeta, MoodMeta, initializeLocalStorage } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame } from "lucide-react";
+import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame, Calendar, Video as VideoIcon } from "lucide-react";
 import Link from "next/link";
-import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
+import { format, formatDistanceToNow, isToday, isYesterday, isPast, isFuture } from 'date-fns';
 import { ContentHubItem, seedContentHub } from "@/lib/content-hub-seeder";
 import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
 import { getSession } from "@/lib/session";
@@ -25,6 +25,7 @@ import { AuthModal } from "@/components/auth-modal";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { StarRating } from "@/components/star-rating";
+import { Conference } from "@/lib/conferences-seeder";
 
 const Starfield = () => (
   <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -432,11 +433,81 @@ function SidebarTabs() {
     )
 }
 
+interface ActivityItem {
+    id: string;
+    type: 'upcoming_conference' | 'replay_available' | 'appointment';
+    title: string;
+    description: string;
+    date: Date;
+    cta: {
+        label: string;
+        href: string;
+    };
+    icon: React.ElementType;
+}
+
 function ActivityTab() {
+    const [activities, setActivities] = useState<ActivityItem[]>([]);
+
+    useEffect(() => {
+        const rsvps = getLocal<any[]>('rsvps') || [];
+        const allConferences = getLocal<Conference[]>('conferences') || [];
+
+        const upcoming = rsvps
+            .map(rsvp => allConferences.find(c => c.id === rsvp.eventId))
+            .filter((c): c is Conference => !!c && isFuture(new Date(c.dateISO)))
+            .map(c => ({
+                id: c.id,
+                type: 'upcoming_conference' as const,
+                title: `Upcoming: ${c.title}`,
+                description: format(new Date(c.dateISO), 'MMM d, yyyy @ h:mm a'),
+                date: new Date(c.dateISO),
+                cta: { label: 'Join', href: `/conferences/${c.slug}`},
+                icon: Calendar
+            }));
+
+        const replays = rsvps
+            .map(rsvp => allConferences.find(c => c.id === rsvp.eventId))
+            .filter((c): c is Conference => !!c && isPast(new Date(c.dateISO)) && c.recordingAvailable)
+            .map(c => ({
+                id: c.id,
+                type: 'replay_available' as const,
+                title: `Replay available: ${c.title}`,
+                description: `Ended ${formatDistanceToNow(new Date(c.dateISO), { addSuffix: true })}`,
+                date: new Date(c.dateISO),
+                cta: { label: 'Watch recording', href: `/conferences/${c.slug}`},
+                icon: VideoIcon
+            }));
+        
+        const combined = [...upcoming, ...replays]
+            .sort((a,b) => b.date.getTime() - a.date.getTime());
+
+        setActivities(combined);
+    }, []);
+
     return (
         <Card>
             <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground text-center">No recent activity yet.</p>
+                {activities.length > 0 ? (
+                    <div className="space-y-4">
+                        {activities.map(activity => (
+                            <div key={activity.id} className="flex items-center justify-between gap-4">
+                                <div className="flex items-start gap-3">
+                                    <activity.icon className="h-4 w-4 text-muted-foreground mt-1" />
+                                    <div className="text-sm">
+                                        <p className="font-medium">{activity.title}</p>
+                                        <p className="text-xs text-muted-foreground">{activity.description}</p>
+                                    </div>
+                                </div>
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={activity.cta.href}>{activity.cta.label}</Link>
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center">No recent activity yet.</p>
+                )}
             </CardContent>
         </Card>
     );
@@ -516,7 +587,7 @@ function FavoritesTab() {
             } else {
                 // Seed with demo favorites if user has none
                 const demoFavorites = ["aeliana-rose", "seraphina-moon"]
-                    .map(id => allConsultants.find(c => c.id === id))
+                    .map(id => allConsultants.find(c => c.slug === id))
                     .filter((c): c is Consultant => !!c);
                 setFavorites(demoFavorites);
             }
