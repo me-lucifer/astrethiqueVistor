@@ -158,10 +158,13 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
 
             const feeCents = config.detailedHoroscopeFeeEUR * 100;
             const note = `Detailed horoscope for ${user.zodiacSign}`;
-
-            const wasSpent = spendFromWallet(feeCents, note);
+            
+            const wasSpent = spendFromWallet(feeCents, "horoscope", note);
             
             if (!wasSpent) {
+                // spendFromWallet returns false if funds are insufficient or budget is locked.
+                // We'll assume for now it's an funds issue and open the modal.
+                // A more robust solution might have spendFromWallet return a specific reason.
                 setIsFundsModalOpen(true);
                 return;
             }

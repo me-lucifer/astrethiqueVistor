@@ -196,16 +196,21 @@ export const setWallet = (wallet: Wallet) => {
     window.dispatchEvent(new Event('storage'));
 }
 
-export function spendFromWallet(amount_cents: number, note: string): boolean {
+export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string, requireUnlocked = true): boolean {
     const wallet = getWallet();
+
+    if (requireUnlocked && wallet.budget_lock?.enabled) {
+        console.warn("Budget is locked. Transaction blocked.");
+        // Here we would trigger the modal. For now, we just block.
+        // In the UI component, we'll check this return value.
+        return false;
+    }
     
-    // Check for sufficient balance
     if (wallet.balance_cents < amount_cents) {
         console.warn("Insufficient funds.");
         return false;
     }
 
-    // Deduct fee and update wallet
     const newWalletState: Wallet = {
         ...wallet,
         balance_cents: wallet.balance_cents - amount_cents,
@@ -213,13 +218,11 @@ export function spendFromWallet(amount_cents: number, note: string): boolean {
     };
     setWallet(newWalletState);
 
-    // Log the transaction
     addSpendLogEntry({
         ts: new Date().toISOString(),
-        type: "horoscope", // For now, this is the only spend type
+        type: type,
         amount_cents: -amount_cents,
         note: note,
-        runningBalance: 0, // This will be calculated on read
     });
     
     return true;

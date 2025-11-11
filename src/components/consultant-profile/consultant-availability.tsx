@@ -12,6 +12,9 @@ import { StartNowModal } from '../start-now-modal';
 import { getSession, setSession } from '@/lib/session';
 import { AuthModal } from '../auth-modal';
 import * as authLocal from '@/lib/authLocal';
+import { getWallet } from '@/lib/local';
+import { BudgetWizardModal } from '../budget/budget-wizard-modal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -23,6 +26,8 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const router = useRouter();
   const [selectedMode, setSelectedMode] = useState('chat');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+  const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
   const { toast } = useToast();
   const [user, setUser] = useState<authLocal.User | null>(null);
@@ -76,6 +81,18 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
           setIsAuthModalOpen(true);
           return;
       }
+      
+      const wallet = getWallet();
+      if (!wallet.budget_set) {
+          setIsBudgetModalOpen(true);
+          return;
+      }
+
+      if (wallet.budget_lock?.enabled) {
+          setIsLockModalOpen(true);
+          return;
+      }
+
       toast({
         title: 'Starting Session...',
         description: `Connecting you for a ${selectedMode} session with ${consultant.name}.`,
@@ -169,9 +186,24 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
       </Card>
       
       <AuthModal isOpen={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} onLoginSuccess={onLoginSuccess} />
+      <BudgetWizardModal isOpen={isBudgetModalOpen} onOpenChange={setIsBudgetModalOpen} />
+      
+      <Dialog open={isLockModalOpen} onOpenChange={setIsLockModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Budget Locked</DialogTitle>
+            <DialogDescription>
+              Your budget for this month is locked. You can schedule future sessions but cannot start a new one right now.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Got it</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
     </div>
   );
 }
-
-    
