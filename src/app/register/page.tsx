@@ -8,7 +8,7 @@ import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Gem, LogIn, UserPlus, User, Mask, Info } from "lucide-react";
+import { Gem, LogIn, UserPlus, User, Shield, Info } from "lucide-react";
 import * as authLocal from "@/lib/authLocal";
 import { useToast } from "@/hooks/use-toast";
 
@@ -296,7 +296,7 @@ export default function RegisterPage() {
                                                 </FormControl>
                                                 <Label htmlFor="pseudonym" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'pseudonym' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50', !isPseudonymValid && 'opacity-50 cursor-not-allowed')}>
                                                     <div className="flex items-center gap-2 font-semibold">
-                                                        <Mask className="w-4 h-4" />
+                                                        <Shield className="w-4 h-4" />
                                                         Pseudonym (recommended)
                                                     </div>
                                                     <span className="text-sm font-normal text-muted-foreground mt-1">Use your pseudonym everywhere.</span>
