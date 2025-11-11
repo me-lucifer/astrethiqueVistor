@@ -36,7 +36,16 @@ const PasswordStrength = ({ password = "" }: { password?: string }) => {
 
 
   return (
-    <div className="space-y-1">
+    <div 
+        className="space-y-1"
+        role="meter"
+        aria-live="polite"
+        aria-label={`Password strength: ${strengthText}`}
+        aria-valuemin={0}
+        aria-valuemax={4}
+        aria-valuenow={strength}
+        aria-valuetext={strengthText}
+    >
       <Progress value={strengthValue} indicatorClassName={indicatorColor} />
       <span className="text-xs text-muted-foreground">{strengthText}</span>
     </div>

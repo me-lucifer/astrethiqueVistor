@@ -108,6 +108,23 @@ export default function RegisterPage() {
             }
         });
     }
+
+    const onInvalidSubmit = (errors: any) => {
+        toast({
+          variant: "destructive",
+          title: "Please fix the errors highlighted on the form.",
+        });
+        const firstErrorField = Object.keys(errors)[0];
+        if(firstErrorField) {
+            try {
+                const element = document.getElementsByName(firstErrorField)[0];
+                element?.focus({ preventScroll: true });
+                element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (e) {
+                console.warn('Could not focus on invalid field:', firstErrorField)
+            }
+        }
+    };
     
     const heroImage = PlaceHolderImages.find(p => p.id === 'hero-background');
     const watchedPassword = form.watch("password");
@@ -197,7 +214,7 @@ export default function RegisterPage() {
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 bg-card text-muted-foreground text-xs">OR</div>
                             </div>
                             <Form {...form}>
-                            <form onSubmit={form.handleSubmit(handleCreateAccount)} className="space-y-4">
+                            <form onSubmit={form.handleSubmit(handleCreateAccount, onInvalidSubmit)} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                      <FormField control={form.control} name="firstName" render={({ field }) => (
                                         <FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="Your first name" {...field} /></FormControl><FormMessage /></FormItem>
@@ -228,7 +245,7 @@ export default function RegisterPage() {
                                 </div>
 
                                 <FormField control={form.control} name="agreeToTerms" render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the <Link href="/legal-hub/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/legal-hub/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</Link>.</FormLabel><FormMessage /></div></FormItem>
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the <Link href="/legal-hub/terms-of-service" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/legal-hub/privacy-policy" className="text-primary hover:underline">Privacy Policy</Link>.</FormLabel><FormMessage /></div></FormItem>
                                 )} />
                                 <FormField control={form.control} name="marketingOptIn" render={({ field }) => (
                                 <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I’d like occasional product updates and offers.</FormLabel></div></FormItem>
@@ -248,7 +265,7 @@ export default function RegisterPage() {
                         </CardContent>
                          <CardFooter className="text-center">
                             <p className="text-xs text-muted-foreground">
-                                Prototype: accounts are stored locally on your device. Don’t use a real password.
+                                Your name helps personalize your experience. You can change it in Settings. We protect your data under GDPR.
                             </p>
                         </CardFooter>
                     </Card>
