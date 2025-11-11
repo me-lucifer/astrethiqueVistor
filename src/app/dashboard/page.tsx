@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -210,6 +210,7 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
     const [ratings, setRatings] = useState<Ratings>({ money: 0, health: 0, work: 0, love: 0 });
     const { toast } = useToast();
 
+    // Load initial state
     useEffect(() => {
         const moodLog = getMoodLog();
         const today = format(new Date(), 'yyyy-MM-dd');
@@ -224,42 +225,51 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
         }
     }, []);
 
-    const handleRating = (dimension: keyof Ratings, value: number) => {
-        const newRatings = { ...ratings, [dimension]: value };
-        setRatings(newRatings);
+    const debouncedSave = useCallback(() => {
+        const handler = setTimeout(() => {
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const moodLog = getMoodLog();
+            const moodMeta = getMoodMeta() || { streak: 0, lastCheckIn: '' };
+            
+            let newStreak = moodMeta.streak;
+            const lastDate = moodMeta.lastCheckIn ? new Date(moodMeta.lastCheckIn) : null;
+            const todayDate = new Date();
+            const isFirstCheckinToday = !lastDate || !isToday(lastDate);
 
-        const today = format(new Date(), 'yyyy-MM-dd');
-        const moodLog = getMoodLog();
-        const moodMeta = getMoodMeta() || { streak: 0, lastCheckIn: '' };
-        
-        let newStreak = moodMeta.streak;
-        const lastDate = moodMeta.lastCheckIn ? new Date(moodMeta.lastCheckIn) : null;
-        const todayDate = new Date();
-        const isFirstCheckinToday = !lastDate || !isToday(lastDate);
-
-        if (isFirstCheckinToday) {
-            if (lastDate && isYesterday(lastDate)) {
-                newStreak = (newStreak || 0) + 1;
-            } else if (lastDate && !isToday(lastDate)) {
-                 newStreak = 1;
-            } else if (!lastDate) {
-                 newStreak = 1;
+            if (isFirstCheckinToday) {
+                if (lastDate && isYesterday(lastDate)) {
+                    newStreak = (newStreak || 0) + 1;
+                } else if (lastDate && !isToday(lastDate)) {
+                    newStreak = 1;
+                } else if (!lastDate) {
+                    newStreak = 1;
+                }
+                onFirstCheckin();
+                toast({
+                    title: "Mood saved ✓",
+                    duration: 2500,
+                });
             }
-            onFirstCheckin();
-            toast({
-                title: "Mood saved ✓",
-                duration: 2500,
-            });
-        }
 
-        const todayIndex = moodLog.findIndex(entry => entry.dateISO === today);
-        if (todayIndex > -1) {
-            moodLog[todayIndex] = { ...moodLog[todayIndex], ...newRatings, dateISO: today };
-        } else {
-            moodLog.push({ dateISO: today, ...newRatings });
-        }
-        
-        setMoodLog(moodLog, { streak: newStreak, lastCheckIn: todayDate.toISOString() });
+            const todayIndex = moodLog.findIndex(entry => entry.dateISO === today);
+            if (todayIndex > -1) {
+                moodLog[todayIndex] = { ...moodLog[todayIndex], ...ratings, dateISO: today };
+            } else {
+                moodLog.push({ dateISO: today, ...ratings });
+            }
+            
+            setMoodLog(moodLog, { streak: newStreak, lastCheckIn: todayDate.toISOString() });
+        }, 200);
+
+        return () => clearTimeout(handler);
+    }, [ratings, onFirstCheckin, toast]);
+
+    useEffect(() => {
+        debouncedSave();
+    }, [ratings, debouncedSave]);
+
+    const handleRating = (dimension: keyof Ratings, value: number) => {
+        setRatings(prevRatings => ({ ...prevRatings, [dimension]: value }));
     };
 
     return (
@@ -581,4 +591,3 @@ const horoscopeData: { [key: string]: string } = {
     Aquarius: "Connect with your community. A group activity could spark a brilliant new idea or friendship.",
     Pisces: "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
-
