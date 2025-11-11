@@ -154,7 +154,7 @@ export default function RegisterPage() {
     return (
         <>
         <div className="min-h-[calc(100vh-4rem)] grid grid-cols-1 lg:grid-cols-2">
-            <div className="hidden lg:block relative">
+            <div className="relative h-[40vh] lg:h-full">
                  {heroImage && (
                     <Image
                         src={heroImage.imageUrl}
@@ -167,7 +167,7 @@ export default function RegisterPage() {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
                 <div className="absolute inset-0 bg-black/30" />
-                <div className="relative z-10 flex flex-col justify-end h-full p-12 text-white">
+                <div className="relative z-10 flex flex-col justify-end h-full p-8 md:p-12 text-white">
                     <Link href="/" className="flex items-center gap-2 font-headline text-lg font-bold text-primary mb-4">
                         <Gem className="h-6 w-6" />
                         <span>ASTRETHIQUE</span>
