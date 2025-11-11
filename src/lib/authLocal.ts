@@ -1,6 +1,8 @@
 
 "use client";
 
+import { getLocal, setLocal, seedOnce } from './local';
+
 // --- DATA STRUCTURES ---
 export interface User {
     id: string;
@@ -43,11 +45,31 @@ interface AstroStore {
     session: Session | null;
 }
 
+// --- INITIALIZATION ---
+function initializeLocalStorage() {
+  seedOnce('ast_admin_config_seeded', () => {
+    setLocal('ast_admin_config', { detailedHoroscopeFeeEUR: 2.5 });
+  });
+  seedOnce('ast_wallet_seeded', () => {
+    // This is a global wallet for guests, logged-in users have their own
+    setLocal('ast_wallet', { balanceEUR: 5 });
+  });
+  seedOnce('ast_mood_log_seeded', () => {
+    setLocal('ast_mood_log', []);
+  });
+  seedOnce('ast_favorites_seeded', () => {
+    // For guest favorites
+    setLocal('ast_favorites', []);
+  });
+}
+
+// Ensure initialization runs once on module load
+if (typeof window !== 'undefined') {
+    initializeLocalStorage();
+}
+
 
 // --- STORAGE HELPERS ---
-// These now use getLocal/setLocal but are kept for semantic clarity
-// and to ensure a single namespace is used for the store.
-
 function getStore(): AstroStore {
     if (typeof window === 'undefined') {
         return { users: [], session: null };
@@ -187,9 +209,9 @@ export function getCurrentUser(): User | null {
     if (user && user.displayNamePreference === undefined) {
         // This is a migration for older user objects.
         console.log(`Migrating user: ${user.id}`);
+        // Set default display preference and compute public name
         const migratedUser = updateUser(user.id, {
-            displayNamePreference: 'realName',
-            pseudonym: '',
+            displayNamePreference: 'pseudonym', // Defaulting to pseudonym as requested
         });
         return migratedUser;
     }
@@ -317,27 +339,4 @@ export function deleteUser(userId: string): void {
     }
     
     saveStore(store);
-}
-
-// --- HELPERS FROM DEPRECATED local.ts for comments ---
-// These are included to avoid breaking the comments feature.
-// They should be refactored to use the new store if comments are kept.
-export function getLocal<T>(key: string): T | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : null;
-  } catch (error) {
-    console.error(`Error reading from localStorage for key "${key}":`, error);
-    return null;
-  }
-}
-
-export function setLocal<T>(key: string, value: T): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.error(`Error writing to localStorage for key "${key}":`, error);
-  }
 }

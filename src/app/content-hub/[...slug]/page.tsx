@@ -21,6 +21,7 @@ import { CommentsSection } from '@/components/content-hub/comments-section';
 import { YouTubePlayer } from '@/components/content-hub/youtube-player';
 import { format } from 'date-fns';
 import { AuthModal } from '@/components/auth-modal';
+import { getLocal } from '@/lib/local';
 
 const Placeholder = () => (
     <div className="container py-12">
@@ -101,12 +102,12 @@ export default function ContentDetailPage() {
             return;
         };
 
-        const storedItems = authLocal.getLocal<ContentHubItem[]>('ch_items') || [];
-        const allComments = authLocal.getLocal<authLocal.Comment[]>('ast_comments') || [];
+        const storedItems = getLocal<ContentHubItem[]>('ch_items') || [];
+        const allCommentsData = getLocal<authLocal.Comment[]>('ast_comments') || [];
         const user = authLocal.getCurrentUser();
         
         const updatedItems = storedItems.map(i => {
-            const itemComments = allComments.filter(c => c.contentId === i.id);
+            const itemComments = allCommentsData.filter(c => c.contentId === i.id);
             return {
                 ...i,
                 liked: false, // Likes are ephemeral for now
@@ -120,7 +121,7 @@ export default function ContentDetailPage() {
 
         if (foundItem && !foundItem.deleted) {
             setItem(foundItem);
-            const itemComments = allComments.filter(c => c.contentId === itemId);
+            const itemComments = allCommentsData.filter(c => c.contentId === itemId);
             const users = authLocal.getUsers();
             
             const enrichedComments: Comment[] = itemComments.map(c => {
@@ -161,7 +162,7 @@ export default function ContentDetailPage() {
     }
 
     const updateItemInLocalStorage = useCallback((updatedItem: ContentHubItem) => {
-        const currentItems = authLocal.getLocal<ContentHubItem[]>('ch_items') || [];
+        const currentItems = getLocal<ContentHubItem[]>('ch_items') || [];
         const updatedItems = currentItems.map(i => i.id === updatedItem.id ? updatedItem : i);
         authLocal.setLocal('ch_items', updatedItems);
         window.dispatchEvent(new Event('storage_change')); // Notify other components
@@ -212,7 +213,7 @@ export default function ContentDetailPage() {
         }
         if (!item) return;
 
-        const allComments = authLocal.getLocal<authLocal.Comment[]>('ast_comments') || [];
+        const allComments = getLocal<authLocal.Comment[]>('ast_comments') || [];
         const newComment: authLocal.Comment = {
             id: authLocal.createId('comment'),
             userId: user.id,

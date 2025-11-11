@@ -2,6 +2,7 @@
 "use client";
 
 import * as authLocal from './authLocal';
+import { getLocal } from './local';
 
 export interface Comment {
   id: string;
@@ -16,7 +17,7 @@ export interface Comment {
 }
 
 export function getComments(contentId: string): Comment[] {
-  const allComments = authLocal.getLocal<authLocal.Comment[]>('ast_comments') || [];
+  const allComments = getLocal<authLocal.Comment[]>('ast_comments') || [];
   const users = authLocal.getUsers();
 
   const itemComments = allComments.filter(c => c.contentId === contentId);
@@ -47,7 +48,7 @@ export function addComment(contentId: string, text: string, itemType: 'article' 
     return null;
   }
 
-  const allComments = authLocal.getLocal<authLocal.Comment[]>('ast_comments') || [];
+  const allComments = getLocal<authLocal.Comment[]>('ast_comments') || [];
   const newComment: authLocal.Comment = {
     id: authLocal.createId('comment'),
     userId: user.id,

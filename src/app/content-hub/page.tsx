@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, UserPlus } from 'lucide-react';
 import { getSession } from '@/lib/session';
-import { getLocal } from '@/lib/local';
+import { getLocal, setLocal } from '@/lib/local';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -172,7 +172,7 @@ function ContentHubContent() {
         setAllItems(updatedItems);
         const originalItems = getLocal<ContentHubItem[]>('ch_items') || [];
         const updatedOriginalItems = originalItems.map(item => item.id === itemId ? {...item, likes: updatedItems.find(i => i.id === itemId)?.likes} : item);
-        authLocal.setLocal('ch_items', updatedOriginalItems);
+        setLocal('ch_items', updatedOriginalItems);
     }
 
     const handleToggleBookmark = (itemId: string) => {
