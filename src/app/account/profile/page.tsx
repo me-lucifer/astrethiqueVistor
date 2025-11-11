@@ -16,8 +16,10 @@ import { useRouter } from "next/navigation";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Shield, User as UserIcon, AlertTriangle } from "lucide-react";
+import { Shield, User as UserIcon, AlertTriangle, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const pseudonymSchema = (currentUserId: string) => z.string()
     .min(3, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
@@ -98,7 +100,16 @@ export default function ProfilePage() {
     
     const {formState: {errors}} = form;
     const watchedPseudonym = form.watch("pseudonym");
+    const watchedFirstName = form.watch("firstName");
+    const watchedLastName = form.watch("lastName");
+    const watchedPreference = form.watch("displayNamePreference");
+    
     const isPseudonymValid = !!watchedPseudonym && watchedPseudonym.length >= 3 && !errors.pseudonym;
+    
+    const publicName = watchedPreference === 'pseudonym' && isPseudonymValid
+        ? watchedPseudonym
+        : `${watchedFirstName || ''} ${watchedLastName || ''}`.trim();
+
 
     if (!user) {
         return <div>Loading...</div>;
@@ -181,6 +192,23 @@ export default function ProfilePage() {
                                     </FormItem>
                                 )}
                             />
+
+                            <div className="flex justify-between items-center text-sm" aria-live="polite">
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline">Preview:</Badge>
+                                    <span>{publicName || "Your Public Name"}</span>
+                                </div>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>This is how your name will appear to others.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField control={form.control} name="language" render={({ field }) => (
