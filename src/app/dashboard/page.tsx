@@ -498,3 +498,4 @@ const horoscopeData: { [key: string]: string } = {
     Aquarius: "Connect with your community. A group activity could spark a brilliant new idea or friendship.",
     Pisces: "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+

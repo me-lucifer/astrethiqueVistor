@@ -5,7 +5,7 @@ import { useState, useEffect, useTransition } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getLocal, setLocal, getWallet, getAdminConfig } from "@/lib/local";
+import { getLocal, setLocal, getWallet, getAdminConfig, setWallet } from "@/lib/local";
 import { User } from "@/lib/authLocal";
 import { AddFundsModal } from "./add-funds-modal";
 import { useToast } from "@/hooks/use-toast";
@@ -155,15 +155,25 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
         startTransition(() => {
             if (!user?.zodiacSign || !config) return;
 
-            const wallet = getWallet();
-            if (!wallet || wallet.balanceEUR < config.detailedHoroscopeFeeEUR) {
+            const wallet = getWallet() || { balanceEUR: 0, history: [] };
+            if (wallet.balanceEUR < config.detailedHoroscopeFeeEUR) {
                 setIsFundsModalOpen(true);
                 return;
             }
 
             // Deduct fee
             const newBalance = wallet.balanceEUR - config.detailedHoroscopeFeeEUR;
-            setLocal('ast_wallet', { balanceEUR: newBalance });
+            const newHistoryItem = {
+                type: 'horoscope',
+                amount: -config.detailedHoroscopeFeeEUR,
+                ts: new Date().toISOString()
+            };
+
+            setWallet({
+                balanceEUR: newBalance,
+                history: [...(wallet.history || []), newHistoryItem]
+            });
+
             window.dispatchEvent(new Event('storage')); // Notify other components of wallet change
             
             toast({

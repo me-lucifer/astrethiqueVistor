@@ -25,9 +25,14 @@ export function AddFundsModal({ isOpen, onOpenChange, neededAmount }: AddFundsMo
     }, [isOpen]);
     
     const handleTopUp = (amount: number) => {
-        const newBalance = balance + amount;
-        setBalance(newBalance);
-        setWallet({ balanceEUR: newBalance });
+        const currentWallet = getWallet() || { balanceEUR: 0, history: [] };
+        const newBalance = currentWallet.balanceEUR + amount;
+        
+        setWallet({
+            balanceEUR: newBalance,
+            history: [...(currentWallet.history || []), { type: 'topup', amount, ts: new Date().toISOString() }]
+        });
+        
         window.dispatchEvent(new Event('storage')); // Notify other components
 
         toast({

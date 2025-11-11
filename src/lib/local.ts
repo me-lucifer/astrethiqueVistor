@@ -90,7 +90,7 @@ export const setAdminConfig = (config: AdminConfig) => setLocal(ADMIN_CONFIG_KEY
 export interface Wallet {
     balanceEUR: number;
     history?: {
-        type: 'topup' | 'deduction';
+        type: 'topup' | 'deduction' | 'horoscope';
         amount: number;
         ts: string;
     }[];
