@@ -81,11 +81,11 @@ export function emailExists(email: string): boolean {
     return store.users.some(u => u.email.toLowerCase() === email.toLowerCase());
 }
 
-export function pseudonymExists(pseudonym: string): boolean {
+export function pseudonymExists(pseudonym: string, currentUserId?: string): boolean {
     if (!pseudonym) return false;
     const n = (pseudonym||'').toLowerCase()
     const store = getStore();
-    return store.users.some(u => (u.pseudonym||'').toLowerCase() === n)
+    return store.users.some(u => u.id !== currentUserId && (u.pseudonym||'').toLowerCase() === n)
 }
 
 
@@ -215,29 +215,38 @@ export function findUserByEmail(email: string): User | undefined {
     return store.users.find(u => u.email.toLowerCase() === email.toLowerCase());
 }
 
-export function updateUser(updatedUser: User): void {
+export function updateUser(userId: string, updatedFields: Partial<User>): User {
     const store = getStore();
-    const userIndex = store.users.findIndex(u => u.id === updatedUser.id);
-    if (userIndex !== -1) {
-        
-        // Recompute publicName
-        const usePseudonym = updatedUser.displayNamePreference === 'pseudonym';
-        const pseudonym = (updatedUser.pseudonym || '').trim() || undefined;
-        const publicName = usePseudonym && pseudonym ? pseudonym : `${updatedUser.firstName} ${updatedUser.lastName}`.trim();
-        
-        let nameHistory = updatedUser.nameHistory || [store.users[userIndex].publicName];
-        if (nameHistory[nameHistory.length - 1] !== publicName) {
-            nameHistory.push(publicName);
-        }
-
-        store.users[userIndex] = {
-            ...updatedUser,
-            publicName,
-            nameHistory
-        };
-        
-        saveStore(store);
+    const userIndex = store.users.findIndex(u => u.id === userId);
+    
+    if (userIndex === -1) {
+        throw new Error("User not found for update.");
     }
+    
+    const currentUser = store.users[userIndex];
+    const potentialUpdatedUser = { ...currentUser, ...updatedFields };
+
+    // Recompute publicName
+    const usePseudonym = potentialUpdatedUser.displayNamePreference === 'pseudonym';
+    const pseudonym = (potentialUpdatedUser.pseudonym || '').trim() || undefined;
+    const publicName = usePseudonym && pseudonym ? pseudonym : `${potentialUpdatedUser.firstName} ${potentialUpdatedUser.lastName}`.trim();
+    
+    let nameHistory = potentialUpdatedUser.nameHistory || [currentUser.publicName];
+    if (nameHistory[nameHistory.length - 1] !== publicName) {
+        nameHistory.push(publicName);
+    }
+    
+    const finalUpdatedUser = {
+        ...potentialUpdatedUser,
+        publicName,
+        nameHistory,
+        updatedAt: new Date().toISOString()
+    };
+
+    store.users[userIndex] = finalUpdatedUser;
+    saveStore(store);
+    
+    return finalUpdatedUser;
 }
 
 export async function login(email: string, plainPassword: string):Promise<User> {

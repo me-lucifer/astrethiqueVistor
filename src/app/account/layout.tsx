@@ -12,6 +12,7 @@ const accountNavLinks = [
   { href: "/account/preferences", label: "Notifications", icon: Bell },
   { href: "/account/security", label: "Security", icon: Lock },
   { href: "/account/wallet", label: "Wallet", icon: Wallet },
+  { href: "/account/data", label: "Data & Privacy", icon: Database },
 ];
 
 export default function AccountLayout({ children }: { children: ReactNode }) {
