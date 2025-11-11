@@ -188,7 +188,7 @@ function WalletCard() {
                 <CardTitle>Wallet & Budget</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-3xl font-bold">Balance: €{wallet.balanceEUR.toFixed(2)}</p>
+                <p className="text-3xl font-bold">Balance: €{(wallet.balanceEUR || 0).toFixed(2)}</p>
             </CardContent>
             <CardFooter className="gap-2">
                 <Button onClick={() => handleTopUp(5)}>Top up €5</Button>
@@ -241,14 +241,14 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
             }
             onFirstCheckin();
             toast({
-                title: "Mood saved! ✓",
+                title: "Mood saved ✓",
                 duration: 2500,
             });
         }
 
         const todayIndex = moodLog.findIndex(entry => entry.dateISO === today);
         if (todayIndex > -1) {
-            moodLog[todayIndex] = { ...moodLog[todayIndex], ...newRatings };
+            moodLog[todayIndex] = { ...moodLog[todayIndex], ...newRatings, dateISO: today };
         } else {
             moodLog.push({ dateISO: today, ...newRatings });
         }
@@ -359,7 +359,7 @@ function HoroscopeCard({ user }: { user: authLocal.User | null }) {
                         </div>
                     ) : (
                         <div className="text-center text-muted-foreground p-4 border-dashed border-2 rounded-lg">
-                            <p>Set your zodiac sign to see your daily horoscope.</p>
+                            <p>Set your zodiac sign to unlock your free daily reading.</p>
                             <Button variant="link" onClick={() => setIsModalOpen(true)}>Set your zodiac sign</Button>
                         </div>
                     )}
@@ -470,7 +470,7 @@ function RecommendationsTab() {
                     recommendations.map(item => <ContentHubCard key={item.id} item={item} onTopicClick={handleTopicClick} />)
                 ) : (
                     <div className="text-center text-muted-foreground p-4">
-                        <p>You're doing great! Check back later for new recommendations.</p>
+                        <p>You’re doing great! New content will appear when your check-ins suggest it.</p>
                     </div>
                 )}
             </CardContent>
