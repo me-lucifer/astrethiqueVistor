@@ -254,6 +254,23 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
+  const handleSimulateFirstTime = () => {
+    const defaultWallet = {
+        balance_cents: 0,
+        budget_cents: 0,
+        budget_set: false,
+        spent_this_month_cents: 0,
+        month_key: format(new Date(), 'yyyy-MM'),
+        budget_lock: {
+            enabled: false,
+            until: null,
+            emergency_used: false
+        }
+    };
+    setLocal('ast_wallet', defaultWallet);
+    window.dispatchEvent(new Event('storage'));
+  }
+
   const handleSeed15_30 = () => {
     const currentWallet = getWallet();
     const updatedWallet: WalletType = {
@@ -342,6 +359,7 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
+                      <DropdownMenuItem onClick={handleSimulateFirstTime}>Simulate first-time view</DropdownMenuItem>
                       <DropdownMenuItem onClick={handleSeed15_30}>Seed €15 & set budget €30</DropdownMenuItem>
                       <DropdownMenuItem onClick={handleLockWallet}>Lock wallet</DropdownMenuItem>
                       <DropdownMenuItem onClick={handleResetMonth}>Reset month</DropdownMenuItem>
@@ -981,3 +999,6 @@ const horoscopeData: { [key: string]: string } = {
     
 
       
+
+
+    
