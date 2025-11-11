@@ -348,8 +348,6 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             return;
         }
 
-        storage.trackMetric('favorites');
-
         const allPrefs = storage.getStorageItem<Record<string, any>>('ast_prefs') || {};
         const userPrefs = allPrefs[user.id] || {};
         
