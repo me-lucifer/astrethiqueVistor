@@ -25,15 +25,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import * as storage from "@/lib/storage";
 import PasswordStrength from "./auth/password-strength";
-import { CheckCircle, MailCheck, Rocket } from "lucide-react";
+import { CheckCircle, MailCheck, Rocket, KeyRound, ArrowLeft } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onLoginSuccess: () => void;
+  initialView?: View;
 }
 
-type View = 'auth' | 'verify' | 'success';
+type View = 'auth' | 'verify' | 'success' | 'forgot' | 'forgot-verify' | 'forgot-reset';
 
 const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters")
@@ -65,17 +66,28 @@ const verifySchema = z.object({
   code: z.string().length(6, "Code must be 6 digits"),
 });
 
+const forgotSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+const resetPasswordSchema = z.object({
+    password: passwordSchema
+});
+
 type CreateAccountFormData = z.infer<typeof createAccountSchema>;
 type SignInFormData = z.infer<typeof signInSchema>;
 type VerifyFormData = z.infer<typeof verifySchema>;
+type ForgotFormData = z.infer<typeof forgotSchema>;
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
-export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalProps) {
+
+export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 'auth' }: AuthModalProps) {
   const { toast } = useToast();
   const { language } = useLanguage();
-  const [view, setView] = useState<View>('auth');
+  const [view, setView] = useState<View>(initialView);
   const [role, setRole] = useState<'visitor' | 'consultant'>('visitor');
   const [defaultTimezone, setDefaultTimezone] = useState('');
-  const [verifyingUser, setVerifyingUser] = useState<storage.User | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -107,6 +119,16 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     resolver: zodResolver(verifySchema),
     defaultValues: { code: "" }
   });
+
+  const forgotForm = useForm<ForgotFormData>({
+    resolver: zodResolver(forgotSchema),
+    defaultValues: { email: "" }
+  });
+
+  const resetPasswordForm = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { password: "" }
+  });
   
   useEffect(() => {
     if (defaultTimezone) {
@@ -118,34 +140,15 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     createForm.setValue("role", role);
   }, [role, createForm]);
 
-  const watchedPassword = useWatch({
-    control: createForm.control,
-    name: "password"
-  });
+  const watchedCreatePassword = useWatch({ control: createForm.control, name: "password" });
+  const watchedResetPassword = useWatch({ control: resetPasswordForm.control, name: "password" });
 
   async function handleCreateAccount(values: CreateAccountFormData) {
     if (storage.findUserByEmail(values.email)) {
       createForm.setError("email", { type: "manual", message: "An account with this email already exists." });
       return;
     }
-
-    const passwordHash = await storage.hashPassword(values.password);
-    const userId = storage.createId('user');
-    
-    const newUser: storage.User = {
-      id: userId,
-      role: values.role,
-      name: values.fullName,
-      email: values.email,
-      passwordHash,
-      createdAt: new Date().toISOString(),
-      emailVerified: false,
-      kycStatus: values.role === "consultant" ? "pending" : "n/a",
-    };
-    
-    setVerifyingUser(newUser);
-
-    // Don't save to storage yet, wait for email verification
+    setUserEmail(values.email);
     setView('verify');
   }
 
@@ -163,7 +166,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     }
 
     if (!user.emailVerified) {
-        setVerifyingUser(user);
+        setUserEmail(user.email);
         setView('verify');
         return;
     }
@@ -174,67 +177,118 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     handleCloseModal(false);
   }
 
-  function handleVerify(values: VerifyFormData) {
+  async function handleVerify(values: VerifyFormData) {
     const DEMO_CODE = "123456";
     if (values.code !== DEMO_CODE) {
         verifyForm.setError("code", { type: "manual", message: "Incorrect code." });
         return;
     }
     
-    if (!verifyingUser) {
+    if (!userEmail) {
         toast({ variant: 'destructive', title: 'Something went wrong. Please try again.' });
         setView('auth');
         return;
     }
 
-    const verifiedUser = { ...verifyingUser, emailVerified: true };
-    
-    // Now save the user to storage if they don't exist yet
-    const users = storage.getUsers();
-    if (!storage.findUserByEmail(verifiedUser.email)) {
-        storage.saveUsers([...users, verifiedUser]);
+    let user = storage.findUserByEmail(userEmail);
+    if (user) { // User exists, just verifying
+        const updatedUsers = storage.getUsers().map(u => u.id === user!.id ? { ...u, emailVerified: true } : u);
+        storage.saveUsers(updatedUsers);
+        user.emailVerified = true;
+    } else { // New user registration
+        const createValues = createForm.getValues();
+        const passwordHash = await storage.hashPassword(createValues.password);
+        user = {
+            id: storage.createId('user'),
+            role: createValues.role,
+            name: createValues.fullName,
+            email: createValues.email,
+            passwordHash,
+            createdAt: new Date().toISOString(),
+            emailVerified: true,
+            kycStatus: createValues.role === "consultant" ? "pending" : "n/a",
+        };
+        storage.saveUsers([...storage.getUsers(), user]);
 
         const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-        prefs[verifiedUser.id] = { language: (createForm.getValues('language') || 'EN'), timezone: createForm.getValues('timezone'), marketingOptIn: createForm.getValues('marketingOptIn') };
+        prefs[user.id] = { language: createValues.language, timezone: createValues.timezone, marketingOptIn: createValues.marketingOptIn };
         storage.setStorageItem('ast_prefs', prefs);
         
         const wallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
-        wallets[verifiedUser.id] = { balance: 0, currency: '€' };
+        wallets[user.id] = { balance: 0, currency: '€' };
         storage.setStorageItem('ast_wallets', wallets);
 
         const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-        favorites[verifiedUser.id] = { consultants: [], content: [], conferences: [] };
+        favorites[user.id] = { consultants: [], content: [], conferences: [] };
         storage.setStorageItem('ast_favorites', favorites);
-    } else {
-        // User already exists, just update their verification status
-        const updatedUsers = users.map(u => u.id === verifiedUser.id ? verifiedUser : u);
-        storage.saveUsers(updatedUsers);
     }
     
-    storage.setCurrentUser(verifiedUser.id);
-
+    storage.setCurrentUser(user.id);
     setView('success');
   }
+
+  function handleForgotPassword(values: ForgotFormData) {
+    const user = storage.findUserByEmail(values.email);
+    if (!user) {
+        forgotForm.setError("email", { type: "manual", message: "No account found with this email." });
+        return;
+    }
+    setUserEmail(user.email);
+    setView('forgot-verify');
+  }
   
+  function handleForgotVerify(values: VerifyFormData) {
+    const DEMO_CODE = "123456";
+    if (values.code !== DEMO_CODE) {
+        verifyForm.setError("code", { type: "manual", message: "Incorrect code." });
+        return;
+    }
+    setView('forgot-reset');
+  }
+  
+  async function handleResetPassword(values: ResetPasswordFormData) {
+    if(!userEmail) {
+      toast({ variant: "destructive", title: "Something went wrong." });
+      setView('auth');
+      return;
+    }
+    const user = storage.findUserByEmail(userEmail);
+    if(!user) {
+      toast({ variant: "destructive", title: "User not found." });
+      setView('auth');
+      return;
+    }
+    
+    const newPasswordHash = await storage.hashPassword(values.password);
+    const updatedUsers = storage.getUsers().map(u => u.id === user.id ? {...u, passwordHash: newPasswordHash} : u);
+    storage.saveUsers(updatedUsers);
+    
+    toast({ title: "Password updated successfully", description: "Please sign in with your new password." });
+    setView('auth');
+    signInForm.setValue("email", userEmail);
+    signInForm.setValue("password", "");
+  }
+
   const handleCloseModal = (open: boolean) => {
     if (!open) {
       setTimeout(() => {
-        setView('auth');
-        setVerifyingUser(null);
+        setView(initialView);
+        setUserEmail(null);
         createForm.reset();
         signInForm.reset();
         verifyForm.reset();
+        forgotForm.reset();
+        resetPasswordForm.reset();
       }, 300);
     }
     onOpenChange(open);
   }
   
   const handleStartOnboarding = () => {
-    // For now, this just logs and closes. In future, it will navigate.
-    console.log("Navigating to consultant onboarding...");
     toast({title: "Redirecting to consultant onboarding..."});
     handleCloseModal(false);
     onLoginSuccess();
+    // In a real app, you'd navigate here e.g. router.push('/onboarding/consultant')
   }
   
   const handleFinishVisitor = () => {
@@ -268,7 +322,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
                 <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={createForm.control} name="password" render={({ field }) => (
-                <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><PasswordStrength password={watchedPassword} /><FormMessage /></FormItem>
+                <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><PasswordStrength password={watchedCreatePassword} /><FormMessage /></FormItem>
               )} />
               
               <div className="grid grid-cols-2 gap-4">
@@ -305,7 +359,14 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
                 <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
                 <FormField control={signInForm.control} name="password" render={({ field }) => (
-                <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                    <div className="flex justify-between items-center">
+                        <FormLabel>Password</FormLabel>
+                        <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setView('forgot')}>Forgot password?</Button>
+                    </div>
+                    <FormControl><PasswordInput {...field} /></FormControl>
+                    <FormMessage />
+                </FormItem>
               )} />
               <DialogFooter className="pt-4">
                 <Button type="submit" className="w-full" disabled={signInForm.formState.isSubmitting}>Sign In</Button>
@@ -321,7 +382,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
       <DialogHeader className="text-center">
         <DialogTitle>Verify your email</DialogTitle>
         <DialogDescription>
-          We've sent a code to {verifyingUser?.email}.
+          We've sent a code to {userEmail}.
           <span className="mt-2 block text-xs text-muted-foreground">For this demo, your code is: 123456</span>
         </DialogDescription>
       </DialogHeader>
@@ -350,7 +411,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
   );
 
   const renderSuccessView = () => {
-    const isConsultant = verifyingUser?.role === 'consultant';
+    const isConsultant = createForm.getValues("role") === 'consultant';
     return (
       <div className="text-center p-4">
         <div className="flex justify-center mb-4">
@@ -381,14 +442,99 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
       </div>
     );
   };
+  
+  const renderForgotView = () => (
+    <>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setView('auth')}><ArrowLeft className="h-4 w-4" /></Button>
+            Forgot Password
+          </DialogTitle>
+          <DialogDescription>Enter your email address and we'll send you a code to reset your password.</DialogDescription>
+        </DialogHeader>
+        <Form {...forgotForm}>
+            <form onSubmit={forgotForm.handleSubmit(handleForgotPassword)} className="space-y-4">
+                <FormField control={forgotForm.control} name="email" render={({ field }) => (
+                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <DialogFooter>
+                    <Button type="submit" className="w-full">Send Code</Button>
+                </DialogFooter>
+            </form>
+        </Form>
+    </>
+  );
+
+  const renderForgotVerifyView = () => (
+    <>
+      <DialogHeader className="text-center">
+        <DialogTitle>Check your email</DialogTitle>
+        <DialogDescription>
+          We sent a password reset code to {userEmail}.
+          <span className="mt-2 block text-xs text-muted-foreground">For this demo, your code is: 123456</span>
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...verifyForm}>
+        <form onSubmit={verifyForm.handleSubmit(handleForgotVerify)} className="space-y-4">
+           <FormField control={verifyForm.control} name="code" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="sr-only">Verification Code</FormLabel>
+                <FormControl><Input placeholder="123456" {...field} className="text-center text-lg tracking-[0.5em]" maxLength={6} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <DialogFooter>
+              <Button type="submit" className="w-full">Verify</Button>
+            </DialogFooter>
+        </form>
+      </Form>
+    </>
+  );
+  
+  const renderForgotResetView = () => (
+    <>
+      <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <KeyRound />
+            Reset Your Password
+          </DialogTitle>
+          <DialogDescription>Enter a new strong password for your account.</DialogDescription>
+        </DialogHeader>
+        <Form {...resetPasswordForm}>
+            <form onSubmit={resetPasswordForm.handleSubmit(handleResetPassword)} className="space-y-4">
+                <FormField control={resetPasswordForm.control} name="password" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl><PasswordInput {...field} /></FormControl>
+                        <PasswordStrength password={watchedResetPassword} />
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <DialogFooter>
+                    <Button type="submit" className="w-full">Set New Password</Button>
+                </DialogFooter>
+            </form>
+        </Form>
+    </>
+  );
+
+  const renderView = () => {
+    switch(view) {
+        case 'auth': return renderAuthView();
+        case 'verify': return renderVerifyView();
+        case 'success': return renderSuccessView();
+        case 'forgot': return renderForgotView();
+        case 'forgot-verify': return renderForgotVerifyView();
+        case 'forgot-reset': return renderForgotResetView();
+        default: return renderAuthView();
+    }
+  }
 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCloseModal}>
-      <DialogContent className="sm:max-w-md p-6">
-        {view === 'auth' && renderAuthView()}
-        {view === 'verify' && renderVerifyView()}
-        {view === 'success' && renderSuccessView()}
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        {renderView()}
       </DialogContent>
     </Dialog>
   );
