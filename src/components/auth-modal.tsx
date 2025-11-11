@@ -25,6 +25,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import * as storage from "@/lib/storage";
 import PasswordStrength from "./auth/password-strength";
+import { CheckCircle, MailCheck, KeyRound, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -57,13 +60,19 @@ const signInSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+const verificationSchema = z.object({
+  code: z.string().length(6, "Code must be 6 digits"),
+});
+
 type CreateAccountFormData = z.infer<typeof createAccountSchema>;
 type SignInFormData = z.infer<typeof signInSchema>;
+type VerificationFormData = z.infer<typeof verificationSchema>;
 
 
 export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalProps) {
   const { toast } = useToast();
   const { language } = useLanguage();
+  const [view, setView] = useState<'tabs' | 'verify'>('tabs');
   const [activeTab, setActiveTab] = useState("create");
   const [tempUserEmail, setTempUserEmail] = useState<string | null>(null);
   const [defaultTimezone, setDefaultTimezone] = useState('');
@@ -91,6 +100,11 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     defaultValues: { email: "", password: "" },
+  });
+
+  const verificationForm = useForm<VerificationFormData>({
+    resolver: zodResolver(verificationSchema),
+    defaultValues: { code: "" },
   });
 
   useEffect(() => {
@@ -133,9 +147,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     storage.setStorageItem('ast_favorites', favorites);
     
     setTempUserEmail(user.email);
-    // In a real app, you'd send a verification email. Here we just need to verify the user.
-    // For the demo, let's auto-verify and log them in.
-    handleVerify(user.email);
+    setView('verify');
   }
 
   async function handleSignIn(values: SignInFormData) {
@@ -152,8 +164,8 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     }
 
     if (!user.emailVerified) {
-        // In a real app, you'd force verification. For this demo, let's verify on login.
-        handleVerify(user.email);
+        setTempUserEmail(user.email);
+        setView('verify');
         return;
     }
     
@@ -164,8 +176,15 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     onOpenChange(false);
   }
 
-  const handleVerify = (email: string) => {
-    const user = storage.findUserByEmail(email);
+  function handleVerify(values: VerificationFormData) {
+    if (!tempUserEmail) return;
+
+    if (values.code !== '123456') { // Demo code
+        verificationForm.setError("code", { message: "Invalid verification code." });
+        return;
+    }
+
+    const user = storage.findUserByEmail(tempUserEmail);
     if (!user) return;
     
     const updatedUsers = storage.getUsers().map(u => u.id === user.id ? { ...u, emailVerified: true } : u);
@@ -177,81 +196,145 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
 
     onLoginSuccess();
     onOpenChange(false);
+    setView('tabs');
+  }
+
+  const handleClose = (open: boolean) => {
+    if(!open) {
+      setTimeout(() => {
+        setView('tabs');
+        createForm.reset();
+        signInForm.reset();
+        verificationForm.reset();
+      }, 300);
+    }
+    onOpenChange(open);
+  }
+
+  const VerificationView = () => {
+    return (
+        <>
+            <DialogHeader className="p-6 pb-4">
+                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mx-auto mb-4">
+                    <MailCheck className="h-6 w-6 text-primary" />
+                </div>
+                <DialogTitle className="text-center">Check your email</DialogTitle>
+                <DialogDescription className="text-center">
+                    We sent a 6-digit verification code to <br/> <span className="font-semibold text-foreground">{tempUserEmail}</span>
+                </DialogDescription>
+            </DialogHeader>
+            <Form {...verificationForm}>
+                <form onSubmit={verificationForm.handleSubmit(handleVerify)} className="space-y-4 px-6">
+                    <FormField control={verificationForm.control} name="code" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="sr-only">Verification Code</FormLabel>
+                            <FormControl>
+                                <Input
+                                    {...field}
+                                    className="text-center text-lg tracking-[0.5em]"
+                                    maxLength={6}
+                                    placeholder="------"
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+
+                    <div className="text-center text-sm text-muted-foreground pt-2">
+                        For demo purposes, the code is: <strong className="text-foreground">123456</strong>
+                    </div>
+
+                     <DialogFooter className="pt-4 flex-col gap-2">
+                        <Button type="submit" className="w-full" disabled={verificationForm.formState.isSubmitting}>Verify Email</Button>
+                        <Button type="button" variant="ghost" onClick={() => setView('tabs')} className="w-full text-muted-foreground flex items-center gap-2">
+                            <ArrowLeft className="h-4 w-4" /> Go back
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </>
+    )
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <DialogHeader>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="create">Create Account</TabsTrigger>
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-            </TabsList>
-          </DialogHeader>
-          
-          <TabsContent value="create">
-            <DialogTitle className="sr-only">Create Account</DialogTitle>
-            <Form {...createForm}>
-              <form onSubmit={createForm.handleSubmit(handleCreateAccount)} className="space-y-4 max-h-[60vh] overflow-y-auto px-6 py-4">
-                  <FormField control={createForm.control} name="fullName" render={({ field }) => (
-                  <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your full name" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={createForm.control} name="email" render={({ field }) => (
-                  <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={createForm.control} name="password" render={({ field }) => (
-                  <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><PasswordStrength password={watchedCreatePassword} /><FormMessage /></FormItem>
-                )} />
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={createForm.control} name="language" render={({ field }) => (
-                    <FormItem><FormLabel>Language</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="EN">English</SelectItem><SelectItem value="FR">Français</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={createForm.control} name="timezone" render={({ field }) => (
-                    <FormItem><FormLabel>Timezone</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value={defaultTimezone}>{defaultTimezone.replace(/_/g, " ")}</SelectItem><SelectItem value="Europe/London">Europe/London</SelectItem><SelectItem value="America/New_York">America/New_York</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                  )} />
-                </div>
 
-                <FormField control={createForm.control} name="agreeToTerms" render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the <Link href="/legal-hub/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms</Link> and <Link href="/legal-hub/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</Link>.</FormLabel><FormMessage /></div></FormItem>
-                )} />
-                <FormField control={createForm.control} name="is18OrOlder" render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I confirm I am 18 years of age or older.</FormLabel><FormMessage /></div></FormItem>
-                )} />
-                <FormField control={createForm.control} name="marketingOptIn" render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Send me tips and updates (optional).</FormLabel></div></FormItem>
-                )} />
-                
-                <DialogFooter className="pt-4 sticky bottom-0 bg-background/90 backdrop-blur-sm">
-                  <Button type="submit" className="w-full" disabled={createForm.formState.isSubmitting || !watchedAgreeToTerms || !watchedIs18OrOlder}>Create Account</Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </TabsContent>
-          
-          <TabsContent value="signin">
-              <DialogTitle className="sr-only">Sign In</DialogTitle>
-              <Form {...signInForm}>
-              <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4 px-6 py-4">
-                <FormField control={signInForm.control} name="email" render={({ field }) => (
-                  <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                  <FormField control={signInForm.control} name="password" render={({ field }) => (
-                  <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <DialogFooter className="pt-4">
-                  <Button type="submit" className="w-full" disabled={signInForm.formState.isSubmitting}>Sign In</Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </TabsContent>
-      </Tabs>
-      <div className="p-4 bg-muted text-center">
-        <p className="text-xs text-muted-foreground">
-            Prototype only — accounts are stored locally on your device (no server). Don’t use real passwords.
-        </p>
-      </div>
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        {view === 'tabs' ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <DialogHeader>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="create">Create Account</TabsTrigger>
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+              </TabsList>
+            </DialogHeader>
+            
+            <TabsContent value="create">
+              <DialogTitle className="sr-only">Create Account</DialogTitle>
+              <Form {...createForm}>
+                <form onSubmit={createForm.handleSubmit(handleCreateAccount)} className="space-y-4 max-h-[60vh] overflow-y-auto px-6 py-4">
+                    <FormField control={createForm.control} name="fullName" render={({ field }) => (
+                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your full name" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={createForm.control} name="email" render={({ field }) => (
+                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={createForm.control} name="password" render={({ field }) => (
+                    <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><PasswordStrength password={watchedCreatePassword} /><FormMessage /></FormItem>
+                  )} />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={createForm.control} name="language" render={({ field }) => (
+                      <FormItem><FormLabel>Language</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="EN">English</SelectItem><SelectItem value="FR">Français</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={createForm.control} name="timezone" render={({ field }) => (
+                      <FormItem><FormLabel>Timezone</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value={defaultTimezone}>{defaultTimezone.replace(/_/g, " ")}</SelectItem><SelectItem value="Europe/London">Europe/London</SelectItem><SelectItem value="America/New_York">America/New_York</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                    )} />
+                  </div>
+
+                  <FormField control={createForm.control} name="agreeToTerms" render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the <Link href="/legal-hub/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms</Link> and <Link href="/legal-hub/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</Link>.</FormLabel><FormMessage /></div></FormItem>
+                  )} />
+                  <FormField control={createForm.control} name="is18OrOlder" render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I confirm I am 18 years of age or older.</FormLabel><FormMessage /></div></FormItem>
+                  )} />
+                  <FormField control={createForm.control} name="marketingOptIn" render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Send me tips and updates (optional).</FormLabel></div></FormItem>
+                  )} />
+                  
+                  <DialogFooter className="pt-4 sticky bottom-0 bg-background/90 backdrop-blur-sm">
+                    <Button type="submit" className="w-full" disabled={createForm.formState.isSubmitting || !watchedAgreeToTerms || !watchedIs18OrOlder}>Create Account</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </TabsContent>
+            
+            <TabsContent value="signin">
+                <DialogTitle className="sr-only">Sign In</DialogTitle>
+                <Form {...signInForm}>
+                <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4 px-6 py-4">
+                  <FormField control={signInForm.control} name="email" render={({ field }) => (
+                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                    <FormField control={signInForm.control} name="password" render={({ field }) => (
+                    <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <DialogFooter className="pt-4">
+                    <Button type="submit" className="w-full" disabled={signInForm.formState.isSubmitting}>Sign In</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <VerificationView />
+        )}
+
+        <div className="p-4 bg-muted text-center">
+            <p className="text-xs text-muted-foreground">
+                Prototype only — accounts are stored locally on your device (no server). Don’t use real passwords.
+            </p>
+        </div>
       </DialogContent>
     </Dialog>
   );
