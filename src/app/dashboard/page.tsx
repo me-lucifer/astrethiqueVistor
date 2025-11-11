@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useTransition, useCallback } from "react";
+import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,9 +11,9 @@ import { ContentHubCard } from "@/components/content-hub/card";
 import * as authLocal from "@/lib/authLocal";
 import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal, Wallet, getMoodMeta, MoodMeta, initializeLocalStorage } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame, Calendar, Video as VideoIcon } from "lucide-react";
+import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame, Calendar, Video as VideoIcon, CalendarPlus } from "lucide-react";
 import Link from "next/link";
-import { format, formatDistanceToNow, isToday, isYesterday, isPast, isFuture } from 'date-fns';
+import { format, formatDistanceToNow, isToday, isYesterday, isPast, isFuture, differenceInMinutes, addMinutes } from 'date-fns';
 import { ContentHubItem, seedContentHub } from "@/lib/content-hub-seeder";
 import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
 import { getSession } from "@/lib/session";
@@ -436,45 +436,121 @@ function SidebarTabs() {
     )
 }
 
+function useCountdown(targetDate: string) {
+    const [countdown, setCountdown] = useState('');
+    const [isJoinable, setIsJoinable] = useState(false);
+
+    useEffect(() => {
+        const calculate = () => {
+            const now = new Date();
+            const target = new Date(targetDate);
+            const diff = target.getTime() - now.getTime();
+
+            if (diff <= 0) {
+                setIsJoinable(true);
+                setCountdown('Now');
+                return;
+            }
+            
+            setIsJoinable(diff <= 15 * 60 * 1000);
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            if (days > 0) setCountdown(`${days}d ${hours}h`);
+            else if (hours > 0) setCountdown(`${hours}h ${minutes}m`);
+            else setCountdown(`${minutes}m`);
+        };
+        
+        calculate();
+        const interval = setInterval(calculate, 60000); // Update every minute
+
+        return () => clearInterval(interval);
+    }, [targetDate]);
+
+    return { countdown, isJoinable };
+}
+
 function ActivityTab() {
-    const [activities, setActivities] = useState<ActivityData | null>(null);
+    const [activities, setActivities] = useState<ActivityData>({ upcoming: [], replays: [] });
 
     useEffect(() => {
         const data = getLocal<ActivityData>('ast.activity');
-        setActivities(data);
+        if (data) {
+            const sortedUpcoming = data.upcoming.sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime());
+            const sortedReplays = data.replays.sort((a, b) => new Date(b.recordedISO).getTime() - new Date(a.recordedISO).getTime());
+            setActivities({ upcoming: sortedUpcoming, replays: sortedReplays });
+        }
     }, []);
 
-    const combinedActivities = [
-        ...(activities?.upcoming || []).map(item => ({ ...item, type: 'upcoming' as const })),
-        ...(activities?.replays || []).map(item => ({ ...item, type: 'replay' as const }))
-    ].sort((a, b) => new Date('startISO' in a ? a.startISO : a.recordedISO).getTime() - new Date('startISO' in b ? b.startISO : b.recordedISO).getTime());
+    const ActivityRowUpcoming = ({ item }: { item: ActivityItem }) => {
+        const { countdown, isJoinable } = useCountdown(item.startISO);
+        return (
+            <Card className="p-4 flex items-start gap-4 bg-card/50">
+                <Calendar className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
+                <div className="flex-1 space-y-1">
+                    <p className="font-semibold leading-tight">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {format(new Date(item.startISO), 'EEE, MMM dd · p')} • {item.length} • Host: {item.host}
+                    </p>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <Button size="sm" asChild disabled={!isJoinable}>
+                        <Link href={item.joinUrl} target="_blank">Join</Link>
+                    </Button>
+                    {!isJoinable && <Badge variant="outline" className="text-xs font-normal">Starts in {countdown}</Badge>}
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs">Add to calendar</Button>
+                </div>
+            </Card>
+        );
+    }
+    
+    const ActivityRowReplay = ({ item }: { item: ActivityReplay }) => (
+        <Card className="p-4 flex items-start gap-4 bg-card/50">
+            <VideoIcon className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
+            <div className="flex-1 space-y-1">
+                <p className="font-semibold leading-tight">{item.title}</p>
+                <p className="text-xs text-muted-foreground">
+                    {item.duration} • Host: {item.host} • {formatDistanceToNow(new Date(item.recordedISO), { addSuffix: true })}
+                </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <Button size="sm" asChild><Link href={item.watchUrl} target="_blank">Watch recording</Link></Button>
+                <Button variant="link" size="sm" className="h-auto p-0 text-xs">Details</Button>
+            </div>
+        </Card>
+    );
 
     return (
         <CardContent className="pt-6">
-            {combinedActivities.length > 0 ? (
-                <div className="space-y-4">
-                    {combinedActivities.map(activity => (
-                        <div key={activity.id} className="flex items-center justify-between gap-4">
-                            <div className="flex items-start gap-3">
-                                {activity.type === 'upcoming' ? <Calendar className="h-4 w-4 text-muted-foreground mt-1" /> : <VideoIcon className="h-4 w-4 text-muted-foreground mt-1" />}
-                                <div className="text-sm">
-                                    <p className="font-medium">{activity.title}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {activity.type === 'upcoming' ? `Starts ${formatDistanceToNow(new Date((activity as ActivityItem).startISO), { addSuffix: true })}` : `Recorded ${formatDistanceToNow(new Date((activity as ActivityReplay).recordedISO), { addSuffix: true })}`}
-                                    </p>
-                                </div>
-                            </div>
-                            <Button asChild variant="outline" size="sm">
-                                <Link href={(activity as ActivityItem).joinUrl || (activity as ActivityReplay).watchUrl}>
-                                    {activity.type === 'upcoming' ? 'Join' : 'Watch'}
-                                </Link>
-                            </Button>
+            <div className="space-y-6">
+                {activities.upcoming.length > 0 && (
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-sm">Upcoming</h4>
+                            <Badge variant="secondary">{activities.upcoming.length}</Badge>
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <p className="text-sm text-muted-foreground text-center p-4">No recent activity yet.</p>
-            )}
+                        <div className="space-y-2">
+                            {activities.upcoming.map(item => <ActivityRowUpcoming key={item.id} item={item} />)}
+                        </div>
+                    </div>
+                )}
+                {activities.replays.length > 0 && (
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-sm">Replays</h4>
+                            <Badge variant="secondary">{activities.replays.length}</Badge>
+                        </div>
+                         <div className="space-y-2">
+                           {activities.replays.map(item => <ActivityRowReplay key={item.id} item={item} />)}
+                        </div>
+                    </div>
+                )}
+                 {activities.upcoming.length === 0 && activities.replays.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center p-4">No recent activity yet.</p>
+                )}
+            </div>
         </CardContent>
     );
 }
