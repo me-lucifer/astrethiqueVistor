@@ -29,7 +29,9 @@ export function Footer() {
     <footer className="border-t border-border/40 bg-background">
       <div className="container py-8 flex flex-col lg:flex-row justify-between items-center gap-6">
         <div className="flex items-center gap-2">
-          <Gem className="h-5 w-5 text-primary" />
+          <Link href="/_admin?demo=1">
+            <Gem className="h-5 w-5 text-primary" />
+          </Link>
           <p className="text-sm text-foreground/60 font-headline">
             {t.copyright}
           </p>
