@@ -87,8 +87,13 @@ export const getAdminConfig = (): AdminConfig | null => getLocal<AdminConfig>(AD
 export const setAdminConfig = (config: AdminConfig) => setLocal(ADMIN_CONFIG_KEY, config);
 
 // Wallet
-interface Wallet {
+export interface Wallet {
     balanceEUR: number;
+    history?: {
+        type: 'topup' | 'deduction';
+        amount: number;
+        ts: string;
+    }[];
 }
 const WALLET_KEY = 'ast_wallet';
 export const getWallet = (): Wallet | null => getLocal<Wallet>(WALLET_KEY);

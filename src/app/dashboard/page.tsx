@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ContentHubCard } from "@/components/content-hub/card";
 import * as authLocal from "@/lib/authLocal";
-import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal } from "@/lib/local";
+import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal, Wallet } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame } from "lucide-react";
 import Link from "next/link";
@@ -124,15 +124,13 @@ export default function DashboardPage() {
 
 // Sub-components for the Dashboard
 function WalletCard() {
-    const [balance, setBalance] = useState(0);
+    const [wallet, setWalletState] = useState<Wallet>({ balanceEUR: 0, history: [] });
     const { toast } = useToast();
 
     useEffect(() => {
         const checkWallet = () => {
-            const wallet = getWallet();
-            if (wallet) {
-                setBalance(wallet.balanceEUR);
-            }
+            const storedWallet = getWallet() || { balanceEUR: 0, history: [] };
+            setWalletState(storedWallet);
         };
         checkWallet();
         window.addEventListener('storage', checkWallet);
@@ -140,9 +138,18 @@ function WalletCard() {
     }, []);
 
     const handleTopUp = (amount: number) => {
-        const newBalance = balance + amount;
-        setBalance(newBalance);
-        setWallet({ balanceEUR: newBalance });
+        const newBalance = wallet.balanceEUR + amount;
+        const newHistoryItem = { type: 'topup', amount, ts: new Date().toISOString() };
+        const updatedHistory = [...(wallet.history || []), newHistoryItem];
+        
+        const newWallet: Wallet = {
+            balanceEUR: newBalance,
+            history: updatedHistory,
+        };
+
+        setWalletState(newWallet);
+        setWallet(newWallet);
+        
         toast({
             title: "Funds Added",
             description: `€${amount.toFixed(2)} has been added to your wallet.`,
@@ -155,7 +162,7 @@ function WalletCard() {
                 <CardTitle>Wallet & Budget</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-3xl font-bold">Balance: €{balance.toFixed(2)}</p>
+                <p className="text-3xl font-bold">Balance: €{wallet.balanceEUR.toFixed(2)}</p>
             </CardContent>
             <CardFooter className="gap-2">
                 <Button onClick={() => handleTopUp(5)}>Top up €5</Button>
