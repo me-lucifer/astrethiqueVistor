@@ -36,6 +36,7 @@ import {
   ArrowUp,
   MoreHorizontal,
   Zap,
+  Lock,
 } from "lucide-react";
 import {
   Tooltip,
@@ -233,6 +234,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDev, setIsDev] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsDev(process.env.NODE_ENV === 'development');
@@ -248,7 +250,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
-  const handleDemoAction = (action: 'seed' | 'lock' | 'reset') => {
+  const handleDemoAction = (action: 'seed' | 'reset_month' | 'lock') => {
     let wallet = getWallet();
     switch (action) {
         case 'seed':
@@ -257,14 +259,30 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
         case 'lock':
              wallet = {...wallet, budget_lock: { enabled: true, until: endOfMonth(new Date()).toISOString(), emergency_used: false }};
             break;
-        case 'reset':
+        case 'reset_month':
              wallet = {...wallet, spent_this_month_cents: 0, month_key: format(new Date(), 'yyyy-MM'), budget_lock: { enabled: false, until: null, emergency_used: false }};
             break;
     }
-    setWallet(wallet);
-    fetchWalletData(); // re-fetch to update UI
+    setWallet(wallet); // This updates local storage and triggers re-render via listener
   }
   
+  const handleToggleLock = (lock: boolean) => {
+      const wallet = getWallet();
+      const updatedWallet: WalletType = {
+        ...wallet,
+        budget_lock: {
+          ...wallet.budget_lock,
+          enabled: lock,
+          until: lock ? endOfMonth(new Date()).toISOString() : null,
+        }
+      };
+      setWallet(updatedWallet);
+      toast({
+        title: lock ? "Budget Locked" : "Budget Unlocked",
+        description: lock ? "Your spending is now capped at your budget limit." : "You can spend beyond your budget again."
+      });
+  }
+
   const handleTopUpClick = () => {
     if(!wallet?.budget_set) {
       onBudgetClick();
@@ -291,11 +309,15 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const daysInMonth = getDaysInMonth(new Date());
   const daysLeft = daysInMonth - getDate(new Date());
 
-  const progressColor = progress > 80 ? "bg-destructive" : progress > 50 ? "bg-amber-500" : "bg-success";
+  const progressColor = budget_lock.enabled ? "bg-muted-foreground" : progress > 80 ? "bg-destructive" : progress > 50 ? "bg-amber-500" : "bg-success";
+  
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(amount);
+  };
   
   return (
     <>
-      <GlassCard>
+      <GlassCard className="flex flex-col">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="flex items-center gap-2">
@@ -304,7 +326,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
             </CardTitle>
             <div className="flex items-center gap-1">
                 <Badge variant="outline" className="text-lg font-bold">
-                    Balance: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(balance_cents / 100)}
+                    Balance: {formatCurrency(balance_cents / 100)}
                 </Badge>
                 {isDev && (
                     <DropdownMenu>
@@ -314,44 +336,72 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDemoAction('reset')}>Reset Month</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDemoAction('reset_month')}>Reset Month</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 flex-grow">
           {budget_set ? (
-            <div>
-              <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
-                <span>This month</span>
-                {budget_lock.enabled ? (
-                    <Badge variant="secondary" className="gap-1.5"><Zap className="h-3 w-3 text-amber-500" /> Locked</Badge>
-                ) : (
-                    <span>{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(spentThisMonth)} / {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(budget)}</span>
-                )}
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
+                  <span>This month</span>
+                  {budget_lock.enabled ? (
+                      <Badge variant="secondary" className="gap-1.5"><Zap className="h-3 w-3 text-amber-500" /> Locked</Badge>
+                  ) : (
+                      <span>{formatCurrency(spentThisMonth)} / {formatCurrency(budget)}</span>
+                  )}
+                </div>
+                <Progress value={progress} indicatorClassName={progressColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
+                <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                    <Badge variant="outline" className="font-normal">Remaining: {formatCurrency(remaining)}</Badge>
+                    <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
+                </div>
               </div>
-              <Progress value={progress} indicatorClassName={progressColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
-               <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                   <Badge variant="outline" className="font-normal">Remaining: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(remaining)}</Badge>
-                   <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
-               </div>
+              
+              {budget_lock.enabled ? (
+                  <Card className="bg-muted/50 border-border/50">
+                    <CardHeader className="flex-row items-center justify-between p-4">
+                       <div className="space-y-1">
+                         <CardTitle className="text-base flex items-center gap-2"><Lock className="h-4 w-4"/>Budget Locked</CardTitle>
+                         <CardDescription className="text-xs">Spending blocked until {format(endOfMonth(new Date()), "MMM do")}.</CardDescription>
+                       </div>
+                       <Button variant="ghost" className="text-xs" onClick={() => handleToggleLock(false)}>Disable</Button>
+                    </CardHeader>
+                  </Card>
+              ) : (
+                   <Card className="bg-card border-border">
+                    <CardHeader className="p-4">
+                         <CardTitle className="text-base flex items-center gap-2">Budget Lock</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0 text-sm text-muted-foreground">
+                        Freeze your wallet until {format(endOfMonth(new Date()), "MMM do")}. You can’t spend more than your balance. One emergency top-up allowed.
+                    </CardContent>
+                    <CardFooter className="p-4 pt-0">
+                        <Button variant="outline" onClick={() => handleToggleLock(true)}>Enable lock</Button>
+                    </CardFooter>
+                  </Card>
+              )}
+
             </div>
           ) : (
              <Card className="bg-primary/10 border-primary/20 text-center p-4">
+               <CardTitle className="text-base mb-2">Set up your budget</CardTitle>
                <CardDescription className="text-foreground/90">Set a monthly budget to stay in control of your spending.</CardDescription>
                <Button variant="link" onClick={onBudgetClick} className="mt-1">Set up now</Button>
              </Card>
           )}
         </CardContent>
-        <CardFooter className="flex justify-between items-center">
+        <CardFooter className="flex justify-between items-center mt-auto">
           <div className="flex gap-2">
               <Button onClick={handleTopUpClick} size="sm">Top up</Button>
               <Button onClick={onBudgetClick} variant="outline" size="sm">Change budget</Button>
               <HistoryDrawer />
           </div>
-          {budget_lock.enabled ? (
+          {budget_lock.enabled && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -366,20 +416,6 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          ) : (
-             <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className="flex items-center space-x-2">
-                            <Switch id="budget-lock-cta" />
-                            <Label htmlFor="budget-lock-cta" className="text-xs text-muted-foreground cursor-pointer">Lock budget</Label>
-                        </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p className="max-w-xs">A mindful pause. We’ll protect your wallet until month end. One emergency top-up available.</p>
-                    </TooltipContent>
-                </Tooltip>
-             </TooltipProvider>
           )}
         </CardFooter>
       </GlassCard>
@@ -401,12 +437,16 @@ function HistoryDrawer() {
 
         rawLog.forEach(entry => {
             processedLog.push({ ...entry, runningBalance });
-            const amount = entry.type === 'topup' ? -entry.amount_cents : Math.abs(entry.amount_cents);
+            const amount = entry.amount_cents > 0 ? -entry.amount_cents : Math.abs(entry.amount_cents);
             runningBalance += amount;
         });
 
         setLog(processedLog);
     }
+  };
+  
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(amount);
   };
 
   const iconMap: Record<SpendLogEntry['type'], React.ReactNode> = {
@@ -442,10 +482,10 @@ function HistoryDrawer() {
                     </div>
                     <div className="text-right">
                        <p className={cn("font-semibold text-sm", entry.amount_cents > 0 ? 'text-success' : 'text-foreground')}>
-                            {entry.amount_cents > 0 ? '+' : ''}{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(entry.amount_cents / 100)}
+                            {entry.amount_cents > 0 ? '+' : ''}{formatCurrency(entry.amount_cents / 100)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            Bal: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(entry.runningBalance / 100)}
+                            Bal: {formatCurrency(entry.runningBalance / 100)}
                         </p>
                     </div>
                 </div>
@@ -955,5 +995,6 @@ const horoscopeData: { [key: string]: string } = {
 
 
     
+
 
 
