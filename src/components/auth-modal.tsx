@@ -26,6 +26,7 @@ import { useLanguage } from "@/contexts/language-context";
 import * as storage from "@/lib/storage";
 import PasswordStrength from "./auth/password-strength";
 import { CheckCircle, MailCheck, Rocket, KeyRound, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -83,6 +84,7 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 'auth' }: AuthModalProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const { language } = useLanguage();
   const [view, setView] = useState<View>(initialView);
   const [role, setRole] = useState<'visitor' | 'consultant'>('visitor');
@@ -175,7 +177,8 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 
     
     storage.setCurrentUser(user.id);
     storage.trackMetric('logins');
-    toast({ title: `Welcome back, ${user.name}!` });
+    const firstName = user.name.split(' ')[0];
+    toast({ title: `Welcome back, ${firstName}!` });
     onLoginSuccess();
     handleCloseModal(false);
   }
@@ -295,7 +298,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 
     toast({title: "Redirecting to consultant onboarding..."});
     handleCloseModal(false);
     onLoginSuccess();
-    // In a real app, you'd navigate here e.g. router.push('/onboarding/consultant')
+    router.push('/onboarding/consultant');
   }
   
   const handleFinishVisitor = () => {

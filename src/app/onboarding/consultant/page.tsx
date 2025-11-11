@@ -56,27 +56,30 @@ const stepValidations = [
 
 
 // Step Components
-const Step1Basics = () => (
-  <div className="space-y-4">
-    <FormField control={useFormContext().control} name="displayName" render={({ field }) => (
-      <FormItem><FormLabel>Display Name</FormLabel><FormControl><Input placeholder="e.g., Mystic Marie" {...field} /></FormControl><FormMessage /></FormItem>
-    )} />
-    <FormField control={useFormContext().control} name="headline" render={({ field }) => (
-      <FormItem><FormLabel>Profile Headline</FormLabel><FormControl><Input maxLength={80} placeholder="e.g., Clairvoyant Tarot Reader & Astrologer" {...field} /></FormControl><FormMessage /></FormItem>
-    )} />
-    <div className="grid grid-cols-2 gap-4">
-      <FormField control={useFormContext().control} name="country" render={({ field }) => (
-        <FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="e.g., France" {...field} /></FormControl><FormMessage /></FormItem>
-      )} />
-      <FormField control={useFormContext().control} name="city" render={({ field }) => (
-        <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Paris" {...field} /></FormControl><FormMessage /></FormItem>
-      )} />
-    </div>
-  </div>
-);
+const Step1Basics = () => {
+    const { control } = useForm<OnboardingFormData>();
+    return (
+        <div className="space-y-4">
+            <FormField control={control} name="displayName" render={({ field }) => (
+            <FormItem><FormLabel>Display Name</FormLabel><FormControl><Input placeholder="e.g., Mystic Marie" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={control} name="headline" render={({ field }) => (
+            <FormItem><FormLabel>Profile Headline</FormLabel><FormControl><Input maxLength={80} placeholder="e.g., Clairvoyant Tarot Reader & Astrologer" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <div className="grid grid-cols-2 gap-4">
+            <FormField control={control} name="country" render={({ field }) => (
+                <FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="e.g., France" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={control} name="city" render={({ field }) => (
+                <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Paris" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            </div>
+        </div>
+    )
+};
 
 const Step2Expertise = () => {
-    const { control } = useFormContext<OnboardingFormData>();
+    const { control } = useForm<OnboardingFormData>();
     return (
     <div className="space-y-6">
       <FormField control={control} name="languages" render={() => (
@@ -85,7 +88,8 @@ const Step2Expertise = () => {
             {["EN", "FR"].map((lang) => (
             <FormField key={lang} control={control} name="languages" render={({ field }) => (
               <FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(lang)} onCheckedChange={(checked) => {
-                return checked ? field.onChange([...field.value, lang]) : field.onChange(field.value?.filter((value) => value !== lang));
+                const currentLanguages = field.value || [];
+                return checked ? field.onChange([...currentLanguages, lang]) : field.onChange(currentLanguages.filter((value) => value !== lang));
               }} /></FormControl><FormLabel className="font-normal">{lang === 'EN' ? 'English' : 'Français'}</FormLabel></FormItem>
             )} />
           ))}
@@ -99,7 +103,8 @@ const Step2Expertise = () => {
             {specialtiesList.map((item) => (
             <FormField key={item} control={control} name="specialties" render={({ field }) => (
               <FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(item)} onCheckedChange={(checked) => {
-                return checked ? field.onChange([...field.value, item]) : field.onChange(field.value?.filter((value) => value !== item));
+                const currentSpecialties = field.value || [];
+                return checked ? field.onChange([...currentSpecialties, item]) : field.onChange(currentSpecialties.filter((value) => value !== item));
               }} /></FormControl><FormLabel className="font-normal">{item}</FormLabel></FormItem>
             )} />
           ))}
@@ -112,7 +117,7 @@ const Step2Expertise = () => {
 }
 
 const Step3Types = () => {
-    const { control } = useFormContext<OnboardingFormData>();
+    const { control } = useForm<OnboardingFormData>();
     return (
       <FormField control={control} name="consultationTypes" render={() => (
         <FormItem>
@@ -126,7 +131,8 @@ const Step3Types = () => {
                        <Checkbox
                           checked={field.value?.includes(item)}
                           onCheckedChange={(checked) => {
-                            const updated = checked ? [...field.value, item] : field.value?.filter((value) => value !== item);
+                            const currentTypes = field.value || [];
+                            const updated = checked ? [...currentTypes, item] : currentTypes.filter((value) => value !== item);
                             field.onChange(updated);
                           }}
                           className="sr-only"
@@ -149,7 +155,7 @@ const Step3Types = () => {
 }
 
 const Step4Rate = () => {
-    const { control, watch } = useFormContext<OnboardingFormData>();
+    const { control, watch } = useForm<OnboardingFormData>();
     const rate = watch("ratePerMin");
     return (
     <div className="space-y-6">
@@ -181,19 +187,22 @@ const Step4Rate = () => {
 );
 }
 
-const Step5Bio = () => (
-    <FormField control={useFormContext().control} name="bio" render={({ field }) => (
-        <FormItem>
-            <FormLabel>Your Bio</FormLabel>
-            <FormControl><Textarea placeholder="Tell visitors about your practice, what they can expect from a session, and what makes your approach unique..." className="min-h-[250px]" {...field} /></FormControl>
-             <p className="text-xs text-muted-foreground">Suggested sections: About me, What to expect, Format, Outcome.</p>
-            <FormMessage />
-        </FormItem>
-    )} />
-);
+const Step5Bio = () => {
+    const {control} = useForm<OnboardingFormData>();
+    return (
+        <FormField control={control} name="bio" render={({ field }) => (
+            <FormItem>
+                <FormLabel>Your Bio</FormLabel>
+                <FormControl><Textarea placeholder="Tell visitors about your practice, what they can expect from a session, and what makes your approach unique..." className="min-h-[250px]" {...field} /></FormControl>
+                <p className="text-xs text-muted-foreground">Suggested sections: About me, What to expect, Format, Outcome.</p>
+                <FormMessage />
+            </FormItem>
+        )} />
+    )
+};
 
 const Step6Media = () => {
-    const { control } = useFormContext<OnboardingFormData>();
+    const { control } = useForm<OnboardingFormData>();
     return (
         <div className="space-y-6">
             <FormField control={control} name="avatarUrl" render={({ field }) => (
@@ -263,9 +272,15 @@ export default function ConsultantOnboardingPage() {
         if (!currentUser || currentUser.role !== 'consultant') {
             router.replace("/");
         } else {
+            // Check if consultant profile is already active.
+            const draft = getLocal("ast_consultant_onboarding_draft");
+            if (draft && draft.published) {
+                router.replace(`/discover/consultant/${currentUser.id}`);
+                return;
+            }
             setUser(currentUser);
-            setLoading(false);
         }
+        setLoading(false);
     }, [router]);
     
     // Save draft to local storage on change
@@ -297,7 +312,7 @@ export default function ConsultantOnboardingPage() {
         // Here you would save the final profile to your backend
         // For this demo, we'll log it and clear the draft
         console.log("Publishing profile:", formData);
-        localStorage.removeItem("ast_consultant_onboarding_draft");
+        setLocal("ast_consultant_onboarding_draft", { ...formData, published: true });
         toast({ title: "Profile Published!", description: "Your consultant profile is now live."});
         router.push("/discover");
     }
@@ -337,9 +352,11 @@ export default function ConsultantOnboardingPage() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <form>
-                                    <CurrentStepComponent />
-                                </form>
+                                <Form {...methods}>
+                                    <form>
+                                        <CurrentStepComponent />
+                                    </form>
+                                </Form>
                             </CardContent>
                         </Card>
                     )}
@@ -396,5 +413,3 @@ export default function ConsultantOnboardingPage() {
         </div>
     );
 }
-
-    
