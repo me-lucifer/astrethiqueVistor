@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
@@ -49,53 +50,59 @@ const wizardSchema = step1Schema.merge(step2Schema).merge(step3Schema);
 
 // --- Step Components ---
 
-const Step1 = () => (
-    <div className="space-y-4">
-        <FormField control={useFormContext().control} name="whereYouLive" render={({ field }) => (
-            <FormItem><FormLabel>Where do you live?</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4 pt-1"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="own" id="own" /></FormControl><Label htmlFor="own" className="font-normal">I own</Label></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="rent" id="rent" /></FormControl><Label htmlFor="rent" className="font-normal">I rent</Label></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>
-        )} />
-        <FormField control={useFormContext().control} name="monthlyNetIncome" render={({ field }) => (
-            <FormItem><FormLabel>Monthly net income (€)</FormLabel><FormControl><Input type="number" placeholder="e.g., 3000" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <FormField control={useFormContext().control} name="householdSize" render={({ field }) => (
-            <FormItem><FormLabel>Household size (including you)</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <FormField control={useFormContext().control} name="otherHouseholdIncome" render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Any other household income?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
-        )} />
-        {useFormContext().watch("otherHouseholdIncome") && (
-            <FormField control={useFormContext().control} name="otherHouseholdIncomeAmount" render={({ field }) => (
-                <FormItem><FormLabel>Other income amount (€)</FormLabel><FormControl><Input type="number" placeholder="e.g., 1500" {...field} /></FormControl><FormMessage /></FormItem>
+const Step1 = () => {
+    const { control, watch } = useFormContext<BudgetWizardFormData>();
+    return (
+        <div className="space-y-4">
+            <FormField control={control} name="whereYouLive" render={({ field }) => (
+                <FormItem><FormLabel>Where do you live?</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4 pt-1"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="own" id="own" /></FormControl><Label htmlFor="own" className="font-normal">I own</Label></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="rent" id="rent" /></FormControl><Label htmlFor="rent" className="font-normal">I rent</Label></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>
             )} />
-        )}
-    </div>
-);
-
-const Step2 = () => (
-    <div className="space-y-4">
-        <p className="font-medium text-sm">Monthly essentials (€)</p>
-        <div className="grid grid-cols-2 gap-4">
-            <FormField control={useFormContext().control} name="essentialsRent" render={({ field }) => (<FormItem><FormLabel>Rent/Mortgage</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-            <FormField control={useFormContext().control} name="essentialsUtilities" render={({ field }) => (<FormItem><FormLabel>Utilities</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-            <FormField control={useFormContext().control} name="essentialsGroceries" render={({ field }) => (<FormItem><FormLabel>Groceries</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-            <FormField control={useFormContext().control} name="essentialsTransport" render={({ field }) => (<FormItem><FormLabel>Transport</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+            <FormField control={control} name="monthlyNetIncome" render={({ field }) => (
+                <FormItem><FormLabel>Monthly net income (€)</FormLabel><FormControl><Input type="number" placeholder="e.g., 3000" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={control} name="householdSize" render={({ field }) => (
+                <FormItem><FormLabel>Household size (including you)</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={control} name="otherHouseholdIncome" render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Any other household income?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+            )} />
+            {watch("otherHouseholdIncome") && (
+                <FormField control={control} name="otherHouseholdIncomeAmount" render={({ field }) => (
+                    <FormItem><FormLabel>Other income amount (€)</FormLabel><FormControl><Input type="number" placeholder="e.g., 1500" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+            )}
         </div>
-         <FormField control={useFormContext().control} name="debts" render={({ field }) => (
-            <FormItem><FormLabel>Debts & EMIs (€ per month)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
-        )} />
-        <FormField control={useFormContext().control} name="savingsGoalPercent" render={({ field }) => (
-            <FormItem>
-                <div className="flex justify-between">
-                    <FormLabel>Savings goal (% of income)</FormLabel>
-                    <span className="text-primary font-bold">{field.value}%</span>
-                </div>
-                <FormControl>
-                    <Slider min={0} max={30} step={1} value={[field.value]} onValueChange={(vals) => field.onChange(vals[0])} />
-                </FormControl>
-            </FormItem>
-        )} />
-    </div>
-);
+    );
+}
+
+const Step2 = () => {
+    const { control } = useFormContext<BudgetWizardFormData>();
+    return (
+        <div className="space-y-4">
+            <p className="font-medium text-sm">Monthly essentials (€)</p>
+            <div className="grid grid-cols-2 gap-4">
+                <FormField control={control} name="essentialsRent" render={({ field }) => (<FormItem><FormLabel>Rent/Mortgage</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="essentialsUtilities" render={({ field }) => (<FormItem><FormLabel>Utilities</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="essentialsGroceries" render={({ field }) => (<FormItem><FormLabel>Groceries</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="essentialsTransport" render={({ field }) => (<FormItem><FormLabel>Transport</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+            </div>
+             <FormField control={control} name="debts" render={({ field }) => (
+                <FormItem><FormLabel>Debts & EMIs (€ per month)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+            )} />
+            <FormField control={control} name="savingsGoalPercent" render={({ field }) => (
+                <FormItem>
+                    <div className="flex justify-between">
+                        <FormLabel>Savings goal (% of income)</FormLabel>
+                        <span className="text-primary font-bold">{field.value}%</span>
+                    </div>
+                    <FormControl>
+                        <Slider min={0} max={30} step={1} value={[field.value]} onValueChange={(vals) => field.onChange(vals[0])} />
+                    </FormControl>
+                </FormItem>
+            )} />
+        </div>
+    );
+};
 
 const Step3 = () => {
     const { control, watch } = useFormContext<BudgetWizardFormData>();
@@ -188,7 +195,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         const wallet = getWallet();
         const updatedWallet: Wallet = {
             ...wallet,
-            budget_cents: data.finalBudget * 100,
+            budget_cents: data.finalBudget! * 100,
             budget_set: true,
             budget_lock: {
                 ...wallet.budget_lock,
