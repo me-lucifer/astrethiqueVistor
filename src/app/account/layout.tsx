@@ -8,7 +8,7 @@ import { User, Bell, Lock, Wallet, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const accountNavLinks = [
-  { href: "/account/profile", label: "Profile", icon: User },
+  { href: "/account/profile", label: "Profile & Settings", icon: User },
   { href: "/account/preferences", label: "Notifications", icon: Bell },
   { href: "/account/security", label: "Security", icon: Lock },
   { href: "/account/wallet", label: "Wallet", icon: Wallet },

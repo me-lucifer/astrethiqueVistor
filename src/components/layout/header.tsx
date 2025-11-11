@@ -33,7 +33,7 @@ function HeaderContent() {
   const t = translations[language];
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<authLocal.User | null>(null);
 
   const checkUser = () => {
       setUser(authLocal.getCurrentUser());
@@ -98,6 +98,7 @@ function HeaderContent() {
   const UserMenu = () => {
     if (!user) return null;
     const displayName = user.publicName || user.firstName;
+    const greetingName = user.displayNamePreference === 'pseudonym' && user.pseudonym ? user.pseudonym : user.firstName;
 
     return (
         <DropdownMenu>
@@ -107,7 +108,7 @@ function HeaderContent() {
                     <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} alt={displayName} />
                     <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
                 </Avatar>
-                Hi, {displayName}
+                Hi, {greetingName}
                 <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -118,7 +119,7 @@ function HeaderContent() {
               <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4"/><span>Dashboard</span></Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/account/profile"><User className="mr-2 h-4 w-4"/><span>Profile</span></Link>
+              <Link href="/account/profile"><User className="mr-2 h-4 w-4"/><span>Profile & Settings</span></Link>
             </DropdownMenuItem>
              <DropdownMenuItem asChild>
               <Link href="/appointments"><span>My Appointments</span></Link>
