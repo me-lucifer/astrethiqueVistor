@@ -1,19 +1,12 @@
 
 "use client";
 
-import { Consultant } from './consultants';
-
 // --- STORAGE KEYS ---
 const KEYS = {
     USERS: 'ast_users',
     CURRENT_USER_ID: 'ast_currentUserId',
-    USER_SESSIONS: 'ast_user_sessions',
-    CONSULTANTS: 'ast_consultants',
-    WALLETS: 'ast_wallets',
     PREFERENCES: 'ast_prefs',
     FAVORITES: 'ast_favorites',
-    COMMENTS: 'ast_comments',
-    METRICS: 'ast_metrics',
 };
 
 // --- DATA STRUCTURES ---
@@ -28,19 +21,6 @@ export interface User {
     kycStatus: "pending" | "verified" | "rejected" | "n/a";
 }
 
-export interface SessionRecord {
-    id: string;
-    userId: string;
-    loggedInAt: string; // ISO Date
-    loggedOutAt?: string; // ISO Date
-}
-
-export interface Wallet {
-    balance: number;
-    currency: "€";
-    budgetLock?: number;
-}
-
 export interface Preferences {
     language: "EN" | "FR";
     timezone: string;
@@ -51,25 +31,6 @@ export interface Favorites {
     consultants: string[];
     content: string[];
     conferences: string[];
-}
-
-export interface Comment {
-    id: string;
-    userId: string;
-    contentId: string;
-    type: "article" | "podcast";
-    body: string;
-    createdAt: string; // ISO Date
-}
-
-export interface Metrics {
-    registrations: {
-        visitor: number;
-        consultant: number;
-    };
-    logins: number;
-    comments: number;
-    favorites: number;
 }
 
 // --- CORE STORAGE HELPERS ---
@@ -120,8 +81,8 @@ export function createId(prefix: string): string {
 
 export async function hashPassword(plain: string): Promise<string> {
     if (typeof window === 'undefined' || !window.crypto?.subtle) {
-        console.warn("Web Crypto API not available. Storing password in plain text. (FOR DEMO ONLY)");
-        return `__DEMO__${plain}`;
+        console.warn("Web Crypto API not available. Storing password as base64. (FOR DEMO ONLY)");
+        return btoa(plain);
     }
     try {
         const encoder = new TextEncoder();
@@ -131,8 +92,8 @@ export async function hashPassword(plain: string): Promise<string> {
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         return hashHex;
     } catch(e) {
-        console.error("Password hashing failed. Storing in plain text as fallback. (FOR DEMO ONLY)", e);
-        return `__DEMO__${plain}`;
+        console.error("Password hashing failed. Storing as base64 as fallback. (FOR DEMO ONLY)", e);
+        return btoa(plain);
     }
 }
 
@@ -169,31 +130,11 @@ export function getCurrentUser(): User | null {
     return getUsers().find(u => u.id === userId) || null;
 }
 
-// --- METRICS ---
-export function getMetrics(): Metrics {
-    const defaultMetrics: Metrics = {
-        registrations: { visitor: 0, consultant: 0 },
-        logins: 0,
-        comments: 0,
-        favorites: 0,
-    };
-    return getStorageItem<Metrics>(KEYS.METRICS) || defaultMetrics;
+export function isLoggedIn(): boolean {
+    return !!getCurrentUser();
 }
 
-export function trackMetric(metric: keyof Metrics | 'registrations', role?: 'visitor' | 'consultant'): void {
-    const currentMetrics = getMetrics();
-    
-    if (metric === 'registrations') {
-        if (role) {
-            currentMetrics.registrations[role]++;
-        }
-    } else if (metric === 'logins' || metric === 'comments' || metric === 'favorites') {
-        currentMetrics[metric]++;
-    }
-
-    setStorageItem(KEYS.METRICS, currentMetrics);
-}
-
+// requireAuth functionality will be implemented in the AuthModal component logic.
 
 // --- INITIAL SEEDING ---
 
@@ -201,16 +142,11 @@ function seedInitialData() {
     if (getStorageItem(KEYS.USERS) === null) {
         setStorageItem(KEYS.USERS, []);
     }
-    if (getStorageItem(KEYS.CONSULTANTS) === null) {
-        setStorageItem(KEYS.CONSULTANTS, []);
+    if (getStorageItem(KEYS.PREFERENCES) === null) {
+        setStorageItem(KEYS.PREFERENCES, {});
     }
-     if (getStorageItem(KEYS.METRICS) === null) {
-        setStorageItem(KEYS.METRICS, {
-            registrations: { visitor: 0, consultant: 0 },
-            logins: 0,
-            comments: 0,
-            favorites: 0,
-        });
+    if (getStorageItem(KEYS.FAVORITES) === null) {
+        setStorageItem(KEYS.FAVORITES, {});
     }
 }
 
