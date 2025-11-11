@@ -89,7 +89,7 @@ export default function ProfilePage() {
             toast({ title: "Password changed successfully." });
             passwordForm.reset();
         } catch (error: any) {
-            passwordForm.setError("currentPassword", { message: error.message });
+            toast({ variant: "destructive", title: "Error", description: error.message });
         }
     };
 

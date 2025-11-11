@@ -55,7 +55,7 @@ function HeaderContent() {
   const handleLogout = () => {
       authLocal.clearSession();
       checkUser();
-      toast({ title: "Signed out." });
+      toast({ title: "You've been signed out." });
       router.push('/');
   }
 

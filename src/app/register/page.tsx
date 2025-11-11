@@ -83,7 +83,7 @@ export default function RegisterPage() {
     const handleLogout = () => {
         authLocal.clearSession();
         setUser(null);
-        toast({ title: "You have been signed out." });
+        toast({ title: "Signed out." });
     };
 
     async function handleCreateAccount(values: CreateAccountFormData) {
@@ -92,7 +92,7 @@ export default function RegisterPage() {
                 const newUser = await authLocal.registerVisitor(values);
                 toast({
                   title: `Welcome, ${newUser.firstName}!`,
-                  description: "Your account has been created successfully.",
+                  description: "Account created. You can now log in.",
                 });
                 router.push('/discover');
             } catch (error: any) {
