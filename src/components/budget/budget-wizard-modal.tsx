@@ -20,33 +20,31 @@ import { useToast } from "@/hooks/use-toast";
 import { useBudgetCalculator, type BudgetWizardFormData } from "./use-budget-calculator";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-// --- Zod Schemas for each step ---
-const step1Schema = z.object({
+// --- Zod Schema ---
+const wizardSchema = z.object({
+  // Step 1
   whereYouLive: z.enum(["own", "rent"], { required_error: "Please select an option." }),
   monthlyNetIncome: z.coerce.number().min(0, "Income must be a positive number."),
   householdSize: z.coerce.number().int().min(1, "Household must have at least 1 person.").max(10),
   otherHouseholdIncome: z.boolean(),
   otherHouseholdIncomeAmount: z.coerce.number().optional(),
-}).refine(data => !data.otherHouseholdIncome || (data.otherHouseholdIncomeAmount !== undefined && data.otherHouseholdIncomeAmount >= 0), {
-  message: "Please enter the other income amount.",
-  path: ["otherHouseholdIncomeAmount"],
-});
-
-const step2Schema = z.object({
+  
+  // Step 2
   essentialsRent: z.coerce.number().min(0),
   essentialsUtilities: z.coerce.number().min(0),
   essentialsGroceries: z.coerce.number().min(0),
   essentialsTransport: z.coerce.number().min(0),
   debts: z.coerce.number().min(0),
   savingsGoalPercent: z.number().min(0).max(30),
-});
 
-const step3Schema = z.object({
+  // Step 3
   finalBudget: z.coerce.number().min(5, "Budget must be at least €5."),
   enableBudgetLock: z.boolean(),
+}).refine(data => !data.otherHouseholdIncome || (data.otherHouseholdIncomeAmount !== undefined && data.otherHouseholdIncomeAmount >= 0), {
+  message: "Please enter the other income amount.",
+  path: ["otherHouseholdIncomeAmount"],
 });
 
-const wizardSchema = step1Schema.merge(step2Schema).merge(step3Schema);
 
 // --- Step Components ---
 
@@ -133,9 +131,9 @@ const Step3 = () => {
 };
 
 const steps = [
-    { title: "About You", description: "Let's understand your financial landscape.", component: Step1, schema: step1Schema },
-    { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, schema: step2Schema },
-    { title: "Your Budget", description: "Review our suggestion and set your final budget.", component: Step3, schema: step3Schema },
+    { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["whereYouLive", "monthlyNetIncome", "householdSize", "otherHouseholdIncome", "otherHouseholdIncomeAmount"] },
+    { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentialsRent", "essentialsUtilities", "essentialsGroceries", "essentialsTransport", "debts", "savingsGoalPercent"] },
+    { title: "Your Budget", description: "Review our suggestion and set your final budget.", component: Step3, fields: ["finalBudget", "enableBudgetLock"] },
 ];
 
 
@@ -179,7 +177,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     }, [isOpen, methods]);
     
     const handleNext = async () => {
-        const result = await methods.trigger(Object.keys(steps[currentStep].schema.shape) as (keyof BudgetWizardFormData)[]);
+        const result = await methods.trigger(steps[currentStep].fields as (keyof BudgetWizardFormData)[]);
         if (result) {
             setCurrentStep(s => s + 1);
         } else {
