@@ -396,7 +396,7 @@ export default function RegisterPage() {
                         </CardContent>
                          <CardFooter className="text-center">
                             <p className="text-xs text-muted-foreground">
-                                Your name helps personalize your experience. You can change it in Settings. We protect your data under GDPR.
+                                Your real name is visible only to you and our team for compliance.
                             </p>
                         </CardFooter>
                     </Card>
