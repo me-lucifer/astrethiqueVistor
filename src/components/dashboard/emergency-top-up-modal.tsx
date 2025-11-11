@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getWallet, setWallet, addSpendLogEntry, EMERGENCY_TOPUP_LIMIT_EUR, Wallet } from "@/lib/local";
-import { AlertCircle } from "lucide-react";
+import { Zap } from "lucide-react";
 
 interface EmergencyTopUpModalProps {
     isOpen: boolean;
@@ -68,8 +68,8 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 mb-4">
-                        <AlertCircle className="h-6 w-6 text-destructive" />
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 mb-4">
+                        <Zap className="h-6 w-6 text-amber-500" />
                     </div>
                     <DialogTitle className="text-center">Emergency Top-Up</DialogTitle>
                     <DialogDescription className="text-center">

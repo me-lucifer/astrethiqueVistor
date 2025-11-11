@@ -35,6 +35,7 @@ import {
   Receipt,
   ArrowUp,
   MoreHorizontal,
+  Zap,
 } from "lucide-react";
 import {
   Tooltip,
@@ -54,7 +55,6 @@ import {
 import * as authLocal from "@/lib/authLocal";
 import {
   getWallet,
-  setWallet,
   getMoodLog,
   getLocal,
   setLocal,
@@ -262,7 +262,8 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
         budget_cents: 3000,
         budget_set: true
     };
-    setWallet(updatedWallet);
+    setLocal('ast_wallet', updatedWallet);
+    window.dispatchEvent(new Event('storage'));
   }
   
   const handleLockWallet = () => {
@@ -275,7 +276,8 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
             emergency_used: false,
         }
     };
-    setWallet(updatedWallet);
+    setLocal('ast_wallet', updatedWallet);
+    window.dispatchEvent(new Event('storage'));
   }
 
   const handleResetMonth = () => {
@@ -290,7 +292,8 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
           },
           month_key: format(new Date(), "yyyy-MM"),
       };
-      setWallet(updatedWallet);
+      setLocal('ast_wallet', updatedWallet);
+      window.dispatchEvent(new Event('storage'));
   }
 
   if (!wallet) {
@@ -346,7 +349,7 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
                   </DropdownMenu>
                 )}
                 <p className="text-xl font-bold">
-                  Balance: €{(balance_cents / 100).toFixed(2)}
+                  Balance: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(balance_cents / 100)}
                 </p>
             </div>
         </div>
@@ -356,17 +359,18 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
           <div>
               <div className="flex justify-between text-sm text-muted-foreground mb-1">
                   <span>This month</span>
-                  <span>€{spentThisMonth.toFixed(2)} / €{budget.toFixed(2)}</span>
+                  <span>{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(spentThisMonth)} / {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(budget)}</span>
               </div>
-              <Progress value={progress} indicatorClassName={cn(progressBarColor, progress < 20 && 'animate-pulse')} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
+              <Progress value={progress} indicatorClassName={cn(progressBarColor, progress < 20 && progress > 0 && 'animate-pulse')} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
               <div className="flex gap-2 mt-2">
-                {budgetRemaining !== null && <Badge variant="outline">Remaining: €{budgetRemaining.toFixed(2)}</Badge>}
+                {budgetRemaining !== null && <Badge variant="outline">Remaining: {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(budgetRemaining)}</Badge>}
                 <Badge variant="outline">Days left: {daysLeft}</Badge>
               </div>
           </div>
         ) : (
           <Card className="bg-primary/10 border-primary/20 text-center p-4">
-            <CardDescription className="text-foreground/90">Set a monthly budget to stay in control of your spending.</CardDescription>
+            <Sparkles className="h-6 w-6 text-primary mx-auto mb-2" />
+            <CardDescription className="text-foreground/90 font-medium">Set a monthly budget to stay in control.</CardDescription>
             <Button variant="link" onClick={onBudgetClick} className="mt-1">Set up now</Button>
           </Card>
         )}
@@ -379,8 +383,8 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={onEmergencyClick} disabled={budget_lock.emergency_used}>
-                             Emergency top-up
+                           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1" onClick={onEmergencyClick} disabled={budget_lock.emergency_used}>
+                             <Zap className="h-3 w-3"/> Emergency top-up
                            </Button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -395,7 +399,7 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
          <div className="flex items-center gap-2">
             <Button onClick={onTopUpClick}>Top up</Button>
             <Button variant="outline" onClick={onBudgetClick}>{budget_set ? 'Change budget' : 'Set budget'}</Button>
-            <HistoryDrawer />
+            <HistoryDrawer onTopUpClick={onTopUpClick} />
         </div>
         <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 w-full">
             Spending uses wallet balance only. Locks reset monthly.
@@ -405,12 +409,13 @@ function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudge
   );
 }
 
-function HistoryDrawer() {
+function HistoryDrawer({onTopUpClick}: {onTopUpClick: () => void}) {
   const [log, setLog] = useState<SpendLogEntry[]>([]);
+  const [initialBalance, setInitialBalance] = useState(0);
 
   const iconMap: { [key in SpendLogEntry['type']]: React.ElementType } = {
     topup: ArrowDown,
-    emergency: AlertTriangle,
+    emergency: Zap,
     horoscope: Sparkles,
     consultation: Receipt,
     other: Wallet,
@@ -424,25 +429,38 @@ function HistoryDrawer() {
     other: "text-muted-foreground",
   }
 
-  const calculateRunningBalance = (spendLog: SpendLogEntry[], initialBalance: number): SpendLogEntry[] => {
+  const calculateRunningBalance = (spendLog: Omit<SpendLogEntry, 'runningBalance'>[]): SpendLogEntry[] => {
     let runningBalance = initialBalance;
     const logWithBalance: SpendLogEntry[] = [];
-
-    // Iterate backwards to calculate running balance correctly
-    for (let i = spendLog.length - 1; i >= 0; i--) {
-        const entry = spendLog[i];
-        logWithBalance.unshift({ ...entry, runningBalance });
-        runningBalance -= entry.amount_cents;
+    
+    // Reverse to calculate from oldest to newest
+    const reversedLog = [...spendLog].reverse();
+    const tempLog: (SpendLogEntry & { startBalance: number })[] = [];
+    
+    for(const entry of reversedLog) {
+      const startBalance = runningBalance;
+      runningBalance += entry.amount_cents;
+      tempLog.push({ ...entry, runningBalance: runningBalance, startBalance: startBalance });
     }
-    return logWithBalance;
+
+    // Now reverse back to show newest first
+    return tempLog.reverse();
   };
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
       const spendLog = getSpendLog();
       const currentBalance = getWallet().balance_cents;
-      const logWithRunningBalance = calculateRunningBalance(spendLog, currentBalance);
-      setLog(logWithRunningBalance);
+      setInitialBalance(currentBalance);
+      
+      let runningBalance = currentBalance;
+      const logWithBalance = spendLog.map(entry => {
+          const entryWithBalance = { ...entry, runningBalance: runningBalance };
+          runningBalance -= entry.amount_cents; // work backwards
+          return entryWithBalance;
+      }).reverse(); // now they are in chronological order with correct running balance
+      
+      setLog(logWithBalance.reverse()); // reverse back to newest first
     }
   };
 
@@ -473,14 +491,17 @@ function HistoryDrawer() {
                 </div>
                 <div className="text-right">
                     <p className={cn("font-semibold text-sm", amountIsPositive ? "text-success" : "text-foreground")}>
-                      {amountIsPositive ? '+' : ''}{(entry.amount_cents / 100).toFixed(2)}
+                      {amountIsPositive ? '+' : ''}{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(entry.amount_cents / 100)}
                     </p>
-                    <p className="text-xs text-muted-foreground">€{(entry.runningBalance / 100).toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">{new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(entry.runningBalance / 100)}</p>
                 </div>
               </div>
             )
           }) : (
-            <p className="text-center text-muted-foreground py-8">No transactions yet.</p>
+            <div className="text-center text-muted-foreground py-8">
+              <p>No transactions yet.</p>
+              <Button variant="link" onClick={onTopUpClick}>Make your first top up</Button>
+            </div>
           )}
         </div>
       </SheetContent>

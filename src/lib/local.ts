@@ -244,7 +244,7 @@ export const getBudgetProfile = (): BudgetProfile | null => getLocal<BudgetProfi
 export const setBudgetProfile = (profile: BudgetProfile) => setLocal(BUDGET_PROFILE_KEY, profile);
 
 // --- Spend Log Helpers ---
-export const getSpendLog = (): SpendLogEntry[] => getLocal<SpendLogEntry[]>(SPEND_LOG_KEY) || [];
+export const getSpendLog = (): Omit<SpendLogEntry, 'runningBalance'>[] => getLocal<Omit<SpendLogEntry, 'runningBalance'>[]>(SPEND_LOG_KEY) || [];
 export const addSpendLogEntry = (entry: Omit<SpendLogEntry, 'runningBalance'>) => {
     const log = getSpendLog();
     const newEntry = { ...entry, runningBalance: 0 };
