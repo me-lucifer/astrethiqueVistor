@@ -8,32 +8,36 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import * as authLocal from "@/lib/authLocal";
+import { getWallet, setWallet, Wallet } from "@/lib/local";
 
 export default function WalletPage() {
     const { toast } = useToast();
-    const [user, setUser] = useState<any | null>(null);
+    const [user, setUser] = useState<authLocal.User | null>(null);
+    const [wallet, setWallet] = useState<Wallet | null>(null);
     const [budgetLockValue, setBudgetLockValue] = useState([50]);
 
     useEffect(() => {
         const currentUser = authLocal.getCurrentUser();
-        if (currentUser) {
-            setUser(currentUser);
-            if (currentUser.wallet.budgetLock) {
-                setBudgetLockValue([currentUser.wallet.budgetLock]);
-            }
+        setUser(currentUser);
+        
+        const currentWallet = getWallet();
+        setWallet(currentWallet);
+        
+        if (currentWallet?.budget_cents) {
+            setBudgetLockValue([currentWallet.budget_cents / 100]);
         }
     }, []);
 
     const handleAddCredit = () => {
-        if (!user) return;
+        if (!wallet) return;
 
-        const updatedUser = { 
-            ...user,
-            wallet: { ...user.wallet, balanceCents: user.wallet.balanceCents + 1000 }
+        const newWalletState: Wallet = {
+          ...wallet,
+          balance_cents: wallet.balance_cents + 1000,
         };
-        
-        setUser(updatedUser);
-        authLocal.updateUser(updatedUser);
+        setWallet(newWalletState); // optimistic update
+        setWallet(newWalletState); // persist
+        window.dispatchEvent(new Event('storage'));
 
         toast({
             title: "Funds Added",
@@ -42,15 +46,22 @@ export default function WalletPage() {
     };
 
     const handleSaveBudgetLock = () => {
-        if (!user) return;
-
-        const updatedUser = { 
-            ...user,
-            wallet: { ...user.wallet, budgetLock: budgetLockValue[0] }
-        };
+        if (!wallet) return;
         
-        setUser(updatedUser);
-        authLocal.updateUser(updatedUser);
+        const newWalletState: Wallet = {
+            ...wallet,
+            budget_cents: budgetLockValue[0] * 100,
+            budget_set: true,
+            budget_lock: {
+                ...wallet.budget_lock,
+                enabled: true,
+            }
+        };
+
+        setWallet(newWalletState); // optimistic
+        setWallet(newWalletState); // persist
+        window.dispatchEvent(new Event('storage'));
+
 
         toast({
             title: "Budget Lock Updated",
@@ -58,7 +69,7 @@ export default function WalletPage() {
         });
     }
 
-    if (!user) {
+    if (!user || !wallet) {
         return <div>Loading wallet...</div>
     }
 
@@ -72,7 +83,7 @@ export default function WalletPage() {
                 <CardContent className="space-y-4">
                     <div className="p-6 rounded-lg bg-muted text-center">
                         <p className="text-sm text-muted-foreground">Current Balance</p>
-                        <p className="text-4xl font-bold">€{(user.wallet.balanceCents / 100).toFixed(2)}</p>
+                        <p className="text-4xl font-bold">€{(wallet.balance_cents / 100).toFixed(2)}</p>
                     </div>
                     <Button onClick={handleAddCredit} className="w-full">Add €10 Demo Credit</Button>
                 </CardContent>

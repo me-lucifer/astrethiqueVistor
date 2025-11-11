@@ -5,7 +5,7 @@ import { useState, useEffect, useTransition } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getLocal, setLocal, getWallet, getAdminConfig, setWallet } from "@/lib/local";
+import { getLocal, setLocal, getWallet, getAdminConfig, setWallet, Wallet, SpendLogEntry } from "@/lib/local";
 import { User } from "@/lib/authLocal";
 import { AddFundsModal } from "./add-funds-modal";
 import { useToast } from "@/hooks/use-toast";
@@ -156,26 +156,30 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
         startTransition(() => {
             if (!user?.zodiacSign || !config) return;
 
-            const wallet = getWallet() || { balanceEUR: 0, history: [] };
-            if (wallet.balanceEUR < config.detailedHoroscopeFeeEUR) {
+            const feeCents = config.detailedHoroscopeFeeEUR * 100;
+            const wallet = getWallet();
+            if (wallet.balance_cents < feeCents) {
                 setIsFundsModalOpen(true);
                 return;
             }
-
-            // Deduct fee
-            const newBalance = wallet.balanceEUR - config.detailedHoroscopeFeeEUR;
-            const newHistoryItem = {
-                type: 'horoscope',
-                amount: -config.detailedHoroscopeFeeEUR,
-                ts: new Date().toISOString()
+            
+            // Deduct fee and update wallet
+            const newWalletState: Wallet = {
+                ...wallet,
+                balance_cents: wallet.balance_cents - feeCents,
+                spent_this_month_cents: wallet.spent_this_month_cents + feeCents,
             };
+            setWallet(newWalletState);
 
-            setWallet({
-                balanceEUR: newBalance,
-                history: [...(wallet.history || []), newHistoryItem]
-            });
-
-            window.dispatchEvent(new Event('storage')); // Notify other components of wallet change
+            // Log the transaction
+            const spendLog = getLocal<SpendLogEntry[]>('ast_spend_log') || [];
+            const newLogEntry: SpendLogEntry = {
+                ts: new Date().toISOString(),
+                type: 'horoscope',
+                amount_cents: -feeCents,
+                note: `Detailed horoscope for ${user.zodiacSign}`
+            };
+            setLocal('ast_spend_log', [newLogEntry, ...spendLog]);
             
             toast({
                 title: "Purchase Successful",

@@ -38,6 +38,8 @@ import {
   setLocal,
   getMoodMeta,
   initializeLocalStorage,
+  Wallet as WalletType,
+  setWallet,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -53,7 +55,7 @@ import { cn } from "@/lib/utils";
 import { ActivityTab } from "@/components/dashboard/activity-tab";
 
 // Type Imports
-import type { Wallet as WalletType, MoodMeta } from "@/lib/local";
+import type { MoodMeta } from "@/lib/local";
 import type { Consultant } from "@/lib/consultants-seeder";
 import type { ContentHubItem } from "@/lib/content-hub-seeder";
 
@@ -121,7 +123,7 @@ export default function DashboardPage() {
     setLoading(false);
 
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "astro") {
+      if (event.key === "astro" || event.key === "ast_wallet") {
         checkUser();
       }
     };
@@ -190,27 +192,26 @@ export default function DashboardPage() {
 
 // Sub-components for the Dashboard
 function WalletCard() {
-  const [user, setUser] = useState<authLocal.User | null>(null);
+  const [wallet, setWallet] = useState<WalletType | null>(null);
   const { toast } = useToast();
 
-  const fetchUserData = useCallback(() => {
-    setUser(authLocal.getCurrentUser());
+  const fetchWalletData = useCallback(() => {
+    setWallet(getWallet());
   }, []);
 
   useEffect(() => {
-    fetchUserData();
-    window.addEventListener("storage", fetchUserData);
-    return () => window.removeEventListener("storage", fetchUserData);
-  }, [fetchUserData]);
+    fetchWalletData();
+    window.addEventListener("storage", fetchWalletData);
+    return () => window.removeEventListener("storage", fetchWalletData);
+  }, [fetchWalletData]);
 
   const handleTopUp = () => {
-    if (!user) return;
-    authLocal.updateUser(user.id, {
-        wallet: { 
-            ...user.wallet, 
-            balanceCents: user.wallet.balanceCents + 1000 
-        }
-    });
+    if (!wallet) return;
+    const newWalletState = {
+        ...wallet,
+        balance_cents: wallet.balance_cents + 1000 // Add €10
+    };
+    setWallet(newWalletState);
     toast({
       title: "Funds Added",
       description: "€10.00 has been added to your wallet.",
@@ -218,7 +219,7 @@ function WalletCard() {
     });
   };
 
-  if (!user) {
+  if (!wallet) {
     return (
       <GlassCard>
         <CardContent className="p-6">
@@ -228,10 +229,9 @@ function WalletCard() {
     );
   }
 
-  const { balanceCents = 0, budgetLock } = user.wallet;
-  // This is a placeholder for monthly spent, in a real app this would be calculated
-  const spentThisMonth = 35.50; 
-  const budget = budgetLock || 100; // Default budget if not set
+  const { balance_cents = 0, budget_lock, spent_this_month_cents, budget_cents } = wallet;
+  const spentThisMonth = spent_this_month_cents / 100;
+  const budget = budget_cents / 100;
   const progress = budget > 0 ? (spentThisMonth / budget) * 100 : 0;
 
   let progressBarColor = "bg-success";
@@ -252,7 +252,7 @@ function WalletCard() {
               Wallet & Budget
             </CardTitle>
              <p className="text-xl font-bold">
-              Balance: €{(balanceCents / 100).toFixed(2)}
+              Balance: €{(balance_cents / 100).toFixed(2)}
             </p>
         </div>
       </CardHeader>
@@ -260,12 +260,12 @@ function WalletCard() {
         <div>
             <div className="flex justify-between text-sm text-muted-foreground mb-1">
                 <span>This month</span>
-                <span>€{spentThisMonth.toFixed(2)} / €{budget.toFixed(2)}</span>
+                <span>€{spentThisMonth.toFixed(2)} / €{budget > 0 ? budget.toFixed(2) : ' --'}</span>
             </div>
             <Progress value={progress} indicatorClassName={progressBarColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
         </div>
          <div className="flex items-center gap-2">
-            {budgetLock ? (
+            {budget_lock?.enabled ? (
                 <Badge variant="secondary">Budget Locked until {endOfMonthFormatted}</Badge>
             ) : (
                  <Badge variant="outline">Budget not set</Badge>

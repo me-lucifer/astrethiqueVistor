@@ -4,9 +4,20 @@
 import type { User } from './authLocal';
 import type { MoodLogEntry } from './mood-log';
 import { seedActivityData } from './activity';
-import { subDays, format } from 'date-fns';
+import { subDays, format, getYear, getMonth, endOfMonth } from 'date-fns';
 
 // --- Storage Abstraction ---
+
+let storage: Storage;
+try {
+  const testKey = 'localStorage_test';
+  storage = typeof window !== "undefined" ? window.localStorage : createInMemoryStorage();
+  storage.setItem(testKey, 'test');
+  storage.removeItem(testKey);
+} catch (error) {
+  console.warn("localStorage is not available. Falling back to in-memory storage.", error);
+  storage = createInMemoryStorage();
+}
 
 function createInMemoryStorage(): Storage {
   const store: { [key: string]: string } = {};
@@ -30,16 +41,6 @@ function createInMemoryStorage(): Storage {
   };
 }
 
-let storage: Storage;
-try {
-  const testKey = 'localStorage_test';
-  storage = typeof window !== "undefined" ? window.localStorage : createInMemoryStorage();
-  storage.setItem(testKey, 'test');
-  storage.removeItem(testKey);
-} catch (error) {
-  console.warn("localStorage is not available. Falling back to in-memory storage.", error);
-  storage = createInMemoryStorage();
-}
 
 // --- Generic Helpers ---
 
@@ -77,18 +78,54 @@ export function seedOnce(flagKey: string, seedFn: () => void): void {
     }
 }
 
-// --- INITIALIZATION ---
+// --- Specific Data Models & Constants ---
+
+export const EMERGENCY_TOPUP_LIMIT_EUR = 20;
+export const SUGGEST_MIN_EUR = 5;
+export const SUGGEST_MAX_EUR = 150;
+
+export interface BudgetLock {
+    enabled: boolean;
+    until: string | null;
+    emergency_used: boolean;
+}
+
+export interface Wallet {
+    balance_cents: number;
+    budget_cents: number;
+    budget_set: boolean;
+    spent_this_month_cents: number;
+    month_key: string; // YYYY-MM
+    budget_lock: BudgetLock;
+}
+
+export interface BudgetProfile {
+    answers: Record<string, any>;
+    suggested_cents: number;
+    last_updated: string;
+}
+
+export interface SpendLogEntry {
+    ts: string;
+    type: "consultation" | "horoscope" | "topup" | "emergency" | "other";
+    amount_cents: number;
+    note: string;
+}
+
+const WALLET_KEY = 'ast_wallet';
+const BUDGET_PROFILE_KEY = 'ast_budget_profile';
+const SPEND_LOG_KEY = 'ast_spend_log';
+
+
+// --- INITIALIZATION & MONTHLY RESET ---
 export function initializeLocalStorage() {
-  seedOnce('ast_db_seeded_v2', () => {
+  seedOnce('ast_db_seeded_v3', () => {
     // Seed Admin Config
     setLocal('ast_admin_config', { detailedHoroscopeFeeEUR: 2.5 });
 
-    // Seed Guest Wallet
-    const existingWallet = getLocal<Wallet>(WALLET_KEY);
-    if (!existingWallet || isNaN(existingWallet.balanceEUR)) {
-      setLocal(WALLET_KEY, { balanceEUR: 5.00, history: [] });
-    }
-
+    // Seed Guest Wallet (handled by getWallet default)
+    getWallet(); 
+    
     // Seed Mood Log with historical data
     const existingMoodLog = getLocal<MoodLogEntry[]>(MOOD_LOG_KEY);
     if (!existingMoodLog || existingMoodLog.length === 0) {
@@ -103,7 +140,7 @@ export function initializeLocalStorage() {
       setLocal(MOOD_META_KEY, { streak: 2, lastCheckIn: yesterday.toISOString() });
     }
     
-    // Guest Favorites (will be overridden by user favorites on login)
+    // Guest Favorites
     const existingGuestFavorites = getLocal(FAVORITES_KEY);
     if (!existingGuestFavorites) {
         setFavorites(['aeliana-rose', 'seraphina-moon']);
@@ -112,9 +149,51 @@ export function initializeLocalStorage() {
     // Seed Activity Data
     seedActivityData();
   });
+
+  // Monthly Wallet Reset Logic
+  const wallet = getLocal<Wallet>(WALLET_KEY);
+  const currentMonthKey = format(new Date(), 'yyyy-MM');
+  if (wallet && wallet.month_key !== currentMonthKey) {
+      const updatedWallet: Wallet = {
+          ...wallet,
+          spent_this_month_cents: 0,
+          month_key: currentMonthKey,
+          budget_lock: {
+              enabled: wallet.budget_lock?.enabled || false,
+              until: format(endOfMonth(new Date()), 'yyyy-MM-dd\'T\'HH:mm:ssXXX'),
+              emergency_used: false,
+          }
+      };
+      setLocal(WALLET_KEY, updatedWallet);
+  }
 }
 
-// --- Specific Data Accessors ---
+
+// --- Wallet Specific Helpers ---
+export const getWallet = (): Wallet => {
+    const wallet = getLocal<Wallet>(WALLET_KEY);
+    if (!wallet) {
+        const defaultWallet = {
+            balance_cents: 500,
+            budget_cents: 0,
+            budget_set: false,
+            spent_this_month_cents: 0,
+            month_key: format(new Date(), 'yyyy-MM'),
+            budget_lock: {
+                enabled: false,
+                until: null,
+                emergency_used: false
+            }
+        };
+        setLocal(WALLET_KEY, defaultWallet);
+        return defaultWallet;
+    }
+    return wallet;
+};
+export const setWallet = (wallet: Wallet) => {
+    setLocal(WALLET_KEY, wallet);
+    window.dispatchEvent(new Event('storage'));
+}
 
 // Admin Config
 interface AdminConfig {
@@ -123,28 +202,6 @@ interface AdminConfig {
 const ADMIN_CONFIG_KEY = 'ast_admin_config';
 export const getAdminConfig = (): AdminConfig | null => getLocal<AdminConfig>(ADMIN_CONFIG_KEY);
 export const setAdminConfig = (config: AdminConfig) => setLocal(ADMIN_CONFIG_KEY, config);
-
-// Wallet
-export interface Wallet {
-    balanceEUR: number;
-    history?: {
-        type: 'topup' | 'deduction' | 'horoscope';
-        amount: number;
-        ts: string;
-    }[];
-}
-const WALLET_KEY = 'ast_wallet';
-export const getWallet = (): Wallet | null => {
-    const wallet = getLocal<Wallet>(WALLET_KEY);
-    if (wallet && isNaN(wallet.balanceEUR)) {
-        return { ...wallet, balanceEUR: 0 };
-    }
-    return wallet;
-};
-export const setWallet = (wallet: Wallet) => {
-    setLocal(WALLET_KEY, wallet);
-    window.dispatchEvent(new Event('storage'));
-}
 
 
 // Mood Log

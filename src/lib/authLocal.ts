@@ -20,7 +20,7 @@ export interface User {
     createdAt: string; // ISO Date
     updatedAt: string; // ISO Date
     emailVerified: boolean;
-    wallet: { balanceCents: number, budgetLock?: number };
+    // Wallet data is now separate in `ast_wallet`
     favorites: { consultants: string[]; content: string[] };
     publicName: string;
     nameHistory: string[];
@@ -45,30 +45,6 @@ interface AstroStore {
     users: User[];
     session: Session | null;
 }
-
-// --- INITIALIZATION ---
-function initializeLocalStorage() {
-  seedOnce('ast_admin_config_seeded', () => {
-    setLocal('ast_admin_config', { detailedHoroscopeFeeEUR: 2.5 });
-  });
-  seedOnce('ast_wallet_seeded', () => {
-    // This is a global wallet for guests, logged-in users have their own
-    setLocal('ast_wallet', { balanceEUR: 5 });
-  });
-  seedOnce('ast_mood_log_seeded', () => {
-    setLocal('ast_mood_log', []);
-  });
-  seedOnce('ast_favorites_seeded', () => {
-    // For guest favorites
-    setLocal('ast_favorites', []);
-  });
-}
-
-// Ensure initialization runs once on module load
-if (typeof window !== 'undefined') {
-    initializeLocalStorage();
-}
-
 
 // --- STORAGE HELPERS ---
 function getStore(): AstroStore {
@@ -182,7 +158,6 @@ export async function registerVisitor(payload: {
         createdAt: now,
         updatedAt: now,
         emailVerified: false,
-        wallet: { balanceCents: 0 },
         favorites: { consultants: [], content: [] },
         publicName: publicName,
         nameHistory: [publicName],
@@ -272,12 +247,19 @@ export function updateUser(userId: string, updatedFields: Partial<User>): User {
         nameHistory.push(publicName);
     }
     
-    const finalUpdatedUser = {
-        ...potentialUpdatedUser,
+    // Remove wallet from user object if it exists
+    if ('wallet' in potentialUpdatedUser) {
+        // @ts-ignore
+        delete potentialUpdatedUser.wallet;
+    }
+    
+    const finalUpdatedUser: User = {
+        ...(potentialUpdatedUser as Omit<User, 'wallet'>),
         publicName,
         nameHistory,
         updatedAt: new Date().toISOString()
     };
+
 
     store.users[userIndex] = finalUpdatedUser;
     saveStore(store);

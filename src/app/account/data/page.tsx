@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import * as authLocal from "@/lib/authLocal";
-import { getLocal, setLocal } from "@/lib/local";
+import { getLocal, setLocal, getWallet } from "@/lib/local";
 
 export default function DataPage() {
     const { toast } = useToast();
@@ -33,19 +33,13 @@ export default function DataPage() {
             return;
         }
 
+        const wallet = getWallet();
+        
+        const { passwordHash, ...userProfile } = user;
+
         const dataToExport = {
-            profile: {
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                role: user.role,
-                language: user.language,
-                timezone: user.timezone,
-                marketingOptIn: user.marketingOptIn,
-                createdAt: user.createdAt,
-            },
-            wallet: user.wallet,
+            profile: userProfile,
+            wallet: wallet,
             favorites: user.favorites,
         };
 

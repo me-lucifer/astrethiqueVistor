@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { getWallet, setWallet } from "@/lib/local";
+import { getWallet, setWallet, Wallet } from "@/lib/local";
 
 interface AddFundsModalProps {
     isOpen: boolean;
@@ -20,29 +20,32 @@ export function AddFundsModal({ isOpen, onOpenChange, neededAmount }: AddFundsMo
     useEffect(() => {
         if (isOpen) {
             const wallet = getWallet();
-            setBalance(wallet?.balanceEUR || 0);
+            setBalance(wallet?.balance_cents || 0);
         }
     }, [isOpen]);
     
     const handleTopUp = (amount: number) => {
-        const currentWallet = getWallet() || { balanceEUR: 0, history: [] };
-        const newBalance = currentWallet.balanceEUR + amount;
+        const currentWallet = getWallet();
+        const newBalanceCents = currentWallet.balance_cents + (amount * 100);
         
-        setWallet({
-            balanceEUR: newBalance,
-            history: [...(currentWallet.history || []), { type: 'topup', amount, ts: new Date().toISOString() }]
-        });
-        
-        window.dispatchEvent(new Event('storage')); // Notify other components
+        const newWalletState: Wallet = {
+            ...currentWallet,
+            balance_cents: newBalanceCents
+        };
+
+        setWallet(newWalletState);
 
         toast({
             title: "Funds Added",
-            description: `€${amount.toFixed(2)} has been added. Your new balance is €${newBalance.toFixed(2)}.`,
+            description: `€${amount.toFixed(2)} has been added. Your new balance is €${(newBalanceCents / 100).toFixed(2)}.`,
         });
 
         // Close modal if funds are now sufficient
-        if (newBalance >= neededAmount) {
+        if ((newBalanceCents / 100) >= neededAmount) {
             onOpenChange(false);
+        } else {
+            // Update the balance displayed in the modal
+            setBalance(newBalanceCents);
         }
     };
 
@@ -52,7 +55,7 @@ export function AddFundsModal({ isOpen, onOpenChange, neededAmount }: AddFundsMo
                 <DialogHeader>
                     <DialogTitle>Insufficient Funds</DialogTitle>
                     <DialogDescription>
-                        Your balance is €{balance.toFixed(2)}. You need at least €{neededAmount.toFixed(2)} to view your detailed horoscope.
+                        Your balance is €{(balance / 100).toFixed(2)}. You need at least €{neededAmount.toFixed(2)} to view your detailed horoscope.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-2">
