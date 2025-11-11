@@ -179,6 +179,7 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
             toast({
                 title: "Purchase Successful",
                 description: `€${config.detailedHoroscopeFeeEUR.toFixed(2)} deducted for detailed horoscope.`,
+                duration: 2500,
             });
 
             // Generate and save horoscope

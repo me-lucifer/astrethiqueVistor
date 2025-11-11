@@ -52,6 +52,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+    const router = useRouter();
 
     const checkUser = () => {
         const currentUser = authLocal.getCurrentUser();
@@ -62,8 +63,15 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
-        checkUser();
+        const currentUser = authLocal.getCurrentUser();
+        if (!currentUser) {
+          router.push('/login');
+          toast({ variant: 'destructive', title: "Please sign in to access your dashboard." });
+          return;
+        }
+        setUser(currentUser);
         setLoading(false);
+
         const handleStorageChange = (event: StorageEvent) => {
             if (event.key === 'astro') {
                 checkUser();
@@ -73,7 +81,7 @@ export default function DashboardPage() {
         return () => {
             window.removeEventListener('storage', handleStorageChange);
         };
-    }, []);
+    }, [router, toast]);
 
     if (loading) {
         return <PlaceholderPage title="Loading Dashboard..." />;
@@ -137,8 +145,10 @@ function WalletCard() {
     useEffect(() => {
         const checkWallet = () => {
             const user = authLocal.getCurrentUser();
-            const userWallet: Wallet = { balanceEUR: (user?.wallet.balanceCents || 0) / 100, history: [] }; // Simplified history for card
-            setWalletState(userWallet);
+            if (user) {
+                const userWallet: Wallet = { balanceEUR: user.wallet.balanceCents / 100, history: (user as any).wallet.history || [] };
+                setWalletState(userWallet);
+            }
         };
         checkWallet();
         window.addEventListener('storage', checkWallet);
@@ -150,13 +160,21 @@ function WalletCard() {
         if (!user) return;
 
         const newBalanceCents = user.wallet.balanceCents + (amount * 100);
+        const newHistoryItem = { type: 'topup', amount: amount, ts: new Date().toISOString() };
+        
         authLocal.updateUser(user.id, {
-            wallet: { ...user.wallet, balanceCents: newBalanceCents }
+            wallet: { 
+                ...user.wallet, 
+                balanceCents: newBalanceCents,
+                // @ts-ignore
+                history: [...(user.wallet.history || []), newHistoryItem]
+            }
         });
         
         toast({
             title: "Funds Added",
             description: `€${amount.toFixed(2)} has been added to your wallet.`,
+            duration: 2500,
         });
     };
 
@@ -223,12 +241,8 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
             }
             onFirstCheckin();
             toast({
-                title: "Mood saved!",
-                description: newStreak > 1 ? `You're on a ${newStreak}-day streak! 🔥` : "Come back tomorrow to build your streak.",
-            });
-        } else {
-             toast({
-                title: "Mood updated for today!",
+                title: "Mood saved! ✓",
+                duration: 2500,
             });
         }
 
