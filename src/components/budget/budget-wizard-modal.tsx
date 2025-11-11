@@ -215,6 +215,8 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         setTimeout(() => setCurrentStep(0), 500); // Reset for next time
     };
 
+    const CurrentStepComponent = steps[currentStep].component;
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
@@ -235,7 +237,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    {steps[currentStep].component({})}
+                                    <CurrentStepComponent />
                                 </motion.div>
                             </AnimatePresence>
                         </div>
@@ -258,3 +260,5 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         </Dialog>
     );
 }
+
+    
