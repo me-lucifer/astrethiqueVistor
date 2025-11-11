@@ -21,8 +21,10 @@ export interface User {
     email: string;
     passwordHash: string;
     name: string;
-    role: 'visitor' | 'client' | 'consultant';
+    role: 'visitor' | 'consultant';
     createdAt: string; // ISO Date
+    emailVerified: boolean;
+    kycStatus: "pending" | "verified" | "rejected" | "n/a";
 }
 
 export interface SessionRecord {

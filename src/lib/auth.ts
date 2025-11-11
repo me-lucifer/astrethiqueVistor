@@ -2,46 +2,45 @@
 "use client";
 
 import { getSession, setSession, removeSession } from './session';
+import * as storage from './storage';
 
-export interface AuthUser {
-    id: string;
-    name: string;
-    email?: string;
-    avatar?: string;
-}
-
-const USER_KEY = 'authUser';
 
 /**
- * "Logs in" a user by creating a simple user object and storing it in session storage.
- * This is a simplified demo implementation.
- * @param name The user's display name.
- * @param email The user's optional email.
- */
-export function loginUser(name: string, email?: string): AuthUser {
-    const userId = name.toLowerCase().replace(/\s/g, '_');
-    const user: AuthUser = {
-        id: userId,
-        name,
-        email,
-        avatar: `https://i.pravatar.cc/40?u=${userId}`,
-    };
-    setSession(USER_KEY, user);
-    setSession("userRegistered", "true");
-    return user;
-}
-
-/**
- * "Logs out" the user by removing their data from session storage.
- */
-export function logoutUser(): void {
-    removeSession(USER_KEY);
-}
-
-/**
- * Retrieves the currently "logged in" user from session storage.
+ * Retrieves the currently "logged in" user from local storage.
  * @returns The user object or null if no user is logged in.
  */
-export function getUser(): AuthUser | null {
-    return getSession<AuthUser>(USER_KEY);
+export function getCurrentUser(): storage.User | null {
+    return storage.getCurrentUser();
+}
+
+/**
+ * Logs out the user by clearing the current user ID from storage.
+ */
+export function logoutUser(): void {
+    storage.setCurrentUser(null);
+    // Optionally, you might want to clear session-specific data too
+    removeSession('userRegistered'); // Example
+}
+
+/**
+ * A simple login function for the demo.
+ * In a real app, this would involve server-side validation.
+ */
+export async function loginUser(email: string, password_plain: string): Promise<storage.User | { error: string }> {
+    const user = storage.findUserByEmail(email);
+    if (!user) {
+        return { error: "No account found with this email." };
+    }
+
+    const passwordHash = await storage.hashPassword(password_plain);
+    if (user.passwordHash !== passwordHash) {
+        return { error: "Incorrect password." };
+    }
+    
+    storage.setCurrentUser(user.id);
+    
+    // Also set a session flag for components that use sessionStorage
+    setSession("userRegistered", "true");
+
+    return user;
 }

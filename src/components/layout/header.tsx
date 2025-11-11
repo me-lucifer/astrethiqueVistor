@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AuthModal } from '../auth-modal';
-import { getUser, logoutUser, AuthUser } from '@/lib/auth';
+import * as storage from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { translations } from '@/lib/translations';
@@ -31,25 +31,30 @@ export function Header() {
   const t = translations[language];
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<storage.User | null>(null);
 
   const checkUser = () => {
-      setUser(getUser());
+      setUser(storage.getCurrentUser());
   }
 
   useEffect(() => {
     checkUser();
-    window.addEventListener('storage', checkUser);
-    return () => window.removeEventListener('storage', checkUser);
+    // This is a simple way to listen for storage changes from the auth modal
+    const handleStorageChange = () => checkUser();
+    window.addEventListener('storage_change', handleStorageChange);
+    return () => window.removeEventListener('storage_change', handleStorageChange);
   }, []);
   
   const handleLoginSuccess = () => {
     checkUser();
+    // Dispatch a custom event to notify other components of the login
+    window.dispatchEvent(new Event('storage_change'));
   };
   
   const handleLogout = () => {
-      logoutUser();
+      storage.setCurrentUser(null);
       checkUser();
+      window.dispatchEvent(new Event('storage_change'));
       toast({ title: "You've been logged out." });
   }
 
@@ -91,7 +96,7 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2">
                 <Avatar className="h-6 w-6">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} alt={user.name} />
                     <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                 </Avatar>
                 {user.name}
