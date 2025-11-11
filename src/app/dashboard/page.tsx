@@ -53,6 +53,144 @@ const GlassCard = ({ children, className }: { children: React.ReactNode, classNa
   </Card>
 );
 
+function useCountdown(targetDate: string) {
+    const [countdown, setCountdown] = useState('');
+    const [isJoinable, setIsJoinable] = useState(false);
+
+    useEffect(() => {
+        const calculate = () => {
+            const now = new Date();
+            const target = new Date(targetDate);
+            const diff = target.getTime() - now.getTime();
+
+            if (diff <= 15 * 60 * 1000) { // 15 minutes
+                setIsJoinable(true);
+                if (diff <= 0) {
+                    setCountdown('Now');
+                } else {
+                    const minutes = Math.floor(diff / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    setCountdown(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+                }
+                return;
+            }
+            
+            setIsJoinable(false);
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            if (days > 0) setCountdown(`${days}d ${hours}h`);
+            else if (hours > 0) setCountdown(`${hours}h ${minutes}m`);
+            else setCountdown(`${minutes}m`);
+        };
+        
+        calculate();
+        const interval = setInterval(calculate, 1000); // Update every second
+
+        return () => clearInterval(interval);
+    }, [targetDate]);
+
+    return { countdown, isJoinable };
+}
+
+function formatRelativeDate(date: Date) {
+    if (isToday(date)) return `Today at ${format(date, 'p')}`;
+    if (isTomorrow(date)) return `Tomorrow at ${format(date, 'p')}`;
+    if (isYesterday(date)) return 'Yesterday';
+    const diffDays = Math.ceil(differenceInMinutes(date, new Date()) / 1440);
+    if (diffDays > 0 && diffDays <= 7) return `in ${diffDays} days`;
+    if (diffDays < 0 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
+    return format(date, 'EEE, MMM dd · p');
+}
+
+interface ActivityMeta {
+    hidden: string[];
+    watched: { [id: string]: string }; // id: watchedAt ISO string
+}
+
+interface ActivityRowUpcomingProps {
+    item: ActivityItem;
+    onAddToCalendar: (item: ActivityItem) => void;
+    onHide: (id: string) => void;
+}
+
+function ActivityRowUpcoming({ item, onAddToCalendar, onHide }: ActivityRowUpcomingProps) {
+    const { countdown, isJoinable } = useCountdown(item.startISO);
+    const date = new Date(item.startISO);
+
+    return (
+        <Card className="p-4 flex items-start gap-4 bg-card/50">
+            <Calendar className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
+            <div className="flex-1 space-y-1">
+                <p className="font-semibold leading-tight">{item.title}</p>
+                <p className="text-xs text-muted-foreground">
+                    {formatRelativeDate(date)} • {item.length} • Host: {item.host}
+                </p>
+                {!isJoinable && <Badge variant="outline" className="text-xs font-normal mt-1">Starts in {countdown}</Badge>}
+            </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                {isJoinable ? (
+                    <Button size="sm" asChild>
+                        <Link href={item.joinUrl} target="_blank">Join</Link>
+                    </Button>
+                ) : (
+                    <Tooltip>
+                        <TooltipTrigger asChild><span tabIndex={0}><Button size="sm" disabled>Join</Button></span></TooltipTrigger>
+                        <TooltipContent><p>Join available 15 minutes before start.</p></TooltipContent>
+                    </Tooltip>
+                )}
+                <div className="flex items-center">
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => onAddToCalendar(item)}><Download className="h-3 w-3 mr-1" />Add to calendar</Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+        </Card>
+    );
+}
+
+interface ActivityRowReplayProps {
+    item: ActivityReplay;
+    isWatched: boolean;
+    onWatchReplay: (item: ActivityReplay) => void;
+    onMarkWatched: (id: string) => void;
+    onHide: (id: string) => void;
+}
+
+function ActivityRowReplay({ item, isWatched, onWatchReplay, onMarkWatched, onHide }: ActivityRowReplayProps) {
+    const date = new Date(item.recordedISO);
+    return (
+        <Card className={cn("p-4 flex items-start gap-4 bg-card/50", isWatched && "opacity-60")}>
+            <VideoIcon className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
+            <div className="flex-1 space-y-1">
+                <p className="font-semibold leading-tight">{item.title}</p>
+                <p className="text-xs text-muted-foreground">
+                    {item.duration} • Host: {item.host} • {formatDistanceToNow(date, { addSuffix: true })}
+                </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <Button size="sm" onClick={() => onWatchReplay(item)}>Watch recording</Button>
+                <div className="flex items-center">
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild><Link href="/conferences">Details</Link></Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onMarkWatched(item.id)}>{isWatched ? <Eye className="mr-2 h-4 w-4" />Mark as unwatched : <EyeOff className="mr-2 h-4 w-4" />Mark as watched}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+        </Card>
+    );
+}
+
 // Main Component
 export default function DashboardPage() {
     const { toast } = useToast();
@@ -450,64 +588,6 @@ function SidebarTabs() {
     )
 }
 
-function useCountdown(targetDate: string) {
-    const [countdown, setCountdown] = useState('');
-    const [isJoinable, setIsJoinable] = useState(false);
-
-    useEffect(() => {
-        const calculate = () => {
-            const now = new Date();
-            const target = new Date(targetDate);
-            const diff = target.getTime() - now.getTime();
-
-            if (diff <= 15 * 60 * 1000) { // 15 minutes
-                setIsJoinable(true);
-                if (diff <= 0) {
-                    setCountdown('Now');
-                } else {
-                    const minutes = Math.floor(diff / (1000 * 60));
-                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                    setCountdown(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-                }
-                return;
-            }
-            
-            setIsJoinable(false);
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-            if (days > 0) setCountdown(`${days}d ${hours}h`);
-            else if (hours > 0) setCountdown(`${hours}h ${minutes}m`);
-            else setCountdown(`${minutes}m`);
-        };
-        
-        calculate();
-        const interval = setInterval(calculate, 1000); // Update every second
-
-        return () => clearInterval(interval);
-    }, [targetDate]);
-
-    return { countdown, isJoinable };
-}
-
-function formatRelativeDate(date: Date) {
-    const now = new Date();
-    if (isToday(date)) return `Today at ${format(date, 'p')}`;
-    if (isTomorrow(date)) return `Tomorrow at ${format(date, 'p')}`;
-    if (isYesterday(date)) return 'Yesterday';
-    const diffDays = Math.ceil(differenceInMinutes(date, now) / 1440);
-    if (diffDays > 0 && diffDays <= 7) return `in ${diffDays} days`;
-    if (diffDays < 0 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
-    return format(date, 'EEE, MMM dd · p');
-}
-
-interface ActivityMeta {
-    hidden: string[];
-    watched: { [id: string]: string }; // id: watchedAt ISO string
-}
-
 function ActivityTab() {
     const [activities, setActivities] = useState<{ upcoming: ActivityItem[], replays: ActivityReplay[] }>({ upcoming: [], replays: [] });
     const [activityMeta, setActivityMeta] = useState<ActivityMeta>({ hidden: [], watched: {} });
@@ -516,17 +596,25 @@ function ActivityTab() {
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
     const updateMeta = (newMeta: Partial<ActivityMeta>) => {
-        const updated = { ...activityMeta, ...newMeta };
+        const currentMeta = getLocal<ActivityMeta>('ast.activityMeta') || { hidden: [], watched: {} };
+        const updated = { ...currentMeta, ...newMeta };
         setActivityMeta(updated);
         setLocal('ast.activityMeta', updated);
     };
 
     const handleHide = (id: string) => {
-        updateMeta({ hidden: [...activityMeta.hidden, id] });
+        const currentMeta = getLocal<ActivityMeta>('ast.activityMeta') || { hidden: [], watched: {} };
+        updateMeta({ hidden: [...currentMeta.hidden, id] });
     };
 
     const handleMarkWatched = (id: string) => {
-        const newWatched = { ...activityMeta.watched, [id]: new Date().toISOString() };
+        const currentMeta = getLocal<ActivityMeta>('ast.activityMeta') || { hidden: [], watched: {} };
+        const newWatched = { ...currentMeta.watched };
+        if (newWatched[id]) {
+            delete newWatched[id];
+        } else {
+            newWatched[id] = new Date().toISOString();
+        }
         updateMeta({ watched: newWatched });
     };
 
@@ -585,75 +673,7 @@ function ActivityTab() {
                 
             setActivities({ upcoming, replays: allReplays });
         }
-    }, []);
-
-    const ActivityRowUpcoming = ({ item }: { item: ActivityItem }) => {
-        const { countdown, isJoinable } = useCountdown(item.startISO);
-        const date = new Date(item.startISO);
-
-        return (
-            <Card className="p-4 flex items-start gap-4 bg-card/50">
-                <Calendar className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
-                <div className="flex-1 space-y-1">
-                    <p className="font-semibold leading-tight">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {formatRelativeDate(date)} • {item.length} • Host: {item.host}
-                    </p>
-                    {!isJoinable && <Badge variant="outline" className="text-xs font-normal mt-1">Starts in {countdown}</Badge>}
-                </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    {isJoinable ? (
-                        <Button size="sm" asChild>
-                            <Link href={item.joinUrl} target="_blank">Join</Link>
-                        </Button>
-                    ) : (
-                        <Tooltip>
-                            <TooltipTrigger asChild><span tabIndex={0}><Button size="sm" disabled>Join</Button></span></TooltipTrigger>
-                            <TooltipContent><p>Join available 15 minutes before start.</p></TooltipContent>
-                        </Tooltip>
-                    )}
-                    <div className="flex items-center">
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleAddToCalendar(item)}><Download className="h-3 w-3 mr-1" />Add to calendar</Button>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-            </Card>
-        );
-    }
-    
-    const ActivityRowReplay = ({ item }: { item: ActivityReplay }) => {
-        const date = new Date(item.recordedISO);
-        const isWatched = !!activityMeta.watched[item.id];
-        return (
-            <Card className={cn("p-4 flex items-start gap-4 bg-card/50", isWatched && "opacity-60")}>
-                <VideoIcon className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
-                <div className="flex-1 space-y-1">
-                    <p className="font-semibold leading-tight">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {item.duration} • Host: {item.host} • {formatDistanceToNow(date, { addSuffix: true })}
-                    </p>
-                </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <Button size="sm" onClick={() => handleWatchReplay(item)}>Watch recording</Button>
-                    <div className="flex items-center">
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild><Link href="/conferences">Details</Link></Button>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleMarkWatched(item.id)}>{isWatched ? <Eye className="mr-2 h-4 w-4" />Mark as unwatched : <EyeOff className="mr-2 h-4 w-4" />Mark as watched}</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-            </Card>
-        );
-    }
+    }, [activityMeta.hidden, activityMeta.watched]); // Re-run when meta changes
 
     return (
         <>
@@ -666,7 +686,7 @@ function ActivityTab() {
                             <Badge variant="secondary">{activities.upcoming.length}</Badge>
                         </div>
                         <div className="space-y-2">
-                            {activities.upcoming.map(item => <ActivityRowUpcoming key={item.id} item={item} />)}
+                            {activities.upcoming.map(item => <ActivityRowUpcoming key={item.id} item={item} onAddToCalendar={handleAddToCalendar} onHide={handleHide} />)}
                         </div>
                     </div>
                 )}
@@ -677,7 +697,7 @@ function ActivityTab() {
                             <Badge variant="secondary">{activities.replays.length}</Badge>
                         </div>
                          <div className="space-y-2">
-                           {activities.replays.map(item => <ActivityRowReplay key={item.id} item={item} />)}
+                           {activities.replays.map(item => <ActivityRowReplay key={item.id} item={item} onWatchReplay={handleWatchReplay} onMarkWatched={handleMarkWatched} onHide={handleHide} isWatched={!!activityMeta.watched[item.id]} />)}
                         </div>
                     </div>
                 )}
