@@ -3,6 +3,7 @@
 
 import type { User } from './authLocal';
 import type { MoodLogEntry } from './mood-log';
+import type { ActivityData } from './activity';
 import { subDays, format } from 'date-fns';
 
 // --- Storage Abstraction ---
@@ -78,7 +79,7 @@ export function seedOnce(flagKey: string, seedFn: () => void): void {
 
 // --- INITIALIZATION ---
 export function initializeLocalStorage() {
-  seedOnce('ast_db_seeded_v1', () => {
+  seedOnce('ast_db_seeded_v2', () => {
     // Seed Admin Config
     setLocal('ast_admin_config', { detailedHoroscopeFeeEUR: 2.5 });
 
@@ -108,6 +109,42 @@ export function initializeLocalStorage() {
         setFavorites(['aeliana-rose', 'seraphina-moon']);
     }
 
+    // Seed Activity Data
+    setLocal('ast.activity', {
+     upcoming: [
+       {
+         id: "conf-modern-love",
+         title: "Astrology for Modern Love",
+         host: "Kaelen Vance",
+         startISO: "2025-11-15T15:30:00+05:30",
+         length: "60 min",
+         platform: "Zoom",
+         joinUrl: "https://zoom.example/modern-love",
+         cover: "/images/conf-modern-love.jpg"
+       },
+       {
+         id: "conf-saturn-returns",
+         title: "Navigating Saturn Returns",
+         host: "Fiona Glen",
+         startISO: "2025-11-18T19:00:00+05:30",
+         length: "45 min",
+         platform: "Google Meet",
+         joinUrl: "https://meet.example/saturn-returns",
+         cover: "/images/conf-saturn.jpg"
+       }
+     ],
+     replays: [
+       {
+         id: "conf-future-of-tarot",
+         title: "The Future of Tarot",
+         host: "Orion Blackwood",
+         recordedISO: "2025-11-10T17:30:00+05:30",
+         duration: "40 min",
+         watchUrl: "https://www.youtube.com/watch?v=abcd1234",
+         cover: "/images/conf-future-tarot.jpg"
+       }
+     ]
+   });
   });
 }
 

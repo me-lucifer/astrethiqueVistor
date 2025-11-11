@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { StarRating } from "@/components/star-rating";
 import { Conference } from "@/lib/conferences-seeder";
+import type { ActivityData, ActivityItem, ActivityReplay } from "@/lib/activity";
 
 const Starfield = () => (
   <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -152,6 +153,9 @@ function WalletCard() {
             if (user) {
                 const userWallet: Wallet = { balanceEUR: (user.wallet.balanceCents || 0) / 100, history: (user as any).wallet.history || [] };
                 setWalletState(userWallet);
+            } else {
+                 const guestWallet = getWallet();
+                 if(guestWallet) setWalletState(guestWallet);
             }
         };
         checkWallet();
@@ -432,73 +436,38 @@ function SidebarTabs() {
     )
 }
 
-interface ActivityItem {
-    id: string;
-    type: 'upcoming_conference' | 'replay_available';
-    title: string;
-    description: string;
-    date: Date;
-    cta: {
-        label: string;
-        href: string;
-    };
-    icon: React.ElementType;
-}
-
 function ActivityTab() {
-    const [activities, setActivities] = useState<ActivityItem[]>([]);
+    const [activities, setActivities] = useState<ActivityData | null>(null);
 
     useEffect(() => {
-        const rsvps = getLocal<any[]>('rsvps') || [];
-        const allConferences = getLocal<Conference[]>('conferences') || [];
-
-        const upcoming = rsvps
-            .map(rsvp => allConferences.find(c => c.id === rsvp.eventId))
-            .filter((c): c is Conference => !!c && isFuture(new Date(c.dateISO)))
-            .map(c => ({
-                id: c.id,
-                type: 'upcoming_conference' as const,
-                title: `Upcoming: ${c.title}`,
-                description: format(new Date(c.dateISO), 'MMM d, yyyy @ h:mm a'),
-                date: new Date(c.dateISO),
-                cta: { label: 'Join', href: `/conferences/${c.slug}`},
-                icon: Calendar
-            }));
-
-        const replays = rsvps
-            .map(rsvp => allConferences.find(c => c.id === rsvp.eventId))
-            .filter((c): c is Conference => !!c && isPast(new Date(c.dateISO)) && c.recordingAvailable)
-            .map(c => ({
-                id: c.id,
-                type: 'replay_available' as const,
-                title: `Replay available: ${c.title}`,
-                description: `Ended ${formatDistanceToNow(new Date(c.dateISO), { addSuffix: true })}`,
-                date: new Date(c.dateISO),
-                cta: { label: 'Watch recording', href: `/conferences/${c.slug}`},
-                icon: VideoIcon
-            }));
-        
-        const combined = [...upcoming, ...replays]
-            .sort((a,b) => b.date.getTime() - a.date.getTime());
-
-        setActivities(combined);
+        const data = getLocal<ActivityData>('ast.activity');
+        setActivities(data);
     }, []);
+
+    const combinedActivities = [
+        ...(activities?.upcoming || []).map(item => ({ ...item, type: 'upcoming' as const })),
+        ...(activities?.replays || []).map(item => ({ ...item, type: 'replay' as const }))
+    ].sort((a, b) => new Date('startISO' in a ? a.startISO : a.recordedISO).getTime() - new Date('startISO' in b ? b.startISO : b.recordedISO).getTime());
 
     return (
         <CardContent className="pt-6">
-            {activities.length > 0 ? (
+            {combinedActivities.length > 0 ? (
                 <div className="space-y-4">
-                    {activities.map(activity => (
+                    {combinedActivities.map(activity => (
                         <div key={activity.id} className="flex items-center justify-between gap-4">
                             <div className="flex items-start gap-3">
-                                <activity.icon className="h-4 w-4 text-muted-foreground mt-1" />
+                                {activity.type === 'upcoming' ? <Calendar className="h-4 w-4 text-muted-foreground mt-1" /> : <VideoIcon className="h-4 w-4 text-muted-foreground mt-1" />}
                                 <div className="text-sm">
                                     <p className="font-medium">{activity.title}</p>
-                                    <p className="text-xs text-muted-foreground">{activity.description}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {activity.type === 'upcoming' ? `Starts ${formatDistanceToNow(new Date((activity as ActivityItem).startISO), { addSuffix: true })}` : `Recorded ${formatDistanceToNow(new Date((activity as ActivityReplay).recordedISO), { addSuffix: true })}`}
+                                    </p>
                                 </div>
                             </div>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={activity.cta.href}>{activity.cta.label}</Link>
+                                <Link href={(activity as ActivityItem).joinUrl || (activity as ActivityReplay).watchUrl}>
+                                    {activity.type === 'upcoming' ? 'Join' : 'Watch'}
+                                </Link>
                             </Button>
                         </div>
                     ))}
