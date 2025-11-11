@@ -1,8 +1,9 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Gem, User, LogOut, Globe } from 'lucide-react';
@@ -24,8 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { translations } from '@/lib/translations';
 
-export function Header() {
+function HeaderContent() {
   const pathname = usePathname();
+  const router = useRouter();
   const { toast } = useToast();
   const { language, toggleLanguage } = useLanguage();
   const t = translations[language];
@@ -39,7 +41,6 @@ export function Header() {
 
   useEffect(() => {
     checkUser();
-    // This is a simple way to listen for storage changes from the auth modal
     const handleStorageChange = () => checkUser();
     window.addEventListener('storage_change', handleStorageChange);
     return () => window.removeEventListener('storage_change', handleStorageChange);
@@ -47,20 +48,24 @@ export function Header() {
   
   const handleLoginSuccess = () => {
     checkUser();
-    // Dispatch a custom event to notify other components of the login
     window.dispatchEvent(new Event('storage_change'));
+    router.push('/discover');
   };
   
   const handleLogout = () => {
       storage.setCurrentUser(null);
       checkUser();
       window.dispatchEvent(new Event('storage_change'));
-      toast({ title: "Signed out." });
+      toast({ title: "You've been signed out." });
   }
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string = "") => {
     if (!name || name.trim() === '') return "G";
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    const names = name.split(' ');
+    if (names.length > 1) {
+        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   }
 
 
@@ -84,7 +89,7 @@ export function Header() {
   const AuthButtons = () => (
     <>
       <Button variant="ghost" onClick={() => setIsAuthModalOpen(true)} aria-label={t.login}>{t.login}</Button>
-      <Button asChild>
+      <Button asChild className={pathname === '/register' ? 'bg-primary/80' : ''}>
         <Link href="/register">{t.register}</Link>
       </Button>
     </>
@@ -92,15 +97,16 @@ export function Header() {
 
   const UserMenu = () => {
     if (!user) return null;
+    const name = `${user.firstName} ${user.lastName}`;
     return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2">
                 <Avatar className="h-6 w-6">
-                    <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} alt={user.name} />
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} alt={name} />
+                    <AvatarFallback>{getInitials(name)}</AvatarFallback>
                 </Avatar>
-                {user.name}
+                Hi, {user.firstName}
                 <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -133,7 +139,7 @@ export function Header() {
             {[...navLinks, ...(user ? userNavLinks : [])].map((link) => {
               const isActive = link.href === '/discover' 
                 ? isDiscoverActive(pathname)
-                : (link.href === '/' ? pathname === '/' : pathname.startsWith(link.href));
+                : (pathname === '/register' ? link.href === '/register' : (link.href === '/' ? pathname === '/' : pathname.startsWith(link.href)));
 
               return (
                 <Link 
@@ -154,18 +160,11 @@ export function Header() {
         </div>
         
         <div className="hidden lg:flex items-center gap-2">
-            {user ? <UserMenu /> : <AuthButtons />}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled>
-                  {t.visitor} <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>{t.visitor}</DropdownMenuItem>
-                <DropdownMenuItem>{t.client}</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {user ? <UserMenu /> : (
+              pathname === '/register' ? 
+              <Button variant="link" onClick={() => setIsAuthModalOpen(true)}>Login</Button>
+              : <AuthButtons />
+            )}
             <Button variant="ghost" size="icon" onClick={toggleLanguage} aria-label={`Switch to ${language === 'en' ? 'French' : 'English'}`}>
                 <Globe className="h-5 w-5" />
             </Button>
@@ -196,7 +195,7 @@ export function Header() {
                 {[...navLinks, ...(user ? userNavLinks : [])].map((link) => {
                    const isActive = link.href === '/discover'
                     ? isDiscoverActive(pathname)
-                    : (link.href === '/' ? pathname === '/' : pathname.startsWith(link.href));
+                    : (pathname === '/register' ? link.href === '/register' : (link.href === '/' ? pathname === '/' : pathname.startsWith(link.href)));
                   return (
                     <Button key={link.href} variant={isActive ? "secondary" : "ghost"} className="justify-start text-base" asChild>
                       <Link href={link.href}>
@@ -215,9 +214,6 @@ export function Header() {
                         <Button asChild><Link href="/register">{t.register}</Link></Button>
                     </div>
                 )}
-                 <Button variant="outline" disabled className="w-full">
-                  {t.visitor}
-                </Button>
               </div>
             </SheetContent>
           </Sheet>
@@ -231,4 +227,12 @@ export function Header() {
       />
     </>
   );
+}
+
+export function Header() {
+    return (
+        <Suspense fallback={<div className="h-16 border-b" />}>
+            <HeaderContent />
+        </Suspense>
+    )
 }

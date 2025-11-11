@@ -42,7 +42,8 @@ export default function DataPage() {
         const dataToExport = {
             profile: {
                 id: user.id,
-                name: user.name,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 email: user.email,
                 role: user.role,
                 createdAt: user.createdAt,

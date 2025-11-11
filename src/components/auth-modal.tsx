@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -38,6 +39,7 @@ const passwordSchema = z.string()
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean().default(false),
 });
 
 const verificationSchema = z.object({
@@ -74,7 +76,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", rememberMe: false },
   });
 
   const verificationForm = useForm<VerificationFormData>({
@@ -114,8 +116,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     }
     
     storage.setCurrentUser(user.id);
-    const firstName = user.name.split(' ')[0];
-    toast({ title: `Welcome back, ${firstName}!` });
+    toast({ title: `Welcome back, ${user.firstName}!` });
     onLoginSuccess();
     onOpenChange(false);
   }
@@ -185,7 +186,8 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
         const newUser: storage.User = {
             id: storage.createId('usr_demo'),
             role: 'visitor',
-            name: 'Demo Visitor',
+            firstName: 'Demo',
+            lastName: 'Visitor',
             email: demoEmail,
             passwordHash,
             createdAt: new Date().toISOString(),
@@ -239,7 +241,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
   const onInvalidSubmit = () => {
     toast({
         variant: "destructive",
-        title: "Please fix the errors highlighted on the form.",
+        title: "Please fix the form errors.",
     });
   }
 
@@ -262,7 +264,19 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
             <FormField control={signInForm.control} name="password" render={({ field }) => (
             <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><FormMessage /></FormItem>
           )} />
-          <div className="text-right">
+          <div className="flex justify-between items-center">
+            <FormField
+              control={signInForm.control}
+              name="rememberMe"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Input type="checkbox" className="h-4 w-4" checked={field.value} onChange={field.onChange} />
+                  </FormControl>
+                  <FormLabel className="text-sm font-normal">Remember me</FormLabel>
+                </FormItem>
+              )}
+            />
             <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setView('forgot-password-email')}>Forgot password?</Button>
           </div>
           <DialogFooter className="pt-4">

@@ -16,7 +16,8 @@ import PasswordStrength from "@/components/auth/password-strength";
 import { useRouter } from "next/navigation";
 
 const profileSchema = z.object({
-  fullName: z.string().min(2, "Full name is required."),
+  firstName: z.string().min(1, "First name is required."),
+  lastName: z.string().min(1, "Last name is required."),
   language: z.enum(["EN", "FR"]),
   timezone: z.string().min(1, "Timezone is required."),
 });
@@ -44,7 +45,8 @@ export default function ProfilePage() {
             const userPrefs = allPrefs[currentUser.id];
             setPrefs(userPrefs || null);
             profileForm.reset({
-                fullName: currentUser.name,
+                firstName: currentUser.firstName,
+                lastName: currentUser.lastName,
                 language: userPrefs?.language || 'EN',
                 timezone: userPrefs?.timezone || '',
             });
@@ -70,7 +72,7 @@ export default function ProfilePage() {
         
         // Update user name
         const users = storage.getUsers();
-        const updatedUsers = users.map(u => u.id === user.id ? { ...u, name: data.fullName } : u);
+        const updatedUsers = users.map(u => u.id === user.id ? { ...u, firstName: data.firstName, lastName: data.lastName } : u);
         storage.saveUsers(updatedUsers);
         
         // Update preferences
@@ -79,7 +81,7 @@ export default function ProfilePage() {
         storage.setStorageItem('ast_prefs', allPrefs);
         
         // Update user state locally
-        setUser({ ...user, name: data.fullName });
+        setUser({ ...user, firstName: data.firstName, lastName: data.lastName });
         setPrefs(allPrefs[user.id]);
         window.dispatchEvent(new Event('storage_change')); // To update header
 
@@ -118,9 +120,14 @@ export default function ProfilePage() {
                 <Form {...profileForm}>
                     <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
                         <CardContent className="space-y-4">
-                            <FormField control={profileForm.control} name="fullName" render={({ field }) => (
-                                <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
+                            <div className="grid grid-cols-2 gap-4">
+                               <FormField control={profileForm.control} name="firstName" render={({ field }) => (
+                                    <FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={profileForm.control} name="lastName" render={({ field }) => (
+                                    <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField control={profileForm.control} name="language" render={({ field }) => (
                                     <FormItem><FormLabel>Language</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="EN">English</SelectItem><SelectItem value="FR">Français</SelectItem></SelectContent></Select><FormMessage /></FormItem>

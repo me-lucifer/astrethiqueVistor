@@ -81,8 +81,12 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   };
   
   const getInitials = (name: string) => {
-    if (!name || name.trim() === '') return "G";
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    if (!name || name.trim() === '' || name === '[deleted]') return "G";
+    const names = name.split(' ');
+    if (names.length > 1) {
+        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   }
   
   const visibleComments = comments.slice(0, visibleCount);
@@ -100,7 +104,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <div className='text-sm text-muted-foreground flex justify-between items-center'>
-                    <span>Commenting as <span className="font-semibold text-foreground">{user.name}</span></span>
+                    <span>Commenting as <span className="font-semibold text-foreground">{user.firstName} {user.lastName}</span></span>
                     <button type="button" onClick={handleLogout} className="text-xs hover:underline">Sign out</button>
                 </div>
                 <FormField

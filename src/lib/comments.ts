@@ -23,6 +23,8 @@ export function getComments(contentId: string): Comment[] {
   
   const enrichedComments: Comment[] = itemComments.map(c => {
     const author = users.find(u => u.id === c.userId);
+    const authorName = author ? `${author.firstName} ${author.lastName}` : "Guest";
+
     return {
       id: c.id,
       contentId: c.contentId,
@@ -30,7 +32,7 @@ export function getComments(contentId: string): Comment[] {
       createdAt: c.createdAt,
       author: {
         id: author?.id || 'guest',
-        name: author ? (c.userId === 'deleted' ? '[deleted]' : author.name) : 'Guest',
+        name: c.userId === 'deleted' ? '[deleted]' : authorName,
         avatar: `https://i.pravatar.cc/40?u=${author?.id || 'guest'}`,
       }
     };
@@ -64,7 +66,7 @@ export function addComment(contentId: string, text: string, itemType: 'article' 
     createdAt: newComment.createdAt,
     author: {
         id: user.id,
-        name: user.name,
+        name: `${user.firstName} ${user.lastName}`,
         avatar: `https://i.pravatar.cc/40?u=${user.id}`
     }
   };

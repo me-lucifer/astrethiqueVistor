@@ -17,7 +17,8 @@ export interface User {
     id: string;
     email: string;
     passwordHash: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     role: 'visitor' | 'consultant';
     createdAt: string; // ISO Date
     emailVerified: boolean;
