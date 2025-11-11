@@ -1,11 +1,14 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import type { ActivityData, ActivityItem, ActivityReplay } from "@/lib/activity";
+import type { ActivityMeta } from "@/lib/activity";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import Link from "next/link";
-import { formatDistanceToNow, isFuture, addMinutes, format, isToday, isTomorrow, isYesterday, differenceInMinutes } from "date-fns";
+import { formatDistanceToNow, isFuture, addMinutes, isToday, isTomorrow, isYesterday, differenceInMinutes } from "date-fns";
 import * as ics from "ics";
 import { saveAs } from "file-saver";
+
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { getLocal, setLocal } from "@/lib/local";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,14 +19,6 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/comp
 import { YouTubePlayerModal } from "@/components/youtube-player-modal";
 import { cn } from "@/lib/utils";
 import { Calendar, Video as VideoIcon, MoreHorizontal, EyeOff, Eye, Download } from "lucide-react";
-
-// Explicitly import types
-import type { ActivityData, ActivityItem, ActivityReplay } from "@/lib/activity";
-
-interface ActivityMeta {
-  hidden: string[];
-  watched: { [id: string]: string };
-}
 
 // Helper hook for countdown
 function useCountdown(targetDate: string) {
@@ -90,6 +85,54 @@ function formatRelativeDate(date: Date) {
     return new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
+function ActivityRowUpcoming({
+    item,
+    onHide,
+    onAddToCalendar,
+}: {
+    item: ActivityItem;
+    onHide: (id: string) => void;
+    onAddToCalendar: (item: ActivityItem) => void;
+}) {
+    const { countdown, isJoinable } = useCountdown(item.startISO);
+    const date = new Date(item.startISO);
+
+    return (
+        <Card className="p-4 flex items-start gap-4 bg-card/50">
+            <Calendar className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
+            <div className="flex-1 space-y-1">
+                <p className="font-semibold leading-tight">{item.title}</p>
+                <p className="text-xs text-muted-foreground">
+                    {formatRelativeDate(date)} • {item.length} • Host: {item.host}
+                </p>
+                {!isJoinable && <Badge variant="outline" className="text-xs font-normal mt-1">Starts in {countdown}</Badge>}
+            </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                {isJoinable ? (
+                    <Button size="sm" asChild>
+                        <a href={item.joinUrl} target="_blank" rel="noopener noreferrer">Join</a>
+                    </Button>
+                ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                          <TooltipTrigger asChild><span tabIndex={0}><Button size="sm" disabled>Join</Button></span></TooltipTrigger>
+                          <TooltipContent><p>Join available 15 minutes before start.</p></TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                )}
+                <div className="flex items-center">
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => onAddToCalendar(item)}><Download className="h-3 w-3 mr-1" />Add to calendar</Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+        </Card>
+    );
+}
 
 export function ActivityTab() {
   const [activities, setActivities] = useState<{
@@ -142,7 +185,7 @@ export function ActivityTab() {
 
   useEffect(() => {
     processActivities();
-  }, []);
+  }, [processActivities]);
 
   const updateMeta = (newMeta: Partial<ActivityMeta>) => {
     const currentMeta = getLocal<ActivityMeta>("ast.activityMeta") || {
@@ -206,47 +249,14 @@ export function ActivityTab() {
                 <Badge variant="secondary">{activities.upcoming.length}</Badge>
               </div>
               <div className="space-y-2">
-                {activities.upcoming.map((item) => {
-                  const Countdown = () => useCountdown(item.startISO);
-                  const { countdown, isJoinable } = Countdown();
-                  const date = new Date(item.startISO);
-
-                  return (
-                    <Card key={item.id} className="p-4 flex items-start gap-4 bg-card/50">
-                        <Calendar className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
-                        <div className="flex-1 space-y-1">
-                            <p className="font-semibold leading-tight">{item.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                                {formatRelativeDate(date)} • {item.length} • Host: {item.host}
-                            </p>
-                            {!isJoinable && <Badge variant="outline" className="text-xs font-normal mt-1">Starts in {countdown}</Badge>}
-                        </div>
-                        <div className="flex flex-col items-end gap-1.5 shrink-0">
-                            {isJoinable ? (
-                                <Button size="sm" asChild>
-                                    <a href={item.joinUrl} target="_blank" rel="noopener noreferrer">Join</a>
-                                </Button>
-                            ) : (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                      <TooltipTrigger asChild><span tabIndex={0}><Button size="sm" disabled>Join</Button></span></TooltipTrigger>
-                                      <TooltipContent><p>Join available 15 minutes before start.</p></TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                            )}
-                            <div className="flex items-center">
-                                <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleAddToCalendar(item)}><Download className="h-3 w-3 mr-1" />Add to calendar</Button>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => handleHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        </div>
-                    </Card>
-                  );
-                })}
+                {activities.upcoming.map((item) => (
+                    <ActivityRowUpcoming 
+                        key={item.id}
+                        item={item}
+                        onHide={handleHide}
+                        onAddToCalendar={handleAddToCalendar}
+                    />
+                ))}
               </div>
             </div>
           )}
