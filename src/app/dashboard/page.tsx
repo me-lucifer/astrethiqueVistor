@@ -88,8 +88,8 @@ function WalletCard() {
         setBalance(newBalance);
         setWallet({ balanceEUR: newBalance });
         toast({
-            title: "Wallet Topped Up!",
-            description: `You've added €${amount.toFixed(2)}. Your new balance is €${newBalance.toFixed(2)}.`,
+            title: "Funds Added",
+            description: `€${amount.toFixed(2)} has been added to your wallet.`,
         });
     };
 
@@ -278,12 +278,36 @@ function RecommendationsTab() {
         router.push(`/content-hub?topics=${encodeURIComponent(topic)}`);
     };
 
+    const handleToggleLike = (itemId: string) => {
+        // This is a mock implementation for UI feedback
+        const updatedRecs = recommendations.map(item => {
+            if (item.id === itemId) {
+                const newLiked = !item.liked;
+                const newLikes = newLiked ? (item.likes || 0) + 1 : (item.likes || 1) - 1;
+                return { ...item, liked: newLiked, likes: newLikes };
+            }
+            return item;
+        });
+        setRecommendations(updatedRecs);
+    }
+    
+    const handleToggleBookmark = (itemId: string) => {
+        // This is a mock implementation for UI feedback
+        const updatedRecs = recommendations.map(item => {
+            if (item.id === itemId) {
+                return { ...item, bookmarked: !item.bookmarked };
+            }
+            return item;
+        });
+        setRecommendations(updatedRecs);
+    }
+
     return (
         <Card>
             <CardHeader><CardTitle>Personalized Content</CardTitle></CardHeader>
             <CardContent className="space-y-4">
                 {recommendations.length > 0 ? (
-                    recommendations.map(item => <ContentHubCard key={item.id} item={item} onTopicClick={handleTopicClick} />)
+                    recommendations.map(item => <ContentHubCard key={item.id} item={item} onTopicClick={handleTopicClick} onToggleLike={handleToggleLike} onToggleBookmark={handleToggleBookmark} />)
                 ) : (
                     <div className="text-center text-muted-foreground p-4">
                         <p>You’re doing great! New content will appear here when your check-ins suggest it.</p>

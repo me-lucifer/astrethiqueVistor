@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { getLocal, setLocal, getWallet, getAdminConfig } from "@/lib/local";
 import { User } from "@/lib/authLocal";
 import { AddFundsModal } from "./add-funds-modal";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdminConfig {
     detailedHoroscopeFeeEUR: number;
@@ -131,6 +132,7 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
     const [horoscope, setHoroscope] = useState<DetailedHoroscopeData | null>(null);
     const [config, setConfig] = useState<AdminConfig | null>(null);
     const [isFundsModalOpen, setIsFundsModalOpen] = useState(false);
+    const { toast } = useToast();
 
     useEffect(() => {
         const adminConfig = getAdminConfig();
@@ -160,6 +162,11 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
         const newBalance = wallet.balanceEUR - config.detailedHoroscopeFeeEUR;
         setLocal('ast_wallet', { balanceEUR: newBalance });
         window.dispatchEvent(new Event('storage')); // Notify other components of wallet change
+        
+        toast({
+            title: "Purchase Successful",
+            description: `€${config.detailedHoroscopeFeeEUR.toFixed(2)} deducted for detailed horoscope.`,
+        });
 
         // Generate and save horoscope
         const newText = generateDetailedHoroscope(user.zodiacSign);

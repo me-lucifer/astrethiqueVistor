@@ -47,7 +47,7 @@ export function AddFundsModal({ isOpen, onOpenChange, neededAmount }: AddFundsMo
                 <DialogHeader>
                     <DialogTitle>Insufficient Funds</DialogTitle>
                     <DialogDescription>
-                        Your current balance is €{balance.toFixed(2)}. You need at least €{neededAmount.toFixed(2)} to complete this purchase.
+                        Your balance is €{balance.toFixed(2)}. You need at least €{neededAmount.toFixed(2)} to view your detailed horoscope.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-2">
