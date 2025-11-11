@@ -113,9 +113,16 @@ export interface SpendLogEntry {
     runningBalance: number;
 }
 
+export interface Metrics {
+    topups: number;
+    emergencies: number;
+    horoscope_purchases: number;
+}
+
 const WALLET_KEY = 'ast_wallet';
 const BUDGET_PROFILE_KEY = 'ast_budget_profile';
 const SPEND_LOG_KEY = 'ast_spend_log';
+const METRICS_KEY = 'ast_metrics';
 
 
 // --- INITIALIZATION & MONTHLY RESET ---
@@ -155,9 +162,9 @@ export function initializeLocalStorage() {
     if (spendLog.length === 0) {
         const now = new Date();
         const initialLog = [
-            { ts: subDays(now, 1).toISOString(), type: 'consultation', amount_cents: -1250, note: "Session with Aeliana Rose", runningBalance: 0 },
-            { ts: subDays(now, 3).toISOString(), type: 'horoscope', amount_cents: -250, note: 'Detailed Horoscope', runningBalance: 0 },
-            { ts: subDays(now, 7).toISOString(), type: 'topup', amount_cents: 2000, note: 'Wallet top-up', runningBalance: 0 },
+            { ts: subDays(now, 1).toISOString(), type: 'consultation', amount_cents: -1250, note: "Session with Aeliana Rose" },
+            { ts: subDays(now, 3).toISOString(), type: 'horoscope', amount_cents: -250, note: 'Detailed Horoscope' },
+            { ts: subDays(now, 7).toISOString(), type: 'topup', amount_cents: 2000, note: 'Wallet top-up' },
         ];
         setLocal(SPEND_LOG_KEY, initialLog);
     }
@@ -247,8 +254,7 @@ export const setBudgetProfile = (profile: BudgetProfile) => setLocal(BUDGET_PROF
 export const getSpendLog = (): Omit<SpendLogEntry, 'runningBalance'>[] => getLocal<Omit<SpendLogEntry, 'runningBalance'>[]>(SPEND_LOG_KEY) || [];
 export const addSpendLogEntry = (entry: Omit<SpendLogEntry, 'runningBalance'>) => {
     const log = getSpendLog();
-    const newEntry = { ...entry, runningBalance: 0 };
-    log.unshift(newEntry); // Add to the beginning
+    log.unshift(entry); // Add to the beginning
     setLocal(SPEND_LOG_KEY, log);
 }
 
@@ -293,3 +299,19 @@ interface Lead {
 const LEADS_KEY = 'leads';
 export const getLeads = (): Lead[] => getLocal<Lead[]>(LEADS_KEY) || [];
 export const setLeads = (leads: Lead[]) => setLocal(LEADS_KEY, leads);
+
+
+// Metrics
+export const getMetrics = (): Metrics => {
+    return getLocal<Metrics>(METRICS_KEY) || {
+        topups: 0,
+        emergencies: 0,
+        horoscope_purchases: 0
+    };
+}
+
+export const incrementMetric = (key: keyof Metrics) => {
+    const metrics = getMetrics();
+    metrics[key] += 1;
+    setLocal(METRICS_KEY, metrics);
+}

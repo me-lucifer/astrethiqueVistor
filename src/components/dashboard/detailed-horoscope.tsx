@@ -5,7 +5,7 @@ import { useState, useEffect, useTransition } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getLocal, setLocal, getWallet, getAdminConfig, setWallet, Wallet, SpendLogEntry, spendFromWallet } from "@/lib/local";
+import { getLocal, setLocal, getWallet, getAdminConfig, setWallet, Wallet, SpendLogEntry, spendFromWallet, incrementMetric } from "@/lib/local";
 import { User } from "@/lib/authLocal";
 import { AddFundsModal } from "./add-funds-modal";
 import { useToast } from "@/hooks/use-toast";
@@ -185,6 +185,7 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
             };
             setLocal('ast_detailed_horoscope', newHoroscope);
             setHoroscope(newHoroscope);
+            incrementMetric('horoscope_purchases');
         });
     };
 

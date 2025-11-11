@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { getWallet, setWallet, addSpendLogEntry, EMERGENCY_TOPUP_LIMIT_EUR, Wallet } from "@/lib/local";
+import { getWallet, setWallet, addSpendLogEntry, EMERGENCY_TOPUP_LIMIT_EUR, Wallet, incrementMetric } from "@/lib/local";
 import { Zap } from "lucide-react";
 
 interface EmergencyTopUpModalProps {
@@ -55,6 +55,7 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
             amount_cents: amount * 100,
             note: "Emergency top-up"
         });
+        incrementMetric('emergencies');
 
         toast({
             title: "Emergency Funds Added",
