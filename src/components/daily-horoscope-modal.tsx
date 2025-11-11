@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { getLocal, setLocal } from "@/lib/local";
+import { getLocal, setLocal, getLeads, setLeads } from "@/lib/local";
 import { Sparkles, Send, Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
@@ -80,7 +80,7 @@ export function DailyHoroscopeModal({
 
     // Save lead if not registered
     if (sessionStorage.getItem("userRegistered") !== 'true') {
-      const leads = getLocal<any[]>("leads") || [];
+      const leads = getLeads();
       const existingLead = leads.find(lead => lead.email === values.email);
       if (!existingLead) {
           leads.push({
@@ -89,15 +89,15 @@ export function DailyHoroscopeModal({
               createdAt: new Date().toISOString(),
               lang: 'EN',
           });
-          setLocal("leads", leads);
+          setLeads(leads);
       }
     }
     
     // Simulate removing lead if they "register"
     if (sessionStorage.getItem("userRegistered") === 'true') {
-        const leads = getLocal<any[]>("leads") || [];
+        const leads = getLeads();
         const updatedLeads = leads.filter(lead => lead.email !== values.email);
-        setLocal("leads", updatedLeads);
+        setLeads(updatedLeads);
     }
     
     // Show toast for subscription

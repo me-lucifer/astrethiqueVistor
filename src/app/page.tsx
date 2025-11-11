@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useToast } from "@/hooks/use-toast";
 import { StartNowModal } from "@/components/start-now-modal";
-import { getLocal } from "@/lib/local";
+import { getLeads, getLocal } from "@/lib/local";
 import { getSession, setSession } from "@/lib/session";
 import { seedConsultants } from "@/lib/consultants-seeder";
 import { useLanguage } from "@/contexts/language-context";
@@ -73,9 +73,9 @@ export default function Home() {
 
     // Logic to show registration banner after horoscope submission
     const registrationBannerTimer = setTimeout(() => {
-      const leadExists = getLocal("leads");
+      const leads = getLeads();
       const userRegistered = getSession("userRegistered");
-      if (leadExists && userRegistered !== 'true') {
+      if (leads.length > 0 && userRegistered !== 'true') {
         setShowRegistrationBanner(true);
       }
     }, 60000);

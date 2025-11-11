@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getLocal, setLocal } from "@/lib/local";
+import { getLocal, setLocal, getWallet, getAdminConfig } from "@/lib/local";
 import { User } from "@/lib/authLocal";
 import { AddFundsModal } from "./add-funds-modal";
 
@@ -111,7 +111,7 @@ const luckyHours = ["08:00-09:00", "11:00-12:00", "14:00-15:00", "20:00-21:00", 
 const focusTips = ["Journal for 10 minutes", "Go for a 15-minute walk", "Tidy your desk", "Message a friend", "Drink water and breathe", "Listen to a favorite song", "Stretch for 5 minutes"];
 
 const generateDetailedHoroscope = (sign: string) => {
-    const texts = detailedTextMap[sign] || detailedTextMap.default;
+    const texts = detailedTextMap[sign] || detailedTextMap.Aries;
     const mainText = texts.slice(0, Math.floor(Math.random() * 3) + 3).join("\n\n");
     const color = luckyColors[Math.floor(Math.random() * luckyColors.length)];
     const hour = luckyHours[Math.floor(Math.random() * luckyHours.length)];
@@ -133,7 +133,7 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
     const [isFundsModalOpen, setIsFundsModalOpen] = useState(false);
 
     useEffect(() => {
-        const adminConfig = getLocal<AdminConfig>('ast_admin_config');
+        const adminConfig = getAdminConfig();
         setConfig(adminConfig);
 
         if (user?.zodiacSign) {
@@ -150,7 +150,7 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
     const handlePurchase = () => {
         if (!user?.zodiacSign || !config) return;
 
-        const wallet = getLocal<{ balanceEUR: number }>('ast_wallet');
+        const wallet = getWallet();
         if (!wallet || wallet.balanceEUR < config.detailedHoroscopeFeeEUR) {
             setIsFundsModalOpen(true);
             return;

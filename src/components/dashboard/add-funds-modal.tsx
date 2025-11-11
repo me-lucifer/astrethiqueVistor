@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { getLocal, setLocal } from "@/lib/local";
+import { getWallet, setWallet } from "@/lib/local";
 
 interface AddFundsModalProps {
     isOpen: boolean;
@@ -19,7 +19,7 @@ export function AddFundsModal({ isOpen, onOpenChange, neededAmount }: AddFundsMo
 
     useEffect(() => {
         if (isOpen) {
-            const wallet = getLocal<{ balanceEUR: number }>('ast_wallet');
+            const wallet = getWallet();
             setBalance(wallet?.balanceEUR || 0);
         }
     }, [isOpen]);
@@ -27,7 +27,7 @@ export function AddFundsModal({ isOpen, onOpenChange, neededAmount }: AddFundsMo
     const handleTopUp = (amount: number) => {
         const newBalance = balance + amount;
         setBalance(newBalance);
-        setLocal("ast_wallet", { balanceEUR: newBalance });
+        setWallet({ balanceEUR: newBalance });
         window.dispatchEvent(new Event('storage')); // Notify other components
 
         toast({

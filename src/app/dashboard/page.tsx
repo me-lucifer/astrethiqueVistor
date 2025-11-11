@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/star-rating";
 import { ContentHubCard } from "@/components/content-hub/card";
 import * as authLocal from "@/lib/authLocal";
-import { getLocal, setLocal } from "@/lib/local";
+import { getWallet, setWallet, getMoodLog, setMoodLog } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Activity, Star as StarIcon } from "lucide-react";
 import Link from "next/link";
@@ -21,6 +21,7 @@ import { getSession } from "@/lib/session";
 import { ZodiacSignModal } from "@/components/dashboard/zodiac-sign-modal";
 import { DetailedHoroscope } from "@/components/dashboard/detailed-horoscope";
 import { useRouter } from 'next/navigation';
+import { getLocal } from "@/lib/local";
 
 
 interface MoodLogEntry {
@@ -72,7 +73,7 @@ function WalletCard() {
 
     useEffect(() => {
         const checkWallet = () => {
-            const wallet = getLocal<{ balanceEUR: number }>("ast_wallet");
+            const wallet = getWallet();
             if (wallet) {
                 setBalance(wallet.balanceEUR);
             }
@@ -85,7 +86,7 @@ function WalletCard() {
     const handleTopUp = (amount: number) => {
         const newBalance = balance + amount;
         setBalance(newBalance);
-        setLocal("ast_wallet", { balanceEUR: newBalance });
+        setWallet({ balanceEUR: newBalance });
         toast({
             title: "Wallet Topped Up!",
             description: `You've added €${amount.toFixed(2)}. Your new balance is €${newBalance.toFixed(2)}.`,
@@ -119,7 +120,7 @@ function MoodCard() {
 
     const handleSave = () => {
         const today = format(new Date(), 'yyyy-MM-dd');
-        const moodLog = getLocal<MoodLogEntry[]>("ast_mood_log") || [];
+        const moodLog = getMoodLog();
         
         const todayIndex = moodLog.findIndex(entry => entry.dateISO === today);
         const newEntry = { dateISO: today, ...ratings };
@@ -130,7 +131,7 @@ function MoodCard() {
             moodLog.push(newEntry);
         }
 
-        setLocal("ast_mood_log", moodLog);
+        setMoodLog(moodLog);
         toast({ title: "Mood saved for today!", description: "Check your recommendations for personalized content." });
     };
 
@@ -250,7 +251,7 @@ function RecommendationsTab() {
         seedContentHub();
         setAllContent(getLocal<ContentHubItem[]>("ch_items") || []);
 
-        const moodLog = getLocal<MoodLogEntry[]>("ast_mood_log") || [];
+        const moodLog = getMoodLog();
         if (moodLog.length === 0) return;
 
         const last7Days = moodLog.slice(-7);
@@ -300,7 +301,8 @@ function FavoritesTab() {
     useEffect(() => {
         seedConsultants();
         const allConsultants = getSession<Consultant[]>('discover.seed.v1') || [];
-        const favoriteIds = getSession<string[]>("consultantFavorites") || [];
+        const user = authLocal.getCurrentUser();
+        const favoriteIds = user?.favorites.consultants || [];
 
         if (favoriteIds.length === 0) {
             // Seed with demo favorites if none exist
