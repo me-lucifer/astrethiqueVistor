@@ -26,7 +26,7 @@ import { useLanguage } from "@/contexts/language-context";
 import * as storage from "@/lib/storage";
 import PasswordStrength from "./auth/password-strength";
 import { CheckCircle, MailCheck, KeyRound, ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 interface AuthModalProps {
@@ -88,10 +88,13 @@ type AuthView = 'tabs' | 'verify' | 'forgot-password-email' | 'forgot-password-o
 export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalProps) {
   const { toast } = useToast();
   const { language } = useLanguage();
+  const searchParams = useSearchParams();
   const [view, setView] = useState<AuthView>('tabs');
   const [activeTab, setActiveTab] = useState("create");
   const [tempUserEmail, setTempUserEmail] = useState<string | null>(null);
   const [defaultTimezone, setDefaultTimezone] = useState('');
+
+  const isDemoMode = searchParams.get('demo') === '1';
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -163,15 +166,15 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     
     const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
     prefs[user.id] = { language: values.language, timezone: values.timezone, marketingOptIn: values.marketingOptIn };
-    storage.setStorageItem(KEYS.PREFERENCES, prefs);
+    storage.setStorageItem('ast_prefs', prefs);
     
-    const favorites = storage.getStorageItem<Record<string, storage.Favorites>>(KEYS.FAVORITES) || {};
+    const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
     favorites[user.id] = { consultants: [], content: [], conferences: [] };
-    storage.setStorageItem(KEYS.FAVORITES, favorites);
+    storage.setStorageItem('ast_favorites', favorites);
 
-    const wallets = storage.getStorageItem<Record<string, storage.Wallet>>(KEYS.WALLETS) || {};
+    const wallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
     wallets[user.id] = { balance: 0, currency: '€' };
-    storage.setStorageItem(KEYS.WALLETS, wallets);
+    storage.setStorageItem('ast_wallets', wallets);
 
     storage.trackMetric('registrations.visitor');
     setTempUserEmail(user.email);
@@ -261,6 +264,48 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     signInForm.setValue('email', tempUserEmail);
     signInForm.setValue('password', '');
     setTempUserEmail(null);
+  };
+  
+  const handleSeedAndLogin = async () => {
+    const demoEmail = "demo@local";
+    let demoUser = storage.findUserByEmail(demoEmail);
+
+    if (!demoUser) {
+        const passwordHash = await storage.hashPassword("Demo1234");
+        const newUser: storage.User = {
+            id: storage.createId('usr_demo'),
+            role: 'visitor',
+            name: 'Demo Visitor',
+            email: demoEmail,
+            passwordHash,
+            createdAt: new Date().toISOString(),
+            emailVerified: true,
+            kycStatus: "n/a",
+        };
+
+        const users = storage.getUsers();
+        storage.saveUsers([...users, newUser]);
+
+        const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
+        prefs[newUser.id] = { language: 'EN', timezone: defaultTimezone || 'Europe/London', marketingOptIn: false };
+        storage.setStorageItem('ast_prefs', prefs);
+
+        const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+        favorites[newUser.id] = { consultants: [], content: [], conferences: [] };
+        storage.setStorageItem('ast_favorites', favorites);
+        
+        const wallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
+        wallets[newUser.id] = { balance: 100, currency: '€' }; // Give demo user some credit
+        storage.setStorageItem('ast_wallets', wallets);
+        
+        demoUser = newUser;
+        toast({ title: "Demo user created!" });
+    }
+
+    storage.setCurrentUser(demoUser.id);
+    toast({ title: `Welcome, Demo Visitor!` });
+    onLoginSuccess();
+    onOpenChange(false);
   };
 
   const handleClose = (open: boolean) => {
@@ -458,23 +503,16 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
         {view === 'tabs' && (
           <div className="p-4 bg-muted text-center">
               <p className="text-xs text-muted-foreground">
-                  Prototype only — accounts are stored locally on your device (no server). Don’t use real passwords.
+                  Prototype only — accounts are stored locally on your device. Don’t use real passwords.
               </p>
+              {isDemoMode && (
+                <Button variant="link" size="sm" className="text-xs" onClick={handleSeedAndLogin}>
+                    Seed Demo User
+                </Button>
+              )}
           </div>
         )}
       </DialogContent>
     </Dialog>
   );
 }
-
-const KEYS = {
-    USERS: 'ast_users',
-    CURRENT_USER_ID: 'ast_currentUserId',
-    PREFERENCES: 'ast_prefs',
-    FAVORITES: 'ast_favorites',
-    WALLETS: 'ast_wallets',
-    COMMENTS: 'ast_comments',
-    METRICS: 'ast_metrics',
-};
-
-      
