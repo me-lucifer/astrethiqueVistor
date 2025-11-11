@@ -78,6 +78,13 @@ export function emailExists(email: string): boolean {
     return store.users.some(u => u.email.toLowerCase() === email.toLowerCase());
 }
 
+export function pseudonymExists(pseudonym: string): boolean {
+    if (!pseudonym) return false;
+    const store = getStore();
+    return store.users.some(u => u.pseudonym?.toLowerCase() === pseudonym.toLowerCase());
+}
+
+
 export async function hashPassword(plain: string): Promise<string> {
     if (typeof window === 'undefined' || !window.crypto?.subtle) {
         console.warn("Web Crypto API not available. Using legacy fallback.");
@@ -113,6 +120,9 @@ export async function registerVisitor(payload: {
 }): Promise<User> {
     if (emailExists(payload.email)) {
         throw new Error("An account with this email already exists. Login instead.");
+    }
+    if (payload.displayNamePreference === 'pseudonym' && payload.pseudonym && pseudonymExists(payload.pseudonym)) {
+        throw new Error("That pseudonym is taken. Try another.");
     }
     
     const store = getStore();

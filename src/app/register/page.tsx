@@ -33,19 +33,19 @@ const passwordSchema = z.string()
   .refine((password) => /[a-zA-Z]/.test(password), { message: "Password must contain at least one letter" })
   .refine((password) => /[0-9]/.test(password), { message: "Password must contain at least one number" });
 
+const reservedPseudonyms = ["admin", "moderator", "support", "astrethique", "owner", "null", "undefined"];
+
 const pseudonymSchema = z.string()
-    .refine((val) => val.length === 0 || (val.length >= 3 && val.length <= 24), {
-        message: "Must be between 3 and 24 characters.",
-    })
-    .refine((val) => val.length === 0 || /^[a-zA-Z0-9._-]+$/.test(val), {
-        message: "Can only contain letters, numbers, and . _ -",
-    })
-    .optional();
+    .min(3, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
+    .max(24, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
+    .regex(/^[a-zA-Z0-9._-]+$/, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
+    .refine(val => !reservedPseudonyms.includes(val.toLowerCase()), "This word isn’t allowed as a pseudonym.")
+    .refine(val => !authLocal.pseudonymExists(val), "That pseudonym is taken. Try another.");
 
 const createAccountSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  pseudonym: pseudonymSchema,
+  pseudonym: z.string().optional(),
   displayNamePreference: z.enum(['pseudonym', 'realName']).default('realName'),
   email: z.string().email("Invalid email address"),
   password: passwordSchema,
@@ -55,7 +55,20 @@ const createAccountSchema = z.object({
     errorMap: () => ({ message: "You must agree to the terms and privacy policy" }),
   }),
   marketingOptIn: z.boolean().default(false),
+}).superRefine((data, ctx) => {
+    if (data.displayNamePreference === 'pseudonym') {
+        const result = pseudonymSchema.safeParse(data.pseudonym);
+        if (!result.success) {
+            result.error.issues.forEach(issue => {
+                ctx.addIssue({
+                    ...issue,
+                    path: ['pseudonym'],
+                });
+            });
+        }
+    }
 });
+
 
 type CreateAccountFormData = z.infer<typeof createAccountSchema>;
 
@@ -118,7 +131,10 @@ export default function RegisterPage() {
                 if (error.message.includes("email already exists")) {
                     console.log("register_duplicate_email");
                     form.setError("email", { type: "manual", message: error.message });
-                } else {
+                } else if (error.message.includes("pseudonym is taken")) {
+                    form.setError("pseudonym", { type: "manual", message: error.message });
+                }
+                else {
                     toast({
                         variant: "destructive",
                         title: "Registration failed",
