@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AuthModal } from '../auth-modal';
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { translations } from '@/lib/translations';
@@ -33,10 +33,10 @@ function HeaderContent() {
   const t = translations[language];
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [user, setUser] = useState<storage.User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
 
   const checkUser = () => {
-      setUser(storage.getCurrentUser());
+      setUser(authLocal.getCurrentUser());
   }
 
   useEffect(() => {
@@ -52,7 +52,7 @@ function HeaderContent() {
   };
   
   const handleLogout = () => {
-      storage.clearSession();
+      authLocal.clearSession();
       checkUser();
       toast({ title: "Signed out." });
   }

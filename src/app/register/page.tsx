@@ -1,16 +1,15 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Gem, CheckCircle, LogIn, UserPlus } from "lucide-react";
-import * as storage from "@/lib/storage";
-import { useLanguage } from "@/contexts/language-context";
+import { Gem, LogIn, UserPlus } from "lucide-react";
+import * as authLocal from "@/lib/authLocal";
 import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PasswordStrength from "@/components/auth/password-strength";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { AuthModal } from "@/components/auth-modal";
 import { Separator } from "@/components/ui/separator";
@@ -40,9 +39,6 @@ const createAccountSchema = z.object({
   agreeToTerms: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the terms and privacy policy" }),
   }),
-  isOfAge: z.literal(true, {
-      errorMap: () => ({ message: "You must be 18 or older to register" })
-  }),
   marketingOptIn: z.boolean().default(false),
 });
 
@@ -51,16 +47,17 @@ type CreateAccountFormData = z.infer<typeof createAccountSchema>;
 export default function RegisterPage() {
     const router = useRouter();
     const { toast } = useToast();
-    const { language } = useLanguage();
+    const language = "en"; // Simplified for now
     
-    const [user, setUser] = useState<storage.User | null>(null);
+    const [user, setUser] = useState<any>(null);
     const [isClient, setIsClient] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [defaultTimezone, setDefaultTimezone] = useState('');
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
         setIsClient(true);
-        const currentUser = storage.getCurrentUser();
+        const currentUser = authLocal.getCurrentUser();
         setUser(currentUser);
         if (typeof window !== 'undefined') {
             setDefaultTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -72,7 +69,7 @@ export default function RegisterPage() {
         defaultValues: {
             firstName: "", lastName: "", email: "", password: "",
             language: language.toUpperCase() as "EN" | "FR",
-            timezone: '', agreeToTerms: false, isOfAge: false, marketingOptIn: false,
+            timezone: '', agreeToTerms: false, marketingOptIn: false,
         },
         mode: "onBlur"
     });
@@ -84,50 +81,37 @@ export default function RegisterPage() {
     }, [defaultTimezone, form]);
 
     const handleLogout = () => {
-        storage.clearSession();
+        authLocal.clearSession();
         setUser(null);
         toast({ title: "You have been signed out." });
     };
 
     async function handleCreateAccount(values: CreateAccountFormData) {
-        if (storage.findUserByEmail(values.email)) {
-            form.setError("email", { type: "manual", message: "An account with this email already exists." });
-            return;
-        }
-
-        const passwordHash = await storage.hashPassword(values.password);
-        const now = new Date().toISOString();
-        
-        const newUser: storage.User = {
-            id: storage.createId('usr'),
-            role: 'visitor',
-            firstName: values.firstName,
-            lastName: values.lastName,
-            email: values.email,
-            passwordHash,
-            language: values.language,
-            timezone: values.timezone,
-            marketingOptIn: values.marketingOptIn,
-            createdAt: now,
-            updatedAt: now,
-            wallet: { balanceCents: 0 },
-            favorites: { consultants: [], content: [] }
-        };
-
-        const users = storage.getUsers();
-        storage.saveUsers([...users, newUser]);
-        storage.createSession(newUser);
-        
-        toast({
-          title: `Welcome, ${newUser.firstName}!`,
+        startTransition(async () => {
+            try {
+                const newUser = await authLocal.registerVisitor(values);
+                toast({
+                  title: `Welcome, ${newUser.firstName}!`,
+                  description: "Your account has been created successfully.",
+                });
+                router.push('/discover');
+            } catch (error: any) {
+                if (error.message.includes("email already exists")) {
+                    form.setError("email", { type: "manual", message: error.message });
+                } else {
+                    toast({
+                        variant: "destructive",
+                        title: "Registration failed",
+                        description: "An unexpected error occurred. Please try again.",
+                    });
+                }
+            }
         });
-        router.push('/discover');
     }
     
     const heroImage = PlaceHolderImages.find(p => p.id === 'hero-background');
     const watchedPassword = form.watch("password");
     const watchedAgreeToTerms = form.watch("agreeToTerms");
-    const watchedIsOfAge = form.watch("isOfAge");
 
     if (!isClient) {
         return null; // Render nothing on the server
@@ -226,7 +210,12 @@ export default function RegisterPage() {
                                 <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="password" render={({ field }) => (
-                                <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><PasswordStrength password={watchedPassword} /><FormMessage /></FormItem>
+                                <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl><PasswordInput {...field} /></FormControl>
+                                    <PasswordStrength password={watchedPassword} />
+                                    <FormMessage />
+                                </FormItem>
                                 )} />
                                 
                                 <div className="grid grid-cols-2 gap-4">
@@ -239,20 +228,17 @@ export default function RegisterPage() {
                                 </div>
 
                                 <FormField control={form.control} name="agreeToTerms" render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the <Link href="/legal-hub/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms</Link> and <Link href="/legal-hub/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</Link>.</FormLabel><FormMessage /></div></FormItem>
-                                )} />
-                                <FormField control={form.control} name="isOfAge" render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I confirm I am 18 years of age or older.</FormLabel><FormMessage /></div></FormItem>
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the <Link href="/legal-hub/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/legal-hub/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</Link>.</FormLabel><FormMessage /></div></FormItem>
                                 )} />
                                 <FormField control={form.control} name="marketingOptIn" render={({ field }) => (
                                 <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I’d like occasional product updates and offers.</FormLabel></div></FormItem>
                                 )} />
                                 
                                 <div className="pt-4 space-y-2">
-                                    <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || !watchedAgreeToTerms || !watchedIsOfAge}>Create Account</Button>
+                                    <Button type="submit" className="w-full" disabled={isPending || !watchedAgreeToTerms}>Create Account</Button>
                                      <div className="text-center text-sm">
                                         <span className="text-muted-foreground">Already have an account? </span>
-                                        <Button variant="link" className="p-0" onClick={() => setIsAuthModalOpen(true)}>
+                                        <Button variant="link" className="p-0" type="button" onClick={() => setIsAuthModalOpen(true)}>
                                             Sign in
                                         </Button>
                                      </div>

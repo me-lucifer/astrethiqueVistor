@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { seedContentHub, ContentHubItem } from '@/lib/content-hub-seeder';
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { ContentHubCard } from '@/components/content-hub/card';
 import { ContentHubFilters } from '@/components/content-hub/filters';
 import { EmptyState } from '@/components/content-hub/empty-state';
@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, UserPlus } from 'lucide-react';
 import { getSession } from '@/lib/session';
+import { getLocal } from '@/lib/local';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -41,8 +42,8 @@ function ContentHubContent() {
 
     const loadAllData = useCallback(() => {
         seedContentHub();
-        const items = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
-        const user = storage.getCurrentUser();
+        const items = getLocal<ContentHubItem[]>('ch_items') || [];
+        const user = authLocal.getCurrentUser();
         
         const updatedItems = items.map(item => ({
             ...item,
@@ -169,34 +170,25 @@ function ContentHubContent() {
             return item;
         });
         setAllItems(updatedItems);
-        const originalItems = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
+        const originalItems = getLocal<ContentHubItem[]>('ch_items') || [];
         const updatedOriginalItems = originalItems.map(item => item.id === itemId ? {...item, likes: updatedItems.find(i => i.id === itemId)?.likes} : item);
-        storage.setStorageItem('ch_items', updatedOriginalItems);
+        authLocal.setLocal('ch_items', updatedOriginalItems);
     }
 
     const handleToggleBookmark = (itemId: string) => {
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         if (!user) return; // Should be handled by card, but as a safeguard.
 
-        const allUsers = storage.getUsers();
-        const updatedUsers = allUsers.map(u => {
-            if (u.id === user.id) {
-                const isBookmarked = u.favorites.content.includes(itemId);
-                let newContentFavorites: string[];
+        const updatedUser = { ...user };
+        const isBookmarked = updatedUser.favorites.content.includes(itemId);
 
-                if (isBookmarked) {
-                    newContentFavorites = u.favorites.content.filter(id => id !== itemId);
-                } else {
-                    newContentFavorites = [...u.favorites.content, itemId];
-                }
-                
-                return { ...u, favorites: { ...u.favorites, content: newContentFavorites } };
-            }
-            return u;
-        });
-
-        storage.saveUsers(updatedUsers);
-        window.dispatchEvent(new Event('storage_change'));
+        if (isBookmarked) {
+            updatedUser.favorites.content = updatedUser.favorites.content.filter(id => id !== itemId);
+        } else {
+            updatedUser.favorites.content.push(itemId);
+        }
+        
+        authLocal.updateUser(updatedUser);
     }
     
     const handleSuggestedTopicClick = (topic: string) => {

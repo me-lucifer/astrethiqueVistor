@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Comment } from '@/lib/comments';
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,12 +30,12 @@ const ITEMS_PER_PAGE = 5;
 
 export function CommentsSection({ contentId, comments, onAddComment }: CommentsSectionProps) {
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-  const [user, setUser] = useState<storage.User | null>(null);
+  const [user, setUser] = useState<authLocal.User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [intendedAction, setIntendedAction] = useState<(() => void) | null>(null);
 
   const checkUser = () => {
-    const currentUser = storage.getCurrentUser();
+    const currentUser = authLocal.getCurrentUser();
     setUser(currentUser);
   };
 
@@ -48,7 +48,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   }, []);
   
   const handleLogout = () => {
-      storage.setCurrentUser(null);
+      authLocal.clearSession();
       checkUser();
   }
 
@@ -67,7 +67,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
   }
 
   const handleSubmit = (data: CommentFormData) => {
-    if (!storage.isLoggedIn() || !user?.emailVerified) {
+    if (!authLocal.isLoggedIn() || !user?.emailVerified) {
         setIntendedAction(() => () => onSubmit(data));
         setIsAuthModalOpen(true);
         return;

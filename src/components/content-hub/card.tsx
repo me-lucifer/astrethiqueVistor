@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { AuthModal } from '../auth-modal';
 import { useState } from 'react';
 
@@ -74,7 +74,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
     const handleLikeClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         if (!user) {
             setIsAuthModalOpen(true);
             return;
@@ -85,7 +85,7 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
     const handleBookmarkClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         if (!user) {
             setIsAuthModalOpen(true);
             return;

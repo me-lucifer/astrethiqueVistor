@@ -7,14 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import * as storage from "@/lib/storage";
+import * as authLocal from "@/lib/authLocal";
 
 export default function PreferencesPage() {
     const { toast } = useToast();
-    const [user, setUser] = useState<storage.User | null>(null);
+    const [user, setUser] = useState<any | null>(null);
 
     useEffect(() => {
-        const currentUser = storage.getCurrentUser();
+        const currentUser = authLocal.getCurrentUser();
         if (currentUser) {
             setUser(currentUser);
         }
@@ -29,9 +29,7 @@ export default function PreferencesPage() {
     const handleSaveChanges = () => {
         if (!user) return;
         
-        const users = storage.getUsers();
-        const updatedUsers = users.map(u => u.id === user.id ? user : u);
-        storage.saveUsers(updatedUsers);
+        authLocal.updateUser(user);
 
         toast({
             title: "Preferences saved",

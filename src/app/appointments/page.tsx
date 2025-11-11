@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge";
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { AuthModal } from "@/components/auth-modal";
 
 interface Appointment {
@@ -55,11 +55,11 @@ const modeIcons = {
 export default function AppointmentsPage() {
     const [appointments, setAppointments] = useState<CombinedAppointment[]>([]);
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<storage.User | null>(null);
+    const [user, setUser] = useState<authLocal.User | null>(null);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
     const checkUser = () => {
-        const currentUser = storage.getCurrentUser();
+        const currentUser = authLocal.getCurrentUser();
         setUser(currentUser);
     };
 
@@ -251,4 +251,3 @@ export default function AppointmentsPage() {
         </div>
     );
 }
-

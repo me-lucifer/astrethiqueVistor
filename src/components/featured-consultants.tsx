@@ -21,7 +21,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { getSession, setSession } from "@/lib/session";
 import { parseISO } from 'date-fns';
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { useToast } from "@/hooks/use-toast";
 
 const specialties = [
@@ -200,7 +200,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     }, [initialQuery])
 
     const filteredAndSortedConsultants = useMemo(() => {
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         const favorites = user?.favorites.consultants || [];
         
         let result = allConsultants;
@@ -341,28 +341,22 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     }
 
     const handleSaveSearch = () => {
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         if (!user) {
             toast({ variant: 'destructive', title: 'Please log in to save searches.' });
             return;
         }
 
-        const allUsers = storage.getUsers();
-        const updatedUsers = allUsers.map(u => {
-            if (u.id === user.id) {
-                const savedSearches = (u as any).savedSearches || [];
-                 savedSearches.push({
-                    type: 'consultant',
-                    query: query,
-                    filters: filters,
-                    createdAt: new Date().toISOString()
-                });
-                return { ...u, savedSearches };
-            }
-            return u;
+        const updatedUser = { ...user };
+        const savedSearches = (user as any).savedSearches || [];
+        savedSearches.push({
+            type: 'consultant',
+            query: query,
+            filters: filters,
+            createdAt: new Date().toISOString()
         });
 
-        storage.saveUsers(updatedUsers);
+        authLocal.updateUser({ ...updatedUser, savedSearches });
         
         toast({
             title: "Search saved!",

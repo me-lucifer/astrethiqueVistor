@@ -6,15 +6,15 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import * as storage from "@/lib/storage";
+import * as authLocal from "@/lib/authLocal";
 import { CheckCircle, MailWarning } from "lucide-react";
 
 export default function SecurityPage() {
     const { toast } = useToast();
-    const [user, setUser] = useState<storage.User | null>(null);
+    const [user, setUser] = useState<any | null>(null);
 
     useEffect(() => {
-        setUser(storage.getCurrentUser());
+        setUser(authLocal.getCurrentUser());
     }, []);
 
     const handleResendCode = () => {

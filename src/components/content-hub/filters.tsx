@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { Separator } from "../ui/separator";
 import { Checkbox } from "../ui/checkbox";
 import { AuthModal } from '../auth-modal';
@@ -60,27 +60,25 @@ export function ContentHubFilters({
     const { toast } = useToast();
 
     const handleSaveSearch = () => {
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         if (!user) {
             setIsAuthModalOpen(true);
             return;
         }
 
-        const currentFilters = { query, topics, type, language, sort };
-        const allPrefs = storage.getStorageItem<Record<string, any>>('ast_prefs') || {};
-        const userPrefs = allPrefs[user.id] || {};
-        
-        const savedSearches = userPrefs.savedSearches || [];
-        savedSearches.push({
+        const updatedUser = {...user};
+        // This is a temporary structure. In a real app, this would be more robust.
+        // @ts-ignore
+        if (!updatedUser.savedSearches) updatedUser.savedSearches = [];
+        // @ts-ignore
+        updatedUser.savedSearches.push({
             type: 'content',
             query,
             filters: { topics, type, language, sort },
             createdAt: new Date().toISOString()
         });
 
-        userPrefs.savedSearches = savedSearches;
-        allPrefs[user.id] = userPrefs;
-        storage.setStorageItem('ast_prefs', allPrefs);
+        authLocal.updateUser(updatedUser);
         
         toast({
             title: "Search saved",

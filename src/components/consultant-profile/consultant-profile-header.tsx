@@ -4,25 +4,24 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ConsultantProfile } from '@/lib/consultant-profile';
-import { getSession, setSession } from '@/lib/session';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, Heart, CheckCircle, ShieldCheck, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { AuthModal } from '../auth-modal';
 
 export function ConsultantProfileHeader({ consultant: initialConsultant }: { consultant: ConsultantProfile }) {
     const [consultant, setConsultant] = useState(initialConsultant);
     const [isFavorite, setIsFavorite] = useState(consultant.favorite);
-    const [user, setUser] = useState<storage.User | null>(null);
+    const [user, setUser] = useState<authLocal.User | null>(null);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const { toast } = useToast();
     
     const checkUserAndFavorite = () => {
-        const currentUser = storage.getCurrentUser();
+        const currentUser = authLocal.getCurrentUser();
         setUser(currentUser);
         if (currentUser) {
             setIsFavorite(currentUser.favorites.consultants.includes(consultant.id) || false);
@@ -35,8 +34,8 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
         setConsultant(initialConsultant);
         checkUserAndFavorite();
         
-        window.addEventListener('storage_change', checkUserAndFavorite);
-        return () => window.removeEventListener('storage_change', checkUserAndFavorite);
+        window.addEventListener('storage', checkUserAndFavorite);
+        return () => window.removeEventListener('storage', checkUserAndFavorite);
     }, [initialConsultant, consultant.id]);
 
     const onLoginSuccess = () => {
@@ -52,21 +51,14 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
 
         const newIsFavorite = !isFavorite;
         
-        const allUsers = storage.getUsers();
-        const updatedUsers = allUsers.map(u => {
-            if (u.id === user.id) {
-                const updatedFavorites = { ...u.favorites };
-                if (newIsFavorite) {
-                    updatedFavorites.consultants = [...new Set([...updatedFavorites.consultants, consultant.id])];
-                } else {
-                    updatedFavorites.consultants = updatedFavorites.consultants.filter(id => id !== consultant.id);
-                }
-                return { ...u, favorites: updatedFavorites };
-            }
-            return u;
-        });
-
-        storage.saveUsers(updatedUsers);
+        const updatedUser = { ...user };
+        if (newIsFavorite) {
+            updatedUser.favorites.consultants = [...new Set([...updatedUser.favorites.consultants, consultant.id])];
+        } else {
+            updatedUser.favorites.consultants = updatedUser.favorites.consultants.filter(id => id !== consultant.id);
+        }
+        
+        authLocal.updateUser(updatedUser);
         
         setIsFavorite(newIsFavorite);
         window.dispatchEvent(new Event('storage'));

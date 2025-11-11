@@ -11,7 +11,7 @@ import { MessageSquare, Video, Phone, Clock, Bell, CheckCircle } from 'lucide-re
 import { StartNowModal } from '../start-now-modal';
 import { getSession, setSession } from '@/lib/session';
 import { AuthModal } from '../auth-modal';
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -25,11 +25,11 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
   const { toast } = useToast();
-  const [user, setUser] = useState<storage.User | null>(null);
+  const [user, setUser] = useState<authLocal.User | null>(null);
   const [intendedAction, setIntendedAction] = useState<(() => void) | null>(null);
 
   const checkUser = useCallback(() => {
-    setUser(storage.getCurrentUser());
+    setUser(authLocal.getCurrentUser());
   }, []);
 
   useEffect(() => {

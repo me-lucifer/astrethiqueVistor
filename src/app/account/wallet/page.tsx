@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import * as storage from "@/lib/storage";
+import * as authLocal from "@/lib/authLocal";
 
 export default function WalletPage() {
     const { toast } = useToast();
-    const [user, setUser] = useState<storage.User | null>(null);
+    const [user, setUser] = useState<any | null>(null);
     const [budgetLockValue, setBudgetLockValue] = useState([50]);
 
     useEffect(() => {
-        const currentUser = storage.getCurrentUser();
+        const currentUser = authLocal.getCurrentUser();
         if (currentUser) {
             setUser(currentUser);
             if (currentUser.wallet.budgetLock) {
@@ -33,9 +33,7 @@ export default function WalletPage() {
         };
         
         setUser(updatedUser);
-
-        const allUsers = storage.getUsers();
-        storage.saveUsers(allUsers.map(u => u.id === user.id ? updatedUser : u));
+        authLocal.updateUser(updatedUser);
 
         toast({
             title: "Funds Added",
@@ -52,9 +50,7 @@ export default function WalletPage() {
         };
         
         setUser(updatedUser);
-        
-        const allUsers = storage.getUsers();
-        storage.saveUsers(allUsers.map(u => u.id === user.id ? updatedUser : u));
+        authLocal.updateUser(updatedUser);
 
         toast({
             title: "Budget Lock Updated",

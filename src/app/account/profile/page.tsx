@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input, PasswordInput } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import * as storage from "@/lib/storage";
+import * as authLocal from "@/lib/authLocal";
 import PasswordStrength from "@/components/auth/password-strength";
 import { useRouter } from "next/navigation";
 
@@ -33,11 +33,11 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 export default function ProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
-    const [user, setUser] = useState<storage.User | null>(null);
+    const [user, setUser] = useState<any | null>(null);
     const [defaultTimezone, setDefaultTimezone] = useState('');
 
     useEffect(() => {
-        const currentUser = storage.getCurrentUser();
+        const currentUser = authLocal.getCurrentUser();
         if (currentUser) {
             setUser(currentUser);
             profileForm.reset({
@@ -66,25 +66,17 @@ export default function ProfilePage() {
     const onProfileSubmit = (data: ProfileFormData) => {
         if (!user) return;
         
-        const users = storage.getUsers();
-        const updatedUsers = users.map(u => 
-            u.id === user.id ? { 
-                ...u, 
-                firstName: data.firstName, 
-                lastName: data.lastName,
-                language: data.language,
-                timezone: data.timezone,
-                updatedAt: new Date().toISOString()
-            } : u
-        );
-        storage.saveUsers(updatedUsers);
+        const updatedUser = { 
+            ...user, 
+            firstName: data.firstName, 
+            lastName: data.lastName,
+            language: data.language,
+            timezone: data.timezone,
+            updatedAt: new Date().toISOString()
+        };
         
-        // Update user state locally
-        const updatedUser = updatedUsers.find(u => u.id === user.id);
-        if (updatedUser) {
-            setUser(updatedUser);
-        }
-        window.dispatchEvent(new Event('storage')); // To update header
+        authLocal.updateUser(updatedUser);
+        setUser(updatedUser);
 
         toast({ title: "Profile updated successfully." });
     };
@@ -92,16 +84,15 @@ export default function ProfilePage() {
     const onPasswordSubmit = async (data: PasswordFormData) => {
         if (!user) return;
         
-        const currentPasswordHash = await storage.hashPassword(data.currentPassword);
+        const currentPasswordHash = await authLocal.hashPassword(data.currentPassword);
         if (currentPasswordHash !== user.passwordHash) {
             passwordForm.setError("currentPassword", { message: "Incorrect current password." });
             return;
         }
 
-        const newPasswordHash = await storage.hashPassword(data.newPassword);
-        const users = storage.getUsers();
-        const updatedUsers = users.map(u => u.id === user.id ? { ...u, passwordHash: newPasswordHash, updatedAt: new Date().toISOString() } : u);
-        storage.saveUsers(updatedUsers);
+        const newPasswordHash = await authLocal.hashPassword(data.newPassword);
+        const updatedUser = { ...user, passwordHash: newPasswordHash, updatedAt: new Date().toISOString() };
+        authLocal.updateUser(updatedUser);
 
         toast({ title: "Password changed successfully." });
         passwordForm.reset();

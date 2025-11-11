@@ -6,7 +6,7 @@ import { useParams, useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ContentHubItem } from '@/lib/content-hub-seeder';
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import { Comment } from '@/lib/comments';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Share2, Flag, Clock, Eye, Calendar, BookOpen, Mic, MessageSquare } from 'lucide-react';
@@ -101,9 +101,9 @@ export default function ContentDetailPage() {
             return;
         };
 
-        const storedItems = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
-        const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
-        const user = storage.getCurrentUser();
+        const storedItems = authLocal.getLocal<ContentHubItem[]>('ch_items') || [];
+        const allComments = authLocal.getLocal<authLocal.Comment[]>('ast_comments') || [];
+        const user = authLocal.getCurrentUser();
         
         const updatedItems = storedItems.map(i => {
             const itemComments = allComments.filter(c => c.contentId === i.id);
@@ -121,7 +121,7 @@ export default function ContentDetailPage() {
         if (foundItem && !foundItem.deleted) {
             setItem(foundItem);
             const itemComments = allComments.filter(c => c.contentId === itemId);
-            const users = storage.getUsers();
+            const users = authLocal.getUsers();
             
             const enrichedComments: Comment[] = itemComments.map(c => {
                 const author = users.find(u => u.id === c.userId);
@@ -161,9 +161,9 @@ export default function ContentDetailPage() {
     }
 
     const updateItemInLocalStorage = useCallback((updatedItem: ContentHubItem) => {
-        const currentItems = storage.getStorageItem<ContentHubItem[]>('ch_items') || [];
+        const currentItems = authLocal.getLocal<ContentHubItem[]>('ch_items') || [];
         const updatedItems = currentItems.map(i => i.id === updatedItem.id ? updatedItem : i);
-        storage.setStorageItem('ch_items', updatedItems);
+        authLocal.setLocal('ch_items', updatedItems);
         window.dispatchEvent(new Event('storage_change')); // Notify other components
     }, []);
 
@@ -182,31 +182,22 @@ export default function ContentDetailPage() {
     }, [item, allItems]);
     
     const handleToggleBookmark = useCallback((itemIdToBookmark: string) => {
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         if (!user) {
             setIsAuthModalOpen(true);
             return;
         }
 
-        const allUsers = storage.getUsers();
-        const updatedUsers = allUsers.map(u => {
-            if (u.id === user.id) {
-                const isBookmarked = u.favorites.content.includes(itemIdToBookmark);
-                let newContentFavorites: string[];
+        const updatedUser = { ...user };
+        const isBookmarked = updatedUser.favorites.content.includes(itemIdToBookmark);
 
-                if (isBookmarked) {
-                    newContentFavorites = u.favorites.content.filter(id => id !== itemIdToBookmark);
-                } else {
-                    newContentFavorites = [...u.favorites.content, itemIdToBookmark];
-                }
-                
-                return { ...u, favorites: { ...u.favorites, content: newContentFavorites } };
-            }
-            return u;
-        });
-
-        storage.saveUsers(updatedUsers);
-        window.dispatchEvent(new Event('storage_change'));
+        if (isBookmarked) {
+            updatedUser.favorites.content = updatedUser.favorites.content.filter(id => id !== itemIdToBookmark);
+        } else {
+            updatedUser.favorites.content.push(itemIdToBookmark);
+        }
+        
+        authLocal.updateUser(updatedUser);
 
         toast({
             title: !item?.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
@@ -214,16 +205,16 @@ export default function ContentDetailPage() {
     }, [toast, item]);
 
     const handleAddComment = useCallback((text: string) => {
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         if (!user || !user.emailVerified) {
             setIsAuthModalOpen(true);
             return;
         }
         if (!item) return;
 
-        const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
-        const newComment: storage.Comment = {
-            id: storage.createId('comment'),
+        const allComments = authLocal.getLocal<authLocal.Comment[]>('ast_comments') || [];
+        const newComment: authLocal.Comment = {
+            id: authLocal.createId('comment'),
             userId: user.id,
             contentId: item.id,
             type: item.type,
@@ -231,7 +222,7 @@ export default function ContentDetailPage() {
             createdAt: new Date().toISOString(),
         };
         
-        storage.setStorageItem('ast_comments', [newComment, ...allComments]);
+        authLocal.setLocal('ast_comments', [newComment, ...allComments]);
         window.dispatchEvent(new Event('storage_change'));
 
         toast({

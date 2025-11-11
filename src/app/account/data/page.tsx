@@ -18,7 +18,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import * as storage from "@/lib/storage";
+import * as authLocal from "@/lib/authLocal";
+import { getLocal, setLocal } from "@/lib/local";
 
 export default function DataPage() {
     const { toast } = useToast();
@@ -26,7 +27,7 @@ export default function DataPage() {
     const [deleteConfirmation, setDeleteConfirmation] = useState("");
     
     const handleExportData = () => {
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         if(!user) {
             toast({ variant: "destructive", title: "You must be logged in to export data." });
             return;
@@ -63,15 +64,22 @@ export default function DataPage() {
     };
 
     const handleDeleteAccount = () => {
-        const user = storage.getCurrentUser();
+        const user = authLocal.getCurrentUser();
         if(!user) return;
 
-        // 1. Remove user from users list
-        const users = storage.getUsers().filter(u => u.id !== user.id);
-        storage.saveUsers(users);
+        // Anonymize comments
+        const allComments = getLocal<authLocal.Comment[]>('ast_comments') || [];
+        const updatedComments = allComments.map(c => {
+            if (c.userId === user.id) {
+                return { ...c, body: '[deleted by user]', userId: 'deleted' };
+            }
+            return c;
+        });
+        setLocal('ast_comments', updatedComments);
 
-        // 2. Clear session
-        storage.clearSession();
+        // Delete user
+        authLocal.deleteUser(user.id);
+        authLocal.clearSession();
         
         toast({ title: "Account deleted", description: "Your account and associated data have been removed."});
         router.push('/');

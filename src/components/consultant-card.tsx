@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Star, Bell, Heart, BookOpen, Mic, Video, CheckCircle } from "lucide-react";
 import { AuthModal } from './auth-modal';
-import * as storage from '@/lib/storage';
+import * as authLocal from '@/lib/authLocal';
 import {
     Tooltip,
     TooltipContent,
@@ -52,11 +52,11 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isNotifying, setIsNotifying] = useState(false);
-    const [user, setUser] = useState<storage.User | null>(null);
+    const [user, setUser] = useState<authLocal.User | null>(null);
     const [intendedAction, setIntendedAction] = useState<(() => void) | null>(null);
     
     const checkUser = useCallback(() => {
-        const currentUser = storage.getCurrentUser();
+        const currentUser = authLocal.getCurrentUser();
         setUser(currentUser);
         if (currentUser) {
             setIsFavorite(currentUser.favorites?.consultants.includes(consultant.id) || false);
@@ -93,23 +93,15 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
         
         const newIsFavorite = !isFavorite;
         
-        const allUsers = storage.getUsers();
-        const updatedUsers = allUsers.map(u => {
-            if (u.id === user.id) {
-                const updatedFavorites = { ...u.favorites };
-                if (newIsFavorite) {
-                    updatedFavorites.consultants = [...new Set([...updatedFavorites.consultants, consultant.id])];
-                } else {
-                    updatedFavorites.consultants = updatedFavorites.consultants.filter(id => id !== consultant.id);
-                }
-                return { ...u, favorites: updatedFavorites };
-            }
-            return u;
-        });
-        
-        storage.saveUsers(updatedUsers);
+        const updatedUser = { ...user };
+        if (newIsFavorite) {
+            updatedUser.favorites.consultants = [...new Set([...updatedUser.favorites.consultants, consultant.id])];
+        } else {
+            updatedUser.favorites.consultants = updatedUser.favorites.consultants.filter(id => id !== consultant.id);
+        }
+        authLocal.updateUser(updatedUser);
+
         setIsFavorite(newIsFavorite);
-        window.dispatchEvent(new Event('storage'));
 
         toast({
             title: newIsFavorite ? "Added to your favorites" : "Removed from your favorites",

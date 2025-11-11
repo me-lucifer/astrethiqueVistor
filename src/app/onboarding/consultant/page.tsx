@@ -7,7 +7,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AnimatePresence, motion } from "framer-motion";
-import { getCurrentUser } from "@/lib/storage";
+import { getCurrentUser } from "@/lib/authLocal";
 import { getLocal, setLocal } from "@/lib/local";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";

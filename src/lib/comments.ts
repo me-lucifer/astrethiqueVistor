@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as storage from './storage';
+import * as authLocal from './authLocal';
 
 export interface Comment {
   id: string;
@@ -16,8 +16,8 @@ export interface Comment {
 }
 
 export function getComments(contentId: string): Comment[] {
-  const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
-  const users = storage.getUsers();
+  const allComments = authLocal.getLocal<authLocal.Comment[]>('ast_comments') || [];
+  const users = authLocal.getUsers();
 
   const itemComments = allComments.filter(c => c.contentId === contentId);
   
@@ -42,14 +42,14 @@ export function getComments(contentId: string): Comment[] {
 }
 
 export function addComment(contentId: string, text: string, itemType: 'article' | 'podcast'): Comment | null {
-  const user = storage.getCurrentUser();
+  const user = authLocal.getCurrentUser();
   if (!user) {
     return null;
   }
 
-  const allComments = storage.getStorageItem<storage.Comment[]>('ast_comments') || [];
-  const newComment: storage.Comment = {
-    id: storage.createId('comment'),
+  const allComments = authLocal.getLocal<authLocal.Comment[]>('ast_comments') || [];
+  const newComment: authLocal.Comment = {
+    id: authLocal.createId('comment'),
     userId: user.id,
     contentId: contentId,
     type: itemType,
@@ -57,7 +57,7 @@ export function addComment(contentId: string, text: string, itemType: 'article' 
     createdAt: new Date().toISOString(),
   };
 
-  storage.setStorageItem('ast_comments', [newComment, ...allComments]);
+  authLocal.setLocal('ast_comments', [newComment, ...allComments]);
 
   return {
     id: newComment.id,
