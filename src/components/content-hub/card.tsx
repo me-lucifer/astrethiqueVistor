@@ -92,6 +92,9 @@ export function ContentHubCard({ item, onAuthorClick, onTopicClick, onToggleLike
         }
         if(onToggleBookmark) {
             onToggleBookmark(item.id);
+            if (!item.bookmarked) {
+                storage.trackMetric('favorites');
+            }
         }
     }
 

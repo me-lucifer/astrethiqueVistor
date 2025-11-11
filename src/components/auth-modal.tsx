@@ -174,6 +174,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 
     }
     
     storage.setCurrentUser(user.id);
+    storage.trackMetric('logins');
     toast({ title: `Welcome back, ${user.name}!` });
     onLoginSuccess();
     handleCloseModal(false);
@@ -224,6 +225,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess, initialView = 
         favorites[user.id] = { consultants: [], content: [], conferences: [] };
         storage.setStorageItem('ast_favorites', favorites);
         
+        storage.trackMetric('registrations', createValues.role);
         const firstName = user.name.split(' ')[0];
         toast({ title: `Welcome, ${firstName}!` });
     }

@@ -13,6 +13,7 @@ const KEYS = {
     PREFERENCES: 'ast_prefs',
     FAVORITES: 'ast_favorites',
     COMMENTS: 'ast_comments',
+    METRICS: 'ast_metrics',
 };
 
 // --- DATA STRUCTURES ---
@@ -59,6 +60,16 @@ export interface Comment {
     type: "article" | "podcast";
     body: string;
     createdAt: string; // ISO Date
+}
+
+export interface Metrics {
+    registrations: {
+        visitor: number;
+        consultant: number;
+    };
+    logins: number;
+    comments: number;
+    favorites: number;
 }
 
 // --- CORE STORAGE HELPERS ---
@@ -158,6 +169,31 @@ export function getCurrentUser(): User | null {
     return getUsers().find(u => u.id === userId) || null;
 }
 
+// --- METRICS ---
+export function getMetrics(): Metrics {
+    const defaultMetrics: Metrics = {
+        registrations: { visitor: 0, consultant: 0 },
+        logins: 0,
+        comments: 0,
+        favorites: 0,
+    };
+    return getStorageItem<Metrics>(KEYS.METRICS) || defaultMetrics;
+}
+
+export function trackMetric(metric: keyof Metrics | 'registrations', role?: 'visitor' | 'consultant'): void {
+    const currentMetrics = getMetrics();
+    
+    if (metric === 'registrations') {
+        if (role) {
+            currentMetrics.registrations[role]++;
+        }
+    } else if (metric === 'logins' || metric === 'comments' || metric === 'favorites') {
+        currentMetrics[metric]++;
+    }
+
+    setStorageItem(KEYS.METRICS, currentMetrics);
+}
+
 
 // --- INITIAL SEEDING ---
 
@@ -167,6 +203,14 @@ function seedInitialData() {
     }
     if (getStorageItem(KEYS.CONSULTANTS) === null) {
         setStorageItem(KEYS.CONSULTANTS, []);
+    }
+     if (getStorageItem(KEYS.METRICS) === null) {
+        setStorageItem(KEYS.METRICS, {
+            registrations: { visitor: 0, consultant: 0 },
+            logins: 0,
+            comments: 0,
+            favorites: 0,
+        });
     }
 }
 

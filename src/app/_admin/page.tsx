@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Consultant } from "@/lib/consultants";
 import { getSession, setSession } from "@/lib/session";
+import { Users, LogIn, MessageSquare, Heart } from "lucide-react";
 
 function AdminPageContent() {
     const router = useRouter();
@@ -21,6 +22,7 @@ function AdminPageContent() {
 
     const [consultants, setConsultants] = useState<storage.User[]>([]);
     const [consultantProfiles, setConsultantProfiles] = useState<Consultant[]>([]);
+    const [metrics, setMetrics] = useState<storage.Metrics | null>(null);
 
     const isDemoMode = searchParams.get('demo') === '1';
 
@@ -30,6 +32,8 @@ function AdminPageContent() {
 
         const allConsultantProfiles = getSession<Consultant[]>('discover.seed.v1') || [];
         setConsultantProfiles(allConsultantProfiles);
+
+        setMetrics(storage.getMetrics());
     };
 
     useEffect(() => {
@@ -71,7 +75,40 @@ function AdminPageContent() {
     }
 
     return (
-        <div className="container py-12">
+        <div className="container py-12 space-y-8">
+            {metrics && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Demo Analytics</CardTitle>
+                        <CardDescription>Simple event tracking stored in local storage.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                            <div className="p-4 bg-muted rounded-lg">
+                                <Users className="mx-auto h-6 w-6 text-primary" />
+                                <p className="mt-2 text-2xl font-bold">{metrics.registrations.visitor + metrics.registrations.consultant}</p>
+                                <p className="text-sm text-muted-foreground">Total Registrations</p>
+                            </div>
+                            <div className="p-4 bg-muted rounded-lg">
+                                <LogIn className="mx-auto h-6 w-6 text-primary" />
+                                <p className="mt-2 text-2xl font-bold">{metrics.logins}</p>
+                                <p className="text-sm text-muted-foreground">Logins</p>
+                            </div>
+                            <div className="p-4 bg-muted rounded-lg">
+                                <MessageSquare className="mx-auto h-6 w-6 text-primary" />
+                                <p className="mt-2 text-2xl font-bold">{metrics.comments}</p>
+                                <p className="text-sm text-muted-foreground">Comments</p>
+                            </div>
+                             <div className="p-4 bg-muted rounded-lg">
+                                <Heart className="mx-auto h-6 w-6 text-primary" />
+                                <p className="mt-2 text-2xl font-bold">{metrics.favorites}</p>
+                                <p className="text-sm text-muted-foreground">Favorites</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             <Card>
                 <CardHeader>
                     <CardTitle>Consultant Management</CardTitle>

@@ -73,6 +73,7 @@ export function CommentsSection({ contentId, comments, onAddComment }: CommentsS
         return;
     }
     onAddComment(data.text);
+    storage.trackMetric('comments');
     form.reset();
   };
   

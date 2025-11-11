@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useTransition } from "react";
@@ -348,6 +347,8 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             toast({ variant: 'destructive', title: 'Please log in to save searches.' });
             return;
         }
+
+        storage.trackMetric('favorites');
 
         const allPrefs = storage.getStorageItem<Record<string, any>>('ast_prefs') || {};
         const userPrefs = allPrefs[user.id] || {};

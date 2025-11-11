@@ -99,6 +99,7 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
         const newIsFavorite = !isFavorite;
         if (newIsFavorite) {
             userFavorites.consultants.push(consultant.id);
+            storage.trackMetric('favorites');
         } else {
             userFavorites.consultants = userFavorites.consultants.filter(id => id !== consultant.id);
         }
