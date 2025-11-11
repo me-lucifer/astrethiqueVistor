@@ -181,7 +181,20 @@ export async function registerVisitor(payload: {
 export function getCurrentUser(): User | null {
     const store = getStore();
     if (!store.session) return null;
-    return store.users.find(u => u.id === store.session!.userId) || null;
+    
+    let user = store.users.find(u => u.id === store.session!.userId) || null;
+
+    if (user && user.displayNamePreference === undefined) {
+        // This is a migration for older user objects.
+        console.log(`Migrating user: ${user.id}`);
+        const migratedUser = updateUser(user.id, {
+            displayNamePreference: 'realName',
+            pseudonym: '',
+        });
+        return migratedUser;
+    }
+    
+    return user;
 }
 
 export function getUsers(): User[] {
@@ -232,7 +245,7 @@ export function updateUser(userId: string, updatedFields: Partial<User>): User {
     const publicName = usePseudonym && pseudonym ? pseudonym : `${potentialUpdatedUser.firstName} ${potentialUpdatedUser.lastName}`.trim();
     
     let nameHistory = potentialUpdatedUser.nameHistory || [currentUser.publicName];
-    if (nameHistory[nameHistory.length - 1] !== publicName) {
+    if (nameHistory.length === 0 || nameHistory[nameHistory.length - 1] !== publicName) {
         nameHistory.push(publicName);
     }
     

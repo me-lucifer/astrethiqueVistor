@@ -16,7 +16,8 @@ import { useRouter } from "next/navigation";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Shield, User as UserIcon } from "lucide-react";
+import { Shield, User as UserIcon, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const pseudonymSchema = (currentUserId: string) => z.string()
     .min(3, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
@@ -54,6 +55,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const [user, setUser] = useState<authLocal.User | null>(null);
     const [defaultTimezone, setDefaultTimezone] = useState('');
+    const [showPseudonymBanner, setShowPseudonymBanner] = useState(false);
 
     const form = useForm<ProfileFormData>({
         resolver: zodResolver(profileSchema(user?.id || '')),
@@ -72,6 +74,10 @@ export default function ProfilePage() {
                 language: currentUser?.language || 'EN',
                 timezone: currentUser?.timezone || '',
             });
+            // Show migration banner if they were just migrated
+            if (currentUser.nameHistory.length <= 1 && !currentUser.pseudonym) {
+                setShowPseudonymBanner(true);
+            }
         } else {
             router.push('/');
         }
@@ -85,6 +91,7 @@ export default function ProfilePage() {
         
         const updatedUser = authLocal.updateUser(user.id, data);
         setUser(updatedUser);
+        setShowPseudonymBanner(false);
 
         toast({ title: "Profile updated", description: `Your public name is now ${updatedUser.publicName}.` });
     };
@@ -109,6 +116,15 @@ export default function ProfilePage() {
 
     return (
         <div className="space-y-8">
+            {showPseudonymBanner && (
+                <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>New! Prefer a pseudonym?</AlertTitle>
+                    <AlertDescription>
+                        You can now choose a public pseudonym for added privacy. Set it up below.
+                    </AlertDescription>
+                </Alert>
+            )}
             <Card>
                 <CardHeader>
                     <CardTitle>Personal Information</CardTitle>
