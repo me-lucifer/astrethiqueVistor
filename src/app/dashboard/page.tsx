@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { ContentHubItem, seedContentHub } from "@/lib/content-hub-seeder";
 import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
 import { getSession } from "@/lib/session";
+import { ZodiacSignModal } from "@/components/dashboard/zodiac-sign-modal";
 
 interface MoodLogEntry {
     dateISO: string;
@@ -174,39 +175,58 @@ function SidebarTabs() {
 
 function ActivityTab() {
     const [user, setUser] = useState<authLocal.User | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        setUser(authLocal.getCurrentUser());
+        const checkUser = () => setUser(authLocal.getCurrentUser());
+        checkUser();
+        window.addEventListener('storage', checkUser);
+        return () => window.removeEventListener('storage', checkUser);
     }, []);
 
     const zodiacSign = user?.zodiacSign;
     const horoscope = zodiacSign ? horoscopeData[zodiacSign] : null;
 
+    const handleZodiacSave = (sign: authLocal.User['zodiacSign']) => {
+        if(user) {
+            authLocal.updateUser(user.id, { zodiacSign: sign });
+        }
+        setIsModalOpen(false);
+    }
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                    Daily Horoscope
-                    <Badge variant="outline">Free</Badge>
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                {horoscope ? (
-                    <div>
-                        <p className="font-semibold mb-2">Today for {zodiacSign}</p>
-                        <p className="text-sm text-muted-foreground">{horoscope}</p>
+        <>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex justify-between items-center">
+                        Daily Horoscope
+                        <Badge variant="outline">Free</Badge>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {horoscope ? (
+                        <div>
+                            <p className="font-semibold mb-2">Today for {zodiacSign}</p>
+                            <p className="text-sm text-muted-foreground">{horoscope}</p>
+                        </div>
+                    ) : (
+                        <div className="text-center text-muted-foreground p-4 border-dashed border-2 rounded-lg">
+                            <p>Set your zodiac sign in your profile to see your daily horoscope.</p>
+                            <Button variant="link" onClick={() => setIsModalOpen(true)}>Set your zodiac sign</Button>
+                        </div>
+                    )}
+                    <div className="mt-6 border-t pt-6">
+                        <p className="text-sm text-muted-foreground text-center">No recent activity yet.</p>
                     </div>
-                ) : (
-                    <div className="text-center text-muted-foreground p-4 border-dashed border-2 rounded-lg">
-                        <p>Set your zodiac sign in your profile to see your daily horoscope.</p>
-                        <Button variant="link" asChild><Link href="/account/profile">Go to Profile</Link></Button>
-                    </div>
-                )}
-                <div className="mt-6 border-t pt-6">
-                    <p className="text-sm text-muted-foreground text-center">No recent activity yet.</p>
-                </div>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+            <ZodiacSignModal 
+                isOpen={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                onSave={handleZodiacSave}
+                currentSign={user?.zodiacSign}
+            />
+        </>
     );
 }
 
