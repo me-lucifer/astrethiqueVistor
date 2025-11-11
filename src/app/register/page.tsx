@@ -27,6 +27,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters")
@@ -208,8 +209,8 @@ export default function RegisterPage() {
 
     return (
         <>
-        <div className="min-h-[calc(100vh-4rem)] grid grid-cols-1 lg:grid-cols-2">
-            <div className="relative h-[40vh] lg:h-full">
+        <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+            <div className="relative min-h-[40vh] lg:h-full">
                  {heroImage && (
                     <Image
                         src={heroImage.imageUrl}
@@ -235,9 +236,9 @@ export default function RegisterPage() {
                     </p>
                 </div>
             </div>
-            <div className="flex items-center justify-center p-4 sm:p-8">
+            <div className="flex items-center justify-center p-4 sm:p-8 lg:p-12">
                  <div className="w-full max-w-lg">
-                    <Card>
+                    <Card className="shadow-lg rounded-lg lg:rounded-[12px] p-0 sm:p-6 lg:p-[24px]">
                         <CardHeader>
                             <CardTitle className="font-headline text-2xl">Create an account</CardTitle>
                         </CardHeader>
@@ -284,9 +285,9 @@ export default function RegisterPage() {
                                     <FormField control={form.control} name="pseudonym" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Pseudonym (public name)</FormLabel>
-                                            <FormControl><Input placeholder="e.g., StarSeeker, LunaPath, Orion-27" {...field} /></FormControl>
-                                            <p className="text-xs text-muted-foreground">This is the name others will see. 3–24 chars; letters, numbers, . _ - only.</p>
-                                            <FormMessage />
+                                            <FormControl><Input placeholder="e.g., StarSeeker, LunaPath, Orion-27" {...field} aria-describedby={errors.pseudonym ? `${field.name}-message` : undefined} /></FormControl>
+                                            <p className="text-xs text-muted-foreground">This is the name others will see if you choose Pseudonym. 3–24 chars; letters, numbers, . _ - only.</p>
+                                            <FormMessage id={`${field.name}-message`} />
                                         </FormItem>
                                     )} />
                                 </div>
@@ -330,7 +331,6 @@ export default function RegisterPage() {
                                                 </FormItem>
                                             </RadioGroup>
                                         </FormControl>
-                                        <p className="text-xs text-muted-foreground">Your real name is visible only to you and our team for compliance.</p>
                                         <FormMessage />
                                         </FormItem>
                                     )}
@@ -338,7 +338,7 @@ export default function RegisterPage() {
 
                                 <div className="flex justify-between items-center text-sm" aria-live="polite">
                                     <div className="flex items-center gap-2">
-                                        <Badge variant="outline">Preview</Badge>
+                                        <Badge variant="outline">Preview:</Badge>
                                         <span>{publicName || "Your Public Name"}</span>
                                     </div>
                                     <TooltipProvider>
@@ -347,7 +347,7 @@ export default function RegisterPage() {
                                                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>You can change this later in Settings.</p>
+                                                <p>You can change this later in Settings ▸ Profile & Privacy.</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
@@ -381,6 +381,12 @@ export default function RegisterPage() {
                                 <FormField control={form.control} name="marketingOptIn" render={({ field }) => (
                                 <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I’d like occasional product updates and offers.</FormLabel></div></FormItem>
                                 )} />
+
+                                 <Alert>
+                                    <AlertDescription className="text-xs">
+                                        We store your legal name for compliance but won’t display it if you choose a pseudonym.
+                                    </AlertDescription>
+                                </Alert>
                                 
                                 <div className="pt-4 space-y-2">
                                     <Button type="submit" className="w-full" disabled={isPending || !watchedAgreeToTerms}>Create Account</Button>
@@ -394,11 +400,6 @@ export default function RegisterPage() {
                             </form>
                             </Form>
                         </CardContent>
-                         <CardFooter className="text-center">
-                            <p className="text-xs text-muted-foreground">
-                                Your real name is visible only to you and our team for compliance.
-                            </p>
-                        </CardFooter>
                     </Card>
                  </div>
             </div>
@@ -407,3 +408,5 @@ export default function RegisterPage() {
         </>
     );
 }
+
+    
