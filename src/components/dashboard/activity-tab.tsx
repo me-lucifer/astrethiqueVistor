@@ -18,9 +18,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { YouTubePlayerModal } from "@/components/youtube-player-modal";
 import { cn } from "@/lib/utils";
-import { Calendar, Video as VideoIcon, MoreHorizontal, EyeOff, Eye, Download } from "lucide-react";
+import { Calendar, Video as VideoIcon, MoreHorizontal, EyeOff, Eye, Download, Mail } from "lucide-react";
 
-// Helper hook for countdown
+
+// --- HELPER COMPONENTS ---
+
+// Countdown hook
 function useCountdown(targetDate: string) {
   const [countdown, setCountdown] = useState("");
   const [isJoinable, setIsJoinable] = useState(false);
@@ -72,7 +75,7 @@ function useCountdown(targetDate: string) {
   return { countdown, isJoinable };
 }
 
-// Helper for date formatting
+// Relative date formatter
 function formatRelativeDate(date: Date) {
     const now = new Date();
     if (isToday(date)) return `Today at ${new Date(date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
@@ -85,15 +88,13 @@ function formatRelativeDate(date: Date) {
     return new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-function ActivityRowUpcoming({
-    item,
-    onHide,
-    onAddToCalendar,
-}: {
+interface ActivityRowUpcomingProps {
     item: ActivityItem;
     onHide: (id: string) => void;
     onAddToCalendar: (item: ActivityItem) => void;
-}) {
+}
+
+function ActivityRowUpcoming({ item, onHide, onAddToCalendar }: ActivityRowUpcomingProps) {
     const { countdown, isJoinable } = useCountdown(item.startISO);
     const date = new Date(item.startISO);
 
@@ -134,25 +135,61 @@ function ActivityRowUpcoming({
     );
 }
 
+interface ActivityRowReplayProps {
+    item: ActivityReplay;
+    isWatched: boolean;
+    onWatchReplay: (item: ActivityReplay) => void;
+    onMarkWatched: (id: string) => void;
+    onHide: (id: string) => void;
+}
+
+function ActivityRowReplay({ item, isWatched, onWatchReplay, onMarkWatched, onHide }: ActivityRowReplayProps) {
+    const date = new Date(item.recordedISO);
+    return (
+        <Card className={cn("p-4 flex items-start gap-4 bg-card/50", isWatched && "opacity-60")}>
+            <VideoIcon className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
+            <div className="flex-1 space-y-1">
+                <p className="font-semibold leading-tight">{item.title}</p>
+                <p className="text-xs text-muted-foreground">
+                    {item.duration} • Host: {item.host} • {formatDistanceToNow(date, { addSuffix: true })}
+                </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <Button size="sm" onClick={() => onWatchReplay(item)}>Watch recording</Button>
+                <div className="flex items-center">
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild><Link href="/conferences">Details</Link></Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onMarkWatched(item.id)}>{isWatched ? <Eye className="mr-2 h-4 w-4" /> : <EyeOff className="mr-2 h-4 w-4" />}{isWatched ? 'Mark as unwatched' : 'Mark as watched'}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+        </Card>
+    );
+}
+
+
+// --- MAIN COMPONENT ---
+
 export function ActivityTab() {
   const [activities, setActivities] = useState<{
     upcoming: ActivityItem[];
     replays: ActivityReplay[];
   }>({ upcoming: [], replays: [] });
-  const [activityMeta, setActivityMeta] = useState<ActivityMeta>({
-    hidden: [],
-    watched: {},
-  });
+  const [activityMeta, setActivityMeta] = useState<ActivityMeta>({ hidden: [], watched: {} });
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [playerUrl, setPlayerUrl] = useState("");
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false);
+  const [showAllReplays, setShowAllReplays] = useState(false);
+
 
   const processActivities = useCallback(() => {
     const data = getLocal<ActivityData>("ast.activity");
-    const meta = getLocal<ActivityMeta>("ast.activityMeta") || {
-      hidden: [],
-      watched: {},
-    };
+    const meta = getLocal<ActivityMeta>("ast.activityMeta") || { hidden: [], watched: {} };
     setActivityMeta(meta);
 
     if (data) {
@@ -188,27 +225,19 @@ export function ActivityTab() {
   }, [processActivities]);
 
   const updateMeta = (newMeta: Partial<ActivityMeta>) => {
-    const currentMeta = getLocal<ActivityMeta>("ast.activityMeta") || {
-      hidden: [],
-      watched: {},
-    };
+    const currentMeta = getLocal<ActivityMeta>("ast.activityMeta") || { hidden: [], watched: {} };
     const updated = { ...currentMeta, ...newMeta };
     setActivityMeta(updated);
     setLocal("ast.activityMeta", updated);
     processActivities();
   };
 
-  const handleHide = (id: string) => {
-    updateMeta({ hidden: [...activityMeta.hidden, id] });
-  };
+  const handleHide = (id: string) => updateMeta({ hidden: [...activityMeta.hidden, id] });
 
   const handleMarkWatched = (id: string) => {
     const newWatched = { ...activityMeta.watched };
-    if (newWatched[id]) {
-      delete newWatched[id];
-    } else {
-      newWatched[id] = new Date().toISOString();
-    }
+    if (newWatched[id]) delete newWatched[id];
+    else newWatched[id] = new Date().toISOString();
     updateMeta({ watched: newWatched });
   };
 
@@ -237,6 +266,24 @@ export function ActivityTab() {
     }
     handleMarkWatched(item.id);
   };
+
+  const visibleUpcoming = showAllUpcoming ? activities.upcoming : activities.upcoming.slice(0, 3);
+  const visibleReplays = showAllReplays ? activities.replays : activities.replays.slice(0, 3);
+  
+  if (activities.upcoming.length === 0 && activities.replays.length === 0) {
+    return (
+        <CardContent className="pt-6">
+            <div className="text-center py-10 px-4 border-2 border-dashed rounded-lg flex flex-col items-center justify-center">
+                <Mail className="h-10 w-10 text-muted-foreground mb-4" />
+                <h3 className="font-semibold text-lg">No recent activity yet.</h3>
+                <p className="text-muted-foreground mt-1 mb-4 text-sm">Register for a conference to see it here.</p>
+                <Button asChild>
+                    <Link href="/conferences">Browse Conferences</Link>
+                </Button>
+            </div>
+        </CardContent>
+    )
+  }
   
   return (
     <>
@@ -249,7 +296,7 @@ export function ActivityTab() {
                 <Badge variant="secondary">{activities.upcoming.length}</Badge>
               </div>
               <div className="space-y-2">
-                {activities.upcoming.map((item) => (
+                {visibleUpcoming.map((item) => (
                     <ActivityRowUpcoming 
                         key={item.id}
                         item={item}
@@ -258,6 +305,13 @@ export function ActivityTab() {
                     />
                 ))}
               </div>
+              {activities.upcoming.length > 3 && (
+                <div className="text-center">
+                    <Button variant="link" onClick={() => setShowAllUpcoming(!showAllUpcoming)}>
+                        {showAllUpcoming ? 'Show less' : 'View all'}
+                    </Button>
+                </div>
+              )}
             </div>
           )}
           
@@ -268,45 +322,26 @@ export function ActivityTab() {
                 <Badge variant="secondary">{activities.replays.length}</Badge>
               </div>
               <div className="space-y-2">
-                {activities.replays.map((item) => {
-                  const isWatched = !!activityMeta.watched[item.id];
-                  const date = new Date(item.recordedISO);
-                  
-                  return (
-                    <Card key={item.id} className={cn("p-4 flex items-start gap-4 bg-card/50", isWatched && "opacity-60")}>
-                        <VideoIcon className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
-                        <div className="flex-1 space-y-1">
-                            <p className="font-semibold leading-tight">{item.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                                {item.duration} • Host: {item.host} • {formatDistanceToNow(date, { addSuffix: true })}
-                            </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1.5 shrink-0">
-                            <Button size="sm" onClick={() => handleWatchReplay(item)}>Watch recording</Button>
-                            <div className="flex items-center">
-                                <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild><Link href="/conferences">Details</Link></Button>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => handleMarkWatched(item.id)}>{isWatched ? <Eye className="mr-2 h-4 w-4" /> : <EyeOff className="mr-2 h-4 w-4" />}{isWatched ? 'Mark as unwatched' : 'Mark as watched'}</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleHide(item.id)}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        </div>
-                    </Card>
-                  );
-                })}
+                {visibleReplays.map((item) => (
+                    <ActivityRowReplay
+                        key={item.id}
+                        item={item}
+                        isWatched={!!activityMeta.watched[item.id]}
+                        onWatchReplay={handleWatchReplay}
+                        onMarkWatched={handleMarkWatched}
+                        onHide={handleHide}
+                    />
+                ))}
               </div>
+               {activities.replays.length > 3 && (
+                <div className="text-center">
+                    <Button variant="link" onClick={() => setShowAllReplays(!showAllReplays)}>
+                        {showAllReplays ? 'Show less' : 'View all'}
+                    </Button>
+                </div>
+              )}
             </div>
           )}
-
-          {activities.upcoming.length === 0 &&
-            activities.replays.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center p-4">
-                No recent activity yet.
-              </p>
-            )}
         </div>
       </CardContent>
       <YouTubePlayerModal
