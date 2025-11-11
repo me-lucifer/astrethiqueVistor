@@ -4,7 +4,7 @@
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
+import { format, formatDistanceToNow, isToday, isYesterday, endOfMonth } from "date-fns";
 
 // UI Component Imports
 import {
@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Heart,
@@ -24,6 +25,7 @@ import {
   Star as StarIcon,
   Sparkles,
   Flame,
+  Wallet,
 } from "lucide-react";
 
 // Local Imports
@@ -51,7 +53,7 @@ import { cn } from "@/lib/utils";
 import { ActivityTab } from "@/components/dashboard/activity-tab";
 
 // Type Imports
-import type { Wallet, MoodMeta } from "@/lib/local";
+import type { Wallet as WalletType, MoodMeta } from "@/lib/local";
 import type { Consultant } from "@/lib/consultants-seeder";
 import type { ContentHubItem } from "@/lib/content-hub-seeder";
 
@@ -188,64 +190,35 @@ export default function DashboardPage() {
 
 // Sub-components for the Dashboard
 function WalletCard() {
-  const [wallet, setWalletState] = useState<Wallet | null>(null);
+  const [user, setUser] = useState<authLocal.User | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const checkWallet = () => {
-      const user = authLocal.getCurrentUser();
-      if (user) {
-        const userWallet: Wallet = {
-          balanceEUR: (user.wallet.balanceCents || 0) / 100,
-          history: (user as any).wallet.history || [],
-        };
-        if (isNaN(userWallet.balanceEUR)) {
-          userWallet.balanceEUR = 0;
-        }
-        setWalletState(userWallet);
-      } else {
-        const guestWallet = getWallet();
-        if (guestWallet) {
-          if (isNaN(guestWallet.balanceEUR)) {
-            guestWallet.balanceEUR = 0;
-          }
-          setWalletState(guestWallet);
-        }
-      }
-    };
-    checkWallet();
-    window.addEventListener("storage", checkWallet);
-    return () => window.removeEventListener("storage", checkWallet);
+  const fetchUserData = useCallback(() => {
+    setUser(authLocal.getCurrentUser());
   }, []);
 
-  const handleTopUp = (amount: number) => {
-    const user = authLocal.getCurrentUser();
+  useEffect(() => {
+    fetchUserData();
+    window.addEventListener("storage", fetchUserData);
+    return () => window.removeEventListener("storage", fetchUserData);
+  }, [fetchUserData]);
+
+  const handleTopUp = () => {
     if (!user) return;
-
-    const newBalanceCents = (user.wallet.balanceCents || 0) + amount * 100;
-    const newHistoryItem = {
-      type: "topup",
-      amount: amount,
-      ts: new Date().toISOString(),
-    };
-
     authLocal.updateUser(user.id, {
-      wallet: {
-        ...user.wallet,
-        balanceCents: newBalanceCents,
-        // @ts-ignore
-        history: [...(user.wallet.history || []), newHistoryItem],
-      },
+        wallet: { 
+            ...user.wallet, 
+            balanceCents: user.wallet.balanceCents + 1000 
+        }
     });
-
     toast({
       title: "Funds Added",
-      description: `€${amount.toFixed(2)} has been added to your wallet.`,
+      description: "€10.00 has been added to your wallet.",
       duration: 2500,
     });
   };
 
-  if (wallet === null) {
+  if (!user) {
     return (
       <GlassCard>
         <CardContent className="p-6">
@@ -255,23 +228,63 @@ function WalletCard() {
     );
   }
 
+  const { balanceCents = 0, budgetLock } = user.wallet;
+  // This is a placeholder for monthly spent, in a real app this would be calculated
+  const spentThisMonth = 35.50; 
+  const budget = budgetLock || 100; // Default budget if not set
+  const progress = budget > 0 ? (spentThisMonth / budget) * 100 : 0;
+
+  let progressBarColor = "bg-success";
+  if (progress > 90) {
+    progressBarColor = "bg-destructive";
+  } else if (progress > 60) {
+    progressBarColor = "bg-yellow-500";
+  }
+  
+  const endOfMonthFormatted = format(endOfMonth(new Date()), "MMM dd");
+
   return (
     <GlassCard>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          Wallet & Budget
-        </CardTitle>
+        <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              Wallet & Budget
+            </CardTitle>
+             <p className="text-xl font-bold">
+              Balance: €{(balanceCents / 100).toFixed(2)}
+            </p>
+        </div>
       </CardHeader>
-      <CardContent>
-        <p className="text-3xl font-bold">
-          Balance: €{(wallet.balanceEUR || 0).toFixed(2)}
-        </p>
+      <CardContent className="space-y-4">
+        <div>
+            <div className="flex justify-between text-sm text-muted-foreground mb-1">
+                <span>This month</span>
+                <span>€{spentThisMonth.toFixed(2)} / €{budget.toFixed(2)}</span>
+            </div>
+            <Progress value={progress} indicatorClassName={progressBarColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
+        </div>
+         <div className="flex items-center gap-2">
+            {budgetLock ? (
+                <Badge variant="secondary">Budget Locked until {endOfMonthFormatted}</Badge>
+            ) : (
+                 <Badge variant="outline">Budget not set</Badge>
+            )}
+        </div>
       </CardContent>
-      <CardFooter className="gap-2">
-        <Button onClick={() => handleTopUp(5)}>Top up €5</Button>
-        <Button onClick={() => handleTopUp(10)}>Top up €10</Button>
-        <Button onClick={() => handleTopUp(25)}>Top up €25</Button>
+      <CardFooter className="flex flex-col items-start gap-4">
+         <div className="flex items-center gap-2">
+            <Button onClick={handleTopUp}>Top up</Button>
+            <Button variant="outline" asChild>
+                <Link href="/account/wallet">Set/Change budget</Link>
+            </Button>
+            <Button variant="link" asChild className="text-xs text-muted-foreground">
+                <Link href="/account/wallet#history">History</Link>
+            </Button>
+        </div>
+        <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 w-full">
+            Spending uses wallet balance only. Locks reset monthly.
+        </p>
       </CardFooter>
     </GlassCard>
   );
