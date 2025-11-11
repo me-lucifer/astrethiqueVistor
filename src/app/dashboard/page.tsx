@@ -19,6 +19,8 @@ import { ContentHubItem, seedContentHub } from "@/lib/content-hub-seeder";
 import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
 import { getSession } from "@/lib/session";
 import { ZodiacSignModal } from "@/components/dashboard/zodiac-sign-modal";
+import { DetailedHoroscope } from "@/components/dashboard/detailed-horoscope";
+
 
 interface MoodLogEntry {
     dateISO: string;
@@ -68,10 +70,15 @@ function WalletCard() {
     const { toast } = useToast();
 
     useEffect(() => {
-        const wallet = getLocal<{ balanceEUR: number }>("ast_wallet");
-        if (wallet) {
-            setBalance(wallet.balanceEUR);
-        }
+        const checkWallet = () => {
+            const wallet = getLocal<{ balanceEUR: number }>("ast_wallet");
+            if (wallet) {
+                setBalance(wallet.balanceEUR);
+            }
+        };
+        checkWallet();
+        window.addEventListener('storage', checkWallet);
+        return () => window.removeEventListener('storage', checkWallet);
     }, []);
 
     const handleTopUp = (amount: number) => {
@@ -216,6 +223,9 @@ function ActivityTab() {
                         </div>
                     )}
                     <div className="mt-6 border-t pt-6">
+                       <DetailedHoroscope user={user} />
+                    </div>
+                     <div className="mt-6 border-t pt-6">
                         <p className="text-sm text-muted-foreground text-center">No recent activity yet.</p>
                     </div>
                 </CardContent>
