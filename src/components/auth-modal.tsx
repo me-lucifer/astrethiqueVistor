@@ -156,9 +156,15 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
         return;
     }
     
-    const passwordHash = await storage.hashPassword(values.password);
-    if (user.passwordHash !== passwordHash) {
+    const passwordMatches = (await storage.hashPassword(values.password)) === user.passwordHash;
+    if (!passwordMatches) {
         signInForm.setError("password", { type: "manual", message: "Incorrect password." });
+        return;
+    }
+
+    if (!user.emailVerified) {
+        setVerifyingUser(user);
+        setView('verify');
         return;
     }
     
@@ -183,21 +189,27 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
 
     const verifiedUser = { ...verifyingUser, emailVerified: true };
     
-    // Now save the user to storage
+    // Now save the user to storage if they don't exist yet
     const users = storage.getUsers();
-    storage.saveUsers([...users, verifiedUser]);
+    if (!storage.findUserByEmail(verifiedUser.email)) {
+        storage.saveUsers([...users, verifiedUser]);
 
-    const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-    prefs[verifiedUser.id] = { language: language.toUpperCase() as "EN" | "FR", timezone: createForm.getValues('timezone'), marketingOptIn: createForm.getValues('marketingOptIn') };
-    storage.setStorageItem('ast_prefs', prefs);
-    
-    const wallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
-    wallets[verifiedUser.id] = { balance: 0, currency: '€' };
-    storage.setStorageItem('ast_wallets', wallets);
+        const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
+        prefs[verifiedUser.id] = { language: (createForm.getValues('language') || 'EN'), timezone: createForm.getValues('timezone'), marketingOptIn: createForm.getValues('marketingOptIn') };
+        storage.setStorageItem('ast_prefs', prefs);
+        
+        const wallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
+        wallets[verifiedUser.id] = { balance: 0, currency: '€' };
+        storage.setStorageItem('ast_wallets', wallets);
 
-    const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-    favorites[verifiedUser.id] = { consultants: [], content: [], conferences: [] };
-    storage.setStorageItem('ast_favorites', favorites);
+        const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
+        favorites[verifiedUser.id] = { consultants: [], content: [], conferences: [] };
+        storage.setStorageItem('ast_favorites', favorites);
+    } else {
+        // User already exists, just update their verification status
+        const updatedUsers = users.map(u => u.id === verifiedUser.id ? verifiedUser : u);
+        storage.saveUsers(updatedUsers);
+    }
     
     storage.setCurrentUser(verifiedUser.id);
 
