@@ -9,12 +9,13 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import * as authLocal from "@/lib/authLocal";
 import { getWallet, setWallet, Wallet } from "@/lib/local";
+import { BudgetWizardModal } from "@/components/budget/budget-wizard-modal";
 
 export default function WalletPage() {
     const { toast } = useToast();
     const [user, setUser] = useState<authLocal.User | null>(null);
     const [wallet, setWallet] = useState<Wallet | null>(null);
-    const [budgetLockValue, setBudgetLockValue] = useState([50]);
+    const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
 
     useEffect(() => {
         const currentUser = authLocal.getCurrentUser();
@@ -22,14 +23,15 @@ export default function WalletPage() {
         
         const currentWallet = getWallet();
         setWallet(currentWallet);
-        
-        if (currentWallet?.budget_cents) {
-            setBudgetLockValue([currentWallet.budget_cents / 100]);
-        }
     }, []);
 
     const handleAddCredit = () => {
         if (!wallet) return;
+
+        if (!wallet.budget_set) {
+            setIsBudgetModalOpen(true);
+            return;
+        }
 
         const newWalletState: Wallet = {
           ...wallet,
@@ -45,33 +47,11 @@ export default function WalletPage() {
         });
     };
 
-    const handleSaveBudgetLock = () => {
-        if (!wallet) return;
-        
-        const newWalletState: Wallet = {
-            ...wallet,
-            budget_cents: budgetLockValue[0] * 100,
-            budget_set: true,
-            budget_lock: {
-                ...wallet.budget_lock,
-                enabled: true,
-            }
-        };
-
-        setWallet(newWalletState); // optimistic
-        setWallet(newWalletState); // persist
-        window.dispatchEvent(new Event('storage'));
-
-
-        toast({
-            title: "Budget Lock Updated",
-            description: `Your monthly budget is now set to €${budgetLockValue[0]}.`,
-        });
-    }
-
     if (!user || !wallet) {
         return <div>Loading wallet...</div>
     }
+
+    const budgetInEuros = wallet.budget_cents / 100;
 
     return (
         <div className="space-y-8">
@@ -98,22 +78,23 @@ export default function WalletPage() {
                     <CardDescription>Set a monthly spending limit to stay in control.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
-                    <div className="flex justify-between items-center">
-                        <Label htmlFor="budget-slider" className="text-lg font-bold text-primary">€{budgetLockValue[0]}</Label>
+                     <div className="flex justify-between items-center">
+                        <Label htmlFor="budget-slider" className="text-lg font-bold text-primary">
+                            {wallet.budget_set ? `€${budgetInEuros}` : 'Not Set'}
+                        </Label>
                         <p className="text-sm text-muted-foreground">Per calendar month</p>
                     </div>
-                    <Slider
-                        id="budget-slider"
-                        max={200}
-                        step={10}
-                        value={budgetLockValue}
-                        onValueChange={setBudgetLockValue}
-                    />
+                    <p className="text-sm text-muted-foreground">
+                        Use the budget wizard to calculate a suggested budget based on your income and expenses, and optionally lock it to prevent overspending.
+                    </p>
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={handleSaveBudgetLock}>Save Budget Limit</Button>
+                    <Button onClick={() => setIsBudgetModalOpen(true)}>
+                        {wallet.budget_set ? 'Change Budget Limit' : 'Set Up Budget'}
+                    </Button>
                 </CardFooter>
             </Card>
+            <BudgetWizardModal isOpen={isBudgetModalOpen} onOpenChange={setIsBudgetModalOpen} />
         </div>
     );
 }

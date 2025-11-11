@@ -160,7 +160,7 @@ export function initializeLocalStorage() {
           month_key: currentMonthKey,
           budget_lock: {
               enabled: wallet.budget_lock?.enabled || false,
-              until: format(endOfMonth(new Date()), 'yyyy-MM-dd\'T\'HH:mm:ssXXX'),
+              until: wallet.budget_lock?.enabled ? format(endOfMonth(new Date()), 'yyyy-MM-dd\'T\'HH:mm:ssXXX') : null,
               emergency_used: false,
           }
       };
@@ -194,6 +194,19 @@ export const setWallet = (wallet: Wallet) => {
     setLocal(WALLET_KEY, wallet);
     window.dispatchEvent(new Event('storage'));
 }
+
+// --- Budget Profile Helpers ---
+export const getBudgetProfile = (): BudgetProfile | null => getLocal<BudgetProfile>(BUDGET_PROFILE_KEY);
+export const setBudgetProfile = (profile: BudgetProfile) => setLocal(BUDGET_PROFILE_KEY, profile);
+
+// --- Spend Log Helpers ---
+export const getSpendLog = (): SpendLogEntry[] => getLocal<SpendLogEntry[]>(SPEND_LOG_KEY) || [];
+export const addSpendLogEntry = (entry: SpendLogEntry) => {
+    const log = getSpendLog();
+    log.unshift(entry); // Add to the beginning
+    setLocal(SPEND_LOG_KEY, log);
+}
+
 
 // Admin Config
 interface AdminConfig {

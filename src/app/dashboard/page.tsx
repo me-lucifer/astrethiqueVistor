@@ -39,7 +39,6 @@ import {
   getMoodMeta,
   initializeLocalStorage,
   Wallet as WalletType,
-  setWallet,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -53,6 +52,8 @@ import { seedContentHub } from "@/lib/content-hub-seeder";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ActivityTab } from "@/components/dashboard/activity-tab";
+import { BudgetWizardModal } from "@/components/budget/budget-wizard-modal";
+
 
 // Type Imports
 import type { MoodMeta } from "@/lib/local";
@@ -95,6 +96,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<authLocal.User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const router = useRouter();
 
@@ -176,7 +178,7 @@ export default function DashboardPage() {
         </AnimatePresence>
         <div className="grid grid-cols-12 gap-8 items-start">
           <div className="col-span-12 lg:col-span-8 space-y-8">
-            <WalletCard />
+            <WalletCard onBudgetClick={() => setIsBudgetModalOpen(true)} />
             <MoodCard onFirstCheckin={handleFirstCheckin} />
             <QuickTrends />
           </div>
@@ -186,12 +188,13 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      <BudgetWizardModal isOpen={isBudgetModalOpen} onOpenChange={setIsBudgetModalOpen} />
     </div>
   );
 }
 
 // Sub-components for the Dashboard
-function WalletCard() {
+function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [wallet, setWallet] = useState<WalletType | null>(null);
   const { toast } = useToast();
 
@@ -207,11 +210,17 @@ function WalletCard() {
 
   const handleTopUp = () => {
     if (!wallet) return;
-    const newWalletState = {
+
+    if (!wallet.budget_set) {
+        onBudgetClick();
+        return;
+    }
+
+    const newWalletState: WalletType = {
         ...wallet,
         balance_cents: wallet.balance_cents + 1000 // Add €10
     };
-    setWallet(newWalletState);
+    authLocal.setWallet(newWalletState);
     toast({
       title: "Funds Added",
       description: "€10.00 has been added to your wallet.",
@@ -260,12 +269,12 @@ function WalletCard() {
         <div>
             <div className="flex justify-between text-sm text-muted-foreground mb-1">
                 <span>This month</span>
-                <span>€{spentThisMonth.toFixed(2)} / €{budget > 0 ? budget.toFixed(2) : ' --'}</span>
+                <span>€{spentThisMonth.toFixed(2)} / {budget > 0 ? `€${budget.toFixed(2)}` : 'No budget'}</span>
             </div>
             <Progress value={progress} indicatorClassName={progressBarColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
         </div>
          <div className="flex items-center gap-2">
-            {budget_lock?.enabled ? (
+            {wallet.budget_set && budget_lock?.enabled ? (
                 <Badge variant="secondary">Budget Locked until {endOfMonthFormatted}</Badge>
             ) : (
                  <Badge variant="outline">Budget not set</Badge>
@@ -275,11 +284,9 @@ function WalletCard() {
       <CardFooter className="flex flex-col items-start gap-4">
          <div className="flex items-center gap-2">
             <Button onClick={handleTopUp}>Top up</Button>
-            <Button variant="outline" asChild>
-                <Link href="/account/wallet">Set/Change budget</Link>
-            </Button>
+            <Button variant="outline" onClick={onBudgetClick}>Set/Change budget</Button>
             <Button variant="link" asChild className="text-xs text-muted-foreground">
-                <Link href="/account/wallet#history">History</Link>
+                <Link href="/account/wallet">History</Link>
             </Button>
         </div>
         <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 w-full">
