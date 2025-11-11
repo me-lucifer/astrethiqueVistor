@@ -195,6 +195,37 @@ export const setWallet = (wallet: Wallet) => {
     window.dispatchEvent(new Event('storage'));
 }
 
+export function spendFromWallet(amount_cents: number, note: string): boolean {
+    const wallet = getWallet();
+    
+    // Check for sufficient balance
+    if (wallet.balance_cents < amount_cents) {
+        console.warn("Insufficient funds.");
+        return false;
+    }
+
+    // Deduct fee and update wallet
+    const newWalletState: Wallet = {
+        ...wallet,
+        balance_cents: wallet.balance_cents - amount_cents,
+        spent_this_month_cents: wallet.spent_this_month_cents + amount_cents,
+    };
+    setWallet(newWalletState);
+
+    // Log the transaction
+    const spendLog = getLocal<SpendLogEntry[]>('ast_spend_log') || [];
+    const newLogEntry: SpendLogEntry = {
+        ts: new Date().toISOString(),
+        type: "horoscope", // For now, this is the only spend type
+        amount_cents: -amount_cents,
+        note: note
+    };
+    setLocal('ast_spend_log', [newLogEntry, ...spendLog]);
+    
+    return true;
+}
+
+
 // --- Budget Profile Helpers ---
 export const getBudgetProfile = (): BudgetProfile | null => getLocal<BudgetProfile>(BUDGET_PROFILE_KEY);
 export const setBudgetProfile = (profile: BudgetProfile) => setLocal(BUDGET_PROFILE_KEY, profile);
@@ -248,5 +279,3 @@ interface Lead {
 const LEADS_KEY = 'leads';
 export const getLeads = (): Lead[] => getLocal<Lead[]>(LEADS_KEY) || [];
 export const setLeads = (leads: Lead[]) => setLocal(LEADS_KEY, leads);
-
-    

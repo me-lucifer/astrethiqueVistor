@@ -5,7 +5,7 @@ import { useState, useEffect, useTransition } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getLocal, setLocal, getWallet, getAdminConfig, setWallet, Wallet, SpendLogEntry } from "@/lib/local";
+import { getLocal, setLocal, getWallet, getAdminConfig, setWallet, Wallet, SpendLogEntry, spendFromWallet } from "@/lib/local";
 import { User } from "@/lib/authLocal";
 import { AddFundsModal } from "./add-funds-modal";
 import { useToast } from "@/hooks/use-toast";
@@ -157,29 +157,14 @@ export function DetailedHoroscope({ user }: { user: User | null }) {
             if (!user?.zodiacSign || !config) return;
 
             const feeCents = config.detailedHoroscopeFeeEUR * 100;
-            const wallet = getWallet();
-            if (wallet.balance_cents < feeCents) {
+            const note = `Detailed horoscope for ${user.zodiacSign}`;
+
+            const wasSpent = spendFromWallet(feeCents, note);
+            
+            if (!wasSpent) {
                 setIsFundsModalOpen(true);
                 return;
             }
-            
-            // Deduct fee and update wallet
-            const newWalletState: Wallet = {
-                ...wallet,
-                balance_cents: wallet.balance_cents - feeCents,
-                spent_this_month_cents: wallet.spent_this_month_cents + feeCents,
-            };
-            setWallet(newWalletState);
-
-            // Log the transaction
-            const spendLog = getLocal<SpendLogEntry[]>('ast_spend_log') || [];
-            const newLogEntry: SpendLogEntry = {
-                ts: new Date().toISOString(),
-                type: 'horoscope',
-                amount_cents: -feeCents,
-                note: `Detailed horoscope for ${user.zodiacSign}`
-            };
-            setLocal('ast_spend_log', [newLogEntry, ...spendLog]);
             
             toast({
                 title: "Purchase Successful",
