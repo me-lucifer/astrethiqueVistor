@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Gem, User, LogOut, Globe } from 'lucide-react';
+import { Menu, Gem, User, LogOut, Globe, LayoutDashboard } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import {
   DropdownMenu,
@@ -114,6 +114,9 @@ function HeaderContent() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4"/><span>Dashboard</span></Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/account/profile"><User className="mr-2 h-4 w-4"/><span>Profile</span></Link>
             </DropdownMenuItem>
