@@ -13,7 +13,7 @@ import { getWallet, setWallet, getMoodLog, setMoodLog, getLocal, setLocal, Walle
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Activity, Star as StarIcon, Sparkles, Check, CheckCircle, Flame, Calendar, Video as VideoIcon, CalendarPlus } from "lucide-react";
 import Link from "next/link";
-import { format, formatDistanceToNow, isToday, isYesterday, isPast, isFuture, differenceInMinutes, addMinutes } from 'date-fns';
+import { format, formatDistanceToNow, isToday, isYesterday, isPast, isFuture, differenceInMinutes, addMinutes, isTomorrow } from 'date-fns';
 import { ContentHubItem, seedContentHub } from "@/lib/content-hub-seeder";
 import { Consultant, seedConsultants } from "@/lib/consultants-seeder";
 import { getSession } from "@/lib/session";
@@ -152,10 +152,18 @@ function WalletCard() {
             const user = authLocal.getCurrentUser();
             if (user) {
                 const userWallet: Wallet = { balanceEUR: (user.wallet.balanceCents || 0) / 100, history: (user as any).wallet.history || [] };
+                if (isNaN(userWallet.balanceEUR)) {
+                    userWallet.balanceEUR = 0;
+                }
                 setWalletState(userWallet);
             } else {
                  const guestWallet = getWallet();
-                 if(guestWallet) setWalletState(guestWallet);
+                 if(guestWallet) {
+                     if (isNaN(guestWallet.balanceEUR)) {
+                        guestWallet.balanceEUR = 0;
+                     }
+                     setWalletState(guestWallet);
+                 }
             }
         };
         checkWallet();
@@ -472,27 +480,52 @@ function useCountdown(targetDate: string) {
     return { countdown, isJoinable };
 }
 
+function formatRelativeDate(date: Date) {
+    if (isToday(date)) return `Today at ${format(date, 'p')}`;
+    if (isTomorrow(date)) return `Tomorrow at ${format(date, 'p')}`;
+    if (isYesterday(date)) return 'Yesterday';
+    const diffDays = differenceInMinutes(date, new Date()) / 1440;
+    if (diffDays > 0 && diffDays < 7) return `in ${Math.ceil(diffDays)} days`;
+    return format(date, 'EEE, MMM dd · p');
+}
+
+
 function ActivityTab() {
-    const [activities, setActivities] = useState<ActivityData>({ upcoming: [], replays: [] });
+    const [activities, setActivities] = useState<{ upcoming: ActivityItem[], replays: ActivityReplay[] }>({ upcoming: [], replays: [] });
 
     useEffect(() => {
         const data = getLocal<ActivityData>('ast.activity');
         if (data) {
-            const sortedUpcoming = data.upcoming.sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime());
-            const sortedReplays = data.replays.sort((a, b) => new Date(b.recordedISO).getTime() - new Date(a.recordedISO).getTime());
-            setActivities({ upcoming: sortedUpcoming, replays: sortedReplays });
+            const now = new Date();
+            const upcoming = data.upcoming
+                .filter(item => isFuture(addMinutes(new Date(item.startISO), parseInt(item.length))))
+                .sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime());
+
+            const completed = data.upcoming
+                .filter(item => isPast(addMinutes(new Date(item.startISO), parseInt(item.length))));
+            
+            const completedReplays = completed
+                .map(item => data.replays.find(r => r.id === item.id))
+                .filter((r): r is ActivityReplay => !!r);
+
+            const allReplays = [...data.replays.filter(r => !completed.some(c => c.id === r.id)), ...completedReplays]
+                .sort((a, b) => new Date(b.recordedISO).getTime() - new Date(a.recordedISO).getTime());
+                
+            setActivities({ upcoming, replays: allReplays });
         }
     }, []);
 
     const ActivityRowUpcoming = ({ item }: { item: ActivityItem }) => {
         const { countdown, isJoinable } = useCountdown(item.startISO);
+        const date = new Date(item.startISO);
+
         return (
             <Card className="p-4 flex items-start gap-4 bg-card/50">
                 <Calendar className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
                 <div className="flex-1 space-y-1">
                     <p className="font-semibold leading-tight">{item.title}</p>
                     <p className="text-xs text-muted-foreground">
-                        {format(new Date(item.startISO), 'EEE, MMM dd · p')} • {item.length} • Host: {item.host}
+                        {formatRelativeDate(date)} • {item.length} • Host: {item.host}
                     </p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -506,21 +539,24 @@ function ActivityTab() {
         );
     }
     
-    const ActivityRowReplay = ({ item }: { item: ActivityReplay }) => (
-        <Card className="p-4 flex items-start gap-4 bg-card/50">
-            <VideoIcon className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
-            <div className="flex-1 space-y-1">
-                <p className="font-semibold leading-tight">{item.title}</p>
-                <p className="text-xs text-muted-foreground">
-                    {item.duration} • Host: {item.host} • {formatDistanceToNow(new Date(item.recordedISO), { addSuffix: true })}
-                </p>
-            </div>
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
-                <Button size="sm" asChild><Link href={item.watchUrl} target="_blank">Watch recording</Link></Button>
-                <Button variant="link" size="sm" className="h-auto p-0 text-xs">Details</Button>
-            </div>
-        </Card>
-    );
+    const ActivityRowReplay = ({ item }: { item: ActivityReplay }) => {
+        const date = new Date(item.recordedISO);
+        return (
+            <Card className="p-4 flex items-start gap-4 bg-card/50">
+                <VideoIcon className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
+                <div className="flex-1 space-y-1">
+                    <p className="font-semibold leading-tight">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {item.duration} • Host: {item.host} • {formatDistanceToNow(date, { addSuffix: true })}
+                    </p>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <Button size="sm" asChild><Link href={item.watchUrl} target="_blank">Watch recording</Link></Button>
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs">Details</Button>
+                </div>
+            </Card>
+        );
+    }
 
     return (
         <CardContent className="pt-6">
