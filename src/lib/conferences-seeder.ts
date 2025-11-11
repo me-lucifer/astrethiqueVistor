@@ -1,7 +1,7 @@
 
 "use client";
 
-import { setLocal } from "./local";
+import { setLocal } from "@/lib/local";
 import { addDays, addMinutes, subMinutes, addHours } from "date-fns";
 
 export interface Conference {
@@ -143,7 +143,3 @@ export const seedConferences = () => {
   setLocal("conferences", conferences);
   setLocal("waitlist", []);
 };
-
-    
-
-    

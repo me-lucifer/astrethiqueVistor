@@ -1,7 +1,7 @@
 
 "use client";
 
-import { getLocal, setLocal } from "./local";
+import { getLocal, setLocal } from "@/lib/local";
 import type { CommentsStore } from "./comments";
 
 export type ContentHubItem = {
