@@ -33,13 +33,11 @@ const passwordSchema = z.string()
   .refine((password) => /[a-zA-Z]/.test(password), { message: "Password must contain at least one letter" })
   .refine((password) => /[0-9]/.test(password), { message: "Password must contain at least one number" });
 
-const reservedPseudonyms = ["admin", "moderator", "support", "astrethique", "owner", "null", "undefined"];
-
 const pseudonymSchema = z.string()
     .min(3, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
     .max(24, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
     .regex(/^[a-zA-Z0-9._-]+$/, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
-    .refine(val => !reservedPseudonyms.includes(val.toLowerCase()), "This word isn’t allowed as a pseudonym.")
+    .refine(val => !authLocal.reservedPseudonyms.includes(val.toLowerCase()), "This word isn’t allowed as a pseudonym.")
     .refine(val => !authLocal.pseudonymExists(val), "That pseudonym is taken. Try another.");
 
 const createAccountSchema = z.object({
@@ -175,7 +173,7 @@ export default function RegisterPage() {
     const isPseudonymValid = !!watchedPseudonym && watchedPseudonym.length >= 3 && !errors.pseudonym;
     
     useEffect(() => {
-        if (isPseudonymValid) {
+        if (isPseudonymValid && watchedPreference !== 'pseudonym') {
             form.setValue('displayNamePreference', 'pseudonym', { shouldValidate: true });
         } else if (watchedPreference === 'pseudonym' && !isPseudonymValid) {
             form.setValue('displayNamePreference', 'realName', { shouldValidate: true });
@@ -298,45 +296,47 @@ export default function RegisterPage() {
                                     name="displayNamePreference"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
-                                        <FormLabel>Choose what others see</FormLabel>
+                                        <FormLabel id="displayNameChoiceLabel">Choose what others see</FormLabel>
                                         <FormControl>
                                             <RadioGroup
-                                            onValueChange={field.onChange}
-                                            value={field.value}
-                                            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                                                aria-labelledby="displayNameChoiceLabel"
                                             >
-                                            <FormItem>
-                                                <FormControl>
-                                                <RadioGroupItem value="pseudonym" id="pseudonym" className="sr-only" disabled={!isPseudonymValid} />
-                                                </FormControl>
-                                                <Label htmlFor="pseudonym" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'pseudonym' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50', !isPseudonymValid && 'opacity-50 cursor-not-allowed')}>
-                                                    <div className="flex items-center gap-2 font-semibold">
-                                                        <Shield className="w-4 h-4" />
-                                                        Pseudonym (recommended)
-                                                    </div>
-                                                    <span className="text-sm font-normal text-muted-foreground mt-1">Use your pseudonym everywhere.</span>
-                                                </Label>
-                                            </FormItem>
-                                            <FormItem>
-                                                <FormControl>
-                                                    <RadioGroupItem value="realName" id="realName" className="sr-only" />
-                                                </FormControl>
-                                                <Label htmlFor="realName" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'realName' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
-                                                     <div className="flex items-center gap-2 font-semibold">
-                                                        <User className="w-4 h-4" />
-                                                        Real name
-                                                    </div>
-                                                     <span className="text-sm font-normal text-muted-foreground mt-1">Show: {watchedFirstName || 'First'} {watchedLastName || 'Last'}</span>
-                                                </Label>
-                                            </FormItem>
+                                                <FormItem>
+                                                    <FormControl>
+                                                    <RadioGroupItem value="pseudonym" id="pseudonym" className="sr-only" disabled={!isPseudonymValid} />
+                                                    </FormControl>
+                                                    <Label htmlFor="pseudonym" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'pseudonym' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50', !isPseudonymValid && 'opacity-50 cursor-not-allowed')}>
+                                                        <div className="flex items-center gap-2 font-semibold">
+                                                            <Shield className="w-4 h-4" />
+                                                            Pseudonym (recommended)
+                                                        </div>
+                                                        <span className="text-sm font-normal text-muted-foreground mt-1">Use your pseudonym everywhere.</span>
+                                                    </Label>
+                                                </FormItem>
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <RadioGroupItem value="realName" id="realName" className="sr-only" />
+                                                    </FormControl>
+                                                    <Label htmlFor="realName" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'realName' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
+                                                         <div className="flex items-center gap-2 font-semibold">
+                                                            <User className="w-4 h-4" />
+                                                            Real name
+                                                        </div>
+                                                         <span className="text-sm font-normal text-muted-foreground mt-1">Show: {watchedFirstName || 'First'} {watchedLastName || 'Last'}</span>
+                                                    </Label>
+                                                </FormItem>
                                             </RadioGroup>
                                         </FormControl>
+                                        <p className="text-xs text-muted-foreground">Your real name is visible only to you and our team for compliance.</p>
                                         <FormMessage />
                                         </FormItem>
                                     )}
                                 />
 
-                                <div className="flex justify-between items-center text-sm">
+                                <div className="flex justify-between items-center text-sm" aria-live="polite">
                                     <div className="flex items-center gap-2">
                                         <Badge variant="outline">Preview</Badge>
                                         <span>{publicName || "Your Public Name"}</span>

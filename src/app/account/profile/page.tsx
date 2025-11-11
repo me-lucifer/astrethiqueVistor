@@ -83,9 +83,7 @@ export default function ProfilePage() {
     const onProfileSubmit = (data: ProfileFormData) => {
         if (!user) return;
         
-        const updatedUserPartial: Partial<authLocal.User> = { ...data, updatedAt: new Date().toISOString() };
-        
-        const updatedUser = authLocal.updateUser(user.id, updatedUserPartial);
+        const updatedUser = authLocal.updateUser(user.id, data);
         setUser(updatedUser);
 
         toast({ title: "Profile updated", description: `Your public name is now ${updatedUser.publicName}.` });
@@ -141,35 +139,36 @@ export default function ProfilePage() {
                                 name="displayNamePreference"
                                 render={({ field }) => (
                                     <FormItem className="space-y-3">
-                                    <FormLabel>Public Identity</FormLabel>
+                                    <FormLabel id="displayNameChoiceProfileLabel">Public Identity</FormLabel>
                                     <FormControl>
                                         <RadioGroup
-                                        onValueChange={field.onChange}
-                                        value={field.value}
-                                        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                                            aria-labelledby="displayNameChoiceProfileLabel"
                                         >
-                                        <FormItem>
-                                            <FormControl>
-                                                <RadioGroupItem value="pseudonym" id="pseudonym" className="sr-only" disabled={!isPseudonymValid} />
-                                            </FormControl>
-                                            <Label htmlFor="pseudonym" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'pseudonym' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50', !isPseudonymValid && 'opacity-50 cursor-not-allowed')}>
-                                                <div className="flex items-center gap-2 font-semibold">
-                                                    <Shield className="w-4 h-4" />
-                                                    Pseudonym
-                                                </div>
-                                            </Label>
-                                        </FormItem>
-                                        <FormItem>
-                                            <FormControl>
-                                                <RadioGroupItem value="realName" id="realName" className="sr-only" />
-                                            </FormControl>
-                                            <Label htmlFor="realName" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'realName' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
+                                            <FormItem>
+                                                <FormControl>
+                                                    <RadioGroupItem value="pseudonym" id="pseudonym-profile" className="sr-only" disabled={!isPseudonymValid} />
+                                                </FormControl>
+                                                <Label htmlFor="pseudonym-profile" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'pseudonym' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50', !isPseudonymValid && 'opacity-50 cursor-not-allowed')}>
                                                     <div className="flex items-center gap-2 font-semibold">
-                                                    <UserIcon className="w-4 h-4" />
-                                                    Real name
-                                                </div>
-                                            </Label>
-                                        </FormItem>
+                                                        <Shield className="w-4 h-4" />
+                                                        Pseudonym
+                                                    </div>
+                                                </Label>
+                                            </FormItem>
+                                            <FormItem>
+                                                <FormControl>
+                                                    <RadioGroupItem value="realName" id="realName-profile" className="sr-only" />
+                                                </FormControl>
+                                                <Label htmlFor="realName-profile" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-colors", field.value === 'realName' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
+                                                        <div className="flex items-center gap-2 font-semibold">
+                                                        <UserIcon className="w-4 h-4" />
+                                                        Real name
+                                                    </div>
+                                                </Label>
+                                            </FormItem>
                                         </RadioGroup>
                                     </FormControl>
                                     <FormMessage />
