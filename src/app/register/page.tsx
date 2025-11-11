@@ -182,7 +182,6 @@ export default function RegisterPage() {
         }
     }, [watchedPseudonym, isPseudonymValid, watchedPreference, form]);
 
-
     const publicName = watchedPreference === 'pseudonym' && isPseudonymValid
         ? watchedPseudonym
         : `${watchedFirstName || ''} ${watchedLastName || ''}`.trim();

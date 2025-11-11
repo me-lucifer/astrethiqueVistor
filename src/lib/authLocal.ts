@@ -80,8 +80,9 @@ export function emailExists(email: string): boolean {
 
 export function pseudonymExists(pseudonym: string): boolean {
     if (!pseudonym) return false;
+    const n = (pseudonym||'').toLowerCase()
     const store = getStore();
-    return store.users.some(u => u.pseudonym?.toLowerCase() === pseudonym.toLowerCase());
+    return store.users.some(u => (u.pseudonym||'').toLowerCase() === n)
 }
 
 
@@ -121,7 +122,11 @@ export async function registerVisitor(payload: {
     if (emailExists(payload.email)) {
         throw new Error("An account with this email already exists. Login instead.");
     }
-    if (payload.displayNamePreference === 'pseudonym' && payload.pseudonym && pseudonymExists(payload.pseudonym)) {
+
+    const usePseudonym = payload.displayNamePreference === 'pseudonym';
+    const pseudonym = (payload.pseudonym || '').trim() || undefined;
+
+    if (usePseudonym && pseudonym && pseudonymExists(pseudonym)) {
         throw new Error("That pseudonym is taken. Try another.");
     }
     
@@ -134,7 +139,7 @@ export async function registerVisitor(payload: {
         role: 'visitor',
         firstName: payload.firstName,
         lastName: payload.lastName,
-        pseudonym: payload.pseudonym,
+        pseudonym: pseudonym,
         displayNamePreference: payload.displayNamePreference,
         email: payload.email,
         passwordHash,
@@ -143,14 +148,13 @@ export async function registerVisitor(payload: {
         marketingOptIn: payload.marketingOptIn,
         createdAt: now,
         updatedAt: now,
-        emailVerified: false, // Default to false
+        emailVerified: false,
         wallet: { balanceCents: 0 },
         favorites: { consultants: [], content: [] },
     };
 
     store.users.push(newUser);
     
-    // Create session immediately after registration
     store.session = {
         userId: newUser.id,
         role: newUser.role,
@@ -208,18 +212,6 @@ export function updateUser(updatedUser: User): void {
     }
 }
 
-export function deleteUser(userId: string): void {
-    const store = getStore();
-    const updatedUsers = store.users.filter(u => u.id !== userId);
-    store.users = updatedUsers;
-    
-    if (store.session && store.session.userId === userId) {
-        store.session = null;
-    }
-    
-    saveStore(store);
-}
-
 export async function login(email: string, plainPassword: string):Promise<User> {
     const user = findUserByEmail(email);
     if (!user) {
@@ -263,6 +255,17 @@ export async function changePassword(
     
     const newPasswordHash = await hashPassword(newPassword);
     store.users[userIndex] = { ...user, passwordHash: newPasswordHash, updatedAt: new Date().toISOString() };
+    saveStore(store);
+}
+
+export function deleteUser(userId: string): void {
+    const store = getStore();
+    store.users = store.users.filter(u => u.id !== userId);
+    
+    if (store.session && store.session.userId === userId) {
+        store.session = null;
+    }
+    
     saveStore(store);
 }
 
