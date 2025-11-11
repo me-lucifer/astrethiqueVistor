@@ -21,6 +21,8 @@ import {
 import { getSession, setSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/language-context";
+
 
 const specialtyMap: Record<string, { icon: string }> = {
     Love: { icon: "💖" },
@@ -54,6 +56,7 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
     const [isNotifying, setIsNotifying] = useState(false);
     const [user, setUser] = useState<authLocal.User | null>(null);
     const [intendedAction, setIntendedAction] = useState<(() => void) | null>(null);
+    const { language } = useLanguage();
     
     const checkUser = useCallback(() => {
         const currentUser = authLocal.getCurrentUser();
@@ -162,6 +165,11 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
         toast({ title: `Starting session with ${consultant.name}...`})
     }
 
+    const formatCurrency = (amount: number) => {
+        const locale = language === 'fr' ? 'fr-FR' : 'en-IE';
+        return new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR' }).format(amount);
+    }
+
     const StartNowButton = () => (
         <Button size="sm" onClick={(e) => handleActionClick(e, handleStartNow)} aria-label={`Start now with ${consultant.name}`}>Start now</Button>
     );
@@ -250,7 +258,7 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <div className="font-bold text-base text-primary cursor-pointer">
-                                            From {consultant.pricePerMin.toFixed(2)}€<span className="text-sm font-normal text-foreground/70">/min</span>
+                                            From {formatCurrency(consultant.pricePerMin)}<span className="text-sm font-normal text-foreground/70">/min</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent>

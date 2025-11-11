@@ -57,7 +57,7 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
 
         toast({
             title: "Funds Added!",
-            description: `€${amount.toFixed(2)} has been added to your wallet.`,
+            description: `Your new balance is €${(updatedWallet.balance_cents / 100).toFixed(2)}.`,
         });
         
         onOpenChange(false);
@@ -132,7 +132,7 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
                      <DialogClose asChild>
                         <Button type="button" variant="ghost">Cancel</Button>
                     </DialogClose>
-                    <Button onClick={handleAddFunds}>Add €{amount.toFixed(2)} to Wallet</Button>
+                    <Button onClick={handleAddFunds} disabled={amount <= 0}>Add €{amount.toFixed(2)} to Wallet</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

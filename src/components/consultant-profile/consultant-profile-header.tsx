@@ -12,6 +12,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 import { useToast } from '@/hooks/use-toast';
 import * as authLocal from '@/lib/authLocal';
 import { AuthModal } from '../auth-modal';
+import { useLanguage } from '@/contexts/language-context';
 
 export function ConsultantProfileHeader({ consultant: initialConsultant }: { consultant: ConsultantProfile }) {
     const [consultant, setConsultant] = useState(initialConsultant);
@@ -19,7 +20,8 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
     const [user, setUser] = useState<authLocal.User | null>(null);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const { toast } = useToast();
-    
+    const { language } = useLanguage();
+
     const checkUserAndFavorite = () => {
         const currentUser = authLocal.getCurrentUser();
         setUser(currentUser);
@@ -70,6 +72,12 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
             title: newIsFavorite ? "Added to your favorites" : "Removed from your favorites",
         });
     }
+
+    const formatCurrency = (amount?: number) => {
+        if (amount === undefined) return '';
+        const locale = language === 'fr' ? 'fr-FR' : 'en-IE';
+        return new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR' }).format(amount);
+    }
     
     return (
         <TooltipProvider>
@@ -118,9 +126,9 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                         </div>
                         <div className="text-left sm:text-right shrink-0">
                             {consultant.prevPricePerMin && (
-                                <p className="text-muted-foreground line-through text-sm">€{consultant.prevPricePerMin.toFixed(2)}/min</p>
+                                <p className="text-muted-foreground line-through text-sm">{formatCurrency(consultant.prevPricePerMin)}/min</p>
                             )}
-                            <p className="text-2xl font-bold text-primary">€{consultant.pricePerMin.toFixed(2)}<span className="text-base font-medium text-muted-foreground">/min</span></p>
+                            <p className="text-2xl font-bold text-primary">{formatCurrency(consultant.pricePerMin)}<span className="text-base font-medium text-muted-foreground">/min</span></p>
                         </div>
                     </div>
                     

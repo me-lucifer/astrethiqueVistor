@@ -10,19 +10,29 @@ import { useToast } from "@/hooks/use-toast";
 import * as authLocal from "@/lib/authLocal";
 import { getWallet, setWallet, Wallet } from "@/lib/local";
 import { BudgetWizardModal } from "@/components/budget/budget-wizard-modal";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function WalletPage() {
     const { toast } = useToast();
     const [user, setUser] = useState<authLocal.User | null>(null);
     const [wallet, setWallet] = useState<Wallet | null>(null);
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+    const { language } = useLanguage();
 
-    useEffect(() => {
+    const fetchWalletData = () => {
         const currentUser = authLocal.getCurrentUser();
         setUser(currentUser);
         
         const currentWallet = getWallet();
         setWallet(currentWallet);
+    };
+
+    useEffect(() => {
+        fetchWalletData();
+        window.addEventListener('storage', fetchWalletData);
+        return () => {
+            window.removeEventListener('storage', fetchWalletData);
+        };
     }, []);
 
     const handleAddCredit = () => {
@@ -37,15 +47,18 @@ export default function WalletPage() {
           ...wallet,
           balance_cents: wallet.balance_cents + 1000,
         };
-        setWallet(newWalletState); // optimistic update
-        setWallet(newWalletState); // persist
-        window.dispatchEvent(new Event('storage'));
+        setWallet(newWalletState); // optimistic update & persist
 
         toast({
             title: "Funds Added",
             description: `€10.00 has been added to your wallet.`,
         });
     };
+
+    const formatCurrency = (amountCents: number) => {
+        const locale = language === 'fr' ? 'fr-FR' : 'en-IE';
+        return new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR' }).format(amountCents / 100);
+    }
 
     if (!user || !wallet) {
         return <div>Loading wallet...</div>
@@ -63,7 +76,7 @@ export default function WalletPage() {
                 <CardContent className="space-y-4">
                     <div className="p-6 rounded-lg bg-muted text-center">
                         <p className="text-sm text-muted-foreground">Current Balance</p>
-                        <p className="text-4xl font-bold">€{(wallet.balance_cents / 100).toFixed(2)}</p>
+                        <p className="text-4xl font-bold">{formatCurrency(wallet.balance_cents)}</p>
                     </div>
                     <Button onClick={handleAddCredit} className="w-full">Add €10 Demo Credit</Button>
                 </CardContent>
@@ -80,7 +93,7 @@ export default function WalletPage() {
                 <CardContent className="space-y-4 pt-4">
                      <div className="flex justify-between items-center">
                         <Label htmlFor="budget-slider" className="text-lg font-bold text-primary">
-                            {wallet.budget_set ? `€${budgetInEuros}` : 'Not Set'}
+                            {wallet.budget_set ? formatCurrency(wallet.budget_cents) : 'Not Set'}
                         </Label>
                         <p className="text-sm text-muted-foreground">Per calendar month</p>
                     </div>

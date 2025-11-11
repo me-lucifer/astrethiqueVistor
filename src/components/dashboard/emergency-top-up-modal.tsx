@@ -58,7 +58,7 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
 
         toast({
             title: "Emergency Funds Added",
-            description: `€${amount.toFixed(2)} has been added to your wallet.`,
+            description: `€${amount.toFixed(2)} added. Your new balance is €${(updatedWallet.balance_cents / 100).toFixed(2)}.`,
         });
 
         onOpenChange(false);
