@@ -282,7 +282,7 @@ function ContentHubContent() {
     );
 }
 
-export default function ContentHubPageWrapper() {
+export default function ContentHubPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <ContentHubContent />
