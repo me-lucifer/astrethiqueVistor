@@ -26,7 +26,11 @@ import {
   Sparkles,
   Flame,
   Wallet,
+  Info,
+  BadgeInfo,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 // Local Imports
 import * as authLocal from "@/lib/authLocal";
@@ -54,6 +58,8 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ActivityTab } from "@/components/dashboard/activity-tab";
 import { BudgetWizardModal } from "@/components/budget/budget-wizard-modal";
+import { TopUpModal } from "@/components/dashboard/top-up-modal";
+import { EmergencyTopUpModal } from "@/components/dashboard/emergency-top-up-modal";
 
 
 // Type Imports
@@ -98,6 +104,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+  const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
+  const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const router = useRouter();
 
@@ -179,7 +187,11 @@ export default function DashboardPage() {
         </AnimatePresence>
         <div className="grid grid-cols-12 gap-8 items-start">
           <div className="col-span-12 lg:col-span-8 space-y-8">
-            <WalletCard onBudgetClick={() => setIsBudgetModalOpen(true)} />
+            <WalletCard 
+              onBudgetClick={() => setIsBudgetModalOpen(true)}
+              onTopUpClick={() => setIsTopUpModalOpen(true)}
+              onEmergencyClick={() => setIsEmergencyModalOpen(true)}
+            />
             <MoodCard onFirstCheckin={handleFirstCheckin} />
             <QuickTrends />
           </div>
@@ -190,14 +202,15 @@ export default function DashboardPage() {
         </div>
       </div>
       <BudgetWizardModal isOpen={isBudgetModalOpen} onOpenChange={setIsBudgetModalOpen} />
+      <TopUpModal isOpen={isTopUpModalOpen} onOpenChange={setIsTopUpModalOpen} />
+      <EmergencyTopUpModal isOpen={isEmergencyModalOpen} onOpenChange={setIsEmergencyModalOpen} />
     </div>
   );
 }
 
 // Sub-components for the Dashboard
-function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
+function WalletCard({ onBudgetClick, onTopUpClick, onEmergencyClick }: { onBudgetClick: () => void, onTopUpClick: () => void, onEmergencyClick: () => void }) {
   const [wallet, setWallet] = useState<WalletType | null>(null);
-  const { toast } = useToast();
 
   const fetchWalletData = useCallback(() => {
     setWallet(getWallet());
@@ -209,25 +222,6 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
-  const handleTopUp = () => {
-    if (!wallet) return;
-
-    if (!wallet.budget_set) {
-        onBudgetClick();
-        return;
-    }
-
-    const newWalletState: WalletType = {
-        ...wallet,
-        balance_cents: wallet.balance_cents + 1000 // Add €10
-    };
-    setWallet(newWalletState);
-    toast({
-      title: "Funds Added",
-      description: "€10.00 has been added to your wallet.",
-      duration: 2500,
-    });
-  };
 
   if (!wallet) {
     return (
@@ -239,10 +233,10 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     );
   }
 
-  const { balance_cents = 0, budget_lock, spent_this_month_cents, budget_cents } = wallet;
+  const { balance_cents = 0, budget_lock, spent_this_month_cents, budget_cents, budget_set } = wallet;
   const spentThisMonth = spent_this_month_cents / 100;
   const budget = budget_cents / 100;
-  const progress = budget > 0 ? (spentThisMonth / budget) * 100 : 0;
+  const progress = budget_set && budget > 0 ? (spentThisMonth / budget) * 100 : 0;
 
   let progressBarColor = "bg-success";
   if (progress > 90) {
@@ -251,8 +245,8 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     progressBarColor = "bg-yellow-500";
   }
   
-  const endOfMonthFormatted = format(endOfMonth(new Date()), "MMM dd");
-
+  const endOfMonthFormatted = budget_lock?.until ? format(new Date(budget_lock.until), "MMM dd") : format(endOfMonth(new Date()), "MMM dd");
+  
   return (
     <GlassCard>
       <CardHeader>
@@ -270,22 +264,37 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
         <div>
             <div className="flex justify-between text-sm text-muted-foreground mb-1">
                 <span>This month</span>
-                <span>€{spentThisMonth.toFixed(2)} / {budget > 0 ? `€${budget.toFixed(2)}` : 'No budget'}</span>
+                <span>€{spentThisMonth.toFixed(2)} / {budget_set && budget > 0 ? `€${budget.toFixed(2)}` : 'No budget'}</span>
             </div>
             <Progress value={progress} indicatorClassName={progressBarColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
         </div>
          <div className="flex items-center gap-2">
-            {wallet.budget_set && budget_lock?.enabled ? (
+            {budget_lock?.enabled ? (
                 <Badge variant="secondary">Budget Locked until {endOfMonthFormatted}</Badge>
-            ) : wallet.budget_set ? null : (
+            ) : !budget_set ? (
                  <Badge variant="outline">Budget not set</Badge>
+            ) : null }
+
+             {budget_lock?.enabled && (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={onEmergencyClick} disabled={budget_lock.emergency_used}>
+                             Emergency top-up
+                           </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                           <p>{budget_lock.emergency_used ? "Emergency top-up already used for this month." : "Add a small, one-time amount for emergencies."}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             )}
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-4">
          <div className="flex items-center gap-2">
-            <Button onClick={handleTopUp}>Top up</Button>
-            <Button variant="outline" onClick={onBudgetClick}>Set/Change budget</Button>
+            <Button onClick={onTopUpClick}>Top up</Button>
+            <Button variant="outline" onClick={onBudgetClick}>{budget_set ? 'Change budget' : 'Set budget'}</Button>
             <Button variant="link" asChild className="text-xs text-muted-foreground">
                 <Link href="/account/wallet">History</Link>
             </Button>
@@ -757,5 +766,7 @@ const horoscopeData: { [key: string]: string } = {
   Pisces:
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+
+    
 
     
