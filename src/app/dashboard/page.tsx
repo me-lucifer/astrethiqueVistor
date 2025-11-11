@@ -56,6 +56,9 @@ export default function DashboardPage() {
     const checkUser = () => {
         const currentUser = authLocal.getCurrentUser();
         setUser(currentUser);
+        if (!currentUser) {
+            setIsAuthModalOpen(true);
+        }
     };
 
     useEffect(() => {
@@ -80,8 +83,8 @@ export default function DashboardPage() {
         return (
             <>
                 <PlaceholderPage 
-                    title="Access Denied" 
-                    description="Please log in to view your dashboard." 
+                    title="Please Sign In" 
+                    description="You need to be logged in to view your dashboard." 
                 />
                 <AuthModal isOpen={true} onOpenChange={setIsAuthModalOpen} onLoginSuccess={checkUser} />
             </>
@@ -128,43 +131,38 @@ export default function DashboardPage() {
 
 // Sub-components for the Dashboard
 function WalletCard() {
-    const [wallet, setWalletState] = useState<Wallet>({ balanceEUR: 0, history: [] });
+    const [wallet, setWalletState] = useState<Wallet | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
         const checkWallet = () => {
-            const storedWallet = getWallet() || { balanceEUR: 0, history: [] };
-            setWalletState(storedWallet);
+            const user = authLocal.getCurrentUser();
+            const userWallet: Wallet = { balanceEUR: (user?.wallet.balanceCents || 0) / 100, history: [] }; // Simplified history for card
+            setWalletState(userWallet);
         };
         checkWallet();
-        const handleStorageChange = (event: StorageEvent) => {
-             if (event.key === 'ast_wallet') {
-                checkWallet();
-            }
-        };
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        window.addEventListener('storage', checkWallet);
+        return () => window.removeEventListener('storage', checkWallet);
     }, []);
 
     const handleTopUp = (amount: number) => {
-        const currentWallet = getWallet() || { balanceEUR: 0, history: [] };
-        const newBalance = currentWallet.balanceEUR + amount;
-        const newHistoryItem = { type: 'topup' as const, amount, ts: new Date().toISOString() };
-        const updatedHistory = [...(currentWallet.history || []), newHistoryItem];
-        
-        const newWallet: Wallet = {
-            balanceEUR: newBalance,
-            history: updatedHistory,
-        };
+        const user = authLocal.getCurrentUser();
+        if (!user) return;
 
-        setWalletState(newWallet);
-        setWallet(newWallet);
+        const newBalanceCents = user.wallet.balanceCents + (amount * 100);
+        authLocal.updateUser(user.id, {
+            wallet: { ...user.wallet, balanceCents: newBalanceCents }
+        });
         
         toast({
             title: "Funds Added",
             description: `€${amount.toFixed(2)} has been added to your wallet.`,
         });
     };
+
+    if (wallet === null) {
+        return <GlassCard><CardContent className="p-6"><div className="h-24 bg-muted animate-pulse rounded-md" /></CardContent></GlassCard>
+    }
 
     return (
         <GlassCard>
@@ -187,7 +185,6 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
     type Ratings = { money: number; health: number; work: number; love: number };
     const [ratings, setRatings] = useState<Ratings>({ money: 0, health: 0, work: 0, love: 0 });
     const { toast } = useToast();
-    const [isSavedToday, setIsSavedToday] = useState(false);
 
     useEffect(() => {
         const moodLog = getMoodLog();
@@ -200,7 +197,6 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
                 work: todayEntry.work,
                 love: todayEntry.love
             });
-            setIsSavedToday(true);
         }
     }, []);
 
@@ -215,24 +211,26 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
         let newStreak = moodMeta.streak;
         const lastDate = moodMeta.lastCheckIn ? new Date(moodMeta.lastCheckIn) : null;
         const todayDate = new Date();
+        const isFirstCheckinToday = !lastDate || !isToday(lastDate);
 
-        if (!lastDate || !isToday(lastDate)) { // First check-in of the day
+        if (isFirstCheckinToday) {
             if (lastDate && isYesterday(lastDate)) {
                 newStreak = (newStreak || 0) + 1;
-            } else {
-                newStreak = 1;
+            } else if (lastDate && !isToday(lastDate)) {
+                 newStreak = 1;
+            } else if (!lastDate) {
+                 newStreak = 1;
             }
             onFirstCheckin();
             toast({
                 title: "Mood saved!",
                 description: newStreak > 1 ? `You're on a ${newStreak}-day streak! 🔥` : "Come back tomorrow to build your streak.",
             });
-        } else if (!isSavedToday) {
+        } else {
              toast({
                 title: "Mood updated for today!",
             });
         }
-
 
         const todayIndex = moodLog.findIndex(entry => entry.dateISO === today);
         if (todayIndex > -1) {
@@ -242,7 +240,6 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
         }
         
         setMoodLog(moodLog, { streak: newStreak, lastCheckIn: todayDate.toISOString() });
-        setIsSavedToday(true);
     };
 
     return (
@@ -277,12 +274,14 @@ function QuickTrends() {
     const updateTrends = () => {
         const moodMeta = getMoodMeta();
         if (moodMeta && moodMeta.lastCheckIn) {
-            setLastCheckIn(formatDistanceToNow(new Date(moodMeta.lastCheckIn), { addSuffix: true }));
+            const lastDate = new Date(moodMeta.lastCheckIn);
+            setLastCheckIn(formatDistanceToNow(lastDate, { addSuffix: true }));
+            
             const today = new Date();
-            if (isToday(new Date(moodMeta.lastCheckIn))) {
+            if (isToday(lastDate)) {
               setStreak(moodMeta.streak || 1);
-            } else if (isYesterday(new Date(moodMeta.lastCheckIn))) {
-              setStreak(moodMeta.streak || 0);
+            } else if (isYesterday(lastDate)) {
+              setStreak(moodMeta.streak || 0); // User will get +1 on next checkin
             } else {
               setStreak(0); // Streak broken
             }
@@ -416,7 +415,7 @@ function RecommendationsTab() {
             const allContent = getLocal<ContentHubItem[]>("ch_items") || [];
             const moodLog = getMoodLog();
             if (moodLog.length === 0) {
-                setRecommendations(allContent.filter(item => item.featured).slice(0, 3));
+                setRecommendations(allContent.filter(item => item.featured && !item.deleted).slice(0, 3));
                 return;
             };
 
@@ -475,13 +474,14 @@ function FavoritesTab() {
             const user = authLocal.getCurrentUser();
             const favoriteIds = user?.favorites.consultants || [];
 
-            if (favoriteIds.length === 0) {
+            if (favoriteIds.length > 0) {
+                setFavorites(allConsultants.filter(c => favoriteIds.includes(c.id)));
+            } else {
+                // Seed with demo favorites if user has none
                 const demoFavorites = ["Aeliana Rose", "Seraphina Moon"]
                     .map(name => allConsultants.find(c => c.name === name))
                     .filter((c): c is Consultant => !!c);
                 setFavorites(demoFavorites);
-            } else {
-                setFavorites(allConsultants.filter(c => favoriteIds.includes(c.id)));
             }
         };
 
@@ -494,16 +494,18 @@ function FavoritesTab() {
         window.addEventListener('storage', loadFavorites);
 
         return () => {
-            clearInterval(timer)
+            clearInterval(timer);
             window.removeEventListener('storage', loadFavorites);
         };
     }, []);
+    
+    const onlineFavorites = favorites.filter(fav => fav.availability.online);
 
     return (
         <Card>
             <CardContent className="pt-6 space-y-4">
-                {favorites.length > 0 ? (
-                    favorites.map((fav, index) => (
+                {onlineFavorites.length > 0 ? (
+                    onlineFavorites.map((fav, index) => (
                         <div key={fav.id} className="flex items-center justify-between">
                             <Link href={`/discover/consultant/${fav.slug}`} className="flex items-center gap-3 group">
                                 <Avatar>
@@ -518,14 +520,19 @@ function FavoritesTab() {
                                     </div>
                                 </div>
                             </Link>
-                            <Button size="sm" asChild variant="outline">
-                                <Link href={`/discover/consultant/${fav.slug}#availability-section`}>Schedule</Link>
-                            </Button>
+                             <div className="flex gap-2">
+                                <Button size="sm" variant="default" asChild>
+                                    <Link href={`/discover/consultant/${fav.slug}#availability-section`}>Start</Link>
+                                </Button>
+                                <Button size="sm" asChild variant="outline">
+                                    <Link href={`/discover/consultant/${fav.slug}/schedule`}>Schedule</Link>
+                                </Button>
+                            </div>
                         </div>
                     ))
                 ) : (
                      <div className="text-center text-muted-foreground p-4">
-                        <p>You haven't added any favorites yet.</p>
+                        <p>Your favorites aren’t online yet.</p>
                     </div>
                 )}
             </CardContent>
@@ -547,7 +554,3 @@ const horoscopeData: { [key: string]: string } = {
     Aquarius: "Connect with your community. A group activity could spark a brilliant new idea or friendship.",
     Pisces: "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
-
-
-
-
