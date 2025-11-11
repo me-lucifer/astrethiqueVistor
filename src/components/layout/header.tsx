@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -81,15 +80,13 @@ export function Header() {
   const isDiscoverActive = (path: string) => {
     return path.startsWith('/discover') || path.startsWith('/consultant/');
   }
-  
-  const handleAuthClick = () => {
-    setIsAuthModalOpen(true);
-  }
 
   const AuthButtons = () => (
     <>
-      <Button variant="ghost" onClick={handleAuthClick} aria-label={t.login}>{t.login}</Button>
-      <Button onClick={handleAuthClick} aria-label={t.register}>{t.register}</Button>
+      <Button variant="ghost" onClick={() => setIsAuthModalOpen(true)} aria-label={t.login}>{t.login}</Button>
+      <Button asChild>
+        <Link href="/register">{t.register}</Link>
+      </Button>
     </>
   );
 
@@ -214,8 +211,8 @@ export function Header() {
                     <Button variant="outline" className="w-full" onClick={handleLogout}>Sign out</Button>
                 ) : (
                     <div className="grid grid-cols-2 gap-2">
-                        <Button variant="ghost" onClick={handleAuthClick}>{t.login}</Button>
-                        <Button onClick={handleAuthClick}>{t.register}</Button>
+                        <Button variant="ghost" onClick={() => setIsAuthModalOpen(true)}>{t.login}</Button>
+                        <Button asChild><Link href="/register">{t.register}</Link></Button>
                     </div>
                 )}
                  <Button variant="outline" disabled className="w-full">

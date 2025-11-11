@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -15,18 +14,14 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input, PasswordInput } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/contexts/language-context";
 import * as storage from "@/lib/storage";
 import PasswordStrength from "./auth/password-strength";
-import { CheckCircle, MailCheck, KeyRound, ArrowLeft } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { MailCheck, KeyRound, ArrowLeft } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 
 interface AuthModalProps {
@@ -39,21 +34,6 @@ const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters")
   .refine((password) => /[a-zA-Z]/.test(password), { message: "Password must contain at least one letter" })
   .refine((password) => /[0-9]/.test(password), { message: "Password must contain at least one number" });
-
-const createAccountSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: passwordSchema,
-  language: z.enum(["EN", "FR"]),
-  timezone: z.string().min(1, "Please select your timezone"),
-  agreeToTerms: z.literal(true, {
-    errorMap: () => ({ message: "You must agree to the terms and privacy policy" }),
-  }),
-  is18OrOlder: z.literal(true, {
-    errorMap: () => ({ message: "You must be 18 or older to register" }),
-  }),
-  marketingOptIn: z.boolean(),
-});
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -77,40 +57,21 @@ const forgotPasswordResetSchema = z.object({
 });
 
 
-type CreateAccountFormData = z.infer<typeof createAccountSchema>;
 type SignInFormData = z.infer<typeof signInSchema>;
 type VerificationFormData = z.infer<typeof verificationSchema>;
 type ForgotPasswordEmailFormData = z.infer<typeof forgotPasswordEmailSchema>;
 type ForgotPasswordResetFormData = z.infer<typeof forgotPasswordResetSchema>;
 
-type AuthView = 'tabs' | 'verify' | 'forgot-password-email' | 'forgot-password-otp' | 'forgot-password-reset';
+type AuthView = 'signin' | 'verify' | 'forgot-password-email' | 'forgot-password-otp' | 'forgot-password-reset';
 
 export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalProps) {
   const { toast } = useToast();
-  const { language } = useLanguage();
   const searchParams = useSearchParams();
-  const [view, setView] = useState<AuthView>('tabs');
-  const [activeTab, setActiveTab] = useState("create");
+  const [view, setView] = useState<AuthView>('signin');
   const [tempUserEmail, setTempUserEmail] = useState<string | null>(null);
-  const [defaultTimezone, setDefaultTimezone] = useState('');
 
   const isDemoMode = searchParams.get('demo') === '1';
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setDefaultTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
-    }
-  }, []);
-
-  const createForm = useForm<CreateAccountFormData>({
-    resolver: zodResolver(createAccountSchema),
-    defaultValues: {
-      fullName: "", email: "", password: "",
-      language: language.toUpperCase() as "EN" | "FR",
-      timezone: '', agreeToTerms: false, is18OrOlder: false, marketingOptIn: false,
-    },
-  });
-  
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     defaultValues: { email: "", password: "" },
@@ -131,58 +92,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-
-  useEffect(() => {
-    if (defaultTimezone) {
-      createForm.setValue("timezone", defaultTimezone);
-    }
-  }, [defaultTimezone, createForm]);
-
-  const watchedCreatePassword = useWatch({ control: createForm.control, name: "password" });
   const watchedResetPassword = useWatch({ control: forgotPasswordResetForm.control, name: "password" });
-  const watchedAgreeToTerms = useWatch({ control: createForm.control, name: "agreeToTerms" });
-  const watchedIs18OrOlder = useWatch({ control: createForm.control, name: "is18OrOlder" });
-
-  async function handleCreateAccount(values: CreateAccountFormData) {
-    if (storage.findUserByEmail(values.email)) {
-      createForm.setError("email", { type: "manual", message: "An account with this email already exists." });
-      return;
-    }
-
-    const passwordHash = await storage.hashPassword(values.password);
-    const user: storage.User = {
-        id: storage.createId('usr_'),
-        role: 'visitor',
-        name: values.fullName,
-        email: values.email,
-        passwordHash,
-        createdAt: new Date().toISOString(),
-        emailVerified: false,
-        kycStatus: "n/a",
-    };
-
-    const users = storage.getUsers();
-    storage.saveUsers([...users, user]);
-    
-    const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-    prefs[user.id] = { language: values.language, timezone: values.timezone, marketingOptIn: values.marketingOptIn };
-    storage.setStorageItem('ast_prefs', prefs);
-    
-    const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
-    favorites[user.id] = { consultants: [], content: [], conferences: [] };
-    storage.setStorageItem('ast_favorites', favorites);
-
-    const wallets = storage.getStorageItem<Record<string, storage.Wallet>>('ast_wallets') || {};
-    wallets[user.id] = { balance: 0, currency: '€' };
-    storage.setStorageItem('ast_wallets', wallets);
-
-    setTempUserEmail(user.email);
-    toast({
-      title: "Account created",
-      description: "Verify your email to continue.",
-    });
-    setView('verify');
-  }
 
   async function handleSignIn(values: SignInFormData) {
     const user = storage.findUserByEmail(values.email);
@@ -229,7 +139,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
 
     onLoginSuccess();
     onOpenChange(false);
-    setView('tabs');
+    setView('signin');
   }
 
   const handleForgotPasswordEmail = (values: ForgotPasswordEmailFormData) => {
@@ -260,8 +170,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     storage.saveUsers(updatedUsers);
 
     toast({ title: "Password successfully reset!", description: "You can now sign in with your new password." });
-    setView('tabs');
-    setActiveTab('signin');
+    setView('signin');
     signInForm.setValue('email', tempUserEmail);
     signInForm.setValue('password', '');
     setTempUserEmail(null);
@@ -288,7 +197,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
         storage.saveUsers([...users, newUser]);
 
         const prefs = storage.getStorageItem<Record<string, storage.Preferences>>('ast_prefs') || {};
-        prefs[newUser.id] = { language: 'EN', timezone: defaultTimezone || 'Europe/London', marketingOptIn: false };
+        prefs[newUser.id] = { language: 'EN', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London', marketingOptIn: false };
         storage.setStorageItem('ast_prefs', prefs);
 
         const favorites = storage.getStorageItem<Record<string, storage.Favorites>>('ast_favorites') || {};
@@ -312,8 +221,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
   const handleClose = (open: boolean) => {
     if(!open) {
       setTimeout(() => {
-        setView('tabs');
-        createForm.reset();
+        setView('signin');
         signInForm.reset();
         verificationForm.reset();
         forgotPasswordEmailForm.reset();
@@ -323,8 +231,8 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
     onOpenChange(open);
   }
   
-  const goBackToTabs = () => {
-    setView('tabs');
+  const goBackToSignin = () => {
+    setView('signin');
     setTempUserEmail(null);
   }
 
@@ -334,6 +242,36 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
         title: "Please fix the errors highlighted on the form.",
     });
   }
+
+  const SignInView = () => (
+    <>
+      <DialogHeader className="p-6 pb-2">
+        <DialogTitle>Sign In</DialogTitle>
+        <DialogDescription>
+            Don't have an account?{' '}
+            <Button asChild variant="link" className="p-0">
+                <Link href="/register">Create one</Link>
+            </Button>
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...signInForm}>
+        <form onSubmit={signInForm.handleSubmit(handleSignIn, onInvalidSubmit)} className="space-y-4 px-6 pb-4">
+          <FormField control={signInForm.control} name="email" render={({ field }) => (
+            <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+            <FormField control={signInForm.control} name="password" render={({ field }) => (
+            <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <div className="text-right">
+            <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setView('forgot-password-email')}>Forgot password?</Button>
+          </div>
+          <DialogFooter className="pt-4">
+            <Button type="submit" className="w-full" disabled={signInForm.formState.isSubmitting}>Sign In</Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </>
+  );
 
   const VerificationView = ({ onVerify }: { onVerify: (values: VerificationFormData) => void }) => {
     return (
@@ -370,7 +308,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
 
                      <DialogFooter className="pt-4 flex-col gap-2">
                         <Button type="submit" className="w-full" disabled={verificationForm.formState.isSubmitting}>Verify</Button>
-                        <Button type="button" variant="ghost" onClick={goBackToTabs} className="w-full text-muted-foreground flex items-center gap-2">
+                        <Button type="button" variant="ghost" onClick={goBackToSignin} className="w-full text-muted-foreground flex items-center gap-2">
                             <ArrowLeft className="h-4 w-4" /> Go back
                         </Button>
                     </DialogFooter>
@@ -397,7 +335,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
                 )} />
                 <DialogFooter className="pt-4 flex-col gap-2">
                     <Button type="submit" className="w-full" disabled={forgotPasswordEmailForm.formState.isSubmitting}>Send Code</Button>
-                    <Button type="button" variant="ghost" onClick={goBackToTabs} className="w-full text-muted-foreground">Cancel</Button>
+                    <Button type="button" variant="ghost" onClick={goBackToSignin} className="w-full text-muted-foreground">Cancel</Button>
                 </DialogFooter>
             </form>
         </Form>
@@ -420,7 +358,7 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
           )} />
           <DialogFooter className="pt-4 flex-col gap-2">
             <Button type="submit" className="w-full" disabled={forgotPasswordResetForm.formState.isSubmitting}>Set New Password</Button>
-            <Button type="button" variant="ghost" onClick={goBackToTabs} className="w-full text-muted-foreground">Cancel</Button>
+            <Button type="button" variant="ghost" onClick={goBackToSignin} className="w-full text-muted-foreground">Cancel</Button>
           </DialogFooter>
         </form>
       </Form>
@@ -428,98 +366,38 @@ export function AuthModal({ isOpen, onOpenChange, onLoginSuccess }: AuthModalPro
   );
 
 
+  const renderContent = () => {
+    switch(view) {
+        case 'signin':
+            return <SignInView />;
+        case 'verify':
+            return <VerificationView onVerify={handleVerify} />;
+        case 'forgot-password-email':
+            return <ForgotPasswordEmailView />;
+        case 'forgot-password-otp':
+             return <VerificationView onVerify={handleForgotPasswordOtp} />;
+        case 'forgot-password-reset':
+            return <ForgotPasswordResetView />;
+        default:
+            return <SignInView />;
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-        {view === 'tabs' && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <DialogHeader>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="create">Create Account</TabsTrigger>
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-              </TabsList>
-            </DialogHeader>
-            
-            <TabsContent value="create">
-              <DialogTitle className="sr-only">Create Account</DialogTitle>
-              <Form {...createForm}>
-                <form onSubmit={createForm.handleSubmit(handleCreateAccount, onInvalidSubmit)} className="space-y-4 max-h-[60vh] overflow-y-auto px-6 py-4">
-                    <FormField control={createForm.control} name="fullName" render={({ field }) => (
-                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your full name" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={createForm.control} name="email" render={({ field }) => (
-                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={createForm.control} name="password" render={({ field }) => (
-                    <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><PasswordStrength password={watchedCreatePassword} /><FormMessage /></FormItem>
-                  )} />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField control={createForm.control} name="language" render={({ field }) => (
-                      <FormItem><FormLabel>Language</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="EN">English</SelectItem><SelectItem value="FR">Français</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={createForm.control} name="timezone" render={({ field }) => (
-                      <FormItem><FormLabel>Timezone</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value={defaultTimezone}>{defaultTimezone.replace(/_/g, " ")}</SelectItem><SelectItem value="Europe/London">Europe/London</SelectItem><SelectItem value="America/New_York">America/New_York</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                    )} />
-                  </div>
+        {renderContent()}
 
-                  <FormField control={createForm.control} name="agreeToTerms" render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I agree to the <Link href="/legal-hub/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms</Link> and <Link href="/legal-hub/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</Link>.</FormLabel><FormMessage /></div></FormItem>
-                  )} />
-                  <FormField control={createForm.control} name="is18OrOlder" render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>I confirm I am 18 years of age or older.</FormLabel><FormMessage /></div></FormItem>
-                  )} />
-                  <FormField control={createForm.control} name="marketingOptIn" render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Send me tips and updates (optional).</FormLabel></div></FormItem>
-                  )} />
-                  
-                  <DialogFooter className="pt-4 sticky bottom-0 bg-background/90 backdrop-blur-sm">
-                    <Button type="submit" className="w-full" disabled={createForm.formState.isSubmitting || !watchedAgreeToTerms || !watchedIs18OrOlder}>Create Account</Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </TabsContent>
-            
-            <TabsContent value="signin">
-                <DialogTitle className="sr-only">Sign In</DialogTitle>
-                <Form {...signInForm}>
-                <form onSubmit={signInForm.handleSubmit(handleSignIn, onInvalidSubmit)} className="space-y-4 px-6 py-4">
-                  <FormField control={signInForm.control} name="email" render={({ field }) => (
-                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                    <FormField control={signInForm.control} name="password" render={({ field }) => (
-                    <FormItem><FormLabel>Password</FormLabel><FormControl><PasswordInput {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <div className="text-right">
-                    <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setView('forgot-password-email')}>Forgot password?</Button>
-                  </div>
-                  <DialogFooter className="pt-4">
-                    <Button type="submit" className="w-full" disabled={signInForm.formState.isSubmitting}>Sign In</Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </TabsContent>
-          </Tabs>
-        )}
-
-        {view === 'verify' && <VerificationView onVerify={handleVerify} />}
-        {view === 'forgot-password-email' && <ForgotPasswordEmailView />}
-        {view === 'forgot-password-otp' && <VerificationView onVerify={handleForgotPasswordOtp} />}
-        {view === 'forgot-password-reset' && <ForgotPasswordResetView />}
-
-
-        {view === 'tabs' && (
-          <div className="p-4 bg-muted text-center">
-              <p className="text-xs text-muted-foreground">
-                  Prototype only — accounts are stored locally on your device. Don’t use real passwords.
-              </p>
-              {isDemoMode && (
-                <Button variant="link" size="sm" className="text-xs" onClick={handleSeedAndLogin}>
-                    Seed Demo User
-                </Button>
-              )}
-          </div>
-        )}
+        <div className="p-4 bg-muted text-center">
+            <p className="text-xs text-muted-foreground">
+                Prototype only — accounts are stored locally on your device. Don’t use real passwords.
+            </p>
+            {isDemoMode && (
+              <Button variant="link" size="sm" className="text-xs" onClick={handleSeedAndLogin}>
+                  Seed Demo User
+              </Button>
+            )}
+        </div>
       </DialogContent>
     </Dialog>
   );
