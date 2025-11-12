@@ -215,7 +215,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         if (isOpen) {
             setCurrentStep(0);
             const wallet = getWallet();
-            // Pre-fill form if data exists in wallet, but don't persist between steps
+            // Pre-fill form if data exists in wallet
             const defaultValues: WizardFormData = {
                 aboutYou: wallet.aboutYou || { home: 'rent', income: 3000, household: 1, hasOther: false },
                 essentials: {
@@ -332,3 +332,5 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         </Dialog>
     );
 }
+
+    
