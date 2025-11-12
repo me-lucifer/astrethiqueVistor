@@ -331,7 +331,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-primary" />
+              <Sparkles className="h-5 w-5 text-primary" />
               Wallet & Budget
             </CardTitle>
             <div className="flex items-center gap-1">
@@ -370,7 +370,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
                   <span>This month</span>
                   {budget_lock.enabled ? (
-                      <Badge variant="secondary" className="gap-1.5"><Zap className="h-3 w-3 text-amber-500" /> Locked</Badge>
+                      <Badge variant="secondary" className="gap-1.5 bg-amber-500/10 text-amber-500 border-amber-500/20"><Lock className="h-3 w-3"/> Locked</Badge>
                   ) : (
                       <span>{formatCurrency(spentThisMonth)} / {formatCurrency(budget)}</span>
                   )}
@@ -385,7 +385,23 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 />
                 <div className="flex justify-between text-xs text-muted-foreground mt-2">
                     <Badge variant="outline" className="font-normal">Remaining: {formatCurrency(remaining)}</Badge>
-                    <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
+                    <div className="flex items-center gap-4">
+                        <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
+                        {budget_lock.enabled && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span tabIndex={0}>
+                                     <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5 h-auto py-0 px-1" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={budget_lock.emergency_used} aria-label="Use emergency top-up">
+                                        <Zap className="h-4 w-4"/> Emergency
+                                    </Button>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {budget_lock.emergency_used ? <p>Emergency top-up already used for this period.</p> : <p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p>}
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+                    </div>
                 </div>
               </div>
               
@@ -400,7 +416,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                     </CardHeader>
                   </Card>
               ) : (
-                   <Card className="bg-card border-border">
+                   <Card className="bg-card border-primary/20">
                     <CardHeader className="p-4">
                         <div className="flex justify-between items-start">
                          <CardTitle className="text-base flex items-center gap-2">Budget Lock</CardTitle>
@@ -442,20 +458,6 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                   <Button onClick={onBudgetClick} variant="outline" size="sm">Change budget</Button>
                   <HistoryDrawer />
               </div>
-              {budget_lock.enabled && (
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span tabIndex={0}>
-                         <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={budget_lock.emergency_used} aria-label="Use emergency top-up">
-                            <Zap className="h-4 w-4"/> Emergency
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {budget_lock.emergency_used ? <p>Emergency top-up already used for this period.</p> : <p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p>}
-                    </TooltipContent>
-                </Tooltip>
-              )}
             </CardFooter>
         )}
          <p className="text-xs text-muted-foreground text-center p-2">Spending uses wallet balance only. Budgets reset monthly.</p>
