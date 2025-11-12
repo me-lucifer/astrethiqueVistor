@@ -350,7 +350,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   };
   
   const handleQuickTopUp = (amount: number) => {
-      if(!wallet?.budget_set) {
+      if(!wallet?.budget_set && wallet?.balance_cents === 0) {
           setTopUpOnlyAmount(amount);
           setIsSetBudgetPromptOpen(true);
       } else {
@@ -364,8 +364,8 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   }
 
   const handleResetDemo = () => {
-    removeLocal("ast.wallet");
-    removeLocal("ast_spend_log");
+    removeLocal(WALLET_KEY);
+    removeLocal(SPEND_LOG_KEY);
     fetchWalletData();
     toast({ title: "Demo activity has been reset." });
   }
@@ -1169,3 +1169,5 @@ const horoscopeData: { [key: string]: string } = {
 };
 
     
+
+      
