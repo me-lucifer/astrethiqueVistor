@@ -162,7 +162,7 @@ export const getWallet = (): Wallet => {
 
     if (!wallet) {
         const newWallet: Wallet = {
-            balance_cents: 0,
+            balance_cents: 2500, // Default to €25
             budget_cents: 0,
             spent_this_month_cents: 0,
             budget_lock: { enabled: false, emergency_used: false, until: null },

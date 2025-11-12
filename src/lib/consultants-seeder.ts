@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { setSession, getSession } from "./session";
@@ -41,6 +40,18 @@ const createConsultant = (index: number): Consultant => {
     const now = new Date();
     const consultantName = names[(index - 1) % names.length];
     
+    let specialties: ('Love' | 'Work' | 'Health' | 'Money' | 'Life Path')[] = ["Love", "Work", "Health", "Money", "Life Path"];
+    let languages: ('EN' | 'FR')[] = index % 3 === 0 
+            ? ['EN', 'FR']
+            : (index % 3 === 1 ? ['FR'] : ['EN']);
+    let pricePerMin = Math.round((1.5 + Math.random() * 8.5) * 2) / 2;
+
+    if (consultantName === "Astrid Belle") {
+        specialties = ["Love", "Clairvoyance"] as any; // Allow Clairvoyance for seeding
+        languages = ['EN'];
+        pricePerMin = 2.50;
+    }
+    
     const simpleAvailability = ['online', 'offline', 'busy', 'online', 'offline', 'online', 'offline', 'busy', 'online', 'offline', 'online', 'offline'][index % 12] as 'online' | 'busy' | 'offline';
 
     const reviews = [
@@ -51,18 +62,12 @@ const createConsultant = (index: number): Consultant => {
         reviews.push({ author: 'Emily R.', rating: 5, dateISO: subDays(now, 2).toISOString(), text: 'Truly gifted and compassionate. Highly recommend!'});
     }
 
-    const specialties: Consultant['specialties'] = ["Love", "Work", "Health", "Money", "Life Path"];
-    const languages = index % 3 === 0 
-            ? ['EN', 'FR']
-            : (index % 3 === 1 ? ['FR'] : ['EN']);
-
-
     return {
         id: consultantName.toLowerCase().replace(/\s+/g, '-'),
         slug: consultantName.toLowerCase().replace(/\s+/g, '-'),
         name: consultantName,
         rating: Math.round((4.2 + Math.random() * 0.8) * 10) / 10,
-        pricePerMin: Math.round((1.5 + Math.random() * 8.5) * 2) / 2,
+        pricePerMin: pricePerMin,
         priceWas: index % 4 === 0 ? Math.round((3 + Math.random() * 3) * 2) / 2 : undefined,
         promo24h: index % 5 === 0,
         languages: languages,
@@ -107,7 +112,7 @@ export const seedConsultants = () => {
   if (typeof window === 'undefined') return;
 
   const seededVersion = getSession('discover.seeded.version');
-  const currentVersion = 'v9'; // Increment this version to force re-seeding
+  const currentVersion = 'v10'; // Increment this version to force re-seeding
 
   if (seededVersion !== currentVersion) {
     const baseConsultants: Consultant[] = Array.from({ length: 12 }, (_, i) => createConsultant(i + 1));
