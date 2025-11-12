@@ -17,6 +17,7 @@ import { BudgetWizardModal } from '../budget/budget-wizard-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
 import { TopUpModal } from '../dashboard/top-up-modal';
 import { RequestSessionModal } from '../request-session-modal';
+import { EmergencyTopUpModal } from '../dashboard/emergency-top-up-modal';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -31,6 +32,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [isFundsModalOpen, setIsFundsModalOpen] = useState(false);
+  const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
   const [isRequestingModalOpen, setIsRequestingModalOpen] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
   const { toast } = useToast();
@@ -92,13 +94,20 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
           return;
       }
 
-      const spendResult = spendFromWallet(0, "consultation", `Start session with ${consultant.name}`);
+      // Pre-auth check for at least 1 minute of funds
+      const minRequiredCents = consultant.pricePerMin * 100;
+      const spendResult = spendFromWallet(minRequiredCents, "consultation", `Pre-auth for ${consultant.name}`, true);
       
       if (!spendResult.ok) {
         if (spendResult.message.includes("locked")) {
-            setIsLockModalOpen(true);
-        } else {
-            setIsFundsModalOpen(true); // Generic for insufficient funds or other issues
+            const wallet = getWallet();
+            if (wallet.budget_lock.enabled && !wallet.budget_lock.emergency_used) {
+                setIsEmergencyTopUpOpen(true);
+            } else {
+                setIsLockModalOpen(true);
+            }
+        } else { // Insufficient funds or other issues
+            setIsFundsModalOpen(true);
         }
         return;
       }
@@ -187,7 +196,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
           </div>
         </CardContent>
         <CardFooter className="p-0 pt-4">
-            <p className="text-xs text-muted-foreground">Per-minute billing during live sessions.</p>
+            <p className="text-xs text-muted-foreground">Readings are for guidance only and not a substitute for professional advice (medical, legal, financial, or emergency).</p>
         </CardFooter>
       </Card>
       
@@ -199,7 +208,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
           <DialogHeader>
             <DialogTitle>Budget Locked</DialogTitle>
             <DialogDescription>
-              Your budget for this month is locked. You can schedule future sessions but cannot start a new one right now.
+              Your budget for this month is locked, and your emergency top-up has been used. You can schedule future sessions but cannot start a new one right now.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -213,6 +222,11 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
        <TopUpModal
             isOpen={isFundsModalOpen}
             onOpenChange={setIsFundsModalOpen}
+        />
+
+        <EmergencyTopUpModal
+            isOpen={isEmergencyTopUpOpen}
+            onOpenChange={setIsEmergencyTopUpOpen}
         />
         
        {isRequestingModalOpen && (

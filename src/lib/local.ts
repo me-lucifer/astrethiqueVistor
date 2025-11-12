@@ -218,13 +218,13 @@ export const getWallet = (): Wallet => {
     return wallet;
 };
 
-export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string): { ok: boolean, message: string } {
+export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string, isPreAuth: boolean = false): { ok: boolean, message: string } {
     const wallet = getWallet();
     const result = { ok: false, message: "" };
 
     if (amount_cents > 0) {
-      if (wallet.budget_lock.enabled && (wallet.balance_cents < amount_cents)) {
-          result.message = "locked:Wallet is locked and funds are insufficient.";
+      if (wallet.budget_lock.enabled) {
+          result.message = "locked:Wallet is locked.";
           return result;
       }
       if (wallet.balance_cents < amount_cents) {
@@ -237,6 +237,13 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
       }
     }
     
+    // If it's a pre-auth, we don't actually deduct funds, just check if it's possible.
+    if (isPreAuth) {
+        result.ok = true;
+        result.message = "Pre-authorization successful.";
+        return result;
+    }
+
     const newWalletState: Wallet = {
         ...wallet,
         balance_cents: wallet.balance_cents - amount_cents,
