@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { getWallet, setWallet, addSpendLogEntry, EMERGENCY_TOPUP_LIMIT_EUR, Wallet, incrementMetric } from "@/lib/local";
+import { getWallet, setLocal, addSpendLogEntry, EMERGENCY_TOPUP_LIMIT_EUR, Wallet, incrementMetric, WALLET_KEY } from "@/lib/local";
 import { Label } from "../ui/label";
 import { Zap } from "lucide-react";
 
@@ -59,7 +59,7 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
                 emergency_used: true,
             }
         };
-        setWallet(updatedWallet, true);
+        setLocal(WALLET_KEY, updatedWallet, true);
         addSpendLogEntry({
             ts: new Date().toISOString(),
             type: "emergency",

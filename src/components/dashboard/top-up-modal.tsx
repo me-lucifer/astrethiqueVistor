@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { getWallet, setWallet, addSpendLogEntry, Wallet, incrementMetric } from "@/lib/local";
+import { getWallet, setLocal, addSpendLogEntry, Wallet, incrementMetric, WALLET_KEY } from "@/lib/local";
 import { Info, Wallet as WalletIcon } from "lucide-react";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { endOfMonth, format } from "date-fns";
@@ -59,7 +59,7 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
             };
         }
         
-        setWallet(updatedWallet, true);
+        setLocal(WALLET_KEY, updatedWallet, true);
         addSpendLogEntry({
             ts: new Date().toISOString(),
             type: "topup",
