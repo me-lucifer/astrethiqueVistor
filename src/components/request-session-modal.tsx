@@ -17,7 +17,7 @@ interface RequestSessionModalProps {
     onSchedule: () => void;
 }
 
-type RequestStatus = 'requesting' | 'timedOut' | 'declined';
+type RequestStatus = 'requesting' | 'unavailable';
 
 const CountdownCircle = ({ onComplete }: { onComplete: () => void }) => {
     const [countdown, setCountdown] = useState(60);
@@ -82,14 +82,13 @@ const CountdownCircle = ({ onComplete }: { onComplete: () => void }) => {
 export function RequestSessionModal({ isOpen, onOpenChange, consultant, onSchedule }: RequestSessionModalProps) {
     const [status, setStatus] = useState<RequestStatus>('requesting');
     
-    // Simulate a decline after 5 seconds for demonstration
+    // Simulate a decline after some seconds for demonstration
     useEffect(() => {
         if (status === 'requesting' && isOpen) {
+            const randomTimeout = Math.random() * 8000 + 4000; // 4-12 seconds
             const declineTimer = setTimeout(() => {
-                if (Math.random() > 0.5) { // 50% chance to simulate a decline
-                    setStatus('declined');
-                }
-            }, 8000);
+                setStatus('unavailable');
+            }, randomTimeout);
             return () => clearTimeout(declineTimer);
         }
     }, [status, isOpen]);
@@ -103,12 +102,13 @@ export function RequestSessionModal({ isOpen, onOpenChange, consultant, onSchedu
     }, [isOpen]);
 
     const handleTimeout = () => {
-        setStatus('timedOut');
+        setStatus('unavailable');
     };
     
-    const handleTryAgain = () => {
-        setStatus('requesting');
-    };
+    const handleScheduleAndClose = () => {
+        onSchedule();
+        onOpenChange(false);
+    }
     
     const renderContent = () => {
         switch (status) {
@@ -123,7 +123,7 @@ export function RequestSessionModal({ isOpen, onOpenChange, consultant, onSchedu
                             </Avatar>
                         </div>
                         <DialogHeader>
-                            <DialogTitle className="text-center">Requesting Session...</DialogTitle>
+                            <DialogTitle className="text-center">Requesting Session…</DialogTitle>
                             <DialogDescription className="text-center">Waiting for {consultant.name} to accept.</DialogDescription>
                         </DialogHeader>
                         <DialogFooter>
@@ -133,30 +133,17 @@ export function RequestSessionModal({ isOpen, onOpenChange, consultant, onSchedu
                         </DialogFooter>
                     </div>
                 );
-            case 'timedOut':
+            case 'unavailable':
                 return (
                      <div className="flex flex-col items-center gap-4 py-6 text-center">
-                        <Clock className="w-12 h-12 text-muted-foreground" />
-                        <DialogHeader>
-                            <DialogTitle>No Response</DialogTitle>
-                            <DialogDescription>{consultant.name} didn't respond in time. Please try again or schedule a session for later.</DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter className="w-full sm:justify-center flex-col sm:flex-col sm:space-x-0 gap-2">
-                           <Button onClick={handleTryAgain} className="w-full">Try Again</Button>
-                           <Button variant="outline" onClick={onSchedule} className="w-full">Schedule</Button>
-                        </DialogFooter>
-                    </div>
-                );
-            case 'declined':
-                return (
-                    <div className="flex flex-col items-center gap-4 py-6 text-center">
                         <XCircle className="w-12 h-12 text-destructive" />
                         <DialogHeader>
-                            <DialogTitle>Request Declined</DialogTitle>
-                            <DialogDescription>{consultant.name} is unable to take the session right now. Please schedule for a future time.</DialogDescription>
+                            <DialogTitle>Consultant Unavailable</DialogTitle>
+                            <DialogDescription>{consultant.name} is currently unavailable. Would you like to schedule a time instead?</DialogDescription>
                         </DialogHeader>
-                        <DialogFooter className="w-full sm:justify-center">
-                            <Button variant="outline" onClick={onSchedule} className="w-full">Schedule a Session</Button>
+                        <DialogFooter className="w-full sm:justify-center flex-col sm:flex-row gap-2">
+                           <DialogClose asChild><Button variant="outline" className="w-full">Close</Button></DialogClose>
+                           <Button onClick={handleScheduleAndClose} className="w-full">Schedule</Button>
                         </DialogFooter>
                     </div>
                 );
@@ -182,4 +169,3 @@ export function RequestSessionModal({ isOpen, onOpenChange, consultant, onSchedu
         </Dialog>
     );
 }
-
