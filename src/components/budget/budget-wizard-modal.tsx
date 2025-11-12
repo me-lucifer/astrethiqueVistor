@@ -17,6 +17,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { getWallet, setWallet, type Wallet } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Slider } from "../ui/slider";
 
 // --- Zod Schema ---
 const aboutYouSchema = z.object({
@@ -30,8 +31,18 @@ const aboutYouSchema = z.object({
   path: ["otherIncome"],
 });
 
+const essentialsSchema = z.object({
+    rentOrMortgage: z.coerce.number().min(0, "Cannot be negative."),
+    utilities: z.coerce.number().min(0, "Cannot be negative."),
+    groceries: z.coerce.number().min(0, "Cannot be negative."),
+    transport: z.coerce.number().min(0, "Cannot be negative."),
+    debts: z.coerce.number().min(0, "Cannot be negative."),
+    savingsPct: z.coerce.number().min(0).max(30),
+});
+
 const wizardSchema = z.object({
   aboutYou: aboutYouSchema,
+  essentials: essentialsSchema,
 });
 
 export type WizardFormData = z.infer<typeof wizardSchema>;
@@ -63,6 +74,51 @@ const Step1 = () => {
     );
 }
 
+const Step2 = () => {
+    const { control, watch } = useFormContext<WizardFormData>();
+    const savingsValue = watch('essentials.savingsPct');
+
+    return (
+        <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+                <FormField control={control} name="essentials.rentOrMortgage" render={({ field }) => (
+                    <FormItem><FormLabel>Rent/Mortgage</FormLabel><FormControl><Input type="number" placeholder="e.g., 1200" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={control} name="essentials.utilities" render={({ field }) => (
+                    <FormItem><FormLabel>Utilities</FormLabel><FormControl><Input type="number" placeholder="e.g., 150" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={control} name="essentials.groceries" render={({ field }) => (
+                    <FormItem><FormLabel>Groceries</FormLabel><FormControl><Input type="number" placeholder="e.g., 400" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={control} name="essentials.transport" render={({ field }) => (
+                    <FormItem><FormLabel>Transport</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+            </div>
+            <FormField control={control} name="essentials.debts" render={({ field }) => (
+                <FormItem><FormLabel>Debts & Loans</FormLabel><FormControl><Input type="number" placeholder="e.g., 200" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={control} name="essentials.savingsPct" render={({ field }) => (
+                <FormItem>
+                    <div className="flex justify-between items-center">
+                        <FormLabel>Savings goal</FormLabel>
+                        <span className="text-sm font-medium text-primary">{savingsValue}%</span>
+                    </div>
+                    <FormControl>
+                        <Slider
+                            defaultValue={[field.value]}
+                            onValueChange={(value) => field.onChange(value[0])}
+                            max={30}
+                            step={1}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+        </div>
+    );
+};
+
+
 const PlaceholderStep = ({ title }: { title: string }) => (
   <div className="text-center text-muted-foreground p-8">
     <p>Placeholder for: {title}</p>
@@ -71,7 +127,7 @@ const PlaceholderStep = ({ title }: { title: string }) => (
 
 const steps = [
     { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou.home", "aboutYou.income", "aboutYou.household", "aboutYou.hasOther", "aboutYou.otherIncome"] },
-    { title: "Essentials", description: "Account for your necessary monthly spending.", component: () => <PlaceholderStep title="Essentials" />, fields: [] },
+    { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentials.rentOrMortgage", "essentials.utilities", "essentials.groceries", "essentials.transport", "essentials.debts", "essentials.savingsPct"] },
     { title: "Suggestion", description: "Suggested budget for you", component: () => <PlaceholderStep title="Suggestion" />, fields: [] },
 ];
 
@@ -90,6 +146,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         resolver: zodResolver(wizardSchema),
         defaultValues: {
             aboutYou: { home: 'rent', income: 3000, household: 1, hasOther: false, otherIncome: 0 },
+            essentials: { rentOrMortgage: 1200, utilities: 150, groceries: 400, transport: 100, debts: 0, savingsPct: 10 },
         },
         mode: "onChange",
     });
@@ -117,6 +174,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
             ...wallet,
             wizardSeen: true,
             aboutYou: data.aboutYou,
+            essentials: data.essentials,
         };
         setWallet(updatedWallet);
 
