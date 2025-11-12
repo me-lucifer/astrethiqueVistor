@@ -280,8 +280,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
             break;
         case 'lock':
              newWalletState = {...currentWallet, budget_lock: { ...currentWallet.budget_lock, enabled: true, until: endOfMonth(new Date()).toISOString() } };
-             toast({ title: "Budget locked for current month." });
-            break;
+             break;
         case 'reset_month':
              const now = new Date();
              newWalletState = {...currentWallet, spent_this_month_cents: 0, monthStart: startOfMonth(now).toISOString(), monthEnd: endOfMonth(now).toISOString(), budget_lock: { enabled: false, emergency_used: false, until: null } };
