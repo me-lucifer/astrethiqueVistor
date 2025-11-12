@@ -169,10 +169,6 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                                 <p>Identity documents verified.</p>
                             </TooltipContent>
                         </Tooltip>
-                         <div className="flex items-center gap-1.5">
-                            <CalendarCheck className="h-3.5 w-3.5" />
-                            <span>Last review: {new Date(consultant.verifications.lastReview).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        </div>
                     </div>
                 </div>
             </div>
