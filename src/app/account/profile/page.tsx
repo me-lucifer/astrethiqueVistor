@@ -20,6 +20,7 @@ import { Shield, User as UserIcon, AlertTriangle, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ProfilePhotoCard } from "@/components/account/profile-photo-card";
 
 const pseudonymSchema = (currentUserId: string) => z.string()
     .min(3, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
@@ -64,7 +65,7 @@ export default function ProfilePage() {
         mode: "onChange",
     });
 
-    useEffect(() => {
+    const refreshUser = () => {
         const currentUser = authLocal.getCurrentUser();
         if (currentUser) {
             setUser(currentUser);
@@ -76,17 +77,32 @@ export default function ProfilePage() {
                 language: currentUser?.language || 'EN',
                 timezone: currentUser?.timezone || '',
             });
-            // Show migration banner if they were just migrated
+             // Show migration banner if they were just migrated
             if (currentUser.nameHistory.length <= 1 && !currentUser.pseudonym) {
                 setShowPseudonymBanner(true);
             }
         } else {
             router.push('/');
         }
+    }
+
+    useEffect(() => {
+        refreshUser();
         if (typeof window !== 'undefined') {
             setDefaultTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
         }
-    }, [router, form]);
+    }, [router]);
+    
+    useEffect(() => {
+        form.reset({
+            firstName: user?.firstName,
+            lastName: user?.lastName,
+            pseudonym: user?.pseudonym || '',
+            displayNamePreference: user?.displayNamePreference || 'realName',
+            language: user?.language || 'EN',
+            timezone: user?.timezone || defaultTimezone,
+        });
+    }, [user, form, defaultTimezone]);
 
     const onProfileSubmit = (data: ProfileFormData) => {
         if (!user) return;
@@ -117,6 +133,7 @@ export default function ProfilePage() {
 
     return (
         <div className="space-y-8">
+             <ProfilePhotoCard user={user} onUpdate={refreshUser} />
             {showPseudonymBanner && (
                 <Alert>
                     <AlertTriangle className="h-4 w-4" />

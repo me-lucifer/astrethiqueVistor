@@ -24,6 +24,7 @@ export interface User {
     favorites: { consultants: string[]; content: string[] };
     publicName: string;
     nameHistory: string[];
+    avatarUrl?: string;
 }
 
 export interface Comment {
