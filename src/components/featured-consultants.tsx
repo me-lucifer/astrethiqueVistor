@@ -160,7 +160,8 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                  mergedFilters.minPrice = String(initialPrice[0]);
                  mergedFilters.maxPrice = String(initialPrice[1]);
             }
-            updateFilters(mergedFilters, true);
+             setFilters(mergedFilters);
+             setSession('discover.filters.v1', mergedFilters);
         }
         const savedQuery = getSession<string>('discover.search.v1');
         if (savedQuery) {
@@ -634,3 +635,5 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         </TooltipProvider>
     );
 }
+
+    
