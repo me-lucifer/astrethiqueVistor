@@ -394,43 +394,60 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     <TooltipProvider>
       <GlassCard className="flex flex-col motion-reduce:transition-none">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-start">
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               Wallet & Budget
             </CardTitle>
-            <div className="flex items-center gap-1">
-              {(wizardSeen || budget_set) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge variant="outline" className="text-lg font-bold cursor-help" aria-live="polite">
-                      Balance: <span className="ml-1">{formatCurrency(balance)}</span>
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Funds available for sessions & content.</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              {isDev && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4"/></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleDemoAction('first_time')}>Simulate first-time view</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDemoAction('reset_month')}>Reset Month</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => {e.preventDefault(); handleSpend(700, "Demo spend €7")}}>Spend €7 (guard)</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => {e.preventDefault(); handleSpend(5000, "Demo spend €50")}}>Try spend €50</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDemoAction('new_month')}>New month</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleResetDemo(); }}>
-                      <span className="text-destructive">Reset demo activity</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-1">
+                {(wizardSeen || budget_set || balance > 0) && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="outline" className="text-lg font-bold cursor-help" aria-live="polite">
+                        Balance: <span className="ml-1">{formatCurrency(balance)}</span>
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Funds available for sessions & content.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {isDev && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4"/></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleDemoAction('first_time')}>Simulate first-time view</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDemoAction('reset_month')}>Reset Month</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={(e) => {e.preventDefault(); handleSpend(700, "Demo spend €7")}}>Spend €7 (guard)</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={(e) => {e.preventDefault(); handleSpend(5000, "Demo spend €50")}}>Try spend €50</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDemoAction('new_month')}>New month</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleResetDemo(); }}>
+                        <span className="text-destructive">Reset demo activity</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+               {budget_set && (
+                 <div className="flex items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span tabIndex={0} className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Info className="h-3 w-3" />
+                            Emergency top-up: €20 (once) when locked
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent><p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p></TooltipContent>
+                    </Tooltip>
+                    <Label htmlFor="lock-switch-header" className="text-sm sr-only">{locked ? 'Locked' : 'Unlocked'}</Label>
+                    <Switch id="lock-switch-header" checked={locked} onCheckedChange={handleToggleLock} aria-label="Lock budget"/>
+                </div>
               )}
             </div>
           </div>
@@ -448,26 +465,13 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
               </div>
             </Card>
           ) : !budget_set && balance > 0 ? (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
-                <Badge variant="outline">No monthly budget set</Badge>
-                <Button variant="link" size="sm" onClick={onBudgetClick}>Enable budget</Button>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-secondary border border-dashed" />
-              <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
-                <span>Budget not set</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="link" size="sm" className="text-xs p-0 h-auto">Why set a budget?</Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Adds a monthly cap; can be locked.</TooltipContent>
-                </Tooltip>
-              </div>
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(5)}>Top up €5</Button>
-                <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(10)}>Top up €10</Button>
-                <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(25)}>Top up €25</Button>
-              </div>
+            <div className="space-y-4 text-center">
+                <h3 className="font-semibold">You've added funds</h3>
+                <p className="text-sm text-muted-foreground">Set a monthly budget to avoid overspending.</p>
+                <div className="flex justify-center gap-2 pt-2">
+                    <Button onClick={onBudgetClick}>Set up budget</Button>
+                    <Button variant="secondary" onClick={() => handleToggleLock(true)}>Lock Wallet</Button>
+                </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -511,7 +515,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                         <TooltipTrigger asChild>
                           <span tabIndex={0}>
                             <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5 h-auto py-0 px-1" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={lockEmergencyUsed} aria-label="Use emergency top-up">
-                              <Zap className="h-4 w-4"/> Emergency top-up (€20 max)
+                              <Zap className="h-4 w-4"/> Emergency top-up
                             </Button>
                           </span>
                         </TooltipTrigger>
@@ -532,11 +536,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
               <Button onClick={() => setIsTopUpOpen(true)} size="sm" disabled={locked && lockEmergencyUsed}>Top up</Button>
               <Button onClick={onBudgetClick} variant="outline" size="sm">Change budget</Button>
             </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="lock-switch" className="text-sm">{locked ? 'Locked' : 'Unlocked'}</Label>
-              <Switch id="lock-switch" checked={locked} onCheckedChange={handleToggleLock} aria-label="Lock budget"/>
-              <HistoryDrawer />
-            </div>
+             <HistoryDrawer />
           </CardFooter>
         )}
         <p className="text-xs text-muted-foreground text-center p-2">Spending uses wallet balance only. Budgets reset monthly.</p>
@@ -628,13 +628,15 @@ function HistoryDrawer() {
   }, [log, filter]);
   
   const downloadInvoice = () => {
+    if (!selectedTransaction) return;
     const blob = new Blob(["This is a placeholder PDF invoice."], { type: "application/pdf" });
-    saveAs(blob, `invoice-${selectedTransaction?.ts}.pdf`);
+    saveAs(blob, `invoice-${new Date(selectedTransaction.ts).getTime()}.pdf`);
   };
     
   const downloadCreditNote = () => {
+    if (!selectedTransaction) return;
     const blob = new Blob(["This is a placeholder PDF credit note."], { type: "application/pdf" });
-    saveAs(blob, `credit-note-${selectedTransaction?.ts}.pdf`);
+    saveAs(blob, `credit-note-${new Date(selectedTransaction.ts).getTime()}.pdf`);
   };
 
   const iconMap: Record<SpendLogEntry['type'], React.ReactNode> = {
@@ -709,7 +711,7 @@ function HistoryDrawer() {
                         )}
                         {/* @ts-ignore */}
                         {entry.creditNoteUrl && (
-                            <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground mt-1">Credit Note</Button>
+                             <Button variant="link" size="sm" onClick={downloadCreditNote} className="h-auto p-0 text-xs text-muted-foreground mt-1">Credit Note</Button>
                         )}
                     </div>
                 </div>
@@ -1248,5 +1250,8 @@ const horoscopeData: { [key: string]: string } = {
     
 
       
+
+    
+
 
     
