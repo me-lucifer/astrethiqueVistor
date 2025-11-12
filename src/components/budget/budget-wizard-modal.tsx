@@ -200,6 +200,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
 
     useEffect(() => {
         if (isOpen) {
+            setCurrentStep(0);
             const wallet = getWallet();
             methods.reset({
                 aboutYou: wallet.aboutYou,
