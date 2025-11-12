@@ -107,9 +107,9 @@ const Step3 = () => {
     const formData = watch();
     const { suggestedBudget } = useBudgetCalculator(formData);
     
-    // Set initial value for finalBudget if not already set
+    // Set initial value for finalBudget if not already set or is 0
     useEffect(() => {
-        if (formData.finalBudget === undefined && suggestedBudget > 0) {
+        if ((formData.finalBudget === undefined || formData.finalBudget === 0) && suggestedBudget > 0) {
             setValue('finalBudget', suggestedBudget);
         }
     }, [suggestedBudget, formData.finalBudget, setValue]);
@@ -163,7 +163,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
             essentialsTransport: 100,
             debts: 0,
             savingsGoalPercent: 10,
-            finalBudget: undefined,
+            finalBudget: 0,
             enableBudgetLock: false
         },
         mode: "onChange",
