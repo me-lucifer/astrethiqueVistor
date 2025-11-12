@@ -35,6 +35,7 @@ try {
 }
 
 export function getSession<T>(key: string): T | null {
+  if (typeof window === 'undefined') return null;
   try {
     const item = storage.getItem(key);
     return item ? JSON.parse(item) : null;
@@ -45,6 +46,7 @@ export function getSession<T>(key: string): T | null {
 }
 
 export function setSession<T>(key: string, value: T): void {
+  if (typeof window === 'undefined') return;
   try {
     storage.setItem(key, JSON.stringify(value));
   } catch (error) {
@@ -53,6 +55,7 @@ export function setSession<T>(key: string, value: T): void {
 }
 
 export function removeSession(key: string): void {
+    if (typeof window === 'undefined') return;
     try {
         storage.removeItem(key);
     } catch (error) {
@@ -61,6 +64,7 @@ export function removeSession(key: string): void {
 }
 
 export function seedOnce(flagKey: string, seedFn: () => void): void {
+    if (typeof window === 'undefined') return;
     const hasBeenSeeded = getSession<boolean>(flagKey);
     if (!hasBeenSeeded) {
         seedFn();

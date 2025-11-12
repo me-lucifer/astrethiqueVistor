@@ -215,24 +215,23 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         if (isOpen) {
             setCurrentStep(0);
             const wallet = getWallet();
-            // Pre-fill form if data exists in wallet
-            if (wallet.wizardSeen) {
-                methods.reset({
-                    aboutYou: wallet.aboutYou,
-                    essentials: { // essentials has a different structure in wallet, map it
-                        rentOrMortgage: wallet.essentials.rent,
-                        utilities: wallet.essentials.utilities,
-                        groceries: wallet.essentials.groceries,
-                        transport: wallet.essentials.transport,
-                        debts: wallet.essentials.debts,
-                        savingsPct: wallet.essentials.savingsPct
-                    },
-                    finalStep: {
-                        finalAmount: wallet.budget_cents / 100,
-                        lockWallet: wallet.budget_lock.enabled,
-                    }
-                });
-            }
+            // Pre-fill form if data exists in wallet, but don't persist between steps
+            const defaultValues: WizardFormData = {
+                aboutYou: wallet.aboutYou || { home: 'rent', income: 3000, household: 1, hasOther: false },
+                essentials: {
+                    rentOrMortgage: wallet.essentials?.rent || 1200,
+                    utilities: wallet.essentials?.utilities || 150,
+                    groceries: wallet.essentials?.groceries || 400,
+                    transport: wallet.essentials?.transport || 100,
+                    debts: wallet.essentials?.debts || 0,
+                    savingsPct: wallet.essentials?.savingsPct || 10
+                },
+                finalStep: {
+                    finalAmount: wallet.budget_cents > 0 ? wallet.budget_cents / 100 : 0,
+                    lockWallet: wallet.budget_lock?.enabled || true,
+                }
+            };
+            methods.reset(defaultValues);
         }
     }, [isOpen, methods]);
 

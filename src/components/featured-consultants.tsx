@@ -23,6 +23,7 @@ import { getSession, setSession } from "@/lib/session";
 import { parseISO } from 'date-fns';
 import * as authLocal from '@/lib/authLocal';
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 const specialties = [
     { id: "Love", name: "Love", icon: Heart },
@@ -110,6 +111,7 @@ const INITIAL_VISIBLE_COUNT = 9;
 export function FeaturedConsultants({ initialQuery, showFilters = false }: { initialQuery?: string, showFilters?: boolean }) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
     const { toast } = useToast();
+    const router = useRouter();
 
     const [allConsultants, setAllConsultants] = useState<Consultant[]>([]);
     const [readingTypes, setReadingTypes] = useState<string[]>([]);
@@ -127,6 +129,18 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
     });
     const [sort, setSort] = useState<SortKey>(() => getSession<SortKey>('discover.sort.v1') || 'recommended');
     const [priceBounds, setPriceBounds] = useState<[number, number]>([0, 10]);
+    
+    const [debouncedFilters, setDebouncedFilters] = useState(filters);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedFilters(filters);
+        }, 250);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [filters]);
 
     const loadState = useCallback(() => {
         const storedConsultants = getSession<Consultant[]>('discover.seed.v1');
@@ -140,7 +154,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             const savedFilters = getSession<Filters>('discover.filters.v1');
             const mergedFilters = { ...defaultFilters, ...savedFilters };
             
-            if (!savedFilters || !savedFilters.price) {
+            if (!savedFilters || !savedFilters.price || savedFilters.price[0] === 0 && savedFilters.price[1] === 10) {
                  const initialPrice: [number, number] = [min, max];
                  mergedFilters.price = initialPrice;
                  mergedFilters.minPrice = String(initialPrice[0]);
@@ -218,46 +232,46 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
 
         // Standard Filters
         result = result.filter(c => {
-            if (filters.myFavorites && !favorites.includes(c.id)) return false;
+            if (debouncedFilters.myFavorites && !favorites.includes(c.id)) return false;
             
-            if (filters.specialties.length > 0 && !filters.specialties.some(s => c.specialties.includes(s as any))) return false;
+            if (debouncedFilters.specialties.length > 0 && !debouncedFilters.specialties.some(s => c.specialties.includes(s as any))) return false;
 
-            if (filters.types.length > 0 && !filters.types.some(t => c.types.includes(t))) return false;
+            if (debouncedFilters.types.length > 0 && !debouncedFilters.types.some(t => c.types.includes(t))) return false;
             
-            if (c.pricePerMin < filters.price[0] || c.pricePerMin > filters.price[1]) return false;
+            if (c.pricePerMin < debouncedFilters.price[0] || c.pricePerMin > debouncedFilters.price[1]) return false;
 
-            if (filters.zodiac && !c.specializesInSigns.includes(filters.zodiac)) return false;
+            if (debouncedFilters.zodiac && !c.specializesInSigns.includes(debouncedFilters.zodiac)) return false;
 
-            if (parseFloat(filters.rating) > 0 && c.rating < parseFloat(filters.rating)) return false;
+            if (parseFloat(debouncedFilters.rating) > 0 && c.rating < parseFloat(debouncedFilters.rating)) return false;
 
-            if (filters.badges.length > 0 && !filters.badges.every(b => c.badges && c.badges.includes(b as any))) return false;
+            if (debouncedFilters.badges.length > 0 && !debouncedFilters.badges.every(b => c.badges && c.badges.includes(b as any))) return false;
 
-            if (Object.values(filters.languages).some(v => v) && !Object.entries(filters.languages).every(([lang, checked]) => !checked || c.languages.includes(lang as any))) {
+            if (Object.values(debouncedFilters.languages).some(v => v) && !Object.entries(debouncedFilters.languages).every(([lang, checked]) => !checked || c.languages.includes(lang as any))) {
               return false;
             }
 
 
-            if (filters.availability.length > 0) {
+            if (debouncedFilters.availability.length > 0) {
                 const availabilityString = c.availability.online ? 'Online now' : (getSession<string[]>('busyConsultants')?.includes(c.id) ? 'Busy' : 'Offline');
-                if (!filters.availability.includes(availabilityString)) {
+                if (!debouncedFilters.availability.includes(availabilityString)) {
                      return false;
                 }
             }
 
-            if (filters.content.length > 0) {
+            if (debouncedFilters.content.length > 0) {
                 const checks = {
                     hasArticles: c.contentCounts.articles > 0,
                     hasPodcasts: c.contentCounts.podcasts > 0,
                     hasUpcomingConference: c.contentCounts.conferences > 0,
                 };
-                if (!filters.content.every(filterKey => checks[filterKey as keyof typeof checks])) {
+                if (!debouncedFilters.content.every(filterKey => checks[filterKey as keyof typeof checks])) {
                     return false;
                 }
             }
 
-            if (filters.frOnlyVisibility && !c.languages.some(l => l === 'FR')) return false;
-            if (filters.aPlusPlusOnly && c.rating < 4.8) return false;
-            if (filters.onPromo && !c.promo24h) return false;
+            if (debouncedFilters.frOnlyVisibility && !c.languages.some(l => l === 'FR')) return false;
+            if (debouncedFilters.aPlusPlusOnly && c.rating < 4.8) return false;
+            if (debouncedFilters.onPromo && !c.promo24h) return false;
 
             return true;
         });
@@ -287,7 +301,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         });
         
         return result;
-    }, [allConsultants, filters, sort, query]);
+    }, [allConsultants, debouncedFilters, sort, query]);
 
     const handleResetFilters = () => {
         const newFilters = {...defaultFilters, price: priceBounds, minPrice: String(priceBounds[0]), maxPrice: String(priceBounds[1])};
@@ -356,7 +370,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
             createdAt: new Date().toISOString()
         });
 
-        authLocal.updateUser({ ...updatedUser, savedSearches });
+        authLocal.updateUser(user.id, { ...updatedUser, savedSearches });
         
         toast({
             title: "Search saved!",

@@ -136,7 +136,7 @@ export interface Metrics {
     horoscope_purchases: number;
 }
 
-const WALLET_KEY = 'ast_wallet';
+const WALLET_KEY = 'ast.wallet';
 const SPEND_LOG_KEY = 'ast_spend_log';
 const METRICS_KEY = 'ast_metrics';
 
@@ -182,9 +182,9 @@ export const getWallet = (): Wallet => {
             monthEnd: endOfMonth(now).toISOString(),
             budget_lock: {
                 ...wallet.budget_lock,
-                enabled: false, // Reset lock at start of new month
-                emergency_used: false,
-                until: null
+                enabled: wallet.budget_lock.enabled, // Preserve lock status
+                emergency_used: false, // Reset emergency use
+                until: wallet.budget_lock.enabled ? endOfMonth(now).toISOString() : null,
             },
         };
         setLocal(WALLET_KEY, wallet);
