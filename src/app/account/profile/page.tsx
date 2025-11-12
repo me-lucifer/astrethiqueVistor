@@ -94,14 +94,16 @@ export default function ProfilePage() {
     }, [router]);
     
     useEffect(() => {
-        form.reset({
-            firstName: user?.firstName,
-            lastName: user?.lastName,
-            pseudonym: user?.pseudonym || '',
-            displayNamePreference: user?.displayNamePreference || 'realName',
-            language: user?.language || 'EN',
-            timezone: user?.timezone || defaultTimezone,
-        });
+        if (user) {
+            form.reset({
+                firstName: user.firstName,
+                lastName: user.lastName,
+                pseudonym: user.pseudonym || '',
+                displayNamePreference: user.displayNamePreference || 'realName',
+                language: user.language || 'EN',
+                timezone: user.timezone || defaultTimezone,
+            });
+        }
     }, [user, form, defaultTimezone]);
 
     const onProfileSubmit = (data: ProfileFormData) => {
@@ -169,7 +171,7 @@ export default function ProfilePage() {
                              <FormField control={form.control} name="pseudonym" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Pseudonym (public name)</FormLabel>
-                                    <FormControl><Input placeholder="e.g., StarSeeker" {...field} /></FormControl>
+                                    <FormControl><Input placeholder="e.g., StarSeeker" {...field} value={field.value ?? ''} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
