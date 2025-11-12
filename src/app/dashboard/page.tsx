@@ -4,7 +4,7 @@
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format, formatDistanceToNow, isToday, isYesterday, endOfMonth, getDaysInMonth, getDate } from "date-fns";
+import { format, formatDistanceToNow, isToday, isYesterday, endOfMonth, getDaysInMonth, getDate, differenceInDays } from "date-fns";
 
 // UI Component Imports
 import {
@@ -272,17 +272,17 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     let newWalletState: WalletType;
     switch (action) {
         case 'first_time':
-             newWalletState = {...currentWallet, balance: 0, budget: 0, monthSpend: 0, wizardSeen: false, locked: false, lockEmergencyUsed: false };
+             newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, wizardSeen: false, budget_lock: { enabled: false, emergency_used: false, until: null } };
              break;
         case 'seed':
-            newWalletState = {...currentWallet, balance: 15, budget: 30, monthSpend: 0, wizardSeen: true, lockEmergencyUsed: false };
+            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, wizardSeen: true, budget_lock: { ...currentWallet.budget_lock, emergency_used: false } };
             break;
         case 'lock':
-             newWalletState = {...currentWallet, locked: true, lockUntil: endOfMonth(new Date()).toISOString() };
+             newWalletState = {...currentWallet, budget_lock: { ...currentWallet.budget_lock, enabled: true, until: endOfMonth(new Date()).toISOString() } };
             break;
         case 'reset_month':
              const now = new Date();
-             newWalletState = {...currentWallet, monthSpend: 0, monthStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(), monthEnd: endOfMonth(now).toISOString(), locked: false, lockEmergencyUsed: false };
+             newWalletState = {...currentWallet, spent_this_month_cents: 0, monthStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(), monthEnd: endOfMonth(now).toISOString(), budget_lock: { enabled: false, emergency_used: false, until: null } };
             break;
     }
     setWalletAndUpdateState(newWalletState);
@@ -292,8 +292,11 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
       const wallet = getWallet();
       const updatedWallet: WalletType = {
         ...wallet,
-        locked: lock,
-        lockUntil: lock ? endOfMonth(new Date()).toISOString() : null,
+        budget_lock: {
+          ...wallet.budget_lock,
+          enabled: lock,
+          until: lock ? endOfMonth(new Date()).toISOString() : null,
+        }
       };
       setWalletAndUpdateState(updatedWallet);
       toast({
@@ -320,7 +323,10 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     );
   }
 
-  const { balance, monthSpend, budget, wizardSeen, locked, lockEmergencyUsed, monthEnd } = wallet;
+  const { balance_cents: balance, spent_this_month_cents: monthSpend, budget_cents: budget, wizardSeen, budget_lock } = wallet;
+  const locked = budget_lock.enabled;
+  const lockEmergencyUsed = budget_lock.emergency_used;
+  const monthEnd = wallet.monthEnd;
   const remaining = Math.max(0, budget - monthSpend);
   const progress = wizardSeen && budget > 0 ? (monthSpend / budget) * 100 : 0;
   const daysLeft = differenceInDays(new Date(monthEnd), new Date());
@@ -328,12 +334,12 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const progressColor = locked ? "bg-muted-foreground" : progress > 80 ? "bg-destructive" : progress > 50 ? "bg-amber-500" : "bg-success";
   
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(amount);
+    return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(amount / 100);
   };
   
   return (
     <TooltipProvider>
-      <GlassCard className="flex flex-col">
+      <GlassCard className="flex flex-col motion-reduce:transition-none">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="flex items-center gap-2">
@@ -362,7 +368,6 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                             <DropdownMenuItem onClick={() => handleDemoAction('first_time')}>Simulate first-time view</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDemoAction('reset_month')}>Reset Month</DropdownMenuItem>
                             <DropdownMenuSeparator />
                              <DropdownMenuItem onClick={() => handleSpend(700, "Demo spend €7")}>Spend €7 (guard)</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSpend(5000, "Demo spend €50")}>Try spend €50</DropdownMenuItem>
@@ -497,7 +502,7 @@ function HistoryDrawer() {
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
-        let runningBalance = getWallet().balance;
+        let runningBalance = getWallet().balance_cents / 100;
         const rawLog = getSpendLog();
         const processedLog: SpendLogEntry[] = [];
 
