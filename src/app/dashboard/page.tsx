@@ -69,6 +69,7 @@ import {
   getMoodMeta,
   EMERGENCY_TOPUP_LIMIT_EUR,
   getMoodLog,
+  removeLocal,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -226,6 +227,7 @@ export default function DashboardPage() {
 // Sub-components for the Dashboard
 function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [wallet, setWalletState] = useState<WalletType | null>(null);
+  const [debouncedWallet, setDebouncedWallet] = useState<WalletType | null>(null);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
   const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -236,21 +238,17 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
   const [topUpOnlyAmount, setTopUpOnlyAmount] = useState(0);
 
-  const [debouncedWallet, setDebouncedWallet] = useState<WalletType | null>(wallet);
-
   useEffect(() => {
     setIsDev(process.env.NODE_ENV === 'development');
     const handler = setTimeout(() => {
-      if (wallet) {
-        setWallet(wallet);
+      if (debouncedWallet) {
+        setWallet(debouncedWallet);
       }
     }, 250);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [wallet]);
-
+  
+    return () => clearTimeout(handler);
+  }, [debouncedWallet]);
+  
 
   const fetchWalletData = useCallback(() => {
     setWalletState(getWallet());
@@ -271,6 +269,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
             variant: "destructive",
         });
     }
+    fetchWalletData();
   }
 
   const handleDemoAction = (action: 'first_time' | 'seed' | 'lock' | 'reset_month' | 'new_month') => {
@@ -302,6 +301,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
             break;
     }
     setWallet(newWalletState);
+    fetchWalletData();
   }
   
   const handleToggleLock = (lock: boolean) => {
@@ -364,8 +364,10 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   }
 
   const handleResetDemo = () => {
-    removeWallet();
+    removeLocal("ast.wallet");
+    removeLocal("ast_spend_log");
     fetchWalletData();
+    toast({ title: "Demo activity has been reset." });
   }
 
 
@@ -428,10 +430,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                     <DropdownMenuItem onClick={() => handleDemoAction('reset_month')}>Reset Month</DropdownMenuItem>
                     <DropdownMenuItem onSelect={(e) => {e.preventDefault(); handleSpend(700, "Demo spend €7")}}>Spend €7 (guard)</DropdownMenuItem>
                     <DropdownMenuItem onSelect={(e) => {e.preventDefault(); handleSpend(5000, "Demo spend €50")}}>Try spend €50</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <Button variant="link-destructive" className="p-0 h-auto" onClick={() => handleDemoAction('new_month')}>New month</Button>
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDemoAction('new_month')}>New month</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleResetDemo(); }}>
                       <span className="text-destructive">Reset demo activity</span>
