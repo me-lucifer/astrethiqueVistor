@@ -250,12 +250,6 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
-  const setWallet = (newWallet: WalletType) => {
-    setWalletState(newWallet);
-    setLocal(WALLET_KEY, newWallet);
-    window.dispatchEvent(new Event('storage'));
-  }
-  
   const handleSpend = (amountCents: number, note: string) => {
     const spendResult = spendFromWallet(amountCents, 'other', note);
     if (!spendResult.ok) {
@@ -286,17 +280,17 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
              break;
         case 'reset_month':
              const now = new Date();
-             newWalletState = {...currentWallet, spent_this_month_cents: 0, month: format(now, 'yyyy-MM'), budget_lock: { enabled: false, emergency_used: false, until: null } };
+             newWalletState = {...currentWallet, spent_this_month_cents: 0, month: format(now, 'yyyy-MM'), budget_lock: { ...currentWallet.budget_lock, enabled: false, emergency_used: false, until: null } };
              toast({ title: "Monthly spend has been reset." });
             break;
         case 'new_month':
             const nextMonth = new Date();
             nextMonth.setMonth(nextMonth.getMonth() + 1);
-            newWalletState = {...currentWallet, spent_this_month_cents: 0, month: format(nextMonth, 'yyyy-MM'), budget_lock: { enabled: false, emergency_used: false, until: null }, budget_cents: 0, wizardSeen: false, budget_set: false, balance_cents: currentWallet.balance_cents };
+            newWalletState = {...currentWallet, spent_this_month_cents: 0, month: format(nextMonth, 'yyyy-MM'), budget_lock: { ...currentWallet.budget_lock, enabled: false, emergency_used: false, until: null }, budget_cents: 0, wizardSeen: false, budget_set: false, balance_cents: currentWallet.balance_cents };
             toast({ title: "Simulating a completely new month."});
             break;
     }
-    setWallet(newWalletState);
+    setLocal(WALLET_KEY, newWalletState);
     fetchWalletData();
   }
   
@@ -325,7 +319,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
         until: endOfMonth(new Date()).toISOString(),
       }
     };
-    setWallet(updatedWallet);
+    setLocal(WALLET_KEY, updatedWallet);
     toast({ title: "Budget locked" });
     setIsLockConfirmOpen(false);
   };
@@ -340,7 +334,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
         until: null,
       }
     };
-    setWallet(updatedWallet);
+    setLocal(WALLET_KEY, updatedWallet);
     toast({ title: "Budget unlocked" });
     setIsUnlockConfirmOpen(false);
   };
@@ -503,7 +497,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                           <div className="space-y-1" tabIndex={0}>
                             <CardTitle className="text-base flex items-center gap-2 text-amber-500">
                               <Lock className="h-4 w-4"/>
-                              Budget locked until {monthEnd && monthEnd ? format(new Date(monthEnd), "MMM dd") : ''}
+                              Budget locked until {monthEnd ? format(new Date(monthEnd), "MMM dd") : ''}
                             </CardTitle>
                           </div>
                         </TooltipTrigger>
@@ -531,7 +525,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
         {(wizardSeen || budget_set) && (
           <CardFooter className="flex justify-between items-center mt-auto border-t pt-4">
             <div className="flex gap-2">
-              <Button onClick={() => setIsTopUpOpen(true)} size="sm">Top up</Button>
+              <Button onClick={() => setIsTopUpOpen(true)} size="sm" disabled={locked && lockEmergencyUsed}>Top up</Button>
               <Button onClick={onBudgetClick} variant="outline" size="sm">Change budget</Button>
             </div>
             <div className="flex items-center gap-2">
