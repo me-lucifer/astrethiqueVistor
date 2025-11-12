@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { AnimatePresence, motion } from "framer-motion";
-import { getWallet, setWallet, type Wallet } from "@/lib/local";
+import { getWallet, setLocal, type Wallet, WALLET_KEY } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, Wallet as WalletIcon } from "lucide-react";
 import { Slider } from "../ui/slider";
@@ -267,7 +267,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
                 savingsPct: data.essentials.savingsPct
             },
         };
-        setWallet(updatedWallet);
+        setLocal(WALLET_KEY, updatedWallet);
 
         let toastDescription = ``;
         if(data.finalStep.lockWallet) {

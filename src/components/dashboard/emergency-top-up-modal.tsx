@@ -59,7 +59,7 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
                 emergency_used: true,
             }
         };
-        setWallet(updatedWallet);
+        setWallet(updatedWallet, true);
         addSpendLogEntry({
             ts: new Date().toISOString(),
             type: "emergency",
@@ -69,7 +69,7 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
         incrementMetric('emergencies');
 
         toast({
-            title: "Emergency Funds Added",
+            title: "Emergency top-up used",
             description: `€${amount.toFixed(2)} added. Your new balance is €${(updatedWallet.balance_cents / 100).toFixed(2)}.`,
         });
 

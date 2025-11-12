@@ -54,12 +54,20 @@ export function getLocal<T>(key: string): T | null {
   }
 }
 
-export function setLocal<T>(key: string, value: T): void {
-  try {
-    storage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new Event('storage_change'));
-  } catch (error) {
-    console.error(`Error writing to storage for key "${key}":`, error);
+export function setLocal<T>(key: string, value: T, shouldDebounce = false): void {
+  const write = () => {
+      try {
+        storage.setItem(key, JSON.stringify(value));
+        window.dispatchEvent(new Event('storage_change'));
+      } catch (error) {
+        console.error(`Error writing to storage for key "${key}":`, error);
+      }
+  };
+  
+  if (shouldDebounce) {
+      setTimeout(write, 250);
+  } else {
+      write();
   }
 }
 
@@ -100,14 +108,14 @@ export interface Wallet {
     monthEnd: string;
     wizardSeen: boolean;
     budget_set: boolean;
-    aboutYou: {
+    aboutYou?: {
         home: "own" | "rent";
         income: number;
         household: number;
         hasOther: boolean;
         otherIncome?: number;
     };
-    essentials: {
+    essentials?: {
         rent: number;
         utilities: number;
         groceries: number;
@@ -115,7 +123,7 @@ export interface Wallet {
         debts: number;
         savingsPct: number;
     };
-    suggestionMeta: {
+    suggestionMeta?: {
         rate: number;
     };
 }
@@ -135,8 +143,8 @@ export interface Metrics {
     horoscope_purchases: number;
 }
 
-const WALLET_KEY = 'ast.wallet';
-const SPEND_LOG_KEY = 'ast_spend_log';
+export const WALLET_KEY = 'ast.wallet';
+export const SPEND_LOG_KEY = 'ast_spend_log';
 const METRICS_KEY = 'ast_metrics';
 
 // --- INITIALIZATION ---
@@ -210,31 +218,21 @@ export const getWallet = (): Wallet => {
     return wallet;
 };
 
-export const setWallet = (wallet: Wallet) => {
-    setLocal(WALLET_KEY, wallet);
-}
-
-export const removeWallet = () => {
-    removeLocal(WALLET_KEY);
-}
-
 export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string): { ok: boolean, message: string } {
     const wallet = getWallet();
     const result = { ok: false, message: "" };
 
     if (amount_cents > 0) {
+      if (wallet.budget_lock.enabled && (wallet.balance_cents < amount_cents)) {
+          result.message = "locked:Wallet is locked and funds are insufficient.";
+          return result;
+      }
       if (wallet.balance_cents < amount_cents) {
-          if (wallet.budget_lock.enabled) {
-              result.message = `locked:Budget is locked and funds are insufficient.`;
-          } else {
-              result.message = "insufficient:Insufficient funds in your wallet.";
-          }
-          console.log("Spend failed:", result.message);
+          result.message = "insufficient:Insufficient funds in your wallet.";
           return result;
       }
       if (wallet.budget_set && (wallet.spent_this_month_cents + amount_cents) > wallet.budget_cents) {
           result.message = "budget_exceeded:This transaction exceeds your monthly budget.";
-          console.log("Spend failed:", result.message);
           return result;
       }
     }
@@ -244,7 +242,7 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
         balance_cents: wallet.balance_cents - amount_cents,
         spent_this_month_cents: wallet.spent_this_month_cents + amount_cents,
     };
-    setWallet(newWalletState);
+    setLocal(WALLET_KEY, newWalletState, true);
 
     if (amount_cents > 0) {
         addSpendLogEntry({
@@ -257,7 +255,6 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
     
     result.ok = true;
     result.message = "Transaction successful.";
-    console.log("Spend successful:", { result, amount: amount_cents, newBalance: newWalletState.balance_cents });
     return result;
 }
 

@@ -59,7 +59,7 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
             };
         }
         
-        setWallet(updatedWallet);
+        setWallet(updatedWallet, true);
         addSpendLogEntry({
             ts: new Date().toISOString(),
             type: "topup",
@@ -69,8 +69,8 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
         incrementMetric('topups');
 
         toast({
-            title: "Funds Added!",
-            description: `Your new balance is €${(updatedWallet.balance_cents / 100).toFixed(2)}.`,
+            title: "Funds added!",
+            description: `New balance: €${(updatedWallet.balance_cents / 100).toFixed(2)}.`,
         });
         
         onOpenChange(false);

@@ -70,6 +70,8 @@ import {
   EMERGENCY_TOPUP_LIMIT_EUR,
   getMoodLog,
   removeLocal,
+  WALLET_KEY,
+  SPEND_LOG_KEY,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -227,7 +229,6 @@ export default function DashboardPage() {
 // Sub-components for the Dashboard
 function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [wallet, setWalletState] = useState<WalletType | null>(null);
-  const [debouncedWallet, setDebouncedWallet] = useState<WalletType | null>(null);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
   const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -238,28 +239,23 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
   const [topUpOnlyAmount, setTopUpOnlyAmount] = useState(0);
 
-  useEffect(() => {
-    setIsDev(process.env.NODE_ENV === 'development');
-    const handler = setTimeout(() => {
-      if (debouncedWallet) {
-        setWallet(debouncedWallet);
-      }
-    }, 250);
-  
-    return () => clearTimeout(handler);
-  }, [debouncedWallet]);
-  
-
   const fetchWalletData = useCallback(() => {
     setWalletState(getWallet());
   }, []);
 
   useEffect(() => {
+    setIsDev(process.env.NODE_ENV === 'development');
     fetchWalletData();
     window.addEventListener("storage", fetchWalletData);
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
+  const setWallet = (newWallet: WalletType) => {
+    setWalletState(newWallet);
+    setLocal(WALLET_KEY, newWallet);
+    window.dispatchEvent(new Event('storage'));
+  }
+  
   const handleSpend = (amountCents: number, note: string) => {
     const spendResult = spendFromWallet(amountCents, 'other', note);
     if (!spendResult.ok) {
@@ -330,7 +326,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
       }
     };
     setWallet(updatedWallet);
-    toast({ title: "Budget Locked", description: `Your spending is now capped at your budget of €${(wallet.budget_cents / 100).toFixed(2)}.` });
+    toast({ title: "Budget locked" });
     setIsLockConfirmOpen(false);
   };
   
@@ -345,12 +341,12 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
       }
     };
     setWallet(updatedWallet);
-    toast({ title: "Budget Unlocked", description: "You can spend beyond your budget again." });
+    toast({ title: "Budget unlocked" });
     setIsUnlockConfirmOpen(false);
   };
   
   const handleQuickTopUp = (amount: number) => {
-      if(!wallet?.budget_set && wallet?.balance_cents === 0) {
+      if(wallet && !wallet.budget_set && wallet.balance_cents === 0) {
           setTopUpOnlyAmount(amount);
           setIsSetBudgetPromptOpen(true);
       } else {
@@ -507,7 +503,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                           <div className="space-y-1" tabIndex={0}>
                             <CardTitle className="text-base flex items-center gap-2 text-amber-500">
                               <Lock className="h-4 w-4"/>
-                              Budget locked until {monthEnd ? format(new Date(monthEnd), "MMM dd") : ''}
+                              Budget locked until {monthEnd && monthEnd ? format(new Date(monthEnd), "MMM dd") : ''}
                             </CardTitle>
                           </div>
                         </TooltipTrigger>
