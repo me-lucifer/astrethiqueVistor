@@ -272,7 +272,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     let newWalletState: WalletType;
     switch (action) {
         case 'first_time':
-             newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, wizardSeen: false, budget_set: false, budget_lock: { enabled: false, emergency_used: false, until: null } };
+             newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, wizardSeen: false, budget_set: false, budget_lock: { ...currentWallet.budget_lock, enabled: false, emergency_used: false } };
              break;
         case 'seed':
             newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, wizardSeen: true, budget_set: true, budget_lock: { ...currentWallet.budget_lock, enabled: false, emergency_used: false } };
@@ -784,7 +784,8 @@ function HoroscopeCard({ user }: { user: authLocal.User | null }) {
           {horoscope ? (
             <div>
               <p className="font-semibold mb-2 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" /> Today for{" "}
+                <Sparkles className="h-4 w-4 text-primary" />
+                Today for{" "}
                 {zodiacSign}
               </p>
               <p className="text-sm text-muted-foreground">{horoscope}</p>
@@ -1083,3 +1084,6 @@ const horoscopeData: { [key: string]: string } = {
     
 
 
+
+
+    
