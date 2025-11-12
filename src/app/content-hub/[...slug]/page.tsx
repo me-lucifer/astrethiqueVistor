@@ -21,7 +21,7 @@ import { CommentsSection } from '@/components/content-hub/comments-section';
 import { YouTubePlayer } from '@/components/content-hub/youtube-player';
 import { format } from 'date-fns';
 import { AuthModal } from '@/components/auth-modal';
-import { getLocal } from '@/lib/local';
+import { getLocal, setLocal } from '@/lib/local';
 
 const Placeholder = () => (
     <div className="container py-12">
@@ -164,7 +164,7 @@ export default function ContentDetailPage() {
     const updateItemInLocalStorage = useCallback((updatedItem: ContentHubItem) => {
         const currentItems = getLocal<ContentHubItem[]>('ch_items') || [];
         const updatedItems = currentItems.map(i => i.id === updatedItem.id ? updatedItem : i);
-        authLocal.setLocal('ch_items', updatedItems);
+        setLocal('ch_items', updatedItems);
         window.dispatchEvent(new Event('storage_change')); // Notify other components
     }, []);
 
@@ -198,7 +198,7 @@ export default function ContentDetailPage() {
             updatedUser.favorites.content.push(itemIdToBookmark);
         }
         
-        authLocal.updateUser(updatedUser);
+        authLocal.updateUser(user.id, updatedUser);
 
         toast({
             title: !item?.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
@@ -223,7 +223,7 @@ export default function ContentDetailPage() {
             createdAt: new Date().toISOString(),
         };
         
-        authLocal.setLocal('ast_comments', [newComment, ...allComments]);
+        setLocal('ast_comments', [newComment, ...allComments]);
         window.dispatchEvent(new Event('storage_change'));
 
         toast({
