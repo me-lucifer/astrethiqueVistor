@@ -38,9 +38,10 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
     const streamRef = useRef<MediaStream | null>(null);
 
     useEffect(() => {
+        let stream: MediaStream;
         const getPermissions = async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 streamRef.current = stream;
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
@@ -56,17 +57,19 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
         };
     }, []);
 
-    useEffect(() => {
+    const toggleVideo = (enabled: boolean) => {
         if (streamRef.current) {
-            streamRef.current.getVideoTracks().forEach(track => track.enabled = cameraEnabled);
+            streamRef.current.getVideoTracks().forEach(track => track.enabled = enabled);
         }
-    }, [cameraEnabled]);
-
-    useEffect(() => {
+        setCameraEnabled(enabled);
+    }
+    
+    const toggleAudio = (enabled: boolean) => {
         if (streamRef.current) {
-            streamRef.current.getAudioTracks().forEach(track => track.enabled = micEnabled);
+            streamRef.current.getAudioTracks().forEach(track => track.enabled = enabled);
         }
-    }, [micEnabled]);
+        setMicEnabled(enabled);
+    }
     
     return (
         <div className="h-screen w-screen bg-black/80 flex items-center justify-center p-4">
@@ -93,7 +96,7 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                                 <Label htmlFor="mic-toggle" className="font-medium flex items-center gap-2">
                                     <Mic className="h-4 w-4" /> Microphone
                                 </Label>
-                                <Switch id="mic-toggle" checked={micEnabled} onCheckedChange={(checked) => setMicEnabled(checked)} />
+                                <Switch id="mic-toggle" checked={micEnabled} onCheckedChange={(checked) => toggleAudio(checked)} />
                             </div>
                             <Select defaultValue="default" disabled={!micEnabled}>
                                 <SelectTrigger aria-label="Select microphone"><SelectValue /></SelectTrigger>
@@ -109,7 +112,7 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                                 <Label htmlFor="cam-toggle" className="font-medium flex items-center gap-2">
                                     <Video className="h-4 w-4" /> Camera
                                 </Label>
-                                <Switch id="cam-toggle" checked={cameraEnabled} onCheckedChange={(checked) => setCameraEnabled(checked)} />
+                                <Switch id="cam-toggle" checked={cameraEnabled} onCheckedChange={(checked) => toggleVideo(checked)} />
                             </div>
                              <Select defaultValue="default" disabled={!cameraEnabled}>
                                 <SelectTrigger aria-label="Select camera"><SelectValue /></SelectTrigger>
