@@ -68,6 +68,7 @@ import {
   spendFromWallet,
   getMoodMeta,
   EMERGENCY_TOPUP_LIMIT_EUR,
+  getMoodLog,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -667,8 +668,8 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
             moodLog.push({ dateISO: today, ...ratings });
           }
 
-          setLocal('ast_mood_log', moodLog);
-          setLocal('ast_mood_meta', {
+          setSession('ast_mood_log', moodLog);
+          setSession('ast_mood_meta', {
             streak: newStreak,
             lastCheckIn: todayDate.toISOString(),
           });
@@ -845,11 +846,11 @@ function HoroscopeCard({ user }: { user: authLocal.User | null }) {
 function SidebarTabs() {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "activity";
-    return getLocal<string>("dash.activeTab") || "activity";
+    return getSession<string>("dash.activeTab") || "activity";
   });
 
   useEffect(() => {
-    setLocal("dash.activeTab", activeTab);
+    setSession("dash.activeTab", activeTab);
   }, [activeTab]);
 
   return (
@@ -890,7 +891,7 @@ function RecommendationsTab() {
   useEffect(() => {
     const getRecs = () => {
       seedContentHub();
-      const allContent = getLocal<ContentHubItem[]>("ch_items") || [];
+      const allContent = getSession<ContentHubItem[]>("ch_items") || [];
       const moodLog = getMoodLog();
       if (moodLog.length === 0) {
         setRecommendations(
