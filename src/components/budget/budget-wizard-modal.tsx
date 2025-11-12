@@ -38,7 +38,7 @@ const essentialsSchema = z.object({
   groceries: z.coerce.number().min(0),
   transport: z.coerce.number().min(0),
   debts: z.coerce.number().min(0),
-  savingsPct: z.number().min(0).max(30),
+  savingsPct: z.number().min(0).max(40),
 });
 
 const wizardSchema = z.object({
@@ -82,13 +82,13 @@ const Step2 = () => {
         <div className="space-y-4">
             <p className="font-medium text-sm">Monthly essentials (€)</p>
             <div className="grid grid-cols-2 gap-4">
-                <FormField control={control} name="essentials.rent" render={({ field }) => (<FormItem><FormLabel>Rent/Mortgage</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="essentials.utilities" render={({ field }) => (<FormItem><FormLabel>Utilities</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="essentials.groceries" render={({ field }) => (<FormItem><FormLabel>Groceries</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="essentials.transport" render={({ field }) => (<FormItem><FormLabel>Transport</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="essentials.rent" render={({ field }) => (<FormItem><FormLabel>Rent/Mortgage</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>)} />
+                <FormField control={control} name="essentials.utilities" render={({ field }) => (<FormItem><FormLabel>Utilities</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>)} />
+                <FormField control={control} name="essentials.groceries" render={({ field }) => (<FormItem><FormLabel>Groceries</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>)} />
+                <FormField control={control} name="essentials.transport" render={({ field }) => (<FormItem><FormLabel>Transport</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>)} />
             </div>
              <FormField control={control} name="essentials.debts" render={({ field }) => (
-                <FormItem><FormLabel>Debts & EMIs (€ per month)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                <FormItem><FormLabel>Debts & EMIs (€ per month)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>
             )} />
             <FormField control={control} name="essentials.savingsPct" render={({ field }) => (
                 <FormItem>
@@ -97,8 +97,9 @@ const Step2 = () => {
                         <span className="text-primary font-bold">{field.value}%</span>
                     </div>
                     <FormControl>
-                        <Slider min={0} max={30} step={1} value={[field.value]} onValueChange={(vals) => field.onChange(vals[0])} />
+                        <Slider min={5} max={40} step={1} value={[field.value]} onValueChange={(vals) => field.onChange(vals[0])} />
                     </FormControl>
+                    <FormMessage/>
                 </FormItem>
             )} />
         </div>
@@ -168,13 +169,13 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
             methods.reset({
                 aboutYou: wallet.aboutYou,
                 essentials: wallet.essentials,
-                finalBudget: wallet.budget,
+                finalBudget: wallet.budget_cents / 100,
             });
         }
     }, [isOpen, methods]);
 
     const handleNext = async () => {
-        const result = await methods.trigger(steps[currentStep].fields as (keyof WizardFormData)[]);
+        const result = await methods.trigger(steps[currentStep].fields as any[]);
         if (result) {
             setCurrentStep(s => s + 1);
         } else {
@@ -188,7 +189,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         const wallet = getWallet();
         const updatedWallet: Wallet = {
             ...wallet,
-            budget: data.finalBudget!,
+            budget_cents: data.finalBudget! * 100,
             budget_set: true, // Mark budget as set
             wizardSeen: true,
             aboutYou: data.aboutYou,
@@ -249,6 +250,3 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         </Dialog>
     );
 }
-
-
-    
