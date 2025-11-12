@@ -49,7 +49,6 @@ export interface ConsultantProfile {
   verifications: {
     adminApproved: boolean;
     kycVerified: boolean;
-    lastReview: string;
   };
   nextSlots: string[];
   content: {

@@ -72,7 +72,6 @@ export default function Page() {
                     verifications: {
                         adminApproved: foundConsultant.adminApproved,
                         kycVerified: foundConsultant.kycVerified,
-                        lastReview: new Date(foundConsultant.lastReviewDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
                     },
                     nextSlots: foundConsultant.availability.slots,
                     aboutHtml: foundConsultant.bio,

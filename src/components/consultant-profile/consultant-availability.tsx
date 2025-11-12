@@ -25,7 +25,7 @@ const communicationModes = [
 
 export function ConsultantAvailability({ consultant }: { consultant: Consultant }) {
   const router = useRouter();
-  const [selectedMode, setSelectedMode] = useState('chat');
+  const [selectedMode, setSelectedMode] = useState('video');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
