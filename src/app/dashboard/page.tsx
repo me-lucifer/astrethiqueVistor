@@ -71,6 +71,7 @@ import {
   getMoodMeta,
   EMERGENCY_TOPUP_LIMIT_EUR,
   setWallet,
+  removeLocal,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -337,6 +338,11 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
       setIsTopUpOpen(true);
   }
 
+  const handleResetDemo = () => {
+    removeLocal(WALLET_KEY);
+    fetchWalletData();
+  }
+
 
   if (!wallet) {
     return (
@@ -401,6 +407,10 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                               <DropdownMenuItem>
                                   <Button variant="link-destructive" className="p-0 h-auto" onClick={() => handleDemoAction('new_month')}>New month</Button>
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                               <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleResetDemo(); }}>
+                                <span className="text-destructive">Reset demo activity</span>
+                               </DropdownMenuItem>
                           </DropdownMenuContent>
                       </DropdownMenu>
                   )}
