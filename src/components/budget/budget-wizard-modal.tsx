@@ -177,6 +177,9 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
             }
         }
     }, [isOpen, methods]);
+
+    const watchedData = methods.watch();
+    const { suggestedBudget } = useBudgetCalculator(watchedData);
     
     const handleNext = async () => {
         const result = await methods.trigger(steps[currentStep].fields as (keyof BudgetWizardFormData)[]);
@@ -189,8 +192,6 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     const handlePrev = () => setCurrentStep(s => s - 1);
 
     const handleSave = (data: BudgetWizardFormData) => {
-        const { suggestedBudget } = useBudgetCalculator(data);
-
         // Save wallet settings
         const wallet = getWallet();
         const updatedWallet: Wallet = {
