@@ -251,6 +251,7 @@ export default function SecurityPage() {
                 onSuccess={() => {
                     refreshUser();
                     setIsPasswordModalOpen(false);
+                    toast({ title: "Password updated." });
                 }}
             />
             <TwoFactorModal
@@ -264,5 +265,3 @@ export default function SecurityPage() {
         </div>
     );
 }
-
-    

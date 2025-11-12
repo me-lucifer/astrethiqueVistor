@@ -203,7 +203,7 @@ export default function BillingPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredLog.map(entry => (
+                            {filteredLog.length > 0 && filteredLog.map(entry => (
                                 <TableRow key={entry.ts}>
                                     <TableCell>{format(new Date(entry.ts), 'MMM d, yyyy, HH:mm')}</TableCell>
                                     <TableCell className="capitalize">{entry.type}</TableCell>

@@ -57,7 +57,6 @@ export function ChangePasswordModal({ isOpen, onOpenChange, currentUser, onSucce
     startTransition(async () => {
         try {
             await authLocal.changePassword(currentUser.id, data.currentPassword, data.newPassword);
-            toast({ title: "Password updated." });
             onSuccess();
         } catch (error: any) {
             form.setError("currentPassword", { message: "Your current password does not match." });
