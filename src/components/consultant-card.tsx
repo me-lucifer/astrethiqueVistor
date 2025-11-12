@@ -197,7 +197,7 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
     return (
         <TooltipProvider>
             <Link href={`/discover/consultant/${consultant.slug}`} className="group">
-                <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card">
+                <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg bg-card/50 hover:bg-card motion-reduce:transition-none">
                     <CardContent className="p-0">
                         <div className="relative">
                             {consultant.cover && (
@@ -206,7 +206,7 @@ export function ConsultantCard({ consultant }: { consultant: Consultant }) {
                                     alt={consultant.name}
                                     width={400}
                                     height={300}
-                                    className="w-full object-cover aspect-[4/3] group-hover:opacity-90 transition-opacity"
+                                    className="w-full object-cover aspect-[4/3] group-hover:opacity-90 transition-opacity motion-reduce:transition-none"
                                     data-ai-hint="portrait person"
                                     loading="lazy"
                                 />

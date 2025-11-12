@@ -117,7 +117,7 @@ const GlassCard = ({
 }) => (
   <Card
     className={cn(
-      "bg-card/60 backdrop-blur-lg border-white/10 shadow-lg transition-all duration-300 hover:border-white/20 hover:shadow-primary/10",
+      "bg-card/60 backdrop-blur-lg border-white/10 shadow-lg transition-all duration-300 hover:border-white/20 hover:shadow-primary/10 motion-reduce:transition-none",
       className
     )}
   >
@@ -205,7 +205,7 @@ export default function DashboardPage() {
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
-              className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+              className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none motion-reduce:animate-none"
             >
               <div className="text-6xl">🎉</div>
             </motion.div>
@@ -375,7 +375,14 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                       <span>{formatCurrency(spentThisMonth)} / {formatCurrency(budget)}</span>
                   )}
                 </div>
-                <Progress value={progress} indicatorClassName={progressColor} aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} />
+                <Progress 
+                    value={progress} 
+                    indicatorClassName={progressColor} 
+                    aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} 
+                    aria-valuenow={spent_this_month_cents}
+                    aria-valuemin={0}
+                    aria-valuemax={budget_cents}
+                />
                 <div className="flex justify-between text-xs text-muted-foreground mt-2">
                     <Badge variant="outline" className="font-normal">Remaining: {formatCurrency(remaining)}</Badge>
                     <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
@@ -389,7 +396,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                          <CardTitle className="text-base flex items-center gap-2"><Lock className="h-4 w-4"/>Budget Locked</CardTitle>
                          <CardDescription className="text-xs">Spending blocked until {format(endOfMonth(new Date()), "MMM do")}.</CardDescription>
                        </div>
-                       <Button variant="ghost" className="text-xs" onClick={() => handleToggleLock(false)}>Disable</Button>
+                       <Button variant="ghost" className="text-xs" onClick={() => handleToggleLock(false)} aria-label="Disable budget lock">Disable</Button>
                     </CardHeader>
                   </Card>
               ) : (
@@ -409,7 +416,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                         Freeze your wallet until {format(endOfMonth(new Date()), "MMM do")}. You can’t spend more than your balance.
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
-                        <Button variant="outline" onClick={() => handleToggleLock(true)}>Enable lock</Button>
+                        <Button variant="outline" onClick={() => handleToggleLock(true)} aria-label={`Enable budget lock until ${format(endOfMonth(new Date()), "MMMM do")}`}>Enable lock</Button>
                     </CardFooter>
                   </Card>
               )}
@@ -436,7 +443,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 <Tooltip>
                     <TooltipTrigger asChild>
                       <span tabIndex={0}>
-                         <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={budget_lock.emergency_used}>
+                         <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={budget_lock.emergency_used} aria-label="Use emergency top-up">
                             <Zap className="h-4 w-4"/> Emergency
                         </Button>
                       </span>
