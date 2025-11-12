@@ -180,7 +180,7 @@ const Step4Rate = () => {
                     <FormLabel>Set my status to "Online now"</FormLabel>
                     <p className="text-xs text-muted-foreground">Allow visitors to start sessions with you immediately.</p>
                 </div>
-                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                <FormControl><Switch checked={field.value} onCheckedChange={c => field.onChange(c)} /></FormControl>
             </FormItem>
         )} />
     </div>
