@@ -96,13 +96,17 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
                     </div>
 
                     {isCustom && (
-                        <Input
-                            type="number"
-                            value={amount}
-                            onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                            placeholder="Custom amount"
-                            min="1"
-                        />
+                        <div>
+                            <Label htmlFor="custom-amount" className="sr-only">Custom Amount</Label>
+                            <Input
+                                id="custom-amount"
+                                type="number"
+                                value={amount}
+                                onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                                placeholder="Custom amount"
+                                min="1"
+                            />
+                        </div>
                     )}
                     
                     <div className="pt-4">
@@ -139,7 +143,3 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
         </Dialog>
     );
 }
-
-    
-
-    

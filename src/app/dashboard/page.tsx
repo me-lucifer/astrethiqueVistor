@@ -135,7 +135,7 @@ export default function DashboardPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [router] = useState(useRouter());
+  const router = useRouter();
 
   const checkUser = () => {
     const currentUser = authLocal.getCurrentUser();
@@ -162,7 +162,7 @@ export default function DashboardPage() {
     setLoading(false);
 
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "astro" || event.key === "ast_wallet") {
+      if (event.key === "astro" || event.key === WALLET_KEY) {
         checkUser();
       }
     };
@@ -377,7 +377,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                       <Tooltip>
                           <TooltipTrigger asChild>
                               <Badge variant="outline" className="text-lg font-bold cursor-help" aria-label={`Current balance: ${formatCurrency(balance)}`}>
-                                  Balance: {formatCurrency(balance)}
+                                  Balance: <span className="ml-1" aria-live="polite">{formatCurrency(balance)}</span>
                               </Badge>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -412,8 +412,8 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
-                    <span>This month</span>
-                    <span>{formatCurrency(monthSpend)} / {formatCurrency(budget)}</span>
+                    <span aria-live="polite">This month</span>
+                    <span aria-live="polite">{formatCurrency(monthSpend)} / {formatCurrency(budget)}</span>
                   </div>
                   <Progress 
                       value={progress} 
@@ -424,7 +424,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                       aria-valuemax={budget}
                   />
                   <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                      <Badge variant="outline" className="font-normal">Remaining: {formatCurrency(remaining)}</Badge>
+                      <Badge variant="outline" className="font-normal" aria-live="polite">Remaining: {formatCurrency(remaining)}</Badge>
                       <div className="flex items-center gap-4">
                           <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
                       </div>
@@ -435,12 +435,19 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
                       <Card className="bg-muted/50 border-amber-500/20">
                         <CardHeader className="flex-row items-center justify-between p-4">
-                          <div className="space-y-1">
-                            <CardTitle className="text-base flex items-center gap-2 text-amber-500">
-                              <Lock className="h-4 w-4"/>
-                              Budget locked until {format(new Date(monthEnd), "MMM dd")}
-                            </CardTitle>
-                          </div>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <div className="space-y-1" tabIndex={0}>
+                                    <CardTitle className="text-base flex items-center gap-2 text-amber-500">
+                                      <Lock className="h-4 w-4"/>
+                                      Budget locked until {format(new Date(monthEnd), "MMM dd")}
+                                    </CardTitle>
+                                  </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                  <p>Your spending is capped for the month.</p>
+                              </TooltipContent>
+                            </Tooltip>
                            <Tooltip>
                                 <TooltipTrigger asChild>
                                   <span tabIndex={0}>
@@ -879,7 +886,7 @@ function SidebarTabs() {
 
 function RecommendationsTab() {
   const [recommendations, setRecommendations] = useState<ContentHubItem[]>([]);
-  const [router] = useState(useRouter());
+  const router = useRouter();
 
   useEffect(() => {
     const getRecs = () => {
@@ -1076,4 +1083,5 @@ const horoscopeData: { [key: string]: string } = {
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
 
+const WALLET_KEY = 'ast_wallet';
     

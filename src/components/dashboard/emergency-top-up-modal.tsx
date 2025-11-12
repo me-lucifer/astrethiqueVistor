@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getWallet, setWallet, addSpendLogEntry, EMERGENCY_TOPUP_LIMIT_EUR, Wallet, incrementMetric } from "@/lib/local";
+import { Label } from "../ui/label";
 import { Zap } from "lucide-react";
 
 interface EmergencyTopUpModalProps {
@@ -78,7 +79,9 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-2">
+                    <Label htmlFor="emergency-amount">Amount</Label>
                     <Input
+                        id="emergency-amount"
                         type="number"
                         value={amount}
                         onChange={handleAmountChange}
@@ -101,9 +104,3 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
         </Dialog>
     );
 }
-
-    
-
-    
-
-    
