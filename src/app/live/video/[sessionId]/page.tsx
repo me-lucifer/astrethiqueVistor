@@ -12,6 +12,7 @@ import { Consultant } from "@/lib/consultants";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useSessionTimer } from "@/hooks/use-session-timer";
+import { PermissionsOverlay } from "@/components/video-room/permissions-overlay";
 
 export default function VideoRoomPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function VideoRoomPage() {
   const [consultant, setConsultant] = useState<Consultant | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
   const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
+  const [hasPermissions, setHasPermissions] = useState(false);
   
   const { time, isRunning, startTimer, stopTimer } = useSessionTimer();
 
@@ -32,7 +34,6 @@ export default function VideoRoomPage() {
       const foundConsultant = allConsultants.find(c => sessionId.includes(c.slug));
       if (foundConsultant) {
         setConsultant(foundConsultant);
-        startTimer();
       } else {
         router.push("/discover");
       }
@@ -43,8 +44,13 @@ export default function VideoRoomPage() {
     return () => {
         stopTimer();
     }
-  }, [sessionId, router, startTimer, stopTimer]);
+  }, [sessionId, router, stopTimer]);
   
+  const handleJoinCall = () => {
+    setHasPermissions(true);
+    startTimer();
+  }
+
   const handleEndCall = () => {
     stopTimer();
     router.push('/discover');
@@ -52,18 +58,22 @@ export default function VideoRoomPage() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && hasPermissions) {
         e.preventDefault();
         setIsEndConfirmOpen(true);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [hasPermissions]);
 
 
   if (!consultant) {
     return <PlaceholderPage title="Loading Session..." />;
+  }
+  
+  if (!hasPermissions) {
+      return <PermissionsOverlay onJoin={handleJoinCall} />;
   }
 
   return (

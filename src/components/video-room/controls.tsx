@@ -28,7 +28,7 @@ const ControlButton = ({ tooltip, hotkey, onClick, children, variant = "ghost", 
 export function Controls({ onEndCall, isSidePanelOpen, onToggleNotes }: ControlsProps) {
     const [isMuted, setIsMuted] = useState(false);
     const [isCameraOff, setIsCameraOff] = useState(false);
-    const [isBlurred, setIsBlurred] = useState(false);
+    const [isBlurred, setIsBlurred] = useState(true); // On by default
     
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
