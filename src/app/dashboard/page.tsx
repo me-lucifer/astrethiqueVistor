@@ -471,7 +471,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                                   <div className="space-y-1" tabIndex={0}>
                                     <CardTitle className="text-base flex items-center gap-2 text-amber-500">
                                       <Lock className="h-4 w-4"/>
-                                      Budget locked until {format(new Date(monthEnd), "MMM dd")}
+                                      Budget locked until {monthEnd ? format(new Date(monthEnd), "MMM dd") : ''}
                                     </CardTitle>
                                   </div>
                               </TooltipTrigger>
@@ -522,7 +522,6 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
            <p className="text-xs text-muted-foreground text-center p-2">Spending uses wallet balance only. Budgets reset monthly.</p>
         </GlassCard>
       </TooltipProvider>
-
       <Dialog open={isSetBudgetPromptOpen} onOpenChange={setIsSetBudgetPromptOpen}>
           <DialogContent className="sm:max-w-xs">
               <DialogHeader>
@@ -792,7 +791,7 @@ function QuickTrends() {
   );
 }
 
-function HoroscopeCard({ user }: { user: User | null }) {
+function HoroscopeCard({ user }: { user: authLocal.User | null }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
