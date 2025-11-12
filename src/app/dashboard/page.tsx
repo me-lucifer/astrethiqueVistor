@@ -59,8 +59,7 @@ import { Label } from "@/components/ui/label";
 import * as authLocal from "@/lib/authLocal";
 import {
   getWallet,
-  setWallet,
-  removeWallet,
+  setLocal,
   getSpendLog,
   Wallet as WalletType,
   SpendLogEntry,
@@ -1161,3 +1160,5 @@ const horoscopeData: { [key: string]: string } = {
     
 
       
+
+    
