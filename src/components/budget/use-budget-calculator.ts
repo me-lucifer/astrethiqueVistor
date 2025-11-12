@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useMemo } from 'react';
@@ -15,7 +14,7 @@ export type AboutYou = {
 };
 
 export type Essentials = {
-  rent: number;
+  rentOrMortgage: number;
   utilities: number;
   groceries: number;
   transport: number;
@@ -29,14 +28,14 @@ export function useBudgetCalculator(aboutYou: AboutYou, essentials: Essentials) 
     
     const totalIncome = aboutYou.income + (aboutYou.hasOther ? (aboutYou.otherIncome || 0) : 0);
 
-    const essentialsTotal = essentials.rent + essentials.utilities + essentials.groceries + essentials.transport;
+    const essentialsTotal = essentials.rentOrMortgage + essentials.utilities + essentials.groceries + essentials.transport;
     const savingsAmount = totalIncome * (essentials.savingsPct / 100);
     const totalExpenses = essentialsTotal + essentials.debts + savingsAmount;
 
     const currentDisposable = Math.max(0, totalIncome - totalExpenses);
     if (currentDisposable <= 0) return { suggestedBudget: SUGGEST_MIN_EUR, disposable: 0 };
 
-    let base = Math.round((0.25 * currentDisposable) / 5) * 5;
+    let base = Math.round((0.15 * currentDisposable) / 5) * 5;
     
     const clamped = Math.max(SUGGEST_MIN_EUR, Math.min(base, SUGGEST_MAX_EUR));
 
@@ -46,5 +45,3 @@ export function useBudgetCalculator(aboutYou: AboutYou, essentials: Essentials) 
 
   return { suggestedBudget, disposable };
 }
-
-    
