@@ -153,7 +153,7 @@ export function FeaturedConferences({ initialQuery = "" }: { initialQuery?: stri
         setFilters(initialState);
         sessionStorage.setItem('discover.conferences.filters', JSON.stringify(initialState));
 
-    }, [searchParams]);
+    }, []);
 
     useEffect(() => {
       startTransition(() => {
