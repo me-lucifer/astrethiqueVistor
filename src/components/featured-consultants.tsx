@@ -637,5 +637,3 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
 }
 
     
-
-    
