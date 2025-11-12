@@ -6,6 +6,7 @@ import { Wallet } from "lucide-react";
 import { Progress } from "../ui/progress";
 import { getWallet } from "@/lib/local";
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface WalletDisplayProps {
     sessionTime: number;
@@ -13,8 +14,10 @@ interface WalletDisplayProps {
 }
 
 export function WalletDisplay({ sessionTime, ratePerMin }: WalletDisplayProps) {
+    const { toast } = useToast();
     const [initialBalance, setInitialBalance] = useState(0);
     const [currentBalance, setCurrentBalance] = useState(0);
+    const [gracePeriodToastId, setGracePeriodToastId] = useState<string | null>(null);
 
     useEffect(() => {
         const wallet = getWallet();
@@ -26,8 +29,34 @@ export function WalletDisplay({ sessionTime, ratePerMin }: WalletDisplayProps) {
         const costPerSecond = (ratePerMin * 100) / 60;
         const totalCost = costPerSecond * sessionTime;
         const newBalance = initialBalance - totalCost;
-        setCurrentBalance(Math.max(0, newBalance));
-    }, [sessionTime, ratePerMin, initialBalance]);
+        const newBalanceClamped = Math.max(0, newBalance);
+        setCurrentBalance(newBalanceClamped);
+
+        // Check for low balance (less than one minute of call time remaining)
+        const minuteRateCents = ratePerMin * 100;
+        if (newBalanceClamped > 0 && newBalanceClamped < minuteRateCents && !gracePeriodToastId) {
+            const toastId = toast({
+                title: "Low Balance",
+                description: "About 1 minute left. Top up to continue.",
+                variant: 'destructive',
+                duration: 10000, // 10 second grace period
+            }).id;
+            setGracePeriodToastId(toastId);
+        }
+        
+        if (newBalanceClamped === 0 && sessionTime > 0) {
+            // Logic to end call would be triggered here in a real app
+            // For now, we'll just show a toast
+            if (gracePeriodToastId) {
+                toast.dismiss(gracePeriodToastId);
+            }
+             toast({
+                title: "Session Ended",
+                description: "Your wallet balance reached zero.",
+                variant: 'destructive',
+            });
+        }
+    }, [sessionTime, ratePerMin, initialBalance, toast, gracePeriodToastId]);
     
     const balancePercentage = initialBalance > 0 ? (currentBalance / initialBalance) * 100 : 0;
     

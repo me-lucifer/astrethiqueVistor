@@ -125,9 +125,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
       if (!spendResult.ok) {
         if (spendResult.message.includes("locked")) {
             const wallet = getWallet();
-            if (wallet.budget_lock.enabled && !wallet.budget_lock.emergency_used) {
-                setIsEmergencyTopUpOpen(true);
-            } else {
+            if (wallet.budget_lock.enabled) {
                 setIsLockModalOpen(true);
             }
         } else { // Insufficient funds or other issues
@@ -232,12 +230,19 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
           <DialogHeader>
             <DialogTitle>Budget Locked</DialogTitle>
             <DialogDescription>
-              Your budget for this month is locked, and your emergency top-up has been used. You can schedule future sessions but cannot start a new one right now.
+              {getWallet().budget_lock.emergency_used
+                ? "Your monthly budget is locked and your emergency top-up has been used. You can schedule future sessions but cannot start a new one right now."
+                : "Your monthly budget is locked. You can use your one-time emergency top-up to add funds for this session."
+              }
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
+            {!getWallet().budget_lock.emergency_used && (
+              <Button onClick={() => { setIsLockModalOpen(false); setIsEmergencyTopUpOpen(true); }}>Use Emergency Top-up</Button>
+            )}
+            <Button variant="outline" onClick={() => { setIsLockModalOpen(false); setIsBudgetModalOpen(true); }}>Change Budget</Button>
             <DialogClose asChild>
-              <Button variant="outline">Got it</Button>
+              <Button variant="ghost">Cancel</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>
