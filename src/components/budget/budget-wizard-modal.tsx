@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, FormProvider, useFormContext, FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -184,7 +184,7 @@ const Step3 = () => {
 };
 
 
-const steps = [
+const steps: { title: string; description: string; component: React.FC; fields: FieldPath<WizardFormData>[] }[] = [
     { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou.home", "aboutYou.income", "aboutYou.household", "aboutYou.hasOther", "aboutYou.otherIncome"] },
     { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentials.rentOrMortgage", "essentials.utilities", "essentials.groceries", "essentials.transport", "essentials.debts", "essentials.savingsPct"] },
     { title: "Suggested budget for you", description: "Based on your info, here's a suggested budget. You can adjust it.", component: Step3, fields: ["finalStep.finalAmount", "finalStep.lockWallet"] },
@@ -236,7 +236,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     }, [isOpen, methods]);
 
     const handleNext = async () => {
-        const result = await methods.trigger(steps[currentStep].fields as any);
+        const result = await methods.trigger(steps[currentStep].fields);
         if (result) {
             setCurrentStep(s => s + 1);
         } else {
