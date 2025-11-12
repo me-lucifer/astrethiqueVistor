@@ -33,7 +33,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
             <aside className="md:sticky md:top-24">
                 <nav className="flex flex-col gap-1">
                 {accountNavLinks.map((link) => {
-                    const isActive = pathname.startsWith(link.href);
+                    const isActive = pathname === link.href;
                     return (
                     <Link
                         key={link.href}
