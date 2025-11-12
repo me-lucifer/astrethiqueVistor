@@ -191,9 +191,9 @@ const Step3 = () => {
 
 
 const steps: { title: string; description: string; component: React.FC; fields: FieldPath<WizardFormData>[] }[] = [
-    { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou"] },
-    { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentials"] },
-    { title: "Suggested budget for you", description: "Based on your info, here's a suggested budget. You can adjust it.", component: Step3, fields: ["finalStep"] },
+    { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou.home", "aboutYou.income", "aboutYou.household", "aboutYou.hasOther", "aboutYou.otherIncome"] },
+    { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentials.rentOrMortgage", "essentials.utilities", "essentials.groceries", "essentials.transport", "essentials.debts", "essentials.savingsPct"] },
+    { title: "Suggested budget for you", description: "Based on your info, here's a suggested budget. You can adjust it.", component: Step3, fields: ["finalStep.finalAmount", "finalStep.lockWallet"] },
 ];
 
 
@@ -223,7 +223,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
             const wallet = getWallet();
             // Pre-fill form if data exists in wallet
             const defaultValues: WizardFormData = {
-                aboutYou: wallet.aboutYou || { home: 'rent', income: 3000, household: 1, hasOther: false },
+                aboutYou: wallet.aboutYou || { home: 'rent', income: 3000, household: 1, hasOther: false, otherIncome: 0 },
                 essentials: {
                     rentOrMortgage: wallet.essentials?.rent || 1200,
                     utilities: wallet.essentials?.utilities || 150,
