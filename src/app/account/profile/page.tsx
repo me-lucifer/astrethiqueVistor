@@ -64,7 +64,7 @@ export default function ProfilePage() {
         resolver: zodResolver(profileSchema(user?.id || '')),
         mode: "onChange",
     });
-
+    
     const refreshUser = useCallback(() => {
         const currentUser = authLocal.getCurrentUser();
         if (currentUser) {
@@ -86,6 +86,7 @@ export default function ProfilePage() {
             router.push('/');
         }
     }, [form, router]);
+
 
     useEffect(() => {
         refreshUser();
@@ -240,4 +241,5 @@ export default function ProfilePage() {
             </Card>
         </div>
     );
-}
+
+    
