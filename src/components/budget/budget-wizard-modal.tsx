@@ -29,15 +29,16 @@ const aboutYouSchema = z.object({
   household: z.coerce.number().int().min(1, "Household must have at least 1 person.").max(10),
   hasOther: z.boolean(),
   otherIncome: z.coerce.number().optional(),
-}).superRefine((data, ctx) => {
-  if (data.hasOther && (data.otherIncome === undefined || data.otherIncome < 0)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Please enter the other income amount.",
-      path: ["otherIncome"],
-    });
-  }
+}).refine(data => {
+    if (data.hasOther) {
+        return data.otherIncome !== undefined && data.otherIncome >= 0;
+    }
+    return true;
+}, {
+    message: "Please enter the other income amount.",
+    path: ["otherIncome"],
 });
+
 
 const essentialsSchema = z.object({
     rentOrMortgage: z.coerce.number().min(0, "Cannot be negative."),
