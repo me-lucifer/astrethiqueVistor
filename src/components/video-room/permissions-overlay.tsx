@@ -20,7 +20,7 @@ const MicVisualizer = () => {
             animationFrameId = requestAnimationFrame(visualize);
         };
         visualize();
-        return () => cancelAnimationFrame(animationFrameId);
+        return () => cancelAnimationFrame(visualize);
     }, []);
 
     return (
@@ -38,9 +38,10 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
     const [stream, setStream] = useState<MediaStream | null>(null);
 
     useEffect(() => {
+        let mediaStream: MediaStream;
         const getPermissions = async () => {
             try {
-                const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 setStream(mediaStream);
                 if (videoRef.current) {
                     videoRef.current.srcObject = mediaStream;
@@ -52,7 +53,7 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
         getPermissions();
 
         return () => {
-            stream?.getTracks().forEach(track => track.stop());
+            mediaStream?.getTracks().forEach(track => track.stop());
         };
     }, []);
 
