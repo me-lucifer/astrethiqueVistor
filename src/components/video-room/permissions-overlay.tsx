@@ -35,16 +35,15 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
     const [cameraEnabled, setCameraEnabled] = useState(true);
     const [micEnabled, setMicEnabled] = useState(true);
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [stream, setStream] = useState<MediaStream | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
 
     useEffect(() => {
-        let mediaStream: MediaStream;
         const getPermissions = async () => {
             try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                setStream(mediaStream);
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                streamRef.current = stream;
                 if (videoRef.current) {
-                    videoRef.current.srcObject = mediaStream;
+                    videoRef.current.srcObject = stream;
                 }
             } catch (err) {
                 console.error("Error accessing media devices.", err);
@@ -53,21 +52,21 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
         getPermissions();
 
         return () => {
-            mediaStream?.getTracks().forEach(track => track.stop());
+            streamRef.current?.getTracks().forEach(track => track.stop());
         };
     }, []);
 
     useEffect(() => {
-        if (stream) {
-            stream.getVideoTracks().forEach(track => track.enabled = cameraEnabled);
+        if (streamRef.current) {
+            streamRef.current.getVideoTracks().forEach(track => track.enabled = cameraEnabled);
         }
-    }, [cameraEnabled, stream]);
+    }, [cameraEnabled]);
 
     useEffect(() => {
-        if (stream) {
-            stream.getAudioTracks().forEach(track => track.enabled = micEnabled);
+        if (streamRef.current) {
+            streamRef.current.getAudioTracks().forEach(track => track.enabled = micEnabled);
         }
-    }, [micEnabled, stream]);
+    }, [micEnabled]);
     
     return (
         <div className="h-screen w-screen bg-black/80 flex items-center justify-center p-4">
@@ -80,11 +79,11 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="aspect-video w-full bg-black rounded-lg flex items-center justify-center overflow-hidden">
-                       {cameraEnabled && stream ? (
+                       {cameraEnabled ? (
                            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                        ) : (
                            <p className="text-muted-foreground">
-                               {cameraEnabled ? 'Requesting camera...' : 'Camera is off'}
+                               Camera is off
                            </p>
                        )}
                     </div>
