@@ -65,7 +65,7 @@ export default function ProfilePage() {
         mode: "onChange",
     });
 
-    const refreshUser = () => {
+    const refreshUser = useCallback(() => {
         const currentUser = authLocal.getCurrentUser();
         if (currentUser) {
             setUser(currentUser);
@@ -85,14 +85,14 @@ export default function ProfilePage() {
         } else {
             router.push('/');
         }
-    }
+    }, [form, router]);
 
     useEffect(() => {
         refreshUser();
         if (typeof window !== 'undefined') {
             setDefaultTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
         }
-    }, [router]);
+    }, [refreshUser]);
     
     const onProfileSubmit = (data: ProfileFormData) => {
         if (!user) return;
@@ -241,7 +241,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-
-    
-
-    
