@@ -256,12 +256,15 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
-  const handleDemoAction = (action: 'seed' | 'reset_month' | 'lock') => {
+  const handleDemoAction = (action: 'seed' | 'reset_month' | 'lock' | 'first_time') => {
     let currentWallet = getWallet();
     let newWalletState: WalletType;
     switch (action) {
+        case 'first_time':
+             newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, budget_set: false, budget_lock: { enabled: false, until: null, emergency_used: false }};
+             break;
         case 'seed':
-            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, budget_set: true };
+            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, budget_set: true };
             break;
         case 'lock':
              newWalletState = {...currentWallet, budget_lock: { enabled: true, until: endOfMonth(new Date()).toISOString(), emergency_used: false }};
@@ -311,7 +314,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const { balance_cents = 0, spent_this_month_cents = 0, budget_cents, budget_set, budget_lock } = wallet;
   const spentThisMonth = spent_this_month_cents / 100;
   const budget = budget_cents / 100;
-  const remaining = budget - spentThisMonth;
+  const remaining = Math.max(0, budget - spentThisMonth);
   const progress = budget_set && budget > 0 ? (spentThisMonth / budget) * 100 : 0;
   const daysInMonth = getDaysInMonth(new Date());
   const daysLeft = daysInMonth - getDate(new Date());
@@ -323,7 +326,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   };
   
   return (
-    <>
+    <TooltipProvider>
       <GlassCard className="flex flex-col">
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -332,15 +335,25 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
               Wallet & Budget
             </CardTitle>
             <div className="flex items-center gap-1">
-                <Badge variant="outline" className="text-lg font-bold">
-                    Balance: {formatCurrency(balance_cents / 100)}
-                </Badge>
+                {budget_set && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Badge variant="outline" className="text-lg font-bold cursor-help">
+                                Balance: {formatCurrency(balance_cents / 100)}
+                            </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Funds available for sessions & content.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                )}
                 {isDev && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4"/></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleDemoAction('first_time')}>Simulate first-time view</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('reset_month')}>Reset Month</DropdownMenuItem>
@@ -382,10 +395,18 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
               ) : (
                    <Card className="bg-card border-border">
                     <CardHeader className="p-4">
+                        <div className="flex justify-between items-start">
                          <CardTitle className="text-base flex items-center gap-2">Budget Lock</CardTitle>
+                          <Tooltip>
+                            <TooltipTrigger asChild><Info className="h-4 w-4 text-muted-foreground cursor-help" /></TooltipTrigger>
+                            <TooltipContent>
+                               <p className="max-w-[250px]">Prevents new spending until month end. One €{EMERGENCY_TOPUP_LIMIT_EUR} emergency top-up allowed.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                     </CardHeader>
                     <CardContent className="p-4 pt-0 text-sm text-muted-foreground">
-                        Freeze your wallet until {format(endOfMonth(new Date()), "MMM do")}. You can’t spend more than your balance. One emergency top-up allowed.
+                        Freeze your wallet until {format(endOfMonth(new Date()), "MMM do")}. You can’t spend more than your balance.
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
                         <Button variant="outline" onClick={() => handleToggleLock(true)}>Enable lock</Button>
@@ -395,46 +416,54 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
 
             </div>
           ) : (
-             <Card className="bg-primary/10 border-primary/20 text-center p-4">
-               <CardTitle className="text-base mb-2">Set up your budget</CardTitle>
-               <CardDescription className="text-foreground/90">Set a monthly budget to stay in control of your spending.</CardDescription>
-               <Button variant="link" onClick={onBudgetClick} className="mt-1">Set up now</Button>
+             <Card className="bg-primary/10 border-primary/20 text-center p-6 space-y-3">
+               <CardTitle className="text-base">Set a monthly budget to stay in control.</CardTitle>
+                <div className="flex justify-center gap-2">
+                    <Button onClick={onBudgetClick}>Set up now</Button>
+                </div>
+                <div className="flex justify-center gap-2 pt-2">
+                    <Button size="sm" variant="ghost" disabled>Top up €5</Button>
+                    <Button size="sm" variant="ghost" disabled>Top up €10</Button>
+                    <Button size="sm" variant="ghost" disabled>Top up €25</Button>
+                </div>
              </Card>
           )}
         </CardContent>
-        <CardFooter className="flex justify-between items-center mt-auto">
-          <div className="flex gap-2">
-              <Button onClick={handleTopUpClick} size="sm">Top up</Button>
-              <Button onClick={onBudgetClick} variant="outline" size="sm">Change budget</Button>
-              <HistoryDrawer />
-          </div>
-          {budget_lock.enabled && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span tabIndex={0}>
-                     <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={budget_lock.emergency_used}>
-                        <Zap className="h-4 w-4"/> Emergency
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {budget_lock.emergency_used ? <p>Emergency top-up already used for this period.</p> : <p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p>}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </CardFooter>
+        {budget_set && (
+            <CardFooter className="flex justify-between items-center mt-auto border-t pt-4">
+              <div className="flex gap-2">
+                  <Button onClick={handleTopUpClick} size="sm">Top up</Button>
+                  <Button onClick={onBudgetClick} variant="outline" size="sm">Change budget</Button>
+                  <HistoryDrawer />
+              </div>
+              {budget_lock.enabled && (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>
+                         <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={budget_lock.emergency_used}>
+                            <Zap className="h-4 w-4"/> Emergency
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {budget_lock.emergency_used ? <p>Emergency top-up already used for this period.</p> : <p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p>}
+                    </TooltipContent>
+                </Tooltip>
+              )}
+            </CardFooter>
+        )}
+         <p className="text-xs text-muted-foreground text-center p-2">Spending uses wallet balance only. Budgets reset monthly.</p>
       </GlassCard>
       <TopUpModal isOpen={isTopUpOpen} onOpenChange={setIsTopUpOpen} />
       <EmergencyTopUpModal isOpen={isEmergencyTopUpOpen} onOpenChange={setIsEmergencyTopUpOpen} />
-    </>
+    </TooltipProvider>
   );
 }
 
 
 function HistoryDrawer() {
   const [log, setLog] = useState<SpendLogEntry[]>([]);
+  const [isTopUpOpen, setIsTopUpOpen] = useState(false);
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
@@ -465,6 +494,7 @@ function HistoryDrawer() {
   }
 
   return (
+    <>
     <Sheet onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button variant="link" className="text-xs text-muted-foreground">
@@ -499,13 +529,16 @@ function HistoryDrawer() {
             ))}
             </div>
           ) : (
-            <div className="text-center py-10 text-muted-foreground">
+            <div className="text-center py-10 text-muted-foreground space-y-3">
                 <p>No transactions yet.</p>
+                <Button onClick={() => setIsTopUpOpen(true)}>Make your first top-up</Button>
             </div>
           )}
         </div>
       </SheetContent>
     </Sheet>
+    <TopUpModal isOpen={isTopUpOpen} onOpenChange={setIsTopUpOpen} />
+    </>
   );
 }
 
