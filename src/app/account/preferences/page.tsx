@@ -83,7 +83,7 @@ export default function PreferencesPage() {
     const handleToggle = (path: string, value: boolean) => {
         const keys = path.split('.');
         setPreferences(prev => {
-            const newPrefs = { ...prev };
+            const newPrefs = JSON.parse(JSON.stringify(prev)); // Deep copy to prevent mutation
             let current: any = newPrefs;
             for (let i = 0; i < keys.length - 1; i++) {
                 current = current[keys[i]];
