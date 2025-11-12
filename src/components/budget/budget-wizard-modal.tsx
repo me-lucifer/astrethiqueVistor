@@ -290,5 +290,3 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         </Dialog>
     );
 }
-
-    
