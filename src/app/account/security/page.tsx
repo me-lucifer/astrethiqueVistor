@@ -9,12 +9,15 @@ import { useToast } from "@/hooks/use-toast";
 import * as authLocal from "@/lib/authLocal";
 import { CheckCircle, MailWarning, AlertTriangle } from "lucide-react";
 import { ChangeEmailModal } from "@/components/account/change-email-modal";
+import { ChangePasswordModal } from "@/components/account/change-password-modal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 
 export default function SecurityPage() {
     const { toast } = useToast();
     const [user, setUser] = useState<authLocal.User | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
     const refreshUser = () => {
@@ -27,7 +30,7 @@ export default function SecurityPage() {
 
     const handleEmailChangeSuccess = (newEmail: string) => {
         setPendingEmail(newEmail);
-        setIsModalOpen(false);
+        setIsEmailModalOpen(false);
     };
 
     const handleResend = () => {
@@ -53,7 +56,7 @@ export default function SecurityPage() {
                         <div className="mt-2 sm:mt-0">
                            <Button variant="link" size="sm" className="h-auto p-0" onClick={handleResend}>Resend</Button>
                            <span className="mx-2 text-muted-foreground">|</span>
-                           <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setIsModalOpen(true)}>Change again</Button>
+                           <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setIsEmailModalOpen(true)}>Change again</Button>
                         </div>
                     </AlertDescription>
                 </Alert>
@@ -64,8 +67,8 @@ export default function SecurityPage() {
                     <CardTitle>Login & Security</CardTitle>
                     <CardDescription>Manage your account's security settings.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border gap-4">
+                <CardContent className="divide-y divide-border">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 pl-0 gap-4">
                         <div>
                             <p className="font-medium">Email Address</p>
                             <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -82,8 +85,15 @@ export default function SecurityPage() {
                                     Unverified
                                 </Badge>
                             )}
-                            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>Change</Button>
+                            <Button variant="outline" size="sm" onClick={() => setIsEmailModalOpen(true)}>Change</Button>
                         </div>
+                    </div>
+                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 pl-0 gap-4">
+                        <div>
+                            <p className="font-medium">Password</p>
+                            <p className="text-sm text-muted-foreground">Last changed: {new Date(user.updatedAt).toLocaleDateString()}</p>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => setIsPasswordModalOpen(true)}>Change</Button>
                     </div>
                 </CardContent>
             </Card>
@@ -100,10 +110,19 @@ export default function SecurityPage() {
                 </CardContent>
             </Card>
             <ChangeEmailModal
-                isOpen={isModalOpen}
-                onOpenChange={setIsModalOpen}
+                isOpen={isEmailModalOpen}
+                onOpenChange={setIsEmailModalOpen}
                 currentUser={user}
                 onSuccess={handleEmailChangeSuccess}
+            />
+            <ChangePasswordModal
+                isOpen={isPasswordModalOpen}
+                onOpenChange={setIsPasswordModalOpen}
+                currentUser={user}
+                onSuccess={() => {
+                    refreshUser();
+                    setIsPasswordModalOpen(false);
+                }}
             />
         </div>
     );
