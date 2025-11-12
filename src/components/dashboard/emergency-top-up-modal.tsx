@@ -41,6 +41,16 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
         }
 
         const wallet = getWallet();
+        if (wallet.budget_lock.emergency_used) {
+            toast({
+                variant: "destructive",
+                title: "Emergency Top-up Already Used",
+                description: "You can only use the emergency top-up once per locked budget period.",
+            });
+            onOpenChange(false);
+            return;
+        }
+
         const updatedWallet: Wallet = {
             ...wallet,
             balance_cents: wallet.balance_cents + amount * 100,

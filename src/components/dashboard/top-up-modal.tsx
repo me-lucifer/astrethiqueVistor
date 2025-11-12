@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Info, Wallet as WalletIcon } from "lucide-react";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { endOfMonth, format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription } from "../ui/alert";
 
 interface TopUpModalProps {
     isOpen: boolean;
@@ -26,6 +27,16 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
     const [amount, setAmount] = useState(10);
     const [lockBudget, setLockBudget] = useState(false);
     const [isCustom, setIsCustom] = useState(false);
+    const [wallet, setWalletState] = useState<Wallet | null>(null);
+
+    useEffect(() => {
+        if(isOpen) {
+            setWalletState(getWallet());
+            setAmount(10);
+            setIsCustom(false);
+            setLockBudget(false);
+        }
+    }, [isOpen]);
 
     const handleAddFunds = () => {
         if (amount <= 0) {
@@ -33,7 +44,8 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
             return;
         }
 
-        const wallet = getWallet();
+        if (!wallet) return;
+
         let updatedWallet: Wallet = {
             ...wallet,
             balance_cents: wallet.balance_cents + amount * 100,
@@ -74,6 +86,9 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
         setAmount(50); // Default custom
     }
 
+    const budgetNotSet = wallet && !wallet.budget_set;
+    const walletLocked = wallet && wallet.budget_lock.enabled;
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
@@ -109,28 +124,21 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
                         </div>
                     )}
                     
-                    <div className="pt-4">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                                        <Label htmlFor="lock-budget-toggle" className="flex items-center gap-2">
-                                            Lock budget after this top-up
-                                            <Info className="h-4 w-4 text-muted-foreground" />
-                                        </Label>
-                                        <Switch
-                                            id="lock-budget-toggle"
-                                            checked={lockBudget}
-                                            onCheckedChange={setLockBudget}
-                                        />
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p className="max-w-xs">Enabling this will block further spending once your monthly budget is met. You'll have one emergency top-up of €20 available per month.</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
+                    {budgetNotSet && (
+                        <Alert className="flex items-center justify-between">
+                            <AlertDescription className="text-xs max-w-[80%]">
+                                No monthly budget set. You can still lock wallet after this top-up.
+                            </AlertDescription>
+                             <div className="flex items-center gap-2">
+                                <Label htmlFor="lock-budget-toggle" className="text-xs">Lock</Label>
+                                <Switch
+                                    id="lock-budget-toggle"
+                                    checked={lockBudget}
+                                    onCheckedChange={setLockBudget}
+                                />
+                            </div>
+                        </Alert>
+                    )}
                 </div>
 
                 <DialogFooter>
