@@ -103,16 +103,16 @@ const Step2 = () => {
 };
 
 const Step3 = () => {
-    const { control, watch } = useFormContext<BudgetWizardFormData>();
+    const { control, watch, setValue } = useFormContext<BudgetWizardFormData>();
     const formData = watch();
     const { suggestedBudget } = useBudgetCalculator(formData);
     
     // Set initial value for finalBudget if not already set
     useEffect(() => {
         if (formData.finalBudget === undefined && suggestedBudget > 0) {
-            control.setValue('finalBudget', suggestedBudget);
+            setValue('finalBudget', suggestedBudget);
         }
-    }, [suggestedBudget, formData.finalBudget, control]);
+    }, [suggestedBudget, formData.finalBudget, setValue]);
 
     return (
         <div className="space-y-4">
