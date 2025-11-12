@@ -132,7 +132,7 @@ export interface Metrics {
     horoscope_purchases: number;
 }
 
-const WALLET_KEY = 'astre.wallet';
+const WALLET_KEY = 'ast_wallet';
 const SPEND_LOG_KEY = 'ast_spend_log';
 const METRICS_KEY = 'ast_metrics';
 
@@ -212,6 +212,19 @@ export const getWallet = (): Wallet => {
     if (!wallet.budget_lock) {
         wallet.budget_lock = { enabled: false, emergency_used: false, until: null };
     }
+    if (typeof wallet.budget_set === 'undefined') {
+        wallet.budget_set = wallet.wizardSeen || wallet.budget_cents > 0;
+    }
+    if(!wallet.aboutYou) {
+        wallet.aboutYou = { home: 'rent', income: 3000, household: 1, hasOther: false, otherIncome: 0 };
+    }
+    if(!wallet.essentials) {
+        wallet.essentials = { rent: 1200, utilities: 150, groceries: 400, transport: 100, debts: 0, savingsPct: 10 };
+    }
+     if(!wallet.suggestionMeta) {
+        wallet.suggestionMeta = { rate: 0.25 };
+    }
+
 
     // Monthly Reset Logic
     if (new Date(wallet.monthEnd) < now) {
@@ -280,7 +293,7 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
     
     result.ok = true;
     result.message = "Transaction successful.";
-    console.log("Spend successful:", { amount: amount_cents, newBalance: newWalletState.balance_cents });
+    console.log("Spend successful:", { result, amount: amount_cents, newBalance: newWalletState.balance_cents });
     return result;
 }
 
@@ -353,3 +366,4 @@ export const incrementMetric = (key: keyof Metrics) => {
     
 
     
+

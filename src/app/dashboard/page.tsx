@@ -4,7 +4,7 @@
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format, formatDistanceToNow, isToday, isYesterday, endOfMonth, getDaysInMonth, getDate, differenceInDays } from "date-fns";
+import { format, formatDistanceToNow, isToday, isYesterday, endOfMonth, getDaysInMonth, getDate, differenceInDays, startOfMonth } from "date-fns";
 
 // UI Component Imports
 import {
@@ -162,7 +162,7 @@ export default function DashboardPage() {
     setLoading(false);
 
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "astro" || event.key === "astre.wallet") {
+      if (event.key === "astro" || event.key === "ast_wallet") {
         checkUser();
       }
     };
@@ -267,22 +267,30 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     });
   }
 
-  const handleDemoAction = (action: 'seed' | 'reset_month' | 'lock' | 'first_time') => {
+  const handleDemoAction = (action: 'first_time' | 'seed' | 'lock' | 'reset_month' | 'new_month') => {
     let currentWallet = getWallet();
     let newWalletState: WalletType;
     switch (action) {
         case 'first_time':
-             newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, wizardSeen: false, budget_lock: { enabled: false, emergency_used: false, until: null } };
+             newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, wizardSeen: false, budget_set: false, budget_lock: { enabled: false, emergency_used: false, until: null } };
              break;
         case 'seed':
-            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, wizardSeen: true, budget_lock: { ...currentWallet.budget_lock, emergency_used: false } };
+            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, wizardSeen: true, budget_set: true, budget_lock: { ...currentWallet.budget_lock, enabled: false, emergency_used: false } };
+            toast({ title: "Demo wallet seeded." });
             break;
         case 'lock':
              newWalletState = {...currentWallet, budget_lock: { ...currentWallet.budget_lock, enabled: true, until: endOfMonth(new Date()).toISOString() } };
+             toast({ title: "Budget locked for current month." });
             break;
         case 'reset_month':
              const now = new Date();
-             newWalletState = {...currentWallet, spent_this_month_cents: 0, monthStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(), monthEnd: endOfMonth(now).toISOString(), budget_lock: { enabled: false, emergency_used: false, until: null } };
+             newWalletState = {...currentWallet, spent_this_month_cents: 0, monthStart: startOfMonth(now).toISOString(), monthEnd: endOfMonth(now).toISOString(), budget_lock: { enabled: false, emergency_used: false, until: null } };
+             toast({ title: "Monthly spend has been reset." });
+            break;
+        case 'new_month':
+            const nextMonth = new Date();
+            newWalletState = {...currentWallet, spent_this_month_cents: 0, monthStart: startOfMonth(nextMonth).toISOString(), monthEnd: endOfMonth(nextMonth).toISOString(), budget_lock: { enabled: false, emergency_used: false, until: null }, budget_cents: 0, wizardSeen: false, budget_set: false };
+            toast({ title: "Simulating a completely new month."});
             break;
     }
     setWalletAndUpdateState(newWalletState);
@@ -323,7 +331,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     );
   }
 
-  const { balance_cents: balance, spent_this_month_cents: monthSpend, budget_cents: budget, wizardSeen, budget_lock } = wallet;
+  const { balance_cents: balance, spent_this_month_cents: monthSpend, budget_cents: budget, wizardSeen, budget_set, budget_lock } = wallet;
   const locked = budget_lock.enabled;
   const lockEmergencyUsed = budget_lock.emergency_used;
   const monthEnd = wallet.monthEnd;
@@ -368,11 +376,12 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                             <DropdownMenuItem onClick={() => handleDemoAction('first_time')}>Simulate first-time view</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                             <DropdownMenuItem onClick={() => handleSpend(700, "Demo spend €7")}>Spend €7 (guard)</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDemoAction('reset_month')}>Reset Month</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSpend(700, "Demo spend €7")}>Spend €7 (guard)</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSpend(5000, "Demo spend €50")}>Try spend €50</DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem>
-                                <Button variant="link-destructive" className="p-0 h-auto" onClick={() => handleDemoAction('reset_month')}>New month</Button>
+                                <Button variant="link-destructive" className="p-0 h-auto" onClick={() => handleDemoAction('new_month')}>New month</Button>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -381,7 +390,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4 flex-grow">
-          {wizardSeen ? (
+          {wizardSeen || budget_set ? (
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
@@ -1072,3 +1081,4 @@ const horoscopeData: { [key: string]: string } = {
 
 
     
+
