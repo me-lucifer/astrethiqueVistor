@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { TopUpModal } from '../dashboard/top-up-modal';
 import { RequestSessionModal } from '../request-session-modal';
 import { EmergencyTopUpModal } from '../dashboard/emergency-top-up-modal';
+import { ConsultantProfile } from '@/lib/consultant-profile';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -78,6 +79,29 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
         setIsAuthModalOpen(true);
         return;
     }
+    const profileData: ConsultantProfile = {
+        id: consultant.id,
+        name: consultant.name,
+        avatar: consultant.cover,
+        isOnline: consultant.availability.online,
+        badges: consultant.badges || [],
+        rating: consultant.rating,
+        reviewsCount: consultant.reviews.length,
+        languages: consultant.languages,
+        pricePerMin: consultant.pricePerMin,
+        summary: consultant.bio.substring(0, 100),
+        specialties: consultant.specialties,
+        types: consultant.types,
+        verifications: { adminApproved: consultant.adminApproved, kycVerified: consultant.kycVerified },
+        nextSlots: consultant.availability.slots,
+        content: consultant.content,
+        reviews: [],
+        favorite: false,
+        yearsExperience: consultant.yearsExperience,
+        country: consultant.country,
+        aboutHtml: consultant.bio,
+    };
+    setSession('consultantProfile', profileData);
     router.push(`/discover/consultant/${consultant.slug}/schedule`);
   };
   

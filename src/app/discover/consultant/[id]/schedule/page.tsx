@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
-import { getSession } from "@/lib/session";
+import { getSession, setSession } from "@/lib/session";
 import { ConsultantProfile } from "@/lib/consultant-profile";
 
 
@@ -55,12 +55,28 @@ export default function SchedulePage() {
 
     // Fetch consultant name for the toast message
     const profile = getSession<ConsultantProfile>("consultantProfile");
-    if(profile && (profile.id === id)) {
+    if(profile && (profile.id === id || profile.name.toLowerCase().replace(/\s/g, '-') === id)) {
         setConsultant(profile);
     }
   }, [id]);
 
   const handleRequestBooking = () => {
+    // Save to session storage for appointments page
+    const holds = getSession<any[]>('schedule.holds.v1') || [];
+    const newHold = {
+        id: `hold_${Date.now()}`,
+        consultantId: consultant?.id,
+        consultantName: consultant?.name,
+        slug: id,
+        mode: 'video', // Defaulting for now
+        startIso: new Date(`${format(date || new Date(), 'yyyy-MM-dd')}T${selectedTime}:00`).toISOString(),
+        durationMin: parseInt(duration),
+        pricePerMin: consultant?.pricePerMin,
+        type: 'session'
+    }
+    setSession('schedule.holds.v1', [...holds, newHold]);
+
+
     toast({
       title: "Request sent!",
       description: `Your request has been sent to ${consultant?.name || 'the consultant'}. You'll receive confirmation shortly.`,
@@ -72,7 +88,7 @@ export default function SchedulePage() {
     <div className="container py-12">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">Request a Booking</CardTitle>
+          <CardTitle className="font-headline text-2xl">Request a Booking with {consultant?.name}</CardTitle>
           <CardDescription>Select your preferred time and details for the session. Times are shown in your local timezone.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -158,6 +174,9 @@ export default function SchedulePage() {
                 </div>
               ))}
             </RadioGroup>
+            <p className="text-sm text-muted-foreground pt-2">
+                A minimum hold of €{(parseInt(duration) * (consultant?.pricePerMin || 0)).toFixed(2)} will be placed on your wallet. You can reuse or release it if the booking is cancelled.
+            </p>
           </div>
 
           {/* 5. Add a Note */}
@@ -174,7 +193,7 @@ export default function SchedulePage() {
                 <Button variant="ghost" asChild>
                     <Link href={`/discover/consultant/${id}`}>Cancel</Link>
                 </Button>
-                <Button onClick={handleRequestBooking}>
+                <Button onClick={handleRequestBooking} disabled={!date || !selectedTime}>
                     Request Booking
                 </Button>
             </div>
@@ -186,4 +205,3 @@ export default function SchedulePage() {
     </div>
   );
 }
-
