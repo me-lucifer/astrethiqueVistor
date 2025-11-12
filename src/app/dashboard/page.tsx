@@ -5,6 +5,8 @@ import { useState, useEffect, useTransition, useCallback, useMemo } from "react"
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format, formatDistanceToNow, isToday, isYesterday, endOfMonth, getDaysInMonth, getDate, differenceInDays, startOfMonth } from "date-fns";
+import * as ics from "ics";
+import { saveAs } from "file-saver";
 
 // UI Component Imports
 import {
@@ -37,6 +39,9 @@ import {
   MoreHorizontal,
   Zap,
   Lock,
+  Download,
+  FileText,
+  FileDown,
 } from "lucide-react";
 import {
   Tooltip,
@@ -586,7 +591,10 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
 
 function HistoryDrawer() {
   const [log, setLog] = useState<SpendLogEntry[]>([]);
-  const [isTopUpOpen, setIsTopUpOpen] = useState(false);
+  const [filter, setFilter] = useState('All');
+  const [selectedTransaction, setSelectedTransaction] = useState<SpendLogEntry | null>(null);
+  
+  const filterChips = ["All", "Credits", "Debits", "Sessions", "Purchases", "Top-ups", "Adjustments"];
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
@@ -594,14 +602,10 @@ function HistoryDrawer() {
         const rawLog = getSpendLog();
         const processedLog: SpendLogEntry[] = [];
         
-        for (let i = rawLog.length - 1; i >= 0; i--) {
+        for (let i = 0; i < rawLog.length; i++) {
             const entry = rawLog[i];
-            processedLog.unshift({ ...entry, runningBalance: entry.amount_cents < 0 ? (runningBalance + entry.amount_cents) / 100 : runningBalance / 100 });
-            if (entry.amount_cents > 0) {
-                 runningBalance += entry.amount_cents;
-            } else {
-                 runningBalance -= entry.amount_cents;
-            }
+            processedLog.push({ ...entry, runningBalance: runningBalance / 100 });
+            runningBalance -= entry.amount_cents;
         }
 
         setLog(processedLog);
@@ -610,6 +614,22 @@ function HistoryDrawer() {
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(amount);
+  };
+  
+  const filteredLog = useMemo(() => {
+    if (filter === 'All') return log;
+    if (filter === 'Credits') return log.filter(e => e.amount_cents > 0);
+    if (filter === 'Debits') return log.filter(e => e.amount_cents < 0);
+    if (filter === 'Sessions') return log.filter(e => e.type === 'consultation');
+    if (filter === 'Purchases') return log.filter(e => e.type === 'horoscope');
+    if (filter === 'Top-ups') return log.filter(e => e.type === 'topup' || e.type === 'emergency');
+    if (filter === 'Adjustments') return log.filter(e => e.type === 'other');
+    return log;
+  }, [log, filter]);
+  
+  const downloadInvoice = () => {
+    const blob = new Blob(["This is a placeholder PDF invoice."], { type: "application/pdf" });
+    saveAs(blob, `invoice-${selectedTransaction?.ts}.pdf`);
   };
 
   const iconMap: Record<SpendLogEntry['type'], React.ReactNode> = {
@@ -628,15 +648,28 @@ function HistoryDrawer() {
           History
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className="w-[400px] sm:w-[540px] flex flex-col">
         <SheetHeader>
-          <SheetTitle>Transaction History</SheetTitle>
+          <div className="flex justify-between items-center">
+            <SheetTitle>Transaction History</SheetTitle>
+            <div className="flex gap-2">
+                <Button variant="outline" size="sm"><FileText className="h-3 w-3 mr-2"/>Export CSV</Button>
+                <Button variant="outline" size="sm">Open full history</Button>
+            </div>
+          </div>
         </SheetHeader>
-        <div className="py-4 space-y-4">
-          {log.length > 0 ? (
+        <div className="py-4">
+            <div className="flex flex-wrap gap-2">
+                {filterChips.map(f => (
+                    <Button key={f} size="sm" variant={filter === f ? 'secondary' : 'outline'} onClick={() => setFilter(f)}>{f}</Button>
+                ))}
+            </div>
+        </div>
+        <div className="flex-1 overflow-y-auto -mx-6 px-6">
+          {filteredLog.length > 0 ? (
             <div className="space-y-4">
-                {log.map(entry => (
-                <div key={entry.ts} className="flex justify-between items-center">
+                {filteredLog.map(entry => (
+                <div key={entry.ts} className="flex justify-between items-center cursor-pointer hover:bg-muted/50 p-2 rounded-md" onClick={() => setSelectedTransaction(entry)}>
                     <div className="flex items-center gap-3">
                         {iconMap[entry.type]}
                         <div>
@@ -651,20 +684,40 @@ function HistoryDrawer() {
                         <p className="text-xs text-muted-foreground">
                             Bal: {formatCurrency(entry.runningBalance || 0)}
                         </p>
+                        {entry.amount_cents < 0 && <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground mt-1">Download invoice</Button>}
                     </div>
                 </div>
             ))}
             </div>
           ) : (
             <div className="text-center py-10 text-muted-foreground space-y-3">
-                <p>No wallet activity yet this month.</p>
-                <Button onClick={() => setIsTopUpOpen(true)}>Make your first top-up</Button>
+                <p>No activity for this filter.</p>
             </div>
           )}
         </div>
       </SheetContent>
     </Sheet>
-    <TopUpModal isOpen={isTopUpOpen} onOpenChange={setIsTopUpOpen} />
+    
+    <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Transaction Details</DialogTitle>
+            </DialogHeader>
+            {selectedTransaction && (
+                <div className="space-y-4">
+                    <p><strong>Invoice Number:</strong> INV-{new Date(selectedTransaction.ts).getTime()}</p>
+                    <p><strong>Description:</strong> {selectedTransaction.note}</p>
+                    <p><strong>Amount:</strong> {formatCurrency(selectedTransaction.amount_cents / 100)}</p>
+                    <p><strong>Method:</strong> Wallet</p>
+                    <p><strong>VAT (23%):</strong> {formatCurrency((selectedTransaction.amount_cents / 100) * 0.23)}</p>
+                </div>
+            )}
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                <Button onClick={downloadInvoice}><FileDown className="h-4 w-4 mr-2" />Download PDF</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
     </>
   );
 }
