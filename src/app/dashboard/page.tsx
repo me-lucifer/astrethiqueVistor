@@ -446,7 +446,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                       <TooltipContent><p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p></TooltipContent>
                     </Tooltip>
                     <Label htmlFor="lock-switch-header" className="text-sm sr-only">{locked ? 'Locked' : 'Unlocked'}</Label>
-                    <Switch id="lock-switch-header" checked={locked} onCheckedChange={handleToggleLock} aria-label="Lock budget"/>
+                    <Switch id="lock-switch-header" checked={locked} onCheckedChange={(c) => handleToggleLock(c)} aria-label="Lock budget"/>
                 </div>
               )}
             </div>
@@ -1252,5 +1252,6 @@ const horoscopeData: { [key: string]: string } = {
 
 
     
+
 
 
