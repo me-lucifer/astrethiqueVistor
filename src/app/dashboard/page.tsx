@@ -88,6 +88,7 @@ import { BudgetWizardModal } from "@/components/budget/budget-wizard-modal";
 import { TopUpModal } from "@/components/dashboard/top-up-modal";
 import { EmergencyTopUpModal } from "@/components/dashboard/emergency-top-up-modal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 
 
@@ -455,16 +456,26 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
 
             </div>
           ) : (
-             <Card className="bg-primary/10 border-primary/20 text-center p-6 space-y-3">
-               <CardTitle className="text-base">Set a monthly budget to stay in control.</CardTitle>
-               <CardDescription className="text-sm">Use our quick wizard to calculate a budget based on your income and expenses.</CardDescription>
-                <div className="flex flex-wrap justify-center gap-2">
-                    <Button onClick={onBudgetClick}>Set up now</Button>
-                    <Button variant="ghost" className="text-xs" disabled>Top up €5</Button>
-                    <Button variant="ghost" className="text-xs" disabled>Top up €10</Button>
-                    <Button variant="ghost" className="text-xs" disabled>Top up €25</Button>
-                </div>
-             </Card>
+             balance_cents > 0 ? (
+                <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                        Set your monthly budget to keep spending in check.
+                    </AlertDescription>
+                    <Button size="sm" onClick={onBudgetClick} className="mt-3">Set Now</Button>
+                </Alert>
+             ) : (
+                <Card className="bg-primary/10 border-primary/20 text-center p-6 space-y-3">
+                    <CardTitle className="text-base">Set a monthly budget to stay in control.</CardTitle>
+                    <CardDescription className="text-sm">Use our quick wizard to calculate a budget based on your income and expenses.</CardDescription>
+                    <div className="flex flex-wrap justify-center gap-2">
+                        <Button onClick={onBudgetClick}>Set up now</Button>
+                        <Button variant="ghost" className="text-xs" disabled>Top up €5</Button>
+                        <Button variant="ghost" className="text-xs" disabled>Top up €10</Button>
+                        <Button variant="ghost" className="text-xs" disabled>Top up €25</Button>
+                    </div>
+                </Card>
+             )
           )}
         </CardContent>
         {budget_set && (
@@ -1056,4 +1067,5 @@ const horoscopeData: { [key: string]: string } = {
     
 
     
+
 
