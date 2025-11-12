@@ -69,13 +69,14 @@ export default function ProfilePage() {
         const currentUser = authLocal.getCurrentUser();
         if (currentUser) {
             setUser(currentUser);
+            const userTimezone = currentUser?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
             form.reset({
                 firstName: currentUser.firstName,
                 lastName: currentUser.lastName,
                 pseudonym: currentUser.pseudonym || '',
                 displayNamePreference: currentUser.displayNamePreference || 'realName',
                 language: currentUser?.language || 'EN',
-                timezone: currentUser?.timezone || '',
+                timezone: userTimezone,
             });
              // Show migration banner if they were just migrated
             if (currentUser.nameHistory.length <= 1 && !currentUser.pseudonym) {
@@ -93,19 +94,6 @@ export default function ProfilePage() {
         }
     }, [router]);
     
-    useEffect(() => {
-        if (user) {
-            form.reset({
-                firstName: user.firstName,
-                lastName: user.lastName,
-                pseudonym: user.pseudonym || '',
-                displayNamePreference: user.displayNamePreference || 'realName',
-                language: user.language || 'EN',
-                timezone: user.timezone || defaultTimezone,
-            });
-        }
-    }, [user, form, defaultTimezone]);
-
     const onProfileSubmit = (data: ProfileFormData) => {
         if (!user) return;
         
@@ -253,5 +241,7 @@ export default function ProfilePage() {
         </div>
     );
 }
+
+    
 
     
