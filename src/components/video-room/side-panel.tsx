@@ -9,11 +9,11 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useSessionTimer } from "@/hooks/use-session-timer";
-import { Lock, Pin, Trash2, FileDown, Book, Plus, Tag, Clock } from "lucide-react";
+import { Lock, Pin, Trash2, FileDown, Book, Plus, Tag, Clock, PhoneOff } from "lucide-react";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 
-interface Note {
+export interface Note {
     id: number;
     content: string;
     timestamp: number;
@@ -23,6 +23,7 @@ interface Note {
 
 interface SidePanelProps {
   isOpen: boolean;
+  onEndCall: () => void;
 }
 
 const NoteComposer = ({ onSave }: { onSave: (note: Omit<Note, 'id' | 'isPinned'>) => void }) => {
@@ -104,18 +105,21 @@ const NotesPanel = () => {
     const { toast } = useToast();
 
     useEffect(() => {
-        // Simulate loading notes
-        const savedNotes = [];
-        if (savedNotes.length > 0) {
-            setNotes(savedNotes);
+        // Simulate loading notes from localStorage on mount
+        const savedNotesJSON = localStorage.getItem('sessionNotes');
+        if (savedNotesJSON) {
+            setNotes(JSON.parse(savedNotesJSON));
         }
     }, []);
     
     useEffect(() => {
-        // Simulate autosave
+        // Autosave notes to localStorage
         const handler = setTimeout(() => {
-            setSaveStatus(`Saved • ${formatDistanceToNow(new Date(), { addSuffix: true })}`);
-        }, 3000);
+            if (notes.length > 0) {
+                 localStorage.setItem('sessionNotes', JSON.stringify(notes));
+                 setSaveStatus(`Saved • ${new Date().toLocaleTimeString()}`);
+            }
+        }, 1000);
         return () => clearTimeout(handler);
     }, [notes]);
 
@@ -217,15 +221,15 @@ const NoteCard = ({ note, onTogglePin, onDelete }: { note: Note, onTogglePin: (i
 }
 
 
-export function SidePanel({ isOpen }: SidePanelProps) {
+export function SidePanel({ isOpen, onEndCall }: SidePanelProps) {
   return (
     <aside
       className={cn(
-        "absolute top-16 bottom-0 right-0 z-10 w-full max-w-[350px] bg-background/30 border-l border-border/50 backdrop-blur-xl transition-transform duration-300 ease-in-out",
+        "absolute top-0 bottom-0 right-0 z-10 w-full max-w-[350px] bg-background/30 border-l border-border/50 backdrop-blur-xl transition-transform duration-300 ease-in-out flex flex-col",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}
     >
-        <Tabs defaultValue="notes" className="h-full flex flex-col">
+        <Tabs defaultValue="notes" className="h-full flex flex-col flex-1 overflow-hidden">
             <TabsList className="grid w-full grid-cols-3 rounded-none bg-transparent pt-2 px-2 border-b border-border/50">
                 <TabsTrigger value="notes">Notes</TabsTrigger>
                 <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -243,6 +247,11 @@ export function SidePanel({ isOpen }: SidePanelProps) {
                 </TabsContent>
             </div>
         </Tabs>
+        <div className="p-4 border-t border-border/50">
+            <Button variant="outline" className="w-full" onClick={onEndCall}>
+                <PhoneOff className="h-4 w-4 mr-2" /> End Session
+            </Button>
+        </div>
     </aside>
   );
 }

@@ -13,6 +13,7 @@ import { PlaceholderPage } from "@/components/placeholder-page";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { PermissionsOverlay } from "@/components/video-room/permissions-overlay";
+import { SessionSummaryModal } from "@/components/video-room/session-summary-modal";
 
 export default function VideoRoomPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function VideoRoomPage() {
   const [consultant, setConsultant] = useState<Consultant | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
   const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [hasPermissions, setHasPermissions] = useState(false);
   
   const { time, isRunning, startTimer, stopTimer } = useSessionTimer();
@@ -53,19 +55,20 @@ export default function VideoRoomPage() {
 
   const handleEndCall = () => {
     stopTimer();
-    router.push('/discover');
+    setIsEndConfirmOpen(false);
+    setIsSummaryModalOpen(true);
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && hasPermissions) {
+      if (e.key === "Escape" && hasPermissions && !isEndConfirmOpen && !isSummaryModalOpen) {
         e.preventDefault();
         setIsEndConfirmOpen(true);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasPermissions]);
+  }, [hasPermissions, isEndConfirmOpen, isSummaryModalOpen]);
 
 
   if (!consultant) {
@@ -86,7 +89,7 @@ export default function VideoRoomPage() {
       />
       <main className="flex-1 flex overflow-hidden">
         <VideoArea isSidePanelOpen={isSidePanelOpen} />
-        <SidePanel isOpen={isSidePanelOpen} />
+        <SidePanel isOpen={isSidePanelOpen} onEndCall={() => setIsEndConfirmOpen(true)} />
       </main>
       <Controls 
         onEndCall={() => setIsEndConfirmOpen(true)}
@@ -110,6 +113,15 @@ export default function VideoRoomPage() {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+
+        <SessionSummaryModal
+            isOpen={isSummaryModalOpen}
+            onOpenChange={setIsSummaryModalOpen}
+            duration={time}
+            rate={consultant.pricePerMin}
+            consultantName={consultant.name}
+            onClose={() => router.push('/discover')}
+        />
     </div>
   );
 }

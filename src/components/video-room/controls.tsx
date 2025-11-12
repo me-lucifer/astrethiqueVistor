@@ -12,10 +12,10 @@ interface ControlsProps {
     onToggleNotes: () => void;
 }
 
-const ControlButton = ({ tooltip, hotkey, onClick, children, variant = "ghost", className = "" }: { tooltip: string, hotkey?: string, onClick: () => void, children: React.ReactNode, variant?: "ghost" | "destructive", className?: string }) => (
+const ControlButton = ({ tooltip, hotkey, onClick, children, variant = "ghost", className = "" }: { tooltip: string, hotkey?: string, onClick?: () => void, children: React.ReactNode, variant?: "ghost" | "destructive", className?: string }) => (
     <Tooltip>
         <TooltipTrigger asChild>
-            <Button variant={variant} size="icon" className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white ${className}`} onClick={onClick}>
+            <Button variant={variant} size="icon" className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white ${className}`} onClick={onClick} disabled={!onClick}>
                 {children}
             </Button>
         </TooltipTrigger>
@@ -32,6 +32,9 @@ export function Controls({ onEndCall, isSidePanelOpen, onToggleNotes }: Controls
     
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
+            if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
             if (e.key.toLowerCase() === 'm') setIsMuted(prev => !prev);
             if (e.key.toLowerCase() === 'c') setIsCameraOff(prev => !prev);
             if (e.key.toLowerCase() === 'b') setIsBlurred(prev => !prev);
