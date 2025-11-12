@@ -97,7 +97,7 @@ import type { ContentHubItem } from "@/lib/content-hub-seeder";
 
 
 const Starfield = () => (
-  <div className="absolute inset-0 -z-10 overflow-hidden">
+  <div className="absolute inset-0 -z-10 overflow-hidden motion-reduce:hidden">
     <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
     <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.1)_0%,_rgba(255,255,255,0)_60%)] opacity-50" />
     <div className="absolute w-[2px] h-[2px] bg-white/50 rounded-full shadow-[0_0_10px_2px_#fff] top-[10%] left-[10%]" />
@@ -264,7 +264,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
              newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, budget_set: false, budget_lock: { enabled: false, until: null, emergency_used: false }};
              break;
         case 'seed':
-            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, budget_set: true };
+            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, budget_set: true, budget_lock: {...currentWallet.budget_lock, emergency_used: false} };
             break;
         case 'lock':
              newWalletState = {...currentWallet, budget_lock: { ...currentWallet.budget_lock, enabled: true, until: endOfMonth(new Date()).toISOString() }};
@@ -338,7 +338,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 {budget_set && (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Badge variant="outline" className="text-lg font-bold cursor-help">
+                            <Badge variant="outline" className="text-lg font-bold cursor-help" aria-label={`Current balance: ${formatCurrency(balance_cents / 100)}`}>
                                 Balance: {formatCurrency(balance_cents / 100)}
                             </Badge>
                         </TooltipTrigger>
@@ -377,7 +377,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 </div>
                 <Progress 
                     value={progress} 
-                    indicatorClassName={progressColor} 
+                    indicatorClassName={cn("motion-reduce:transition-none", progressColor)} 
                     aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} 
                     aria-valuenow={spent_this_month_cents}
                     aria-valuemin={0}
@@ -426,8 +426,11 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
              <Card className="bg-primary/10 border-primary/20 text-center p-6 space-y-3">
                <CardTitle className="text-base">Set a monthly budget to stay in control.</CardTitle>
                <CardDescription className="text-sm">Use our quick wizard to calculate a budget based on your income and expenses.</CardDescription>
-                <div className="flex justify-center gap-2">
+                <div className="flex flex-wrap justify-center gap-2">
                     <Button onClick={onBudgetClick}>Set up now</Button>
+                    <Button variant="ghost" className="text-xs" disabled>Top up €5</Button>
+                    <Button variant="ghost" className="text-xs" disabled>Top up €10</Button>
+                    <Button variant="ghost" className="text-xs" disabled>Top up €25</Button>
                 </div>
              </Card>
           )}
@@ -1031,5 +1034,7 @@ const horoscopeData: { [key: string]: string } = {
   Pisces:
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+
+    
 
     
