@@ -138,6 +138,7 @@ const NotesPanel = () => {
     };
 
     const handleExport = (type: 'Journal' | 'PDF') => {
+        console.log('notes_export', { type });
         toast({
             title: "Export Started",
             description: `Your notes are being exported as a ${type}.`,

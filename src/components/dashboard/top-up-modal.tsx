@@ -31,6 +31,7 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
 
     useEffect(() => {
         if(isOpen) {
+            console.log('topup_opened');
             setWalletState(getWallet());
             setAmount(10);
             setIsCustom(false);
@@ -45,6 +46,8 @@ export function TopUpModal({ isOpen, onOpenChange }: TopUpModalProps) {
         }
 
         if (!wallet) return;
+        
+        console.log('topup_success', { amount: amount, lock: lockBudget });
 
         let updatedWallet: Wallet = {
             ...wallet,

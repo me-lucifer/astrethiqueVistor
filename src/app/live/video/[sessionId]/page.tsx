@@ -52,6 +52,7 @@ export default function VideoRoomPage() {
   }, [sessionId, router, stopTimer]);
   
   const handleJoinCall = () => {
+    console.log('call_start');
     setHasPermissions(true);
     startTimer();
   }

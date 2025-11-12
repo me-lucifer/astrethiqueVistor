@@ -106,6 +106,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   };
   
   const handleStartNowClick = () => {
+      console.log('session_request');
       if (!user) {
           setIntendedAction(() => handleStartNowClick);
           setIsAuthModalOpen(true);

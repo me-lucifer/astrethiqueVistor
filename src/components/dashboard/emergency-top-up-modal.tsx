@@ -20,6 +20,12 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
     const [amount, setAmount] = useState(EMERGENCY_TOPUP_LIMIT_EUR);
     const [error, setError] = useState("");
 
+    useEffect(() => {
+        if (isOpen) {
+            console.log('topup_opened', { type: 'emergency' });
+        }
+    }, [isOpen]);
+
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = parseFloat(e.target.value);
         if (isNaN(value)) {
@@ -50,6 +56,8 @@ export function EmergencyTopUpModal({ isOpen, onOpenChange }: EmergencyTopUpModa
             onOpenChange(false);
             return;
         }
+
+        console.log('topup_success', { type: 'emergency', amount });
 
         const updatedWallet: Wallet = {
             ...wallet,

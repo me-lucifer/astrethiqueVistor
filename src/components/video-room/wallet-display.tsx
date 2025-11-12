@@ -36,6 +36,7 @@ export function WalletDisplay({ sessionTime, ratePerMin }: WalletDisplayProps) {
         // Check for low balance (less than one minute of call time remaining)
         const minuteRateCents = ratePerMin * 100;
         if (newBalanceClamped > 0 && newBalanceClamped < minuteRateCents && !gracePeriodToastId) {
+            console.log('low_balance');
             const toastId = toast({
                 title: "Low Balance",
                 description: "About 1 minute left. Top up to continue.",

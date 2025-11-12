@@ -9,6 +9,7 @@ import { Consultant } from '@/lib/consultants';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { XCircle, Clock } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface RequestSessionModalProps {
     isOpen: boolean;
@@ -17,7 +18,7 @@ interface RequestSessionModalProps {
     onSchedule: () => void;
 }
 
-type RequestStatus = 'requesting' | 'unavailable';
+type RequestStatus = 'requesting' | 'accepted' | 'declined' | 'timeout';
 
 const CountdownCircle = ({ onComplete }: { onComplete: () => void }) => {
     const [countdown, setCountdown] = useState(60);
@@ -81,17 +82,29 @@ const CountdownCircle = ({ onComplete }: { onComplete: () => void }) => {
 
 export function RequestSessionModal({ isOpen, onOpenChange, consultant, onSchedule }: RequestSessionModalProps) {
     const [status, setStatus] = useState<RequestStatus>('requesting');
+    const router = useRouter();
     
-    // Simulate a decline after some seconds for demonstration
+    // Simulate a response after some seconds for demonstration
     useEffect(() => {
         if (status === 'requesting' && isOpen) {
             const randomTimeout = Math.random() * 8000 + 4000; // 4-12 seconds
-            const declineTimer = setTimeout(() => {
-                setStatus('unavailable');
+            const responseTimer = setTimeout(() => {
+                const isAccepted = Math.random() > 0.4; // 60% chance of acceptance
+                if (isAccepted) {
+                    console.log('session_accept');
+                    setStatus('accepted');
+                     setTimeout(() => {
+                        onOpenChange(false);
+                        router.push(`/live/video/session-with-${consultant.slug}`);
+                    }, 1500);
+                } else {
+                    console.log('session_decline');
+                    setStatus('declined');
+                }
             }, randomTimeout);
-            return () => clearTimeout(declineTimer);
+            return () => clearTimeout(responseTimer);
         }
-    }, [status, isOpen]);
+    }, [status, isOpen, consultant.slug, onOpenChange, router]);
     
      useEffect(() => {
         if (!isOpen) {
@@ -102,7 +115,10 @@ export function RequestSessionModal({ isOpen, onOpenChange, consultant, onSchedu
     }, [isOpen]);
 
     const handleTimeout = () => {
-        setStatus('unavailable');
+        if(status === 'requesting') {
+            console.log('session_decline_timeout');
+            setStatus('timeout');
+        }
     };
     
     const handleScheduleAndClose = () => {
@@ -112,7 +128,38 @@ export function RequestSessionModal({ isOpen, onOpenChange, consultant, onSchedu
     
     const renderContent = () => {
         switch (status) {
+            case 'accepted':
+                 return (
+                    <div className="flex flex-col items-center gap-6 py-6">
+                        <div className="relative">
+                            <Avatar className="w-40 h-40 border-4 border-primary">
+                                <AvatarImage src={consultant.cover} alt={consultant.name} />
+                                <AvatarFallback>{getInitials(consultant.name)}</AvatarFallback>
+                            </Avatar>
+                        </div>
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Request Accepted!</DialogTitle>
+                            <DialogDescription className="text-center">Connecting you to {consultant.name}...</DialogDescription>
+                        </DialogHeader>
+                    </div>
+                );
+            case 'declined':
+            case 'timeout':
+                return (
+                     <div className="flex flex-col items-center gap-4 py-6 text-center">
+                        <XCircle className="w-12 h-12 text-destructive" />
+                        <DialogHeader>
+                            <DialogTitle>Consultant Unavailable</DialogTitle>
+                            <DialogDescription>{consultant.name} is currently unavailable. Would you like to schedule a time instead?</DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="w-full sm:justify-center flex-col sm:flex-row gap-2">
+                           <DialogClose asChild><Button variant="outline" className="w-full">Close</Button></DialogClose>
+                           <Button onClick={handleScheduleAndClose} className="w-full">Schedule</Button>
+                        </DialogFooter>
+                    </div>
+                );
             case 'requesting':
+            default:
                 return (
                     <div className="flex flex-col items-center gap-6 py-6">
                         <div className="relative">
@@ -130,20 +177,6 @@ export function RequestSessionModal({ isOpen, onOpenChange, consultant, onSchedu
                             <DialogClose asChild>
                                 <Button type="button" variant="outline">Cancel Request</Button>
                             </DialogClose>
-                        </DialogFooter>
-                    </div>
-                );
-            case 'unavailable':
-                return (
-                     <div className="flex flex-col items-center gap-4 py-6 text-center">
-                        <XCircle className="w-12 h-12 text-destructive" />
-                        <DialogHeader>
-                            <DialogTitle>Consultant Unavailable</DialogTitle>
-                            <DialogDescription>{consultant.name} is currently unavailable. Would you like to schedule a time instead?</DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter className="w-full sm:justify-center flex-col sm:flex-row gap-2">
-                           <DialogClose asChild><Button variant="outline" className="w-full">Close</Button></DialogClose>
-                           <Button onClick={handleScheduleAndClose} className="w-full">Schedule</Button>
                         </DialogFooter>
                     </div>
                 );

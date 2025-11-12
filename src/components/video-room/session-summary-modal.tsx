@@ -41,13 +41,14 @@ export function SessionSummaryModal({ isOpen, onOpenChange, duration, rate, cons
 
     useEffect(() => {
         if (isOpen) {
+            console.log('call_end', { duration, cost: sessionCost });
             const savedNotesJSON = localStorage.getItem('sessionNotes');
             if (savedNotesJSON) {
                 setNotes(JSON.parse(savedNotesJSON));
             }
             setIsBudgetLocked(getWallet().budget_lock.enabled);
         }
-    }, [isOpen]);
+    }, [isOpen, duration, sessionCost]);
 
     const handleSaveAndClose = () => {
         if (tip > 0 && !isBudgetLocked) {
