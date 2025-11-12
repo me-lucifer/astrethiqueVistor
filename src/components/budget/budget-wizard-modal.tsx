@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -28,9 +29,14 @@ const aboutYouSchema = z.object({
   household: z.coerce.number().int().min(1, "Household must have at least 1 person.").max(10),
   hasOther: z.boolean(),
   otherIncome: z.coerce.number().optional(),
-}).refine(data => !data.hasOther || (data.otherIncome !== undefined && data.otherIncome >= 0), {
-  message: "Please enter the other income amount.",
-  path: ["otherIncome"],
+}).superRefine((data, ctx) => {
+  if (data.hasOther && (data.otherIncome === undefined || data.otherIncome < 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please enter the other income amount.",
+      path: ["otherIncome"],
+    });
+  }
 });
 
 const essentialsSchema = z.object({
@@ -185,9 +191,9 @@ const Step3 = () => {
 
 
 const steps: { title: string; description: string; component: React.FC; fields: FieldPath<WizardFormData>[] }[] = [
-    { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou.home", "aboutYou.income", "aboutYou.household", "aboutYou.hasOther", "aboutYou.otherIncome"] },
-    { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentials.rentOrMortgage", "essentials.utilities", "essentials.groceries", "essentials.transport", "essentials.debts", "essentials.savingsPct"] },
-    { title: "Suggested budget for you", description: "Based on your info, here's a suggested budget. You can adjust it.", component: Step3, fields: ["finalStep.finalAmount", "finalStep.lockWallet"] },
+    { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou"] },
+    { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentials"] },
+    { title: "Suggested budget for you", description: "Based on your info, here's a suggested budget. You can adjust it.", component: Step3, fields: ["finalStep"] },
 ];
 
 
@@ -332,5 +338,3 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         </Dialog>
     );
 }
-
-    
