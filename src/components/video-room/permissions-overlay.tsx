@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
@@ -14,10 +14,13 @@ const MicVisualizer = () => {
     const [level, setLevel] = useState(0);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setLevel(Math.random() * 80 + 10); // Simulate mic input
-        }, 200);
-        return () => clearInterval(interval);
+        let animationFrameId: number;
+        const visualize = () => {
+            setLevel(Math.random() * 80 + 10);
+            animationFrameId = requestAnimationFrame(visualize);
+        };
+        visualize();
+        return () => cancelAnimationFrame(animationFrameId);
     }, []);
 
     return (
@@ -31,6 +34,39 @@ const MicVisualizer = () => {
 export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
     const [cameraEnabled, setCameraEnabled] = useState(true);
     const [micEnabled, setMicEnabled] = useState(true);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [stream, setStream] = useState<MediaStream | null>(null);
+
+    useEffect(() => {
+        const getPermissions = async () => {
+            try {
+                const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                setStream(mediaStream);
+                if (videoRef.current) {
+                    videoRef.current.srcObject = mediaStream;
+                }
+            } catch (err) {
+                console.error("Error accessing media devices.", err);
+            }
+        };
+        getPermissions();
+
+        return () => {
+            stream?.getTracks().forEach(track => track.stop());
+        };
+    }, []);
+
+    useEffect(() => {
+        if (stream) {
+            stream.getVideoTracks().forEach(track => track.enabled = cameraEnabled);
+        }
+    }, [cameraEnabled, stream]);
+
+    useEffect(() => {
+        if (stream) {
+            stream.getAudioTracks().forEach(track => track.enabled = micEnabled);
+        }
+    }, [micEnabled, stream]);
     
     return (
         <div className="h-screen w-screen bg-black/80 flex items-center justify-center p-4">
@@ -42,10 +78,14 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="aspect-video w-full bg-black rounded-lg flex items-center justify-center">
-                        <p className="text-muted-foreground">
-                            {cameraEnabled ? 'Camera Preview' : 'Camera is off'}
-                        </p>
+                    <div className="aspect-video w-full bg-black rounded-lg flex items-center justify-center overflow-hidden">
+                       {cameraEnabled && stream ? (
+                           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                       ) : (
+                           <p className="text-muted-foreground">
+                               {cameraEnabled ? 'Requesting camera...' : 'Camera is off'}
+                           </p>
+                       )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="p-4 rounded-lg border space-y-3">
@@ -55,14 +95,14 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                                 </Label>
                                 <Switch id="mic-toggle" checked={micEnabled} onCheckedChange={setMicEnabled} />
                             </div>
-                            <Select defaultValue="default">
+                            <Select defaultValue="default" disabled={!micEnabled}>
                                 <SelectTrigger aria-label="Select microphone"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="default">Default - Internal Microphone</SelectItem>
                                     <SelectItem value="mic2">External USB Mic</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <MicVisualizer />
+                            {micEnabled && <MicVisualizer />}
                         </div>
                          <div className="p-4 rounded-lg border space-y-3">
                              <div className="flex items-center justify-between">
@@ -71,7 +111,7 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                                 </Label>
                                 <Switch id="cam-toggle" checked={cameraEnabled} onCheckedChange={setCameraEnabled} />
                             </div>
-                             <Select defaultValue="default">
+                             <Select defaultValue="default" disabled={!cameraEnabled}>
                                 <SelectTrigger aria-label="Select camera"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="default">Default - FaceTime HD Camera</SelectItem>
