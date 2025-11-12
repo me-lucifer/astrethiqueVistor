@@ -31,7 +31,7 @@ const PasswordStrength = ({ password = "" }: { password?: string }) => {
   }
   
   if (!password) {
-    strengthText = "";
+    return null;
   }
 
 

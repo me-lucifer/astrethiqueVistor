@@ -580,7 +580,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSaveSearch}>
+                            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSaveSearch} aria-label="Save current search">
                                 <Star className="h-5 w-5" />
                                 <span className="sr-only">Save search</span>
                             </Button>
