@@ -370,7 +370,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 Wallet & Budget
               </CardTitle>
               <div className="flex items-center gap-1">
-                  {wizardSeen && (
+                  {(wizardSeen || budget_set) && (
                       <Tooltip>
                           <TooltipTrigger asChild>
                               <Badge variant="outline" className="text-lg font-bold cursor-help" aria-label={`Current balance: ${formatCurrency(balance)}`}>
@@ -409,7 +409,43 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
             </div>
           </CardHeader>
           <CardContent className="space-y-4 flex-grow">
-            {wizardSeen || budget_set ? (
+            {!wizardSeen && balance === 0 ? (
+              // State A: First-time user
+              <Card className="bg-primary/10 border-primary/20 text-center p-6 space-y-3">
+                  <CardTitle className="text-base">Set a monthly budget to stay in control.</CardTitle>
+                  <CardDescription className="text-sm">Use our quick wizard to calculate a budget based on your income and expenses.</CardDescription>
+                  <div className="flex flex-wrap justify-center gap-2">
+                      <Button onClick={onBudgetClick}>Set up now</Button>
+                      <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(5)}>Top up €5</Button>
+                      <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(10)}>Top up €10</Button>
+                      <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(25)}>Top up €25</Button>
+                  </div>
+              </Card>
+            ) : !budget_set && balance > 0 ? (
+                // State B: No budget, balance > 0
+                 <div className="space-y-4">
+                    <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
+                        <Badge variant="outline">No monthly budget set</Badge>
+                        <Button variant="link" size="sm" onClick={onBudgetClick}>Enable budget</Button>
+                    </div>
+                     <div className="h-2 w-full overflow-hidden rounded-full bg-secondary border border-dashed" />
+                    <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
+                        <span>Budget not set</span>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="link" size="sm" className="text-xs p-0 h-auto">Why set a budget?</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Adds a monthly cap; can be locked.</TooltipContent>
+                        </Tooltip>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(5)}>Top up €5</Button>
+                      <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(10)}>Top up €10</Button>
+                      <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(25)}>Top up €25</Button>
+                  </div>
+                 </div>
+            ) : (
+                // State C: Budget enabled
               <div className="space-y-4">
                 <motion.div layout>
                   <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
@@ -467,26 +503,19 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 )}
 
               </div>
-            ) : (
-              <Card className="bg-primary/10 border-primary/20 text-center p-6 space-y-3">
-                  <CardTitle className="text-base">Set a monthly budget to stay in control.</CardTitle>
-                  <CardDescription className="text-sm">Use our quick wizard to calculate a budget based on your income and expenses.</CardDescription>
-                  <div className="flex flex-wrap justify-center gap-2">
-                      <Button onClick={onBudgetClick}>Set up now</Button>
-                      <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(5)}>Top up €5</Button>
-                      <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(10)}>Top up €10</Button>
-                      <Button variant="ghost" className="text-xs" onClick={() => handleQuickTopUp(25)}>Top up €25</Button>
-                  </div>
-              </Card>
             )}
           </CardContent>
-          {wizardSeen && (
+          {(wizardSeen || budget_set) && (
               <CardFooter className="flex justify-between items-center mt-auto border-t pt-4">
                 <div className="flex gap-2">
                     <Button onClick={() => setIsTopUpOpen(true)} size="sm">Top up</Button>
                     <Button onClick={onBudgetClick} variant="outline" size="sm">Change budget</Button>
                 </div>
-                <HistoryDrawer />
+                 <div className="flex items-center gap-2">
+                    <Label htmlFor="lock-switch" className="text-sm">Lock</Label>
+                    <Switch id="lock-switch" checked={locked} onCheckedChange={handleToggleLock} aria-label="Lock budget"/>
+                    <HistoryDrawer />
+                </div>
               </CardFooter>
           )}
            <p className="text-xs text-muted-foreground text-center p-2">Spending uses wallet balance only. Budgets reset monthly.</p>
@@ -526,8 +555,12 @@ function HistoryDrawer() {
         // Iterate backwards to calculate running balance correctly
         for (let i = rawLog.length - 1; i >= 0; i--) {
             const entry = rawLog[i];
-            processedLog.unshift({ ...entry, runningBalance: runningBalance / 100 });
-            runningBalance -= entry.amount_cents;
+            processedLog.unshift({ ...entry, runningBalance: entry.amount_cents < 0 ? (runningBalance + entry.amount_cents) / 100 : runningBalance / 100 });
+            if (entry.amount_cents > 0) {
+                 runningBalance += entry.amount_cents;
+            } else {
+                 runningBalance -= entry.amount_cents;
+            }
         }
 
         setLog(processedLog);
