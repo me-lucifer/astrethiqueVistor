@@ -79,7 +79,7 @@ import { ZodiacSignModal } from "@/components/dashboard/zodiac-sign-modal";
 import { DetailedHoroscope } from "@/components/dashboard/detailed-horoscope";
 import { PlaceholderPage } from "@/components/placeholder-page";
 import { AuthModal } from "@/components/auth-modal";
-import { getSession } from "@/lib/session";
+import { getSession, setSession } from "@/lib/session";
 import { seedConsultants } from "@/lib/consultants-seeder";
 import { seedContentHub } from "@/lib/content-hub-seeder";
 import { useToast } from "@/hooks/use-toast";
@@ -97,6 +97,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { MoodMeta } from "@/lib/local";
 import type { Consultant } from "@/lib/consultants-seeder";
 import type { ContentHubItem } from "@/lib/content-hub-seeder";
+
+
+const useDebounce = <T,>(value: T, delay: number): T => {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+};
 
 
 const Starfield = () => (
@@ -242,8 +256,15 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [isSetBudgetPromptOpen, setIsSetBudgetPromptOpen] = useState(false);
   const [topUpOnlyAmount, setTopUpOnlyAmount] = useState(0);
 
+  const debouncedWallet = useDebounce(wallet, 250);
+
+  useEffect(() => {
+    if (debouncedWallet) {
+        setWallet(debouncedWallet);
+    }
+  }, [debouncedWallet]);
+
   const setWalletAndUpdateState = (newWallet: WalletType) => {
-    setWallet(newWallet);
     _setWallet(newWallet);
   }
 
@@ -420,7 +441,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
           <CardContent className="space-y-4 flex-grow">
             {wizardSeen || budget_set ? (
               <div className="space-y-4">
-                <div>
+                <motion.div layout>
                   <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
                     <span aria-live="polite">This month</span>
                     <span aria-live="polite">{formatCurrency(monthSpend)} / {formatCurrency(budget)}</span>
@@ -439,7 +460,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                           <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
                       </div>
                   </div>
-                </div>
+                </motion.div>
                 
                 {locked && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>

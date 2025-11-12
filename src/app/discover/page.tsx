@@ -9,7 +9,7 @@ import { getSession, setSession } from "@/lib/session";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
-const useDebounce = <T>(value: T, delay: number): T => {
+const useDebounce = <T,>(value: T, delay: number): T => {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
     useEffect(() => {
         const handler = setTimeout(() => {
