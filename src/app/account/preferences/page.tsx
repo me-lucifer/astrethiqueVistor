@@ -62,23 +62,19 @@ const ChannelSelector = ({ channels, onChannelChange }: { channels: Channels, on
 
 export default function PreferencesPage() {
     const { toast } = useToast();
-    const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
-
-    useEffect(() => {
+    const [preferences, setPreferences] = useState<NotificationPreferences>(() => {
         const currentUser = authLocal.getCurrentUser();
         if (currentUser && currentUser.preferences) {
-            // Deep merge to ensure new properties are added to old user objects
             const userPrefs = currentUser.preferences as NotificationPreferences;
             const mergedPrefs = {
                 general: { ...defaultPreferences.general, ...userPrefs.general },
                 sessions: { ...defaultPreferences.sessions, ...userPrefs.sessions },
                 wallet: { ...defaultPreferences.wallet, ...userPrefs.wallet },
-            }
-            setPreferences(mergedPrefs);
-        } else {
-            setPreferences(defaultPreferences);
+            };
+            return mergedPrefs;
         }
-    }, []);
+        return defaultPreferences;
+    });
 
     const handleToggle = (path: string, value: boolean) => {
         const keys = path.split('.');
