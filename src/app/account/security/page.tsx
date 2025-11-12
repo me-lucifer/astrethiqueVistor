@@ -2,17 +2,46 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as authLocal from "@/lib/authLocal";
-import { CheckCircle, MailWarning, AlertTriangle, ShieldCheck } from "lucide-react";
+import { CheckCircle, MailWarning, AlertTriangle, ShieldCheck, Monitor, Smartphone, Tablet } from "lucide-react";
 import { ChangeEmailModal } from "@/components/account/change-email-modal";
 import { ChangePasswordModal } from "@/components/account/change-password-modal";
 import { TwoFactorModal } from "@/components/account/two-factor-modal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
+const sessions = [
+  {
+    id: "1",
+    device: "Desktop Chrome",
+    location: "Pune, India",
+    lastActive: "Active now",
+    icon: Monitor,
+    isCurrent: true,
+  },
+  {
+    id: "2",
+    device: "Pixel 7",
+    location: "Mumbai, India",
+    lastActive: "2 hours ago",
+    icon: Smartphone,
+    isCurrent: false,
+  },
+  {
+    id: "3",
+    device: "iPad Pro",
+    location: "Unknown",
+    lastActive: "Yesterday",
+    icon: Tablet,
+    isCurrent: false,
+  },
+];
+
 
 export default function SecurityPage() {
     const { toast } = useToast();
@@ -42,6 +71,20 @@ export default function SecurityPage() {
             description: `A new verification link has been sent to ${pendingEmail}.`,
         });
     }
+
+    const handleSignOutDevice = (deviceId: string) => {
+        toast({
+          title: "Device signed out",
+          description: `The session on device ${deviceId} has been terminated.`,
+        });
+      };
+    
+      const handleSignOutAll = () => {
+        toast({
+          title: "Signed out of all other devices",
+          description: "All other active sessions have been terminated.",
+        });
+      };
 
     if (!user) {
         return <div>Loading security settings...</div>
@@ -99,6 +142,7 @@ export default function SecurityPage() {
                     </div>
                 </CardContent>
             </Card>
+
              <Card>
                 <CardHeader>
                     <CardTitle>Two-Factor Authentication</CardTitle>
@@ -135,6 +179,65 @@ export default function SecurityPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Active Sessions & Devices</CardTitle>
+                    <CardDescription>This is a list of devices that have logged into your account.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Device</TableHead>
+                                <TableHead>Location</TableHead>
+                                <TableHead>Last active</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sessions.map((session) => (
+                                <TableRow key={session.id}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <session.icon className="h-4 w-4 text-muted-foreground" />
+                                            <span>{session.device}</span>
+                                            {session.isCurrent && <Badge variant="secondary">This device</Badge>}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{session.location}</TableCell>
+                                    <TableCell>{session.lastActive}</TableCell>
+                                    <TableCell className="text-right">
+                                        {!session.isCurrent && (
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="link" size="sm" className="text-destructive h-auto p-0">Sign out</Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader><AlertDialogTitle>Sign out this device?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to sign out the session on {session.device}?</AlertDialogDescription></AlertDialogHeader>
+                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleSignOutDevice(session.id)}>Sign Out</AlertDialogAction></AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+                <CardFooter>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="link" size="sm" className="p-0 h-auto">Sign out of all other devices</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>Sign out of all other devices?</AlertDialogTitle><AlertDialogDescription>This will sign you out of all sessions on other devices. You will need to sign in again.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleSignOutAll}>Confirm</AlertDialogAction></AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </CardFooter>
+            </Card>
+
             <ChangeEmailModal
                 isOpen={isEmailModalOpen}
                 onOpenChange={setIsEmailModalOpen}
@@ -161,3 +264,5 @@ export default function SecurityPage() {
         </div>
     );
 }
+
+    
