@@ -16,6 +16,7 @@ import { getWallet, spendFromWallet } from '@/lib/local';
 import { BudgetWizardModal } from '../budget/budget-wizard-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
 import { TopUpModal } from '../dashboard/top-up-modal';
+import { RequestSessionModal } from '../request-session-modal';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -30,6 +31,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [isFundsModalOpen, setIsFundsModalOpen] = useState(false);
+  const [isRequestingModalOpen, setIsRequestingModalOpen] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
   const { toast } = useToast();
   const [user, setUser] = useState<authLocal.User | null>(null);
@@ -100,11 +102,7 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
         }
         return;
       }
-
-      toast({
-        title: 'Starting Session...',
-        description: `Connecting you for a ${selectedMode} session with ${consultant.name}.`,
-      });
+      setIsRequestingModalOpen(true);
   }
   
   const handleNotifyClick = () => {
@@ -216,6 +214,18 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
             isOpen={isFundsModalOpen}
             onOpenChange={setIsFundsModalOpen}
         />
+        
+       {isRequestingModalOpen && (
+            <RequestSessionModal
+                isOpen={isRequestingModalOpen}
+                onOpenChange={setIsRequestingModalOpen}
+                consultant={consultant}
+                onSchedule={() => {
+                    setIsRequestingModalOpen(false);
+                    handleScheduleClick();
+                }}
+            />
+       )}
     </div>
   );
 }
