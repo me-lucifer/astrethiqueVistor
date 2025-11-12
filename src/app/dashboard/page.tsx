@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
@@ -596,20 +597,18 @@ function HistoryDrawer() {
   
   const filterChips = ["All", "Credits", "Debits", "Sessions", "Purchases", "Top-ups", "Adjustments"];
 
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen) {
-        let runningBalance = getWallet().balance_cents;
-        const rawLog = getSpendLog();
-        const processedLog: SpendLogEntry[] = [];
-        
-        for (let i = 0; i < rawLog.length; i++) {
-            const entry = rawLog[i];
-            processedLog.push({ ...entry, runningBalance: runningBalance / 100 });
-            runningBalance -= entry.amount_cents;
-        }
-
-        setLog(processedLog);
+  const handleTriggerClick = () => {
+    let runningBalance = getWallet().balance_cents;
+    const rawLog = getSpendLog();
+    const processedLog: SpendLogEntry[] = [];
+    
+    for (let i = 0; i < rawLog.length; i++) {
+        const entry = rawLog[i];
+        processedLog.push({ ...entry, runningBalance: runningBalance / 100 });
+        runningBalance -= entry.amount_cents;
     }
+
+    setLog(processedLog);
   };
   
   const formatCurrency = (amount: number) => {
@@ -649,9 +648,9 @@ function HistoryDrawer() {
 
   return (
     <>
-    <Sheet onOpenChange={handleOpenChange}>
+    <Sheet>
       <SheetTrigger asChild>
-        <Button variant="link" className="text-xs text-muted-foreground">
+        <Button variant="link" className="text-xs text-muted-foreground" onClick={handleTriggerClick}>
           History
         </Button>
       </SheetTrigger>
@@ -1254,3 +1253,4 @@ const horoscopeData: { [key: string]: string } = {
 
 
     
+
