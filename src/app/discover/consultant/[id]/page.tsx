@@ -26,7 +26,7 @@ import {
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ContentItem, seedContentItems } from '@/lib/content-seeder';
 import { Conference, seedConferences } from '@/lib/conferences-seeder';
-import { getLocal } from '@/lib/local';
+import { getLocal, getWallet, setWallet, setSpendLog } from '@/lib/local';
 
 export default function Page() {
   const params = useParams();
@@ -115,6 +115,40 @@ export default function Page() {
     }
   }
 
+  const handleDemoAction = (action: string, value?: any) => {
+    const wallet = getWallet();
+    switch (action) {
+      case 'seed-wallet':
+        setWallet({ ...wallet, balance_cents: wallet.balance_cents + (value * 100) });
+        toast({ title: `Added €${value} to wallet.` });
+        break;
+      case 'set-balance':
+        setWallet({ ...wallet, balance_cents: value * 100 });
+        toast({ title: `Wallet balance set to €${value}.` });
+        break;
+      case 'toggle-lock':
+        const newLockState = !wallet.budget_lock.enabled;
+        setWallet({
+          ...wallet,
+          budget_lock: { ...wallet.budget_lock, enabled: newLockState },
+        });
+        toast({ title: `Budget lock ${newLockState ? 'enabled' : 'disabled'}.` });
+        break;
+      case 'toggle-emergency':
+        const newEmergencyState = !wallet.budget_lock.emergency_used;
+        setWallet({
+          ...wallet,
+          budget_lock: { ...wallet.budget_lock, emergency_used: newEmergencyState },
+        });
+        toast({ title: `Emergency top-up marked as ${newEmergencyState ? 'used' : 'unused'}.` });
+        break;
+      case 'clear-spend-log':
+        setSpendLog([]);
+        toast({ title: 'Spend log cleared.' });
+        break;
+    }
+  };
+
   if (loading) {
     return (
         <div className="container py-8 space-y-8">
@@ -149,7 +183,7 @@ export default function Page() {
             Back to Discover
         </Button>
         <div className="space-y-8">
-            <ConsultantProfileHeader consultant={profile} />
+            <ConsultantProfileHeader consultant={profile} onDemoAction={handleDemoAction} />
             <ConsultantAvailability consultant={consultant} />
             <ConsultantContentTabs consultant={profile} />
 

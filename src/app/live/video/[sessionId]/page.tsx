@@ -14,11 +14,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { PermissionsOverlay } from "@/components/video-room/permissions-overlay";
 import { SessionSummaryModal } from "@/components/video-room/session-summary-modal";
+import { getWallet, setWallet } from "@/lib/local";
+import { useToast } from "@/hooks/use-toast";
 
 export default function VideoRoomPage() {
   const router = useRouter();
   const params = useParams();
   const sessionId = params.sessionId as string;
+  const { toast } = useToast();
 
   const [consultant, setConsultant] = useState<Consultant | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
@@ -69,6 +72,30 @@ export default function VideoRoomPage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [hasPermissions, isEndConfirmOpen, isSummaryModalOpen]);
+  
+  const handleDemoAction = (action: string) => {
+      const wallet = getWallet();
+      switch (action) {
+          case 'low-balance':
+              if (consultant) {
+                  const oneMinCost = consultant.pricePerMin * 100;
+                  setWallet({...wallet, balance_cents: oneMinCost - 1});
+                   toast({
+                      title: "Low Balance Emulated",
+                      description: "Wallet balance is now less than 1 minute of call time.",
+                    });
+              }
+              break;
+          case 'zero-balance':
+              setWallet({...wallet, balance_cents: 0});
+              toast({ title: "Zero Balance Emulated", description: "Session will end automatically." });
+              setTimeout(handleEndCall, 1000);
+              break;
+          case 'end-summary':
+              handleEndCall();
+              break;
+      }
+  }
 
 
   if (!consultant) {
@@ -86,6 +113,7 @@ export default function VideoRoomPage() {
         sessionTime={time}
         isSidePanelOpen={isSidePanelOpen}
         toggleSidePanel={() => setIsSidePanelOpen(!isSidePanelOpen)}
+        onDemoAction={handleDemoAction}
       />
       <main className="flex-1 flex overflow-hidden">
         <VideoArea isSidePanelOpen={isSidePanelOpen} />

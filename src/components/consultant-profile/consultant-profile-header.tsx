@@ -6,21 +6,27 @@ import Image from 'next/image';
 import { ConsultantProfile } from '@/lib/consultant-profile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, Heart, CheckCircle, ShieldCheck, CalendarCheck } from 'lucide-react';
+import { Star, Heart, CheckCircle, ShieldCheck, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import * as authLocal from '@/lib/authLocal';
 import { AuthModal } from '../auth-modal';
 import { useLanguage } from '@/contexts/language-context';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
-export function ConsultantProfileHeader({ consultant: initialConsultant }: { consultant: ConsultantProfile }) {
+export function ConsultantProfileHeader({ consultant: initialConsultant, onDemoAction }: { consultant: ConsultantProfile, onDemoAction: (action: string, value?: any) => void }) {
     const [consultant, setConsultant] = useState(initialConsultant);
     const [isFavorite, setIsFavorite] = useState(consultant.favorite);
     const [user, setUser] = useState<authLocal.User | null>(null);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const { toast } = useToast();
     const { language } = useLanguage();
+    const [isDev, setIsDev] = useState(false);
+
+    useEffect(() => {
+        setIsDev(process.env.NODE_ENV === 'development');
+    }, []);
 
     const checkUserAndFavorite = () => {
         const currentUser = authLocal.getCurrentUser();
@@ -124,11 +130,32 @@ export function ConsultantProfileHeader({ consultant: initialConsultant }: { con
                                 </div>
                             </div>
                         </div>
-                        <div className="text-left sm:text-right shrink-0">
-                            {consultant.prevPricePerMin && (
-                                <p className="text-muted-foreground line-through text-sm">{formatCurrency(consultant.prevPricePerMin)}/min</p>
+                        <div className="flex items-start gap-2">
+                            <div className="text-left sm:text-right shrink-0">
+                                {consultant.prevPricePerMin && (
+                                    <p className="text-muted-foreground line-through text-sm">{formatCurrency(consultant.prevPricePerMin)}/min</p>
+                                )}
+                                <p className="text-2xl font-bold text-primary">{formatCurrency(consultant.pricePerMin)}<span className="text-base font-medium text-muted-foreground">/min</span></p>
+                            </div>
+                            {isDev && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Demo Controls</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onSelect={() => onDemoAction('seed-wallet', 25)}>Seed wallet +€25</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => onDemoAction('seed-wallet', 10)}>Seed wallet +€10</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => onDemoAction('set-balance', 0)}>Set wallet to €0</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onSelect={() => onDemoAction('toggle-lock')}>Toggle Budget Lock</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => onDemoAction('toggle-emergency')}>Toggle Emergency Used</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onSelect={() => onDemoAction('clear-spend-log')}>Clear Spend Log</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             )}
-                            <p className="text-2xl font-bold text-primary">{formatCurrency(consultant.pricePerMin)}<span className="text-base font-medium text-muted-foreground">/min</span></p>
                         </div>
                     </div>
                     

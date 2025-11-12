@@ -218,6 +218,10 @@ export const getWallet = (): Wallet => {
     return wallet;
 };
 
+export function setWallet(wallet: Wallet) {
+    setLocal(WALLET_KEY, wallet);
+}
+
 export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string, isPreAuth: boolean = false): { ok: boolean, message: string } {
     const wallet = getWallet();
     const result = { ok: false, message: "" };
@@ -270,6 +274,9 @@ export const getSpendLog = (): Omit<SpendLogEntry, 'runningBalance'>[] => getLoc
 export const addSpendLogEntry = (entry: Omit<SpendLogEntry, 'runningBalance'>) => {
     const log = getSpendLog();
     log.unshift(entry); // Add to the beginning
+    setLocal(SPEND_LOG_KEY, log);
+};
+export const setSpendLog = (log: Omit<SpendLogEntry, 'runningBalance'>[]) => {
     setLocal(SPEND_LOG_KEY, log);
 }
 
@@ -330,5 +337,3 @@ export const incrementMetric = (key: keyof Metrics) => {
     metrics[key] += 1;
     setLocal(METRICS_KEY, metrics);
 }
-
-    
