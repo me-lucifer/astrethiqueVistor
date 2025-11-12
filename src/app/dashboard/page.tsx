@@ -266,9 +266,9 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     const spendResult = spendFromWallet(amountCents, 'other', note);
     if (!spendResult.ok) {
         toast({
-            title: spendResult.ok ? "Spend Succeeded" : "Spend Failed",
+            title: "Spend Failed",
             description: spendResult.message,
-            variant: spendResult.ok ? "default" : "destructive",
+            variant: "destructive",
         });
     }
   }
@@ -556,7 +556,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 <DialogTitle className="text-center">Set Budget First?</DialogTitle>
                 <DialogDescription className="text-center">Setting a budget helps you keep spending in check.</DialogDescription>
             </DialogHeader>
-            <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2">
+            <DialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2 pt-4">
                 <Button onClick={() => { setIsSetBudgetPromptOpen(false); onBudgetClick(); }}>Set Up Now</Button>
                 <Button variant="ghost" onClick={handleTopUpOnly}>Top Up Only</Button>
             </DialogFooter>
@@ -1168,3 +1168,5 @@ const horoscopeData: { [key: string]: string } = {
   Pisces:
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
+
+    

@@ -223,20 +223,17 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
     const result = { ok: false, message: "" };
 
     if (amount_cents > 0) {
-      if (wallet.budget_lock.enabled) {
-          result.message = `locked:Budget is locked until ${wallet.monthEnd ? format(new Date(wallet.monthEnd), "MMM do") : 'the end of the month'}.`;
-          console.log("Spend failed:", result.message);
-          return result;
-      }
-
-      if (wallet.budget_set && (wallet.spent_this_month_cents + amount_cents) > wallet.budget_cents) {
-          result.message = "This transaction exceeds your monthly budget.";
-          console.log("Spend failed:", result.message);
-          return result;
-      }
-
       if (wallet.balance_cents < amount_cents) {
-          result.message = "Insufficient funds in your wallet.";
+          if (wallet.budget_lock.enabled) {
+              result.message = `locked:Budget is locked and funds are insufficient.`;
+          } else {
+              result.message = "insufficient:Insufficient funds in your wallet.";
+          }
+          console.log("Spend failed:", result.message);
+          return result;
+      }
+      if (wallet.budget_set && (wallet.spent_this_month_cents + amount_cents) > wallet.budget_cents) {
+          result.message = "budget_exceeded:This transaction exceeds your monthly budget.";
           console.log("Spend failed:", result.message);
           return result;
       }
@@ -329,5 +326,7 @@ export const incrementMetric = (key: keyof Metrics) => {
     metrics[key] += 1;
     setLocal(METRICS_KEY, metrics);
 }
+
+    
 
     

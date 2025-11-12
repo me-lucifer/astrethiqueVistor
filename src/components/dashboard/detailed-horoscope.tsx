@@ -248,3 +248,5 @@ export function DetailedHoroscope({ user, onLockError, onEmergencyTopUpNeeded }:
 }
 
     
+
+    
