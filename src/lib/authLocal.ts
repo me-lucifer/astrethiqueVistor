@@ -4,6 +4,30 @@
 import { getLocal, setLocal, seedOnce } from './local';
 
 // --- DATA STRUCTURES ---
+
+type Channels = {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+}
+
+interface NotificationPreferences {
+    general: {
+        tips: { enabled: boolean; channels: Channels };
+        announcements: { enabled: boolean; channels: Channels };
+    };
+    sessions: {
+        reminders: { enabled: boolean; channels: Channels; times: { '24h': boolean; '1h': boolean; '10m': boolean } };
+        conferences: { enabled: boolean; channels: Channels };
+    };
+    wallet: {
+        lowBalance: { enabled: boolean; channels: Channels; threshold: number };
+        budget80: { enabled: boolean; channels: Channels };
+        budgetReached: { enabled: boolean; channels: Channels };
+        summary: { enabled: boolean; channels: Channels };
+    }
+}
+
 export interface User {
     id: string;
     role: 'visitor' | 'consultant';
@@ -20,6 +44,7 @@ export interface User {
     createdAt: string; // ISO Date
     updatedAt: string; // ISO Date
     emailVerified: boolean;
+    preferences?: NotificationPreferences;
     // Wallet data is now separate in `ast_wallet`
     favorites: { consultants: string[]; content: string[] };
     publicName: string;
