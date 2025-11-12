@@ -660,8 +660,7 @@ function HistoryDrawer() {
           <div className="flex justify-between items-center">
             <SheetTitle>Transaction History</SheetTitle>
             <div className="flex gap-2">
-                <Button variant="outline" size="sm"><FileText className="h-3 w-3 mr-2"/>Export CSV</Button>
-                <Button variant="outline" size="sm" asChild><Link href="/account/billing">Open full history</Link></Button>
+                <Button variant="outline" size="sm" asChild><Link href="/account/billing"><FileText className="h-3 w-3 mr-2"/>View All</Link></Button>
             </div>
           </div>
         </SheetHeader>
@@ -698,7 +697,7 @@ function HistoryDrawer() {
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground mt-1 gap-1">
+                                        <Button variant="link" size="sm" onClick={downloadInvoice} className="h-auto p-0 text-xs text-muted-foreground mt-1 gap-1">
                                             <FileText className="h-3 w-3" />
                                             Invoice
                                         </Button>
