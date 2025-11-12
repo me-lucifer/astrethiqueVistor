@@ -631,6 +631,11 @@ function HistoryDrawer() {
     const blob = new Blob(["This is a placeholder PDF invoice."], { type: "application/pdf" });
     saveAs(blob, `invoice-${selectedTransaction?.ts}.pdf`);
   };
+    
+  const downloadCreditNote = () => {
+    const blob = new Blob(["This is a placeholder PDF credit note."], { type: "application/pdf" });
+    saveAs(blob, `credit-note-${selectedTransaction?.ts}.pdf`);
+  };
 
   const iconMap: Record<SpendLogEntry['type'], React.ReactNode> = {
     topup: <ArrowUp className="h-4 w-4 text-success" />,
@@ -654,7 +659,7 @@ function HistoryDrawer() {
             <SheetTitle>Transaction History</SheetTitle>
             <div className="flex gap-2">
                 <Button variant="outline" size="sm"><FileText className="h-3 w-3 mr-2"/>Export CSV</Button>
-                <Button variant="outline" size="sm">Open full history</Button>
+                <Button variant="outline" size="sm" asChild><Link href="/account/billing">Open full history</Link></Button>
             </div>
           </div>
         </SheetHeader>
@@ -669,22 +674,43 @@ function HistoryDrawer() {
           {filteredLog.length > 0 ? (
             <div className="space-y-4">
                 {filteredLog.map(entry => (
-                <div key={entry.ts} className="flex justify-between items-center cursor-pointer hover:bg-muted/50 p-2 rounded-md" onClick={() => setSelectedTransaction(entry)}>
-                    <div className="flex items-center gap-3">
+                <div key={entry.ts} className="flex justify-between items-start cursor-pointer hover:bg-muted/50 p-2 rounded-md" onClick={() => setSelectedTransaction(entry)}>
+                    <div className="flex items-start gap-3">
                         {iconMap[entry.type]}
                         <div>
                             <p className="font-medium text-sm">{entry.note}</p>
                             <p className="text-xs text-muted-foreground">{new Date(entry.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</p>
+                            {/* @ts-ignore */}
+                            {entry.status === 'refunded' && <Badge variant="destructive" className="mt-1 text-xs font-normal">Refunded</Badge>}
                         </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0 ml-4">
                        <p className={cn("font-semibold text-sm", entry.amount_cents > 0 ? 'text-success' : 'text-foreground')}>
                             {entry.amount_cents > 0 ? '+' : ''}{formatCurrency(entry.amount_cents / 100)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                             Bal: {formatCurrency(entry.runningBalance || 0)}
                         </p>
-                        {entry.amount_cents < 0 && <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground mt-1">Download invoice</Button>}
+                        {/* @ts-ignore */}
+                        {entry.invoiceAvailable && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground mt-1 gap-1">
+                                            <FileText className="h-3 w-3" />
+                                            Invoice
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Download official receipt (demo)</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                        {/* @ts-ignore */}
+                        {entry.creditNoteUrl && (
+                            <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground mt-1">Credit Note</Button>
+                        )}
                     </div>
                 </div>
             ))}
@@ -710,11 +736,20 @@ function HistoryDrawer() {
                     <p><strong>Amount:</strong> {formatCurrency(selectedTransaction.amount_cents / 100)}</p>
                     <p><strong>Method:</strong> Wallet</p>
                     <p><strong>VAT (23%):</strong> {formatCurrency((selectedTransaction.amount_cents / 100) * 0.23)}</p>
+                    {/* @ts-ignore */}
+                    {selectedTransaction.status === 'refunded' && (
+                        <div>
+                             <Button variant="link" onClick={downloadCreditNote} className="p-0 h-auto">Download Credit Note</Button>
+                        </div>
+                    )}
                 </div>
             )}
             <DialogFooter>
                 <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
-                <Button onClick={downloadInvoice}><FileDown className="h-4 w-4 mr-2" />Download PDF</Button>
+                 {/* @ts-ignore */}
+                {selectedTransaction?.invoiceAvailable && (
+                    <Button onClick={downloadInvoice}><FileDown className="h-4 w-4 mr-2" />Download PDF</Button>
+                )}
             </DialogFooter>
         </DialogContent>
     </Dialog>
