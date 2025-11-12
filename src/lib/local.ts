@@ -219,19 +219,28 @@ export const setWallet = (wallet: Wallet) => {
 
 export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string): { ok: boolean, message: string } {
     const wallet = getWallet();
+    const result = { ok: false, message: "" };
 
-    if (amount_cents > 0 && wallet.balance_cents < amount_cents) {
-        return { ok: false, message: "Insufficient funds in your wallet." };
-    }
+    if (amount_cents > 0) {
+        if (wallet.budget_lock.enabled) {
+            result.message = `Budget is locked until ${format(endOfMonth(new Date()), "MMM do")}.`;
+            console.log("Spend failed:", result.message);
+            return result;
+        }
 
-    if (amount_cents > 0 && wallet.budget_lock?.enabled && wallet.spent_this_month_cents + amount_cents > wallet.budget_cents) {
-        return { ok: false, message: `Budget is locked until ${format(endOfMonth(new Date()), "MMM do")}.` };
+        if (wallet.budget_set && (wallet.spent_this_month_cents + amount_cents) > wallet.budget_cents) {
+            result.message = "This transaction exceeds your monthly budget.";
+            console.log("Spend failed:", result.message);
+            return result;
+        }
+
+        if (wallet.balance_cents < amount_cents) {
+            result.message = "Insufficient funds in your wallet.";
+            console.log("Spend failed:", result.message);
+            return result;
+        }
     }
     
-    if (wallet.budget_set && (wallet.spent_this_month_cents + amount_cents) > wallet.budget_cents) {
-         return { ok: false, message: "This transaction exceeds your monthly budget." };
-    }
-
     const newWalletState: Wallet = {
         ...wallet,
         balance_cents: wallet.balance_cents - amount_cents,
@@ -239,14 +248,19 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
     };
     setWallet(newWalletState);
 
-    addSpendLogEntry({
-        ts: new Date().toISOString(),
-        type: type,
-        amount_cents: -amount_cents,
-        note: note,
-    });
+    if (amount_cents > 0) {
+        addSpendLogEntry({
+            ts: new Date().toISOString(),
+            type: type,
+            amount_cents: -amount_cents,
+            note: note,
+        });
+    }
     
-    return { ok: true, message: "Transaction successful." };
+    result.ok = true;
+    result.message = "Transaction successful.";
+    console.log("Spend successful:", { amount: amount_cents, newBalance: newWalletState.balance_cents });
+    return result;
 }
 
 

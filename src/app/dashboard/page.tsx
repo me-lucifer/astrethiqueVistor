@@ -49,6 +49,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -256,6 +257,15 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     return () => window.removeEventListener("storage", fetchWalletData);
   }, [fetchWalletData]);
 
+  const handleSpend = (amountCents: number, note: string) => {
+    const result = spendFromWallet(amountCents, 'other', note);
+    toast({
+        title: result.ok ? "Spend Succeeded" : "Spend Failed",
+        description: result.message,
+        variant: result.ok ? "default" : "destructive",
+    });
+  }
+
   const handleDemoAction = (action: 'seed' | 'reset_month' | 'lock' | 'first_time') => {
     let currentWallet = getWallet();
     let newWalletState: WalletType;
@@ -357,6 +367,12 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                             <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDemoAction('reset_month')}>Reset Month</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                             <DropdownMenuItem onClick={() => handleSpend(700, "Demo spend €7")}>Spend €7 (guard)</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSpend(5000, "Demo spend €50")}>Try spend €50</DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <Button variant="link-destructive" className="p-0 h-auto" onClick={() => handleDemoAction('reset_month')}>New month</Button>
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
@@ -406,10 +422,10 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
               </div>
               
               {budget_lock.enabled ? (
-                  <Card className="bg-muted/50 border-border/50">
+                  <Card className="bg-muted/50 border-amber-500/20">
                     <CardHeader className="flex-row items-center justify-between p-4">
                        <div className="space-y-1">
-                         <CardTitle className="text-base flex items-center gap-2"><Lock className="h-4 w-4"/>Budget Locked</CardTitle>
+                         <CardTitle className="text-base flex items-center gap-2 text-amber-500"><Lock className="h-4 w-4"/>Budget Locked</CardTitle>
                          <CardDescription className="text-xs">Spending blocked until {format(endOfMonth(new Date()), "MMM do")}.</CardDescription>
                        </div>
                        <Button variant="ghost" className="text-xs" onClick={() => handleToggleLock(false)} aria-label="Disable budget lock">Disable</Button>
@@ -1040,3 +1056,4 @@ const horoscopeData: { [key: string]: string } = {
     
 
     
+
