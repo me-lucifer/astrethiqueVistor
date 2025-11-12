@@ -58,6 +58,7 @@ export function getLocal<T>(key: string): T | null {
 export function setLocal<T>(key: string, value: T): void {
   try {
     storage.setItem(key, JSON.stringify(value));
+    window.dispatchEvent(new Event('storage_change'));
   } catch (error) {
     console.error(`Error writing to storage for key "${key}":`, error);
   }
@@ -66,6 +67,7 @@ export function setLocal<T>(key: string, value: T): void {
 export function removeLocal(key: string): void {
     try {
         storage.removeItem(key);
+        window.dispatchEvent(new Event('storage_change'));
     } catch (error) {
         console.error(`Error removing from storage for key "${key}":`, error);
     }
@@ -94,6 +96,7 @@ export interface Wallet {
         emergency_used: boolean;
         until: string | null;
     };
+    month: string; // YYYY-MM format
     monthStart: string;
     monthEnd: string;
     wizardSeen: boolean;
@@ -137,78 +140,56 @@ const WALLET_KEY = 'ast_wallet';
 const SPEND_LOG_KEY = 'ast_spend_log';
 const METRICS_KEY = 'ast_metrics';
 
-
-// --- INITIALIZATION & MONTHLY RESET ---
-export function initializeLocalStorage() {
-  seedOnce('ast_db_seeded_v3', () => {
-    // Seed Admin Config
-    setLocal('ast_admin_config', { detailedHoroscopeFeeEUR: 2.5 });
-
-    // Seed Guest Wallet (handled by getWallet default)
-    getWallet(); 
-    
-    // Seed Mood Log with historical data
-    const existingMoodLog = getLocal<MoodLogEntry[]>(MOOD_LOG_KEY);
-    if (!existingMoodLog || existingMoodLog.length === 0) {
-      const today = new Date();
-      const yesterday = subDays(today, 1);
-      const twoDaysAgo = subDays(today, 2);
-      const seedLog: MoodLogEntry[] = [
-        { dateISO: format(twoDaysAgo, 'yyyy-MM-dd'), money: 3, health: 4, work: 2, love: 5 },
-        { dateISO: format(yesterday, 'yyyy-MM-dd'), money: 4, health: 3, work: 3, love: 4 },
-      ];
-      setLocal(MOOD_LOG_KEY, seedLog);
-      setLocal(MOOD_META_KEY, { streak: 2, lastCheckIn: yesterday.toISOString() });
-    }
-    
-    // Guest Favorites
-    const existingGuestFavorites = getLocal(FAVORITES_KEY);
-    if (!existingGuestFavorites) {
-        setFavorites(['aeliana-rose', 'seraphina-moon']);
-    }
-
-    // Seed Activity Data
-    seedActivityData();
-
-    // Seed Spend Log
-    const spendLog = getSpendLog();
-    if (spendLog.length === 0) {
-        const now = new Date();
-        const initialLog = [
-            { ts: subDays(now, 1).toISOString(), type: 'consultation', amount_cents: -1250, note: "Session with Aeliana Rose" },
-            { ts: subDays(now, 3).toISOString(), type: 'horoscope', amount_cents: -250, note: 'Detailed Horoscope' },
-            { ts: subDays(now, 7).toISOString(), type: 'topup', amount_cents: 2000, note: 'Wallet top-up' },
-        ];
-        setLocal(SPEND_LOG_KEY, initialLog);
-    }
-  });
-}
-
+// --- INITIALIZATION ---
+// This part can be moved to a main app entry point if needed
+seedOnce('ast_db_seeded_v3', () => {
+  setLocal('ast_admin_config', { detailedHoroscopeFeeEUR: 2.5 });
+  // Other app-wide seeding can go here
+});
 
 // --- Wallet Specific Helpers ---
 export const getWallet = (): Wallet => {
     let wallet = getLocal<Wallet>(WALLET_KEY);
     const now = new Date();
-    const currentMonthEnd = endOfMonth(now).toISOString();
+    const currentMonth = format(now, 'yyyy-MM');
 
     if (!wallet) {
-        const defaultWallet: Wallet = {
+        const newWallet: Wallet = {
             balance_cents: 0,
             budget_cents: 0,
             spent_this_month_cents: 0,
             budget_lock: { enabled: false, emergency_used: false, until: null },
+            month: currentMonth,
             monthStart: startOfMonth(now).toISOString(),
-            monthEnd: currentMonthEnd,
+            monthEnd: endOfMonth(now).toISOString(),
             wizardSeen: false,
             budget_set: false,
             aboutYou: { home: 'rent', income: 3000, household: 1, hasOther: false, otherIncome: 0 },
             essentials: { rent: 1200, utilities: 150, groceries: 400, transport: 100, debts: 0, savingsPct: 10 },
             suggestionMeta: { rate: 0.25 }
         };
-        setLocal(WALLET_KEY, defaultWallet);
-        return defaultWallet;
+        setLocal(WALLET_KEY, newWallet);
+        return newWallet;
     }
 
+    // Monthly Reset Logic
+    if (wallet.month !== currentMonth) {
+        wallet = {
+            ...wallet,
+            spent_this_month_cents: 0,
+            month: currentMonth,
+            monthStart: startOfMonth(now).toISOString(),
+            monthEnd: endOfMonth(now).toISOString(),
+            budget_lock: {
+                ...wallet.budget_lock,
+                enabled: false, // Reset lock at start of new month
+                emergency_used: false,
+                until: null
+            },
+        };
+        setLocal(WALLET_KEY, wallet);
+    }
+    
     // Data migration/guarding for older wallet objects
     if (!wallet.budget_lock) {
         wallet.budget_lock = { enabled: false, emergency_used: false, until: null };
@@ -227,38 +208,24 @@ export const getWallet = (): Wallet => {
     }
 
 
-    // Monthly Reset Logic
-    if (new Date(wallet.monthEnd) < now) {
-        wallet = {
-            ...wallet,
-            spent_this_month_cents: 0,
-            monthStart: startOfMonth(now).toISOString(),
-            monthEnd: currentMonthEnd,
-            budget_lock: { 
-                ...wallet.budget_lock,
-                enabled: false,
-                emergency_used: false,
-                until: null
-            },
-        };
-        setLocal(WALLET_KEY, wallet);
-    }
-
     return wallet;
 };
+
 export const setWallet = (wallet: Wallet) => {
     setLocal(WALLET_KEY, wallet);
-    window.dispatchEvent(new Event('storage'));
+}
+
+export const removeWallet = () => {
+    removeLocal(WALLET_KEY);
 }
 
 export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string): { ok: boolean, message: string } {
     const wallet = getWallet();
     const result = { ok: false, message: "" };
 
-    // Allow 0 amount checks (e.g. to see if wallet is locked)
     if (amount_cents > 0) {
       if (wallet.budget_lock.enabled) {
-          result.message = `locked:Budget is locked until ${format(new Date(wallet.monthEnd), "MMM do")}.`;
+          result.message = `locked:Budget is locked until ${wallet.monthEnd ? format(new Date(wallet.monthEnd), "MMM do") : 'the end of the month'}.`;
           console.log("Spend failed:", result.message);
           return result;
       }

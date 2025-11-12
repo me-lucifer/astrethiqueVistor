@@ -59,10 +59,8 @@ import { Label } from "@/components/ui/label";
 import * as authLocal from "@/lib/authLocal";
 import {
   getWallet,
-  getMoodLog,
-  setLocal,
-  getLocal,
-  initializeLocalStorage,
+  setWallet,
+  removeWallet,
   getSpendLog,
   Wallet as WalletType,
   SpendLogEntry,
@@ -70,8 +68,6 @@ import {
   spendFromWallet,
   getMoodMeta,
   EMERGENCY_TOPUP_LIMIT_EUR,
-  setWallet,
-  removeLocal,
 } from "@/lib/local";
 import { ContentHubCard } from "@/components/content-hub/card";
 import { StarRating } from "@/components/star-rating";
@@ -97,20 +93,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { MoodMeta } from "@/lib/local";
 import type { Consultant } from "@/lib/consultants-seeder";
 import type { ContentHubItem } from "@/lib/content-hub-seeder";
-
-
-const useDebounce = <T,>(value: T, delay: number): T => {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value);
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-    return debouncedValue;
-};
 
 
 const Starfield = () => (
@@ -162,7 +144,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Ensure data is seeded on first visit
-    initializeLocalStorage();
+    // initializeLocalStorage(); // This seems to cause issues, let getWallet handle it.
 
     const currentUser = authLocal.getCurrentUser();
     if (!currentUser) {
@@ -177,9 +159,7 @@ export default function DashboardPage() {
     setLoading(false);
 
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "astro" || event.key === WALLET_KEY) {
-        checkUser();
-      }
+      checkUser();
     };
     window.addEventListener("storage", handleStorageChange);
     return () => {
@@ -247,7 +227,7 @@ export default function DashboardPage() {
 
 // Sub-components for the Dashboard
 function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
-  const [wallet, _setWallet] = useState<WalletType | null>(null);
+  const [wallet, setWalletState] = useState<WalletType | null>(null);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
   const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -256,24 +236,12 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [isSetBudgetPromptOpen, setIsSetBudgetPromptOpen] = useState(false);
   const [topUpOnlyAmount, setTopUpOnlyAmount] = useState(0);
 
-  const debouncedWallet = useDebounce(wallet, 250);
-
-  useEffect(() => {
-    if (debouncedWallet) {
-        setWallet(debouncedWallet);
-    }
-  }, [debouncedWallet]);
-
-  const setWalletAndUpdateState = (newWallet: WalletType) => {
-    _setWallet(newWallet);
-  }
-
   useEffect(() => {
     setIsDev(process.env.NODE_ENV === 'development');
   }, []);
 
   const fetchWalletData = useCallback(() => {
-    _setWallet(getWallet());
+    setWalletState(getWallet());
   }, []);
 
   useEffect(() => {
@@ -298,11 +266,11 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     let newWalletState: WalletType;
     switch (action) {
         case 'first_time':
-             newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, wizardSeen: false, budget_set: false, budget_lock: { enabled: false, emergency_used: false, until: null } };
+             newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, wizardSeen: false, budget_set: false, budget_lock: { ...currentWallet.budget_lock, enabled: false, emergency_used: false, until: null } };
              toast({ title: "Simulating first-time view." });
              break;
         case 'seed':
-            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, wizardSeen: true, budget_set: true, budget_lock: { enabled: false, emergency_used: false, until: null } };
+            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, wizardSeen: true, budget_set: true, budget_lock: { ...currentWallet.budget_lock, enabled: false, emergency_used: false, until: null } };
             toast({ title: "Demo wallet seeded." });
             break;
         case 'lock':
@@ -311,16 +279,17 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
              break;
         case 'reset_month':
              const now = new Date();
-             newWalletState = {...currentWallet, spent_this_month_cents: 0, monthStart: startOfMonth(now).toISOString(), monthEnd: endOfMonth(now).toISOString(), budget_lock: { enabled: false, emergency_used: false, until: null } };
+             newWalletState = {...currentWallet, spent_this_month_cents: 0, month: format(now, 'yyyy-MM'), budget_lock: { enabled: false, emergency_used: false, until: null } };
              toast({ title: "Monthly spend has been reset." });
             break;
         case 'new_month':
             const nextMonth = new Date();
-            newWalletState = {...currentWallet, spent_this_month_cents: 0, monthStart: startOfMonth(nextMonth).toISOString(), monthEnd: endOfMonth(nextMonth).toISOString(), budget_lock: { enabled: false, emergency_used: false, until: null }, budget_cents: 0, wizardSeen: false, budget_set: false, balance_cents: currentWallet.balance_cents };
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            newWalletState = {...currentWallet, spent_this_month_cents: 0, month: format(nextMonth, 'yyyy-MM'), budget_lock: { enabled: false, emergency_used: false, until: null }, budget_cents: 0, wizardSeen: false, budget_set: false, balance_cents: currentWallet.balance_cents };
             toast({ title: "Simulating a completely new month."});
             break;
     }
-    setWalletAndUpdateState(newWalletState);
+    setWallet(newWalletState);
   }
   
   const handleToggleLock = (lock: boolean) => {
@@ -338,7 +307,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
           until: lock ? endOfMonth(new Date()).toISOString() : null,
         }
       };
-      setWalletAndUpdateState(updatedWallet);
+      setWallet(updatedWallet);
       toast({
         title: lock ? "Budget Locked" : "Budget Unlocked",
         description: lock ? `Your spending is now capped at your budget of €${(wallet.budget_cents/100).toFixed(2)}.` : "You can spend beyond your budget again."
@@ -360,7 +329,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   }
 
   const handleResetDemo = () => {
-    removeLocal(WALLET_KEY);
+    removeWallet();
     fetchWalletData();
   }
 
@@ -381,7 +350,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const monthEnd = wallet.monthEnd;
   const remaining = Math.max(0, budget - monthSpend);
   const progress = wizardSeen && budget > 0 ? (monthSpend / budget) * 100 : 0;
-  const daysLeft = differenceInDays(new Date(monthEnd), new Date());
+  const daysLeft = monthEnd ? differenceInDays(new Date(monthEnd), new Date()) : 30;
 
   const progressColor = locked ? "bg-muted-foreground" : progress > 80 ? "bg-destructive" : progress > 50 ? "bg-amber-500" : "bg-success";
   
@@ -1112,6 +1081,3 @@ const horoscopeData: { [key: string]: string } = {
   Pisces:
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
-
-const WALLET_KEY = 'ast_wallet';
-    
