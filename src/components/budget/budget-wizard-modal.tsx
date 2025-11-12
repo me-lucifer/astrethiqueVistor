@@ -15,57 +15,60 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { AnimatePresence, motion } from "framer-motion";
-import { getBudgetProfile, getWallet, setBudgetProfile, setWallet, type BudgetProfile, type Wallet } from "@/lib/local";
+import { getWallet, setWallet, type Wallet } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
-import { useBudgetCalculator, type BudgetWizardFormData } from "./use-budget-calculator";
+import { useBudgetCalculator, type AboutYou, type Essentials } from "./use-budget-calculator";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 // --- Zod Schema ---
-const wizardSchema = z.object({
-  // Step 1
-  whereYouLive: z.enum(["own", "rent"], { required_error: "Please select an option." }),
-  monthlyNetIncome: z.coerce.number().min(0, "Income must be a positive number."),
-  householdSize: z.coerce.number().int().min(1, "Household must have at least 1 person.").max(10),
-  otherHouseholdIncome: z.boolean(),
-  otherHouseholdIncomeAmount: z.coerce.number().optional(),
-  
-  // Step 2
-  essentialsRent: z.coerce.number().min(0),
-  essentialsUtilities: z.coerce.number().min(0),
-  essentialsGroceries: z.coerce.number().min(0),
-  essentialsTransport: z.coerce.number().min(0),
-  debts: z.coerce.number().min(0),
-  savingsGoalPercent: z.number().min(0).max(30),
-
-  // Step 3
-  finalBudget: z.coerce.number().min(10, "Budget must be at least €10.").max(data => (data.monthlyNetIncome + (data.otherHouseholdIncomeAmount || 0)) * 0.3, "Budget cannot exceed 30% of total income."),
-  enableBudgetLock: z.boolean(),
-}).refine(data => !data.otherHouseholdIncome || (data.otherHouseholdIncomeAmount !== undefined && data.otherHouseholdIncomeAmount >= 0), {
+const aboutYouSchema = z.object({
+  home: z.enum(["own", "rent"], { required_error: "Please select an option." }),
+  income: z.coerce.number().min(0, "Income must be a positive number."),
+  household: z.coerce.number().int().min(1, "Household must have at least 1 person.").max(10),
+  hasOther: z.boolean(),
+  otherIncome: z.coerce.number().optional(),
+}).refine(data => !data.hasOther || (data.otherIncome !== undefined && data.otherIncome >= 0), {
   message: "Please enter the other income amount.",
-  path: ["otherHouseholdIncomeAmount"],
+  path: ["otherIncome"],
 });
 
+const essentialsSchema = z.object({
+  rent: z.coerce.number().min(0),
+  utilities: z.coerce.number().min(0),
+  groceries: z.coerce.number().min(0),
+  transport: z.coerce.number().min(0),
+  debts: z.coerce.number().min(0),
+  savingsPct: z.number().min(0).max(30),
+});
+
+const wizardSchema = z.object({
+  aboutYou: aboutYouSchema,
+  essentials: essentialsSchema,
+  finalBudget: z.coerce.number().min(10, "Budget must be at least €10."),
+});
+
+export type WizardFormData = z.infer<typeof wizardSchema>;
 
 // --- Step Components ---
 
 const Step1 = () => {
-    const { control, watch } = useFormContext<BudgetWizardFormData>();
+    const { control, watch } = useFormContext<WizardFormData>();
     return (
         <div className="space-y-4">
-            <FormField control={control} name="whereYouLive" render={({ field }) => (
+            <FormField control={control} name="aboutYou.home" render={({ field }) => (
                 <FormItem><FormLabel>Where do you live?</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4 pt-1"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="own" id="own" /></FormControl><Label htmlFor="own" className="font-normal">I own</Label></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="rent" id="rent" /></FormControl><Label htmlFor="rent" className="font-normal">I rent</Label></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField control={control} name="monthlyNetIncome" render={({ field }) => (
+            <FormField control={control} name="aboutYou.income" render={({ field }) => (
                 <FormItem><FormLabel>Monthly net income (€)</FormLabel><FormControl><Input type="number" placeholder="e.g., 3000" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField control={control} name="householdSize" render={({ field }) => (
+            <FormField control={control} name="aboutYou.household" render={({ field }) => (
                 <FormItem><FormLabel>Household size (including you)</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField control={control} name="otherHouseholdIncome" render={({ field }) => (
+            <FormField control={control} name="aboutYou.hasOther" render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Any other household income?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
             )} />
-            {watch("otherHouseholdIncome") && (
-                <FormField control={control} name="otherHouseholdIncomeAmount" render={({ field }) => (
+            {watch("aboutYou.hasOther") && (
+                <FormField control={control} name="aboutYou.otherIncome" render={({ field }) => (
                     <FormItem><FormLabel>Other income amount (€)</FormLabel><FormControl><Input type="number" placeholder="e.g., 1500" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
             )}
@@ -74,20 +77,20 @@ const Step1 = () => {
 }
 
 const Step2 = () => {
-    const { control } = useFormContext<BudgetWizardFormData>();
+    const { control } = useFormContext<WizardFormData>();
     return (
         <div className="space-y-4">
             <p className="font-medium text-sm">Monthly essentials (€)</p>
             <div className="grid grid-cols-2 gap-4">
-                <FormField control={control} name="essentialsRent" render={({ field }) => (<FormItem><FormLabel>Rent/Mortgage</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="essentialsUtilities" render={({ field }) => (<FormItem><FormLabel>Utilities</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="essentialsGroceries" render={({ field }) => (<FormItem><FormLabel>Groceries</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="essentialsTransport" render={({ field }) => (<FormItem><FormLabel>Transport</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="essentials.rent" render={({ field }) => (<FormItem><FormLabel>Rent/Mortgage</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="essentials.utilities" render={({ field }) => (<FormItem><FormLabel>Utilities</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="essentials.groceries" render={({ field }) => (<FormItem><FormLabel>Groceries</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="essentials.transport" render={({ field }) => (<FormItem><FormLabel>Transport</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
             </div>
-             <FormField control={control} name="debts" render={({ field }) => (
+             <FormField control={control} name="essentials.debts" render={({ field }) => (
                 <FormItem><FormLabel>Debts & EMIs (€ per month)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
             )} />
-            <FormField control={control} name="savingsGoalPercent" render={({ field }) => (
+            <FormField control={control} name="essentials.savingsPct" render={({ field }) => (
                 <FormItem>
                     <div className="flex justify-between">
                         <FormLabel>Savings goal (% of income)</FormLabel>
@@ -103,16 +106,16 @@ const Step2 = () => {
 };
 
 const Step3 = () => {
-    const { control, watch, setValue } = useFormContext<BudgetWizardFormData>();
-    const formData = watch();
-    const { suggestedBudget } = useBudgetCalculator(formData);
+    const { control, watch, setValue } = useFormContext<WizardFormData>();
+    const { aboutYou, essentials } = watch();
+    const { suggestedBudget } = useBudgetCalculator(aboutYou, essentials);
     
-    // Set initial value for finalBudget if not already set or is 0
     useEffect(() => {
-        if ((formData.finalBudget === undefined || formData.finalBudget === 0) && suggestedBudget > 0) {
+        const finalBudgetValue = watch('finalBudget');
+        if ((finalBudgetValue === undefined || finalBudgetValue === 0) && suggestedBudget > 0) {
             setValue('finalBudget', suggestedBudget);
         }
-    }, [suggestedBudget, formData.finalBudget, setValue]);
+    }, [suggestedBudget, setValue, watch]);
 
     return (
         <div className="space-y-4">
@@ -133,8 +136,8 @@ const Step3 = () => {
 };
 
 const steps = [
-    { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["whereYouLive", "monthlyNetIncome", "householdSize", "otherHouseholdIncome", "otherHouseholdIncomeAmount"] },
-    { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentialsRent", "essentialsUtilities", "essentialsGroceries", "essentialsTransport", "debts", "savingsGoalPercent"] },
+    { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou.home", "aboutYou.income", "aboutYou.household", "aboutYou.hasOther", "aboutYou.otherIncome"] },
+    { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentials.rent", "essentials.utilities", "essentials.groceries", "essentials.transport", "essentials.debts", "essentials.savingsPct"] },
     { title: "Suggestion", description: "Review our suggestion and set your final budget.", component: Step3, fields: ["finalBudget"] },
 ];
 
@@ -149,40 +152,33 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(0);
 
-    const methods = useForm<BudgetWizardFormData>({
+    const methods = useForm<WizardFormData>({
         resolver: zodResolver(wizardSchema),
         defaultValues: {
-            whereYouLive: 'rent',
-            monthlyNetIncome: 3000,
-            householdSize: 1,
-            otherHouseholdIncome: false,
-            otherHouseholdIncomeAmount: 0,
-            essentialsRent: 1200,
-            essentialsUtilities: 150,
-            essentialsGroceries: 400,
-            essentialsTransport: 100,
-            debts: 0,
-            savingsGoalPercent: 10,
+            aboutYou: { home: 'rent', income: 3000, household: 1, hasOther: false, otherIncome: 0 },
+            essentials: { rent: 1200, utilities: 150, groceries: 400, transport: 100, debts: 0, savingsPct: 10, },
             finalBudget: 0,
-            enableBudgetLock: false
         },
         mode: "onChange",
     });
+    
+    const { aboutYou, essentials } = methods.watch();
+    const { suggestedBudget } = useBudgetCalculator(aboutYou, essentials);
+
 
     useEffect(() => {
         if (isOpen) {
-            const profile = getBudgetProfile();
-            if (profile) {
-                methods.reset(profile.answers);
-            }
+            const wallet = getWallet();
+            methods.reset({
+                aboutYou: wallet.aboutYou,
+                essentials: wallet.essentials,
+                finalBudget: wallet.budget,
+            });
         }
     }, [isOpen, methods]);
 
-    const watchedData = methods.watch();
-    const { suggestedBudget } = useBudgetCalculator(watchedData);
-    
     const handleNext = async () => {
-        const result = await methods.trigger(steps[currentStep].fields as (keyof BudgetWizardFormData)[]);
+        const result = await methods.trigger(steps[currentStep].fields as (keyof WizardFormData)[]);
         if (result) {
             setCurrentStep(s => s + 1);
         } else {
@@ -191,23 +187,18 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     };
     const handlePrev = () => setCurrentStep(s => s - 1);
 
-    const handleSave = (data: BudgetWizardFormData) => {
+    const handleSave = (data: WizardFormData) => {
         // Save wallet settings
         const wallet = getWallet();
         const updatedWallet: Wallet = {
             ...wallet,
-            budget_cents: data.finalBudget! * 100,
-            budget_set: true,
+            budget: data.finalBudget!,
+            wizardSeen: true,
+            aboutYou: data.aboutYou,
+            essentials: data.essentials,
+            suggestionMeta: { rate: 0.25 } // Default rate
         };
         setWallet(updatedWallet);
-
-        // Save budget profile answers
-        const profile: BudgetProfile = {
-            answers: data,
-            suggested_cents: suggestedBudget * 100,
-            last_updated: new Date().toISOString()
-        };
-        setBudgetProfile(profile);
 
         toast({ title: "Budget Saved!", description: `Your monthly budget is now €${data.finalBudget}.` });
         onOpenChange(false);
@@ -262,3 +253,6 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         </Dialog>
     );
 }
+
+
+    

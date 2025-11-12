@@ -27,7 +27,7 @@ import {
   Star as StarIcon,
   Sparkles,
   Flame,
-  Wallet,
+  Wallet as WalletIcon,
   Info,
   BadgeInfo,
   ArrowDown,
@@ -162,7 +162,7 @@ export default function DashboardPage() {
     setLoading(false);
 
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "astro" || event.key === "ast_wallet") {
+      if (event.key === "astro" || event.key === "astre.wallet") {
         checkUser();
       }
     };
@@ -272,16 +272,17 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     let newWalletState: WalletType;
     switch (action) {
         case 'first_time':
-             newWalletState = {...currentWallet, balance_cents: 0, budget_cents: 0, spent_this_month_cents: 0, budget_set: false, budget_lock: { enabled: false, until: null, emergency_used: false }};
+             newWalletState = {...currentWallet, balance: 0, budget: 0, monthSpend: 0, wizardSeen: false, locked: false, lockEmergencyUsed: false };
              break;
         case 'seed':
-            newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, budget_set: true, budget_lock: {...currentWallet.budget_lock, emergency_used: false} };
+            newWalletState = {...currentWallet, balance: 15, budget: 30, monthSpend: 0, wizardSeen: true, lockEmergencyUsed: false };
             break;
         case 'lock':
-             newWalletState = {...currentWallet, budget_lock: { ...currentWallet.budget_lock, enabled: true, until: endOfMonth(new Date()).toISOString() }};
+             newWalletState = {...currentWallet, locked: true, lockUntil: endOfMonth(new Date()).toISOString() };
             break;
         case 'reset_month':
-             newWalletState = {...currentWallet, spent_this_month_cents: 0, month_key: format(new Date(), 'yyyy-MM'), budget_lock: { enabled: false, until: null, emergency_used: false }};
+             const now = new Date();
+             newWalletState = {...currentWallet, monthSpend: 0, monthStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(), monthEnd: endOfMonth(now).toISOString(), locked: false, lockEmergencyUsed: false };
             break;
     }
     setWalletAndUpdateState(newWalletState);
@@ -291,11 +292,8 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
       const wallet = getWallet();
       const updatedWallet: WalletType = {
         ...wallet,
-        budget_lock: {
-          ...wallet.budget_lock,
-          enabled: lock,
-          until: lock ? endOfMonth(new Date()).toISOString() : null,
-        }
+        locked: lock,
+        lockUntil: lock ? endOfMonth(new Date()).toISOString() : null,
       };
       setWalletAndUpdateState(updatedWallet);
       toast({
@@ -305,7 +303,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   }
 
   const handleTopUpClick = () => {
-    if(!wallet?.budget_set) {
+    if(!wallet?.wizardSeen) {
       onBudgetClick();
     } else {
       setIsTopUpOpen(true);
@@ -322,15 +320,12 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     );
   }
 
-  const { balance_cents, spent_this_month_cents, budget_cents, budget_set, budget_lock } = wallet;
-  const spentThisMonth = spent_this_month_cents / 100;
-  const budget = budget_cents / 100;
-  const remaining = Math.max(0, budget - spentThisMonth);
-  const progress = budget_set && budget > 0 ? (spent_this_month_cents / budget_cents) * 100 : 0;
-  const daysInMonth = getDaysInMonth(new Date());
-  const daysLeft = daysInMonth - getDate(new Date());
+  const { balance, monthSpend, budget, wizardSeen, locked, lockEmergencyUsed, monthEnd } = wallet;
+  const remaining = Math.max(0, budget - monthSpend);
+  const progress = wizardSeen && budget > 0 ? (monthSpend / budget) * 100 : 0;
+  const daysLeft = differenceInDays(new Date(monthEnd), new Date());
 
-  const progressColor = budget_lock.enabled ? "bg-muted-foreground" : progress > 80 ? "bg-destructive" : progress > 50 ? "bg-amber-500" : "bg-success";
+  const progressColor = locked ? "bg-muted-foreground" : progress > 80 ? "bg-destructive" : progress > 50 ? "bg-amber-500" : "bg-success";
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(amount);
@@ -346,11 +341,11 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
               Wallet & Budget
             </CardTitle>
             <div className="flex items-center gap-1">
-                {budget_set && (
+                {wizardSeen && (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Badge variant="outline" className="text-lg font-bold cursor-help" aria-label={`Current balance: ${formatCurrency(balance_cents / 100)}`}>
-                                Balance: {formatCurrency(balance_cents / 100)}
+                            <Badge variant="outline" className="text-lg font-bold cursor-help" aria-label={`Current balance: ${formatCurrency(balance)}`}>
+                                Balance: {formatCurrency(balance)}
                             </Badge>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -381,40 +376,40 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4 flex-grow">
-          {budget_set ? (
+          {wizardSeen ? (
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
                   <span>This month</span>
-                  {budget_lock.enabled ? (
+                  {locked ? (
                       <Badge variant="secondary" className="gap-1.5 bg-amber-500/10 text-amber-500 border-amber-500/20"><Lock className="h-3 w-3"/> Locked</Badge>
                   ) : (
-                      <span>{formatCurrency(spentThisMonth)} / {formatCurrency(budget)}</span>
+                      <span>{formatCurrency(monthSpend)} / {formatCurrency(budget)}</span>
                   )}
                 </div>
                 <Progress 
                     value={progress} 
                     indicatorClassName={cn("motion-reduce:transition-none", progressColor)} 
                     aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} 
-                    aria-valuenow={spent_this_month_cents}
+                    aria-valuenow={monthSpend}
                     aria-valuemin={0}
-                    aria-valuemax={budget_cents}
+                    aria-valuemax={budget}
                 />
                 <div className="flex justify-between text-xs text-muted-foreground mt-2">
                     <Badge variant="outline" className="font-normal">Remaining: {formatCurrency(remaining)}</Badge>
                     <div className="flex items-center gap-4">
                         <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
-                        {budget_lock.enabled && (
+                        {locked && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                   <span tabIndex={0}>
-                                     <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5 h-auto py-0 px-1" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={budget_lock.emergency_used} aria-label="Use emergency top-up">
+                                     <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5 h-auto py-0 px-1" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={lockEmergencyUsed} aria-label="Use emergency top-up">
                                         <Zap className="h-4 w-4"/> Emergency
                                     </Button>
                                   </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  {budget_lock.emergency_used ? <p>Emergency top-up already used for this period.</p> : <p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p>}
+                                  {lockEmergencyUsed ? <p>Emergency top-up already used for this period.</p> : <p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p>}
                                 </TooltipContent>
                             </Tooltip>
                         )}
@@ -422,7 +417,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 </div>
               </div>
               
-              {budget_lock.enabled ? (
+              {locked ? (
                   <Card className="bg-muted/50 border-amber-500/20">
                     <CardHeader className="flex-row items-center justify-between p-4">
                        <div className="space-y-1">
@@ -456,7 +451,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
 
             </div>
           ) : (
-             balance_cents > 0 ? (
+             balance > 0 ? (
                 <Alert>
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
@@ -478,7 +473,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
              )
           )}
         </CardContent>
-        {budget_set && (
+        {wizardSeen && (
             <CardFooter className="flex justify-between items-center mt-auto border-t pt-4">
               <div className="flex gap-2">
                   <Button onClick={handleTopUpClick} size="sm">Top up</Button>
@@ -502,13 +497,13 @@ function HistoryDrawer() {
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
-        let runningBalance = getWallet().balance_cents;
+        let runningBalance = getWallet().balance;
         const rawLog = getSpendLog();
         const processedLog: SpendLogEntry[] = [];
 
         rawLog.forEach(entry => {
             processedLog.push({ ...entry, runningBalance });
-            const amount = entry.amount_cents > 0 ? -entry.amount_cents : Math.abs(entry.amount_cents);
+            const amount = entry.amount_cents > 0 ? -(entry.amount_cents/100) : Math.abs(entry.amount_cents/100);
             runningBalance += amount;
         });
 
@@ -557,7 +552,7 @@ function HistoryDrawer() {
                             {entry.amount_cents > 0 ? '+' : ''}{formatCurrency(entry.amount_cents / 100)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            Bal: {formatCurrency(entry.runningBalance / 100)}
+                            Bal: {formatCurrency(entry.runningBalance)}
                         </p>
                     </div>
                 </div>
@@ -1069,3 +1064,6 @@ const horoscopeData: { [key: string]: string } = {
     
 
 
+
+
+    
