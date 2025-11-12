@@ -7,6 +7,7 @@ import { Progress } from "../ui/progress";
 import { getWallet } from "@/lib/local";
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '../ui/badge';
 
 interface WalletDisplayProps {
     sessionTime: number;
@@ -67,12 +68,14 @@ export function WalletDisplay({ sessionTime, ratePerMin }: WalletDisplayProps) {
         : "bg-destructive";
 
     return (
-        <div className="flex items-center gap-3">
-            <Wallet className="w-5 h-5 text-primary" />
-            <div className="w-32">
+        <Badge variant="outline" className="flex items-center gap-3 p-0 h-9">
+            <div className="pl-2.5">
+                <Wallet className="w-5 h-5 text-primary" />
+            </div>
+            <div className="w-28 pr-2.5">
                 <p className="text-sm font-semibold">€{(currentBalance / 100).toFixed(2)}</p>
                 <Progress value={balancePercentage} className="h-1 mt-1" indicatorClassName={cn("transition-all duration-1000 ease-linear", progressColor)} />
             </div>
-        </div>
+        </Badge>
     );
 }

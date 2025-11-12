@@ -15,7 +15,7 @@ interface ControlsProps {
 const ControlButton = ({ tooltip, hotkey, onClick, children, variant = "ghost", className = "" }: { tooltip: string, hotkey?: string, onClick?: () => void, children: React.ReactNode, variant?: "ghost" | "destructive", className?: string }) => (
     <Tooltip>
         <TooltipTrigger asChild>
-            <Button variant={variant} size="icon" className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white ${className}`} onClick={onClick} disabled={!onClick}>
+            <Button variant={variant} size="icon" className={`w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 text-white ${className}`} onClick={onClick} disabled={!onClick}>
                 {children}
             </Button>
         </TooltipTrigger>
@@ -47,7 +47,7 @@ export function Controls({ onEndCall, isSidePanelOpen, onToggleNotes }: Controls
     return (
         <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-center z-10">
             <TooltipProvider>
-                <div className="flex items-center gap-4 bg-black/30 backdrop-blur-md p-3 rounded-full border border-white/10">
+                <div className="flex items-center gap-4 bg-black/30 backdrop-blur-md p-2 rounded-full border border-white/10">
                     <ControlButton tooltip={isMuted ? "Unmute" : "Mute"} hotkey="M" onClick={() => setIsMuted(!isMuted)}>
                         {isMuted ? <MicOff /> : <Mic />}
                     </ControlButton>
@@ -61,7 +61,7 @@ export function Controls({ onEndCall, isSidePanelOpen, onToggleNotes }: Controls
                      <Tooltip>
                         <TooltipTrigger asChild>
                             <span tabIndex={0}>
-                                <Button disabled variant="ghost" size="icon" className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white disabled:opacity-50">
+                                <Button disabled variant="ghost" size="icon" className="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 text-white disabled:opacity-50">
                                     <ScreenShare />
                                 </Button>
                             </span>
@@ -75,7 +75,7 @@ export function Controls({ onEndCall, isSidePanelOpen, onToggleNotes }: Controls
                         <NotepadText className={isSidePanelOpen ? "text-primary" : ""} />
                     </ControlButton>
 
-                    <div className="h-8 w-px bg-white/20 mx-2" />
+                    <div className="h-10 w-px bg-white/20 mx-2" />
 
                     <ControlButton tooltip="End Call" hotkey="Esc" onClick={onEndCall} variant="destructive" className="bg-destructive hover:bg-destructive/80">
                         <PhoneOff />

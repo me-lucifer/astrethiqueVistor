@@ -2,6 +2,7 @@
 "use client";
 
 import { Clock } from 'lucide-react';
+import { Badge } from '../ui/badge';
 
 export function SessionTimer({ time }: { time: number }) {
     const formatTime = (totalSeconds: number) => {
@@ -11,9 +12,9 @@ export function SessionTimer({ time }: { time: number }) {
     };
 
     return (
-        <div className="flex items-center gap-2 bg-background/50 px-3 py-1.5 rounded-md">
+        <Badge variant="outline" className="flex items-center gap-2 font-mono text-sm font-semibold h-9">
             <Clock className="w-4 h-4 text-muted-foreground" />
-            <span className="font-mono text-sm font-semibold">{formatTime(time)}</span>
-        </div>
+            <span>{formatTime(time)}</span>
+        </Badge>
     );
 }
