@@ -236,13 +236,12 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [wallet, setWalletState] = useState<WalletType | null>(null);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
   const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isDev, setIsDev] = useState(false);
-  const { toast } = useToast();
   const [isSetBudgetPromptOpen, setIsSetBudgetPromptOpen] = useState(false);
   const [isLockConfirmOpen, setIsLockConfirmOpen] = useState(false);
   const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
   const [topUpOnlyAmount, setTopUpOnlyAmount] = useState(0);
+  const [isDev, setIsDev] = useState(false);
+  const { toast } = useToast();
 
   const fetchWalletData = useCallback(() => {
     setWalletState(getWallet());
@@ -789,56 +788,56 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (Object.values(ratings).some((r) => r > 0)) {
-        startTransition(() => {
-          const today = new Date().toISOString().split('T')[0];
-          const moodLog = getMoodLog();
-          const moodMeta = getMoodMeta() || { streak: 0, lastCheckIn: "" };
+      startTransition(() => {
+        if (Object.values(ratings).every(r => r === 0)) return;
 
-          let newStreak = moodMeta.streak;
-          const lastDate = moodMeta.lastCheckIn
-            ? new Date(moodMeta.lastCheckIn)
-            : null;
-          const todayDate = new Date();
-          const isFirstCheckinToday = !lastDate || !isToday(lastDate);
+        const today = new Date().toISOString().split('T')[0];
+        const moodLog = getMoodLog();
+        const moodMeta = getMoodMeta() || { streak: 0, lastCheckIn: "" };
 
-          if (isFirstCheckinToday) {
-            if (lastDate && isYesterday(lastDate)) {
-              newStreak = (newStreak || 0) + 1;
-            } else if (lastDate && !isToday(lastDate)) {
-              newStreak = 1;
-            } else if (!lastDate) {
-              newStreak = 1;
-            }
-            onFirstCheckin();
-            toast({
-              title: "Mood saved ✓",
-              duration: 2500,
-            });
+        let newStreak = moodMeta.streak;
+        const lastDate = moodMeta.lastCheckIn
+          ? new Date(moodMeta.lastCheckIn)
+          : null;
+        const todayDate = new Date();
+        const isFirstCheckinToday = !lastDate || !isToday(lastDate);
+
+        if (isFirstCheckinToday) {
+          if (lastDate && isYesterday(lastDate)) {
+            newStreak = (newStreak || 0) + 1;
+          } else if (lastDate && !isToday(lastDate)) {
+            newStreak = 1;
+          } else if (!lastDate) {
+            newStreak = 1;
           }
-
-          const todayIndex = moodLog.findIndex(
-            (entry) => entry.dateISO === today
-          );
-          if (todayIndex > -1) {
-            moodLog[todayIndex] = {
-              ...moodLog[todayIndex],
-              ...ratings,
-              dateISO: today,
-            };
-          } else {
-            moodLog.push({ dateISO: today, ...ratings });
-          }
-
-          setSession('ast_mood_log', moodLog);
-          setSession('ast_mood_meta', {
-            streak: newStreak,
-            lastCheckIn: todayDate.toISOString(),
+          onFirstCheckin();
+          toast({
+            title: "Mood saved ✓",
+            duration: 2500,
           });
-          window.dispatchEvent(new Event('storage'));
+        }
+
+        const todayIndex = moodLog.findIndex(
+          (entry) => entry.dateISO === today
+        );
+        if (todayIndex > -1) {
+          moodLog[todayIndex] = {
+            ...moodLog[todayIndex],
+            ...ratings,
+            dateISO: today,
+          };
+        } else {
+          moodLog.push({ dateISO: today, ...ratings });
+        }
+
+        setSession('ast_mood_log', moodLog);
+        setSession('ast_mood_meta', {
+          streak: newStreak,
+          lastCheckIn: todayDate.toISOString(),
         });
-      }
-    }, 200);
+        window.dispatchEvent(new Event('storage'));
+      });
+    }, 500);
 
     return () => clearTimeout(handler);
   }, [ratings, onFirstCheckin, toast]);
@@ -1253,4 +1252,5 @@ const horoscopeData: { [key: string]: string } = {
 
 
     
+
 
