@@ -58,17 +58,17 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
     }, []);
 
     const toggleVideo = (enabled: boolean) => {
+        setCameraEnabled(enabled);
         if (streamRef.current) {
             streamRef.current.getVideoTracks().forEach(track => track.enabled = enabled);
         }
-        setCameraEnabled(enabled);
     }
     
     const toggleAudio = (enabled: boolean) => {
+        setMicEnabled(enabled);
         if (streamRef.current) {
             streamRef.current.getAudioTracks().forEach(track => track.enabled = enabled);
         }
-        setMicEnabled(enabled);
     }
     
     return (
@@ -96,7 +96,7 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                                 <Label htmlFor="mic-toggle" className="font-medium flex items-center gap-2">
                                     <Mic className="h-4 w-4" /> Microphone
                                 </Label>
-                                <Switch id="mic-toggle" checked={micEnabled} onCheckedChange={(checked) => toggleAudio(checked)} />
+                                <Switch id="mic-toggle" checked={micEnabled} onCheckedChange={toggleAudio} />
                             </div>
                             <Select defaultValue="default" disabled={!micEnabled}>
                                 <SelectTrigger aria-label="Select microphone"><SelectValue /></SelectTrigger>
@@ -112,7 +112,7 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                                 <Label htmlFor="cam-toggle" className="font-medium flex items-center gap-2">
                                     <Video className="h-4 w-4" /> Camera
                                 </Label>
-                                <Switch id="cam-toggle" checked={cameraEnabled} onCheckedChange={(checked) => toggleVideo(checked)} />
+                                <Switch id="cam-toggle" checked={cameraEnabled} onCheckedChange={toggleVideo} />
                             </div>
                              <Select defaultValue="default" disabled={!cameraEnabled}>
                                 <SelectTrigger aria-label="Select camera"><SelectValue /></SelectTrigger>
