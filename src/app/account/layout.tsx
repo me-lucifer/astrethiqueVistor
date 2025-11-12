@@ -4,7 +4,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, Bell, Lock, Wallet, Database, Receipt } from "lucide-react";
+import { User, Bell, Lock, Database, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const accountNavLinks = [
@@ -12,7 +12,6 @@ const accountNavLinks = [
   { href: "/account/billing", label: "Billing & Transactions", icon: Receipt },
   { href: "/account/preferences", label: "Notifications", icon: Bell },
   { href: "/account/security", label: "Security", icon: Lock },
-  { href: "/account/wallet", label: "Wallet", icon: Wallet },
   { href: "/account/data", label: "Data & Privacy", icon: Database },
 ];
 
