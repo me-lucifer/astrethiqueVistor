@@ -19,8 +19,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { getWallet, setWallet, type Wallet } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
 import { useBudgetCalculator, type AboutYou, type Essentials } from "./use-budget-calculator";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Info } from "lucide-react";
 import { Alert, AlertDescription } from "../ui/alert";
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { endOfMonth } from "date-fns";
 
 // --- Zod Schema ---
 const aboutYouSchema = z.object({
@@ -47,6 +49,7 @@ const wizardSchema = z.object({
   aboutYou: aboutYouSchema,
   essentials: essentialsSchema,
   finalBudget: z.coerce.number().min(10, "Budget must be at least €10.").optional(),
+  lockBudget: z.boolean().default(false),
 });
 
 export type WizardFormData = z.infer<typeof wizardSchema>;
@@ -125,12 +128,12 @@ const Step3 = () => {
     return (
         <div className="space-y-4">
             <div className="p-4 rounded-lg bg-muted text-center">
-                <p className="text-sm text-muted-foreground">Suggested monthly budget</p>
+                <p className="text-sm text-muted-foreground">Our suggestion ≈ 25% of your disposable income</p>
                 <p className="text-4xl font-bold">€{suggestedBudget}</p>
             </div>
              <FormField control={control} name="finalBudget" render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Set your budget (€)</FormLabel>
+                    <FormLabel>Set your monthly budget (€)</FormLabel>
                     <FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl>
                     <p className="text-xs text-muted-foreground">You can adjust this anytime.</p>
                     <FormMessage />
@@ -143,6 +146,26 @@ const Step3 = () => {
                     </AlertDescription>
                 </Alert>
             )}
+             <FormField control={control} name="lockBudget" render={({ field }) => (
+                <FormItem>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <Label htmlFor="lock-budget-toggle" className="flex items-center gap-2">
+                                        Enable Budget Lock after saving
+                                        <Info className="h-4 w-4 text-muted-foreground" />
+                                    </Label>
+                                    <FormControl><Switch id="lock-budget-toggle" checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p className="max-w-[250px]">Locks wallet until month end. One emergency top-up (≤€20) allowed. You can still decrease budget or unlock next month.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </FormItem>
+            )} />
         </div>
     );
 };
@@ -150,7 +173,7 @@ const Step3 = () => {
 const steps = [
     { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou.home", "aboutYou.income", "aboutYou.household", "aboutYou.hasOther", "aboutYou.otherIncome"] },
     { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentials.rent", "essentials.utilities", "essentials.groceries", "essentials.transport", "essentials.debts", "essentials.savingsPct"] },
-    { title: "Suggestion", description: "Review our suggestion and set your final budget.", component: Step3, fields: ["finalBudget"] },
+    { title: "Suggestion", description: "Suggested budget for you", component: Step3, fields: ["finalBudget"] },
 ];
 
 
@@ -170,6 +193,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
             aboutYou: { home: 'rent', income: 3000, household: 1, hasOther: false, otherIncome: 0 },
             essentials: { rent: 1200, utilities: 150, groceries: 400, transport: 100, debts: 0, savingsPct: 10, },
             finalBudget: 0,
+            lockBudget: false,
         },
         mode: "onChange",
     });
@@ -180,7 +204,8 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
             methods.reset({
                 aboutYou: wallet.aboutYou,
                 essentials: wallet.essentials,
-                finalBudget: wallet.budget_cents / 100,
+                finalBudget: wallet.budget_cents > 0 ? wallet.budget_cents / 100 : undefined,
+                lockBudget: wallet.budget_lock.enabled,
             });
         }
     }, [isOpen, methods]);
@@ -204,6 +229,11 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
             wizardSeen: true,
             aboutYou: data.aboutYou,
             essentials: data.essentials,
+            budget_lock: {
+                ...wallet.budget_lock,
+                enabled: data.lockBudget,
+                until: data.lockBudget ? endOfMonth(new Date()).toISOString() : null,
+            }
         };
         setWallet(updatedWallet);
 
@@ -250,7 +280,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
                                 {currentStep < steps.length - 1 ? (
                                     <Button type="button" onClick={handleNext}>Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
                                 ) : (
-                                    <Button type="submit">Save Budget</Button>
+                                    <Button type="submit">Save budget</Button>
                                 )}
                             </div>
                         </DialogFooter>

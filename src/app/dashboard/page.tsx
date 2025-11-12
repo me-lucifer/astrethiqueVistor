@@ -4,7 +4,7 @@
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDistanceToNow, isToday, isYesterday, endOfMonth, getDaysInMonth, getDate, differenceInDays, startOfMonth } from "date-fns";
+import { format, formatDistanceToNow, isToday, isYesterday, endOfMonth, getDaysInMonth, getDate, differenceInDays, startOfMonth } from "date-fns";
 
 // UI Component Imports
 import {
@@ -135,7 +135,7 @@ export default function DashboardPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const router = useRouter();
+  const [router] = useState(useRouter());
 
   const checkUser = () => {
     const currentUser = authLocal.getCurrentUser();
@@ -262,13 +262,12 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
 
   const handleSpend = (amountCents: number, note: string) => {
     const spendResult = spendFromWallet(amountCents, 'other', note);
-    toast({
-        title: spendResult.ok ? "Spend Succeeded" : "Spend Failed",
-        description: spendResult.message,
-        variant: spendResult.ok ? "default" : "destructive",
-    });
-    if (!spendResult.ok && spendResult.message.startsWith("locked:")) {
-      // Logic to open a specific modal if needed
+    if (!spendResult.ok) {
+        toast({
+            title: spendResult.ok ? "Spend Succeeded" : "Spend Failed",
+            description: spendResult.message,
+            variant: spendResult.ok ? "default" : "destructive",
+        });
     }
   }
 
@@ -414,15 +413,11 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 <div>
                   <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
                     <span>This month</span>
-                    {locked ? (
-                        <Badge variant="secondary" className="gap-1.5 bg-amber-500/10 text-amber-500 border-amber-500/20"><Lock className="h-3 w-3"/> Locked</Badge>
-                    ) : (
-                        <span>{formatCurrency(monthSpend)} / {formatCurrency(budget)}</span>
-                    )}
+                    <span>{formatCurrency(monthSpend)} / {formatCurrency(budget)}</span>
                   </div>
                   <Progress 
                       value={progress} 
-                      indicatorClassName={cn("motion-reduce:transition-none transition-all duration-300", progressColor)} 
+                      indicatorClassName={cn("motion-reduce:transition-none transition-all duration-200 ease-in-out", progressColor)} 
                       aria-label={`Monthly spending: ${progress.toFixed(0)}% of budget`} 
                       aria-valuenow={monthSpend}
                       aria-valuemin={0}
@@ -432,54 +427,35 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                       <Badge variant="outline" className="font-normal">Remaining: {formatCurrency(remaining)}</Badge>
                       <div className="flex items-center gap-4">
                           <Badge variant="outline" className="font-normal">Days left: {daysLeft}</Badge>
-                          {locked && (
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span tabIndex={0}>
-                                       <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5 h-auto py-0 px-1" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={lockEmergencyUsed} aria-label="Use emergency top-up">
-                                          <Zap className="h-4 w-4"/> Emergency
-                                      </Button>
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    {lockEmergencyUsed ? <p>Emergency top-up already used for this period.</p> : <p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p>}
-                                  </TooltipContent>
-                              </Tooltip>
-                          )}
                       </div>
                   </div>
                 </div>
                 
-                {locked ? (
-                    <Card className="bg-muted/50 border-amber-500/20">
-                      <CardHeader className="flex-row items-center justify-between p-4">
-                         <div className="space-y-1">
-                           <CardTitle className="text-base flex items-center gap-2 text-amber-500"><Lock className="h-4 w-4"/>Budget Locked</CardTitle>
-                           <CardDescription className="text-xs">Spending blocked until {endOfMonth(new Date()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.</CardDescription>
-                         </div>
-                         <Button variant="ghost" className="text-xs" onClick={() => handleToggleLock(false)} aria-label="Disable budget lock">Disable</Button>
-                      </CardHeader>
-                    </Card>
-                ) : (
-                     <Card className="bg-card border-primary/20">
-                      <CardHeader className="p-4">
-                          <div className="flex justify-between items-start">
-                           <CardTitle className="text-base flex items-center gap-2">Budget Lock</CardTitle>
-                            <Tooltip>
-                              <TooltipTrigger asChild><Info className="h-4 w-4 text-muted-foreground cursor-help" /></TooltipTrigger>
-                              <TooltipContent>
-                                 <p className="max-w-[250px]">Prevents new spending until month end. One €{EMERGENCY_TOPUP_LIMIT_EUR} emergency top-up allowed.</p>
-                              </TooltipContent>
-                            </Tooltip>
+                {locked && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+                      <Card className="bg-muted/50 border-amber-500/20">
+                        <CardHeader className="flex-row items-center justify-between p-4">
+                          <div className="space-y-1">
+                            <CardTitle className="text-base flex items-center gap-2 text-amber-500">
+                              <Lock className="h-4 w-4"/>
+                              Budget locked until {format(new Date(monthEnd), "MMM dd")}
+                            </CardTitle>
                           </div>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0 text-sm text-muted-foreground">
-                          Freeze your wallet until {endOfMonth(new Date()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}. You can’t spend more than your balance.
-                      </CardContent>
-                      <CardFooter className="p-4 pt-0">
-                          <Button variant="outline" onClick={() => handleToggleLock(true)} aria-label={`Enable budget lock until ${endOfMonth(new Date()).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`}>Enable lock</Button>
-                      </CardFooter>
-                    </Card>
+                           <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span tabIndex={0}>
+                                     <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-400 gap-1.5 h-auto py-0 px-1" onClick={() => setIsEmergencyTopUpOpen(true)} disabled={lockEmergencyUsed} aria-label="Use emergency top-up">
+                                        <Zap className="h-4 w-4"/> Emergency top-up (€20 max)
+                                    </Button>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {lockEmergencyUsed ? <p>Emergency top-up already used for this period.</p> : <p>Add up to €{EMERGENCY_TOPUP_LIMIT_EUR} once per locked period.</p>}
+                                </TooltipContent>
+                            </Tooltip>
+                        </CardHeader>
+                      </Card>
+                    </motion.div>
                 )}
 
               </div>
@@ -501,8 +477,8 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                 <div className="flex gap-2">
                     <Button onClick={() => setIsTopUpOpen(true)} size="sm">Top up</Button>
                     <Button onClick={onBudgetClick} variant="outline" size="sm">Change budget</Button>
-                    <HistoryDrawer />
                 </div>
+                <HistoryDrawer />
               </CardFooter>
           )}
            <p className="text-xs text-muted-foreground text-center p-2">Spending uses wallet balance only. Budgets reset monthly.</p>
@@ -600,7 +576,7 @@ function HistoryDrawer() {
             </div>
           ) : (
             <div className="text-center py-10 text-muted-foreground space-y-3">
-                <p>No transactions yet.</p>
+                <p>No wallet activity yet this month.</p>
                 <Button onClick={() => setIsTopUpOpen(true)}>Make your first top-up</Button>
             </div>
           )}
@@ -778,7 +754,7 @@ function QuickTrends() {
   );
 }
 
-function HoroscopeCard({ user }: { user: authLocal.User | null }) {
+function HoroscopeCard({ user }: { user: User | null }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
@@ -842,7 +818,7 @@ function HoroscopeCard({ user }: { user: authLocal.User | null }) {
       <Dialog open={isLockModalOpen} onOpenChange={setIsLockModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Budget Locked</DialogTitle>
+            <DialogTitle>Budget Lock active</DialogTitle>
             <DialogDescription>
               Your budget is locked. You can't make this purchase now.
               Would you like to use your one-time emergency top-up?
@@ -903,7 +879,7 @@ function SidebarTabs() {
 
 function RecommendationsTab() {
   const [recommendations, setRecommendations] = useState<ContentHubItem[]>([]);
-  const router = useRouter();
+  const [router] = useState(useRouter());
 
   useEffect(() => {
     const getRecs = () => {
@@ -956,7 +932,7 @@ function RecommendationsTab() {
     getRecs();
     window.addEventListener("storage", getRecs);
     return () => window.removeEventListener("storage", getRecs);
-  }, []);
+  }, [router]);
 
   const handleTopicClick = (topic: string) => {
     router.push(`/content-hub?topics=${encodeURIComponent(topic)}`);
@@ -1099,7 +1075,5 @@ const horoscopeData: { [key: string]: string } = {
   Pisces:
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
-
-    
 
     
