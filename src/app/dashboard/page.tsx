@@ -237,8 +237,8 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
   const [isDev, setIsDev] = useState(false);
   const { toast } = useToast();
 
-  const setWallet = (newWallet: WalletType) => {
-    setLocal('ast_wallet', newWallet);
+  const setWalletAndUpdateState = (newWallet: WalletType) => {
+    setWallet(newWallet);
     _setWallet(newWallet);
   }
 
@@ -267,13 +267,13 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
             newWalletState = {...currentWallet, balance_cents: 1500, budget_cents: 3000, spent_this_month_cents: 0, budget_set: true };
             break;
         case 'lock':
-             newWalletState = {...currentWallet, budget_lock: { enabled: true, until: endOfMonth(new Date()).toISOString(), emergency_used: false }};
+             newWalletState = {...currentWallet, budget_lock: { ...currentWallet.budget_lock, enabled: true, until: endOfMonth(new Date()).toISOString() }};
             break;
         case 'reset_month':
              newWalletState = {...currentWallet, spent_this_month_cents: 0, month_key: format(new Date(), 'yyyy-MM'), budget_lock: { enabled: false, until: null, emergency_used: false }};
             break;
     }
-    setWallet(newWalletState);
+    setWalletAndUpdateState(newWalletState);
   }
   
   const handleToggleLock = (lock: boolean) => {
@@ -286,7 +286,7 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
           until: lock ? endOfMonth(new Date()).toISOString() : null,
         }
       };
-      setWallet(updatedWallet);
+      setWalletAndUpdateState(updatedWallet);
       toast({
         title: lock ? "Budget Locked" : "Budget Unlocked",
         description: lock ? "Your spending is now capped at your budget limit." : "You can spend beyond your budget again."
@@ -311,11 +311,11 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
     );
   }
 
-  const { balance_cents = 0, spent_this_month_cents = 0, budget_cents, budget_set, budget_lock } = wallet;
+  const { balance_cents, spent_this_month_cents, budget_cents, budget_set, budget_lock } = wallet;
   const spentThisMonth = spent_this_month_cents / 100;
   const budget = budget_cents / 100;
   const remaining = Math.max(0, budget - spentThisMonth);
-  const progress = budget_set && budget > 0 ? (spentThisMonth / budget) * 100 : 0;
+  const progress = budget_set && budget > 0 ? (spent_this_month_cents / budget_cents) * 100 : 0;
   const daysInMonth = getDaysInMonth(new Date());
   const daysLeft = daysInMonth - getDate(new Date());
 
@@ -418,13 +418,9 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
           ) : (
              <Card className="bg-primary/10 border-primary/20 text-center p-6 space-y-3">
                <CardTitle className="text-base">Set a monthly budget to stay in control.</CardTitle>
+               <CardDescription className="text-sm">Use our quick wizard to calculate a budget based on your income and expenses.</CardDescription>
                 <div className="flex justify-center gap-2">
                     <Button onClick={onBudgetClick}>Set up now</Button>
-                </div>
-                <div className="flex justify-center gap-2 pt-2">
-                    <Button size="sm" variant="ghost" disabled>Top up €5</Button>
-                    <Button size="sm" variant="ghost" disabled>Top up €10</Button>
-                    <Button size="sm" variant="ghost" disabled>Top up €25</Button>
                 </div>
              </Card>
           )}
@@ -1028,18 +1024,5 @@ const horoscopeData: { [key: string]: string } = {
   Pisces:
     "Embrace your dreamy side. Allow yourself time for creative visualization and spiritual reflection.",
 };
-
-    
-
-      
-
-
-    
-
-
-
-
-
-    
 
     

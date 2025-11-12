@@ -220,16 +220,16 @@ export const setWallet = (wallet: Wallet) => {
 export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string): { ok: boolean, message: string } {
     const wallet = getWallet();
 
-    if (amount_cents > 0 && wallet.budget_lock?.enabled && wallet.spent_this_month_cents >= wallet.budget_cents) {
-        return { ok: false, message: `Budget is locked until ${format(endOfMonth(new Date()), "MMM do")}.` };
+    if (amount_cents > 0 && wallet.balance_cents < amount_cents) {
+        return { ok: false, message: "Insufficient funds in your wallet." };
     }
 
-    if ((wallet.spent_this_month_cents + amount_cents) > wallet.budget_cents && wallet.budget_set) {
-         return { ok: false, message: "This transaction exceeds your monthly budget." };
+    if (amount_cents > 0 && wallet.budget_lock?.enabled && wallet.spent_this_month_cents + amount_cents > wallet.budget_cents) {
+        return { ok: false, message: `Budget is locked until ${format(endOfMonth(new Date()), "MMM do")}.` };
     }
     
-    if (wallet.balance_cents < amount_cents) {
-        return { ok: false, message: "Insufficient funds in your wallet." };
+    if (wallet.budget_set && (wallet.spent_this_month_cents + amount_cents) > wallet.budget_cents) {
+         return { ok: false, message: "This transaction exceeds your monthly budget." };
     }
 
     const newWalletState: Wallet = {
@@ -319,3 +319,5 @@ export const incrementMetric = (key: keyof Metrics) => {
     metrics[key] += 1;
     setLocal(METRICS_KEY, metrics);
 }
+
+    
