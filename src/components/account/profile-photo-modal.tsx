@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef, ChangeEvent, useEffect } from 'react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import {
@@ -61,9 +61,17 @@ export function ProfilePhotoModal({ isOpen, onOpenChange, onSave }: ProfilePhoto
     const [completedCrop, setCompletedCrop] = useState<Crop>();
     const [scale, setScale] = useState(1);
     const [rotate, setRotate] = useState(0);
+    const [previewUrl, setPreviewUrl] = useState('');
     const imgRef = useRef<HTMLImageElement>(null);
-    const previewCanvasRef = useRef<HTMLCanvasElement>(null);
     const { toast } = useToast();
+
+    useEffect(() => {
+        if (completedCrop?.width && completedCrop?.height && imgRef.current) {
+            getCroppedImg(imgRef.current, completedCrop).then(url => {
+                setPreviewUrl(url);
+            });
+        }
+    }, [completedCrop]);
 
     const onSelectFile = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -90,11 +98,8 @@ export function ProfilePhotoModal({ isOpen, onOpenChange, onSave }: ProfilePhoto
     }
 
     async function handleSaveCrop() {
-        if (!completedCrop || !imgRef.current) {
-            return;
-        }
-        const dataUrl = await getCroppedImg(imgRef.current, completedCrop);
-        onSave(dataUrl);
+        if (!previewUrl) return;
+        onSave(previewUrl);
     }
 
     const aspect = 1;
@@ -146,9 +151,9 @@ export function ProfilePhotoModal({ isOpen, onOpenChange, onSave }: ProfilePhoto
                              <div className="flex items-center gap-4">
                                 <p className="text-sm font-medium">Preview</p>
                                 <div className="flex items-center gap-4">
-                                    <img src={completedCrop && imgSrc ? getCroppedImg(imgRef.current!, completedCrop).then(url => url) : ''} alt="Preview" style={{ width: 160, height: 160, borderRadius: '50%', objectFit: 'cover' }} />
-                                    <img src={completedCrop && imgSrc ? getCroppedImg(imgRef.current!, completedCrop).then(url => url) : ''} alt="Preview" style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover' }} />
-                                    <img src={completedCrop && imgSrc ? getCroppedImg(imgRef.current!, completedCrop).then(url => url) : ''} alt="Preview" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+                                    <img src={previewUrl} alt="Preview" style={{ width: 160, height: 160, borderRadius: '50%', objectFit: 'cover' }} />
+                                    <img src={previewUrl} alt="Preview" style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover' }} />
+                                    <img src={previewUrl} alt="Preview" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
                                 </div>
                             </div>
 
