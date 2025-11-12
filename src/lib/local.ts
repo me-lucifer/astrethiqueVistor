@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { User } from './authLocal';
@@ -96,7 +97,7 @@ export interface Wallet {
     monthStart: string;
     monthEnd: string;
     wizardSeen: boolean;
-    budget_set: boolean; // Added for clarity
+    budget_set: boolean;
     aboutYou: {
         home: "own" | "rent";
         income: number;
@@ -257,7 +258,7 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
     // Allow 0 amount checks (e.g. to see if wallet is locked)
     if (amount_cents > 0) {
       if (wallet.budget_lock.enabled) {
-          result.message = `Budget is locked until ${format(new Date(wallet.monthEnd), "MMM do")}.`;
+          result.message = `locked:Budget is locked until ${format(new Date(wallet.monthEnd), "MMM do")}.`;
           console.log("Spend failed:", result.message);
           return result;
       }
@@ -362,10 +363,5 @@ export const incrementMetric = (key: keyof Metrics) => {
     metrics[key] += 1;
     setLocal(METRICS_KEY, metrics);
 }
-
-    
-
-    
-
 
     

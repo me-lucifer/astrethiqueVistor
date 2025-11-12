@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -161,7 +162,7 @@ export function DetailedHoroscope({ user, onLockError, onEmergencyTopUpNeeded }:
             const spendResult = spendFromWallet(feeCents, "horoscope", `Detailed horoscope for ${user.zodiacSign}`);
             
             if (!spendResult.ok) {
-                if (spendResult.message.includes("locked")) {
+                if (spendResult.message.startsWith("locked:")) {
                     onLockError();
                 } else {
                     setIsFundsModalOpen(true);
@@ -245,3 +246,5 @@ export function DetailedHoroscope({ user, onLockError, onEmergencyTopUpNeeded }:
         </>
     );
 }
+
+    

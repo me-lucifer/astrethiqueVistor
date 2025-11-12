@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,6 +20,7 @@ import { getWallet, setWallet, type Wallet } from "@/lib/local";
 import { useToast } from "@/hooks/use-toast";
 import { useBudgetCalculator, type AboutYou, type Essentials } from "./use-budget-calculator";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Alert, AlertDescription } from "../ui/alert";
 
 // --- Zod Schema ---
 const aboutYouSchema = z.object({
@@ -108,15 +110,17 @@ const Step2 = () => {
 
 const Step3 = () => {
     const { control, watch, setValue } = useFormContext<WizardFormData>();
-    const { aboutYou, essentials } = watch();
-    const { suggestedBudget } = useBudgetCalculator(aboutYou, essentials);
+    const { aboutYou, essentials, finalBudget } = watch();
+    const { suggestedBudget, disposable } = useBudgetCalculator(aboutYou, essentials);
     
     useEffect(() => {
-        const finalBudgetValue = watch('finalBudget');
-        if ((finalBudgetValue === undefined || finalBudgetValue === 0) && suggestedBudget > 0) {
+        const currentFinalBudget = watch('finalBudget');
+        if ((currentFinalBudget === undefined || currentFinalBudget === 0) && suggestedBudget > 0) {
             setValue('finalBudget', suggestedBudget);
         }
     }, [suggestedBudget, setValue, watch]);
+
+    const exceedsDisposable = finalBudget && disposable > 0 && finalBudget > disposable;
 
     return (
         <div className="space-y-4">
@@ -132,6 +136,13 @@ const Step3 = () => {
                     <FormMessage />
                 </FormItem>
             )} />
+            {exceedsDisposable && (
+                 <Alert variant="destructive">
+                    <AlertDescription>
+                        This exceeds your estimated discretionary funds (€{disposable}). Consider reducing or continue anyway.
+                    </AlertDescription>
+                </Alert>
+            )}
         </div>
     );
 };
@@ -185,12 +196,11 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     const handlePrev = () => setCurrentStep(s => s - 1);
 
     const handleSave = (data: WizardFormData) => {
-        // Save wallet settings
         const wallet = getWallet();
         const updatedWallet: Wallet = {
             ...wallet,
             budget_cents: data.finalBudget! * 100,
-            budget_set: true, // Mark budget as set
+            budget_set: true, 
             wizardSeen: true,
             aboutYou: data.aboutYou,
             essentials: data.essentials,
@@ -199,7 +209,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
 
         toast({ title: "Budget Saved!", description: `Your monthly budget is now €${data.finalBudget}.` });
         onOpenChange(false);
-        setTimeout(() => setCurrentStep(0), 500); // Reset for next time
+        setTimeout(() => setCurrentStep(0), 500); 
     };
 
     const CurrentStepComponent = steps[currentStep].component;
@@ -250,3 +260,5 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         </Dialog>
     );
 }
+
+    

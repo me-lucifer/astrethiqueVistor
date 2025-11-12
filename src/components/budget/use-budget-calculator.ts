@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useMemo } from 'react';
@@ -23,8 +24,8 @@ export type Essentials = {
 };
 
 export function useBudgetCalculator(aboutYou: AboutYou, essentials: Essentials) {
-  const suggestedBudget = useMemo(() => {
-    if (!aboutYou || !essentials) return SUGGEST_MIN_EUR;
+  const { suggestedBudget, disposable } = useMemo(() => {
+    if (!aboutYou || !essentials) return { suggestedBudget: SUGGEST_MIN_EUR, disposable: 0 };
     
     const totalIncome = aboutYou.income + (aboutYou.hasOther ? (aboutYou.otherIncome || 0) : 0);
 
@@ -32,19 +33,18 @@ export function useBudgetCalculator(aboutYou: AboutYou, essentials: Essentials) 
     const savingsAmount = totalIncome * (essentials.savingsPct / 100);
     const totalExpenses = essentialsTotal + essentials.debts + savingsAmount;
 
-    const discretionary = totalIncome - totalExpenses;
-    if (discretionary <= 0) return SUGGEST_MIN_EUR;
+    const currentDisposable = Math.max(0, totalIncome - totalExpenses);
+    if (currentDisposable <= 0) return { suggestedBudget: SUGGEST_MIN_EUR, disposable: 0 };
 
-    let base = Math.round((0.25 * discretionary) / 5) * 5;
+    let base = Math.round((0.25 * currentDisposable) / 5) * 5;
     
     const clamped = Math.max(SUGGEST_MIN_EUR, Math.min(base, SUGGEST_MAX_EUR));
 
-    return Math.round(clamped);
+    return { suggestedBudget: Math.round(clamped), disposable: Math.round(currentDisposable) };
 
   }, [aboutYou, essentials]);
 
-  return { suggestedBudget };
+  return { suggestedBudget, disposable };
 }
-
 
     
