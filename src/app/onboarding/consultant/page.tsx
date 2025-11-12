@@ -31,7 +31,7 @@ const onboardingSchema = z.object({
   languages: z.array(z.string()).min(1, "Please select at least one language."),
   specialties: z.array(z.string()).min(1, "Please select at least one specialty."),
   consultationTypes: z.array(z.string()).min(1, "Please select at least one type."),
-  ratePerMin: z.number().min(0.5, "Rate must be at least €0.50.").max(20, "Rate cannot exceed €20."),
+  ratePerMin: z.coerce.number().min(0.5, "Rate must be at least €0.50.").max(20, "Rate cannot exceed €20."),
   availabilityNote: z.string().optional(),
   isOnlineNow: z.boolean().default(false),
   bio: z.string().min(100, "Bio must be at least 100 characters."),
