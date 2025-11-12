@@ -142,38 +142,38 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         };
     }, [filters]);
 
-    const loadState = useCallback(() => {
-        const storedConsultants = getSession<Consultant[]>('discover.seed.v1');
-        if (storedConsultants && Array.isArray(storedConsultants)) {
-            setAllConsultants(storedConsultants);
-            const prices = storedConsultants.map(c => c.pricePerMin);
-            const min = Math.floor(Math.min(...prices, 0));
-            const max = Math.ceil(Math.max(...prices, 10));
-            setPriceBounds([min, max]);
-
-            const savedFilters = getSession<Filters>('discover.filters.v1');
-            const mergedFilters = { ...defaultFilters, ...savedFilters };
-            
-            if (!savedFilters || !savedFilters.price || savedFilters.price[0] === 0 && savedFilters.price[1] === 10) {
-                 const initialPrice: [number, number] = [min, max];
-                 mergedFilters.price = initialPrice;
-                 mergedFilters.minPrice = String(initialPrice[0]);
-                 mergedFilters.maxPrice = String(initialPrice[1]);
-            }
-             setFilters(mergedFilters);
-             setSession('discover.filters.v1', mergedFilters);
-        }
-        const savedQuery = getSession<string>('discover.search.v1');
-        if (savedQuery) {
-            setQuery(savedQuery);
-        }
-        const savedTypes = getSession<string[]>('discover.types.v1');
-        if (savedTypes) {
-            setReadingTypes(savedTypes);
-        }
-    }, []);
-
     useEffect(() => {
+        const loadState = () => {
+            const storedConsultants = getSession<Consultant[]>('discover.seed.v1');
+            if (storedConsultants && Array.isArray(storedConsultants)) {
+                setAllConsultants(storedConsultants);
+                const prices = storedConsultants.map(c => c.pricePerMin);
+                const min = Math.floor(Math.min(...prices, 0));
+                const max = Math.ceil(Math.max(...prices, 10));
+                setPriceBounds([min, max]);
+
+                const savedFilters = getSession<Filters>('discover.filters.v1');
+                const mergedFilters = { ...defaultFilters, ...savedFilters };
+                
+                if (!savedFilters || !savedFilters.price || savedFilters.price[0] === 0 && savedFilters.price[1] === 10) {
+                     const initialPrice: [number, number] = [min, max];
+                     mergedFilters.price = initialPrice;
+                     mergedFilters.minPrice = String(initialPrice[0]);
+                     mergedFilters.maxPrice = String(initialPrice[1]);
+                }
+                 setFilters(mergedFilters);
+                 setSession('discover.filters.v1', mergedFilters);
+            }
+            const savedQuery = getSession<string>('discover.search.v1');
+            if (savedQuery) {
+                setQuery(savedQuery);
+            }
+            const savedTypes = getSession<string[]>('discover.types.v1');
+            if (savedTypes) {
+                setReadingTypes(savedTypes);
+            }
+        };
+
         loadState();
         
         const handleStorageChange = () => {
@@ -182,7 +182,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
 
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
-    }, [loadState]);
+    }, []);
 
 
     const updateFilters = (newFilters: Partial<Filters>, overwrite = false) => {
@@ -635,5 +635,7 @@ export function FeaturedConsultants({ initialQuery, showFilters = false }: { ini
         </TooltipProvider>
     );
 }
+
+    
 
     
