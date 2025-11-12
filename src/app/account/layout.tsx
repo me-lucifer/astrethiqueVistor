@@ -25,7 +25,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
                 My Account
             </h1>
             <p className="text-lg text-foreground/80 max-w-2xl">
-                Manage your profile, settings, and wallet.
+                Manage your profile, settings, and billing.
             </p>
         </div>
 
