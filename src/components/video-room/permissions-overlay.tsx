@@ -53,7 +53,7 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                                 <Label htmlFor="mic-toggle" className="font-medium flex items-center gap-2">
                                     <Mic className="h-4 w-4" /> Microphone
                                 </Label>
-                                <Switch id="mic-toggle" checked={micEnabled} onCheckedChange={setMicEnabled} />
+                                <Switch id="mic-toggle" checked={micEnabled} onCheckedChange={() => setMicEnabled(prev => !prev)} />
                             </div>
                             <Select defaultValue="default">
                                 <SelectTrigger aria-label="Select microphone"><SelectValue /></SelectTrigger>
@@ -69,7 +69,7 @@ export function PermissionsOverlay({ onJoin }: { onJoin: () => void }) {
                                 <Label htmlFor="cam-toggle" className="font-medium flex items-center gap-2">
                                     <Video className="h-4 w-4" /> Camera
                                 </Label>
-                                <Switch id="cam-toggle" checked={cameraEnabled} onCheckedChange={setCameraEnabled} />
+                                <Switch id="cam-toggle" checked={cameraEnabled} onCheckedChange={() => setCameraEnabled(prev => !prev)} />
                             </div>
                              <Select defaultValue="default">
                                 <SelectTrigger aria-label="Select camera"><SelectValue /></SelectTrigger>
