@@ -105,7 +105,7 @@ export default function DataPage() {
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This will permanently delete your account and all associated data. To proceed, please type "DELETE" in the box below.
+                                    This will permanently delete your account and all associated data. This action is irreversible. To proceed, please type "DELETE" in the box below.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <Input 
@@ -121,7 +121,7 @@ export default function DataPage() {
                                     onClick={handleDeleteAccount}
                                     disabled={deleteConfirmation !== "DELETE"}
                                 >
-                                    Yes, delete my account
+                                    Yes, delete my account permanently
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
