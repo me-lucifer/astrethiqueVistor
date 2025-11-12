@@ -85,15 +85,18 @@ export const SUGGEST_MIN_EUR = 10;
 export const SUGGEST_MAX_EUR = 500;
 
 export interface Wallet {
-    balance: number;
-    budget: number;
-    monthSpend: number;
-    locked: boolean;
-    lockEmergencyUsed: boolean;
+    balance_cents: number;
+    budget_cents: number;
+    spent_this_month_cents: number;
+    budget_lock: {
+        enabled: boolean;
+        emergency_used: boolean;
+        until: string | null;
+    };
     monthStart: string;
     monthEnd: string;
-    lockUntil: string | null;
     wizardSeen: boolean;
+    budget_set: boolean; // Added for clarity
     aboutYou: {
         home: "own" | "rent";
         income: number;
@@ -120,7 +123,7 @@ export interface SpendLogEntry {
     type: "consultation" | "horoscope" | "topup" | "emergency" | "other";
     amount_cents: number;
     note: string;
-    runningBalance: number;
+    runningBalance?: number;
 }
 
 export interface Metrics {
@@ -189,15 +192,14 @@ export const getWallet = (): Wallet => {
 
     if (!wallet) {
         const defaultWallet: Wallet = {
-            balance: 0,
-            budget: 0,
-            monthSpend: 0,
-            locked: false,
-            lockEmergencyUsed: false,
+            balance_cents: 0,
+            budget_cents: 0,
+            spent_this_month_cents: 0,
+            budget_lock: { enabled: false, emergency_used: false, until: null },
             monthStart: startOfMonth(now).toISOString(),
             monthEnd: currentMonthEnd,
-            lockUntil: null,
             wizardSeen: false,
+            budget_set: false,
             aboutYou: { home: 'rent', income: 3000, household: 1, hasOther: false, otherIncome: 0 },
             essentials: { rent: 1200, utilities: 150, groceries: 400, transport: 100, debts: 0, savingsPct: 10 },
             suggestionMeta: { rate: 0.25 }
@@ -206,16 +208,24 @@ export const getWallet = (): Wallet => {
         return defaultWallet;
     }
 
+    // Data migration/guarding for older wallet objects
+    if (!wallet.budget_lock) {
+        wallet.budget_lock = { enabled: false, emergency_used: false, until: null };
+    }
+
     // Monthly Reset Logic
     if (new Date(wallet.monthEnd) < now) {
         wallet = {
             ...wallet,
-            monthSpend: 0,
+            spent_this_month_cents: 0,
             monthStart: startOfMonth(now).toISOString(),
             monthEnd: currentMonthEnd,
-            locked: false,
-            lockEmergencyUsed: false,
-            lockUntil: null
+            budget_lock: { 
+                ...wallet.budget_lock,
+                enabled: false,
+                emergency_used: false,
+                until: null
+            },
         };
         setLocal(WALLET_KEY, wallet);
     }
@@ -229,24 +239,23 @@ export const setWallet = (wallet: Wallet) => {
 
 export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'], note: string): { ok: boolean, message: string } {
     const wallet = getWallet();
-    const amount = amount_cents / 100;
     const result = { ok: false, message: "" };
 
     // Allow 0 amount checks (e.g. to see if wallet is locked)
-    if (amount > 0) {
-      if (wallet.locked) {
+    if (amount_cents > 0) {
+      if (wallet.budget_lock.enabled) {
           result.message = `Budget is locked until ${format(new Date(wallet.monthEnd), "MMM do")}.`;
           console.log("Spend failed:", result.message);
           return result;
       }
 
-      if (wallet.wizardSeen && (wallet.monthSpend + amount) > wallet.budget) {
+      if (wallet.budget_set && (wallet.spent_this_month_cents + amount_cents) > wallet.budget_cents) {
           result.message = "This transaction exceeds your monthly budget.";
           console.log("Spend failed:", result.message);
           return result;
       }
 
-      if (wallet.balance < amount) {
+      if (wallet.balance_cents < amount_cents) {
           result.message = "Insufficient funds in your wallet.";
           console.log("Spend failed:", result.message);
           return result;
@@ -255,12 +264,12 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
     
     const newWalletState: Wallet = {
         ...wallet,
-        balance: wallet.balance - amount,
-        monthSpend: wallet.monthSpend + amount,
+        balance_cents: wallet.balance_cents - amount_cents,
+        spent_this_month_cents: wallet.spent_this_month_cents + amount_cents,
     };
     setWallet(newWalletState);
 
-    if (amount > 0) {
+    if (amount_cents > 0) {
         addSpendLogEntry({
             ts: new Date().toISOString(),
             type: type,
@@ -271,7 +280,7 @@ export function spendFromWallet(amount_cents: number, type: SpendLogEntry['type'
     
     result.ok = true;
     result.message = "Transaction successful.";
-    console.log("Spend successful:", { amount: amount, newBalance: newWalletState.balance });
+    console.log("Spend successful:", { amount: amount_cents, newBalance: newWalletState.balance_cents });
     return result;
 }
 
