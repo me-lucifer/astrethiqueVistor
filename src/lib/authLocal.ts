@@ -44,6 +44,7 @@ export interface User {
     createdAt: string; // ISO Date
     updatedAt: string; // ISO Date
     emailVerified: boolean;
+    twoFactorEnabled: boolean;
     preferences?: NotificationPreferences;
     // Wallet data is now separate in `ast_wallet`
     favorites: { consultants: string[]; content: string[] };
@@ -184,6 +185,7 @@ export async function registerVisitor(payload: {
         createdAt: now,
         updatedAt: now,
         emailVerified: false,
+        twoFactorEnabled: false,
         favorites: { consultants: [], content: [] },
         publicName: publicName,
         nameHistory: [publicName],

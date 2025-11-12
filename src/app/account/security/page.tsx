@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as authLocal from "@/lib/authLocal";
-import { CheckCircle, MailWarning, AlertTriangle } from "lucide-react";
+import { CheckCircle, MailWarning, AlertTriangle, ShieldCheck } from "lucide-react";
 import { ChangeEmailModal } from "@/components/account/change-email-modal";
 import { ChangePasswordModal } from "@/components/account/change-password-modal";
+import { TwoFactorModal } from "@/components/account/two-factor-modal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 
@@ -18,6 +19,7 @@ export default function SecurityPage() {
     const [user, setUser] = useState<authLocal.User | null>(null);
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false);
     const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
     const refreshUser = () => {
@@ -103,10 +105,34 @@ export default function SecurityPage() {
                     <CardDescription>Add an extra layer of security to your account.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50 opacity-60">
-                        <p>Authenticator App</p>
-                        <Button disabled>Enable</Button>
-                    </div>
+                    {user.twoFactorEnabled ? (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+                                <div className="flex items-center gap-3">
+                                    <ShieldCheck className="h-5 w-5 text-success" />
+                                    <div>
+                                        <p className="font-medium">Authenticator App Enabled</p>
+                                        <p className="text-xs text-muted-foreground">Device: Astrethique Demo</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                     <Button variant="outline" size="sm">View recovery codes</Button>
+                                    <Button variant="destructive" size="sm">Disable</Button>
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                You’ll need a code from your authenticator app when signing in.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+                            <div>
+                                <p className="font-medium">Authenticator App</p>
+                                <p className="text-sm text-muted-foreground">Use an app like Google Authenticator or Authy.</p>
+                            </div>
+                            <Button onClick={() => setIsTwoFactorModalOpen(true)}>Enable</Button>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
             <ChangeEmailModal
@@ -122,6 +148,14 @@ export default function SecurityPage() {
                 onSuccess={() => {
                     refreshUser();
                     setIsPasswordModalOpen(false);
+                }}
+            />
+            <TwoFactorModal
+                isOpen={isTwoFactorModalOpen}
+                onOpenChange={setIsTwoFactorModalOpen}
+                onSuccess={() => {
+                    refreshUser();
+                    setIsTwoFactorModalOpen(false);
                 }}
             />
         </div>
