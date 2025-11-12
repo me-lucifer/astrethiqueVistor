@@ -35,7 +35,7 @@ export function useBudgetCalculator(aboutYou: AboutYou, essentials: Essentials) 
     const discretionary = totalIncome - totalExpenses;
     if (discretionary <= 0) return SUGGEST_MIN_EUR;
 
-    let base = Math.round((0.35 * discretionary) / 5) * 5;
+    let base = Math.round((0.25 * discretionary) / 5) * 5;
     
     const clamped = Math.max(SUGGEST_MIN_EUR, Math.min(base, SUGGEST_MAX_EUR));
 

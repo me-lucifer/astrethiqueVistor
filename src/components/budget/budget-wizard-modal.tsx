@@ -44,7 +44,7 @@ const essentialsSchema = z.object({
 const wizardSchema = z.object({
   aboutYou: aboutYouSchema,
   essentials: essentialsSchema,
-  finalBudget: z.coerce.number().min(10, "Budget must be at least €10."),
+  finalBudget: z.coerce.number().min(10, "Budget must be at least €10.").optional(),
 });
 
 export type WizardFormData = z.infer<typeof wizardSchema>;
@@ -161,10 +161,6 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         },
         mode: "onChange",
     });
-    
-    const { aboutYou, essentials } = methods.watch();
-    const { suggestedBudget } = useBudgetCalculator(aboutYou, essentials);
-
 
     useEffect(() => {
         if (isOpen) {
@@ -193,10 +189,10 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
         const updatedWallet: Wallet = {
             ...wallet,
             budget: data.finalBudget!,
+            budget_set: true, // Mark budget as set
             wizardSeen: true,
             aboutYou: data.aboutYou,
             essentials: data.essentials,
-            suggestionMeta: { rate: 0.25 } // Default rate
         };
         setWallet(updatedWallet);
 
