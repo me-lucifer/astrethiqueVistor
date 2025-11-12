@@ -15,7 +15,7 @@ import * as authLocal from '@/lib/authLocal';
 import { getWallet, spendFromWallet } from '@/lib/local';
 import { BudgetWizardModal } from '../budget/budget-wizard-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
-import { AddFundsModal } from '../dashboard/add-funds-modal';
+import { TopUpModal } from '../dashboard/top-up-modal';
 
 const communicationModes = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -212,10 +212,9 @@ export function ConsultantAvailability({ consultant }: { consultant: Consultant 
         </DialogContent>
       </Dialog>
       
-       <AddFundsModal
+       <TopUpModal
             isOpen={isFundsModalOpen}
             onOpenChange={setIsFundsModalOpen}
-            neededAmount={consultant.pricePerMin}
         />
     </div>
   );

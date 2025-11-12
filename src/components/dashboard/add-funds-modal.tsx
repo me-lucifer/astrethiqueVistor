@@ -10,7 +10,7 @@ import { getWallet, setWallet, Wallet } from "@/lib/local";
 interface AddFundsModalProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    neededAmount: number;
+    neededAmount?: number;
 }
 
 export function AddFundsModal({ isOpen, onOpenChange, neededAmount }: AddFundsModalProps) {
@@ -41,7 +41,7 @@ export function AddFundsModal({ isOpen, onOpenChange, neededAmount }: AddFundsMo
         });
 
         // Close modal if funds are now sufficient
-        if ((newBalanceCents / 100) >= neededAmount) {
+        if (neededAmount && (newBalanceCents / 100) >= neededAmount) {
             onOpenChange(false);
         } else {
             // Update the balance displayed in the modal
@@ -54,9 +54,15 @@ export function AddFundsModal({ isOpen, onOpenChange, neededAmount }: AddFundsMo
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Insufficient Funds</DialogTitle>
-                    <DialogDescription>
-                        Your balance is €{(balance / 100).toFixed(2)}. You need at least €{neededAmount.toFixed(2)} to view your detailed horoscope.
-                    </DialogDescription>
+                    {neededAmount ? (
+                        <DialogDescription>
+                            Your balance is €{(balance / 100).toFixed(2)}. You need at least €{neededAmount.toFixed(2)} to proceed.
+                        </DialogDescription>
+                    ) : (
+                         <DialogDescription>
+                            Your balance is €{(balance / 100).toFixed(2)}. Please add funds to your wallet.
+                        </DialogDescription>
+                    )}
                 </DialogHeader>
                 <div className="py-4 space-y-2">
                     <p className="text-sm font-medium">Quick Top-up:</p>

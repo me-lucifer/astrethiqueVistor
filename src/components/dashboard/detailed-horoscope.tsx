@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getLocal, setLocal, getWallet, getAdminConfig, setWallet, Wallet, SpendLogEntry, spendFromWallet, incrementMetric } from "@/lib/local";
 import { User } from "@/lib/authLocal";
-import { AddFundsModal } from "./add-funds-modal";
+import { TopUpModal } from "./top-up-modal";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -238,10 +238,9 @@ export function DetailedHoroscope({ user, onLockError, onEmergencyTopUpNeeded }:
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
-            <AddFundsModal
+            <TopUpModal
                 isOpen={isFundsModalOpen}
                 onOpenChange={setIsFundsModalOpen}
-                neededAmount={config.detailedHoroscopeFeeEUR}
             />
         </>
     );
