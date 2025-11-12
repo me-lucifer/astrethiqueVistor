@@ -23,15 +23,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ProfilePhotoCard } from "@/components/account/profile-photo-card";
 
 const pseudonymSchema = (currentUserId: string) => z.string()
-    .min(3, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
-    .max(24, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
-    .regex(/^[a-zA-Z0-9._-]+$/, "Pick 3–24 characters (letters, numbers, dot, underscore, or dash).")
+    .min(2, "Pseudonym must be 2–40 characters.")
+    .max(40, "Pseudonym must be 2–40 characters.")
+    .regex(/^[a-zA-Z0-9._-]*$/, "Only letters, numbers, dot, underscore, or dash.")
     .refine(val => !authLocal.reservedPseudonyms.includes(val.toLowerCase()), "This word isn’t allowed as a pseudonym.")
     .refine(val => !authLocal.pseudonymExists(val, currentUserId), "That pseudonym is taken. Try another.");
 
 const profileSchema = (currentUserId: string) => z.object({
-  firstName: z.string().min(1, "First name is required."),
-  lastName: z.string().min(1, "Last name is required."),
+  firstName: z.string().min(1, "First name is required.").max(64, "First name cannot exceed 64 characters."),
+  lastName: z.string().min(1, "Last name is required.").max(64, "Last name cannot exceed 64 characters."),
   pseudonym: z.string().optional(),
   displayNamePreference: z.enum(['pseudonym', 'realName']).default('realName'),
   language: z.enum(["EN", "FR"]),
@@ -120,7 +120,7 @@ export default function ProfilePage() {
     const watchedLastName = form.watch("lastName");
     const watchedPreference = form.watch("displayNamePreference");
     
-    const isPseudonymValid = !!watchedPseudonym && watchedPseudonym.length >= 3 && !errors.pseudonym;
+    const isPseudonymValid = !!watchedPseudonym && watchedPseudonym.length >= 2 && !errors.pseudonym;
     
     const publicName = watchedPreference === 'pseudonym' && isPseudonymValid
         ? watchedPseudonym
@@ -130,10 +130,16 @@ export default function ProfilePage() {
     if (!user) {
         return <div>Loading...</div>;
     }
+    
+    const liveUserForPreview: authLocal.User = {
+        ...user,
+        publicName: publicName || user.publicName,
+    }
+
 
     return (
         <div className="space-y-8">
-             <ProfilePhotoCard user={user} onUpdate={refreshUser} />
+             <ProfilePhotoCard user={liveUserForPreview} onUpdate={refreshUser} />
             {showPseudonymBanner && (
                 <Alert>
                     <AlertTriangle className="h-4 w-4" />
@@ -212,7 +218,7 @@ export default function ProfilePage() {
 
                             <div className="flex justify-between items-center text-sm" aria-live="polite">
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="outline">Preview:</Badge>
+                                    <Badge variant="outline">Display name:</Badge>
                                     <span>{publicName || "Your Public Name"}</span>
                                 </div>
                                 <TooltipProvider>
