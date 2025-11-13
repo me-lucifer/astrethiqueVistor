@@ -293,20 +293,20 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+                        <WalletIcon className="h-6 w-6 text-primary" />
+                    </div>
+                    <DialogTitle className="font-headline text-2xl text-center">{"Let's personalize your budget"}</DialogTitle>
+                        <div className="space-y-2 mb-4 pt-4">
+                        <Progress value={((currentStep + 1) / steps.length) * 100} className="h-1" />
+                        <p className="text-sm text-muted-foreground text-center">Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}</p>
+                    </div>
+                    <DialogDescription className="text-center">{steps[currentStep].description}</DialogDescription>
+                </DialogHeader>
+
                 <FormProvider {...methods}>
                     <form onSubmit={methods.handleSubmit(handleSave)}>
-                        <DialogHeader>
-                             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
-                                <WalletIcon className="h-6 w-6 text-primary" />
-                            </div>
-                            <DialogTitle className="font-headline text-2xl text-center">{"Let's personalize your budget"}</DialogTitle>
-                             <div className="space-y-2 mb-4 pt-4">
-                                <Progress value={((currentStep + 1) / steps.length) * 100} className="h-1" />
-                                <p className="text-sm text-muted-foreground text-center">Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}</p>
-                            </div>
-                            <DialogDescription className="text-center">{steps[currentStep].description}</DialogDescription>
-                        </DialogHeader>
-
                         <div className="py-6 min-h-[300px]">
                             <AnimatePresence mode="wait">
                                 <motion.div
