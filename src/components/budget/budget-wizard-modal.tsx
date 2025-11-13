@@ -289,17 +289,9 @@ export function BudgetWizardModal({ isOpen, onOpenChange, demoMode = false }: Bu
     }, [isOpen, methods, demoMode]);
 
     const handleNext = async () => {
-        if (demoMode) {
-            setCurrentStep(s => s + 1);
-            return;
-        }
-        const result = await methods.trigger(steps[currentStep].fields);
-        if (result) {
-            setCurrentStep(s => s + 1);
-        } else {
-             toast({ variant: "destructive", title: "Please fill out all required fields." });
-        }
+        setCurrentStep(s => s + 1);
     };
+
     const handlePrev = () => setCurrentStep(s => s - 1);
 
     const handleSave = (data: WizardFormData) => {
