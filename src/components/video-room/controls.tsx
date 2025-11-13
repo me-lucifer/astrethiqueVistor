@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Mic, MicOff, Video, VideoOff, PictureInPicture, ScreenShare, NotepadText, PhoneOff, Settings, Star } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, NotepadText, PhoneOff } from "lucide-react";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { useState, useEffect } from "react";
@@ -28,7 +28,6 @@ const ControlButton = ({ tooltip, hotkey, onClick, children, variant = "ghost", 
 export function Controls({ onEndCall, isSidePanelOpen, onToggleNotes }: ControlsProps) {
     const [isMuted, setIsMuted] = useState(false);
     const [isCameraOff, setIsCameraOff] = useState(false);
-    const [isBlurred, setIsBlurred] = useState(true); // On by default
     
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,7 +36,6 @@ export function Controls({ onEndCall, isSidePanelOpen, onToggleNotes }: Controls
 
             if (e.key.toLowerCase() === 'm') setIsMuted(prev => !prev);
             if (e.key.toLowerCase() === 'c') setIsCameraOff(prev => !prev);
-            if (e.key.toLowerCase() === 'b') setIsBlurred(prev => !prev);
             if (e.key.toLowerCase() === 'n') onToggleNotes();
         };
         window.addEventListener("keydown", handleKeyDown);
@@ -54,23 +52,7 @@ export function Controls({ onEndCall, isSidePanelOpen, onToggleNotes }: Controls
                     <ControlButton tooltip={isCameraOff ? "Turn camera on" : "Turn camera off"} hotkey="C" onClick={() => setIsCameraOff(!isCameraOff)}>
                         {isCameraOff ? <VideoOff /> : <Video />}
                     </ControlButton>
-                    <ControlButton tooltip={isBlurred ? "Remove background blur" : "Blur background"} hotkey="B" onClick={() => setIsBlurred(!isBlurred)}>
-                        <PictureInPicture className={isBlurred ? "text-primary" : ""} />
-                    </ControlButton>
                     
-                     <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span tabIndex={0}>
-                                <Button disabled variant="ghost" size="icon" className="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 text-white disabled:opacity-50">
-                                    <ScreenShare />
-                                </Button>
-                            </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                           <p>Screenshare <span className="ml-2 bg-background/50 border rounded-sm px-1.5 py-0.5 text-xs">disabled</span></p>
-                        </TooltipContent>
-                    </Tooltip>
-
                     <ControlButton tooltip={isSidePanelOpen ? "Close notes panel" : "Open notes panel"} hotkey="N" onClick={onToggleNotes}>
                         <NotepadText className={isSidePanelOpen ? "text-primary" : ""} />
                     </ControlButton>
