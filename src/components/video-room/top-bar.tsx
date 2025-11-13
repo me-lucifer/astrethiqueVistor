@@ -18,7 +18,7 @@ interface TopBarProps {
     sessionTime: number;
     isSidePanelOpen: boolean;
     toggleSidePanel: () => void;
-    onDemoAction: (action: string) => void;
+    onDemoAction?: (action: string) => void;
 }
 
 export function TopBar({ consultant, sessionTime, isSidePanelOpen, toggleSidePanel, onDemoAction }: TopBarProps) {
@@ -64,19 +64,21 @@ export function TopBar({ consultant, sessionTime, isSidePanelOpen, toggleSidePan
                 <WalletDisplay sessionTime={sessionTime} ratePerMin={consultant.pricePerMin} />
                 <SessionTimer time={sessionTime} />
                 <Badge variant="secondary">€{consultant.pricePerMin.toFixed(2)}/min</Badge>
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Demo Controls</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={handleSimulateNetworkDrop}>Simulate Network Drop</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onDemoAction('low-balance')}>Emulate Low Balance</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onDemoAction('zero-balance')}>Emulate Zero Balance</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onDemoAction('end-summary')}>Open End Summary</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                 {onDemoAction && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Demo Controls</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={handleSimulateNetworkDrop}>Simulate Network Drop</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onDemoAction('low-balance')}>Emulate Low Balance</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onDemoAction('zero-balance')}>Emulate Zero Balance</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onDemoAction('end-summary')}>Open End Summary</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                 )}
                 <Button variant="ghost" size="icon" onClick={toggleSidePanel}>
                     {isSidePanelOpen ? <PanelRightClose /> : <PanelRightOpen />}
                 </Button>
