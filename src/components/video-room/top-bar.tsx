@@ -44,7 +44,7 @@ export function TopBar({ consultant, sessionTime, isSidePanelOpen, toggleSidePan
                     </div>
                 )
             })
-        }, 10000);
+        }, 3000);
     };
 
     return (
