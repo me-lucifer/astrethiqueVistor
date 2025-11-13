@@ -137,14 +137,6 @@ const NotesPanel = () => {
         setNotes(prev => prev.map(n => n.id === id ? { ...n, isPinned: !n.isPinned } : n));
     };
 
-    const handleExport = (type: 'Journal' | 'PDF') => {
-        console.log('notes_export', { type });
-        toast({
-            title: "Export Started",
-            description: `Your notes are being exported as a ${type}.`,
-        });
-    }
-
     const pinnedNotes = notes.filter(n => n.isPinned);
     const regularNotes = notes.filter(n => !n.isPinned);
 
@@ -182,13 +174,6 @@ const NotesPanel = () => {
             {notes.length === 0 && (
                 <div className="text-center py-10 text-sm text-muted-foreground">
                     Your notes will appear here.
-                </div>
-            )}
-            
-            {notes.length > 0 && (
-                 <div className="flex gap-2 pt-4 border-t">
-                    <Button variant="outline" size="sm" onClick={() => handleExport('Journal')}><Book className="h-4 w-4 mr-2"/>Save to Journal</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleExport('PDF')}><FileDown className="h-4 w-4 mr-2"/>Export PDF</Button>
                 </div>
             )}
         </div>
