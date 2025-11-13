@@ -421,8 +421,6 @@ function WalletCard({ onBudgetClick, onBudgetDemoClick }: { onBudgetClick: () =>
                       <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4"/></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onBudgetDemoClick()}>Demo Budget Wizard</DropdownMenuItem>
-                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleDemoAction('first_time')}>Simulate first-time view</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
@@ -771,10 +769,6 @@ function MoodCard({ onFirstCheckin }: { onFirstCheckin: () => void }) {
   });
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-
-  const handleRating = (dimension: keyof Ratings, value: number) => {
-    setRatings((prevRatings) => ({ ...prevRatings, [dimension]: value }));
-  };
 
   useEffect(() => {
     const moodLog = getMoodLog();
@@ -1261,3 +1255,6 @@ const horoscopeData: { [key: string]: string } = {
 
 
 
+
+
+    
