@@ -228,7 +228,7 @@ export default function DashboardPage() {
         </div>
       </div>
       <BudgetWizardModal isOpen={isBudgetModalOpen} onOpenChange={setIsBudgetModalOpen} />
-      <BudgetWizardModal isOpen={isBudgetDemoModalOpen} onOpenChange={setIsBudgetDemoModalOpen} />
+      <BudgetWizardModal isOpen={isBudgetDemoModalOpen} onOpenChange={setIsBudgetDemoModalOpen} demoMode={true} />
     </div>
   );
 }
@@ -1256,6 +1256,7 @@ const horoscopeData: { [key: string]: string } = {
 
 
     
+
 
 
 

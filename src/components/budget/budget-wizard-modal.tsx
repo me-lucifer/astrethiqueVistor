@@ -202,9 +202,10 @@ const steps: { title: string; description: string; component: React.FC; fields: 
 interface BudgetWizardModalProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
+    demoMode?: boolean;
 }
 
-export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalProps) {
+export function BudgetWizardModal({ isOpen, onOpenChange, demoMode = false }: BudgetWizardModalProps) {
     const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(0);
 
@@ -221,28 +222,34 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     useEffect(() => {
         if (isOpen) {
             setCurrentStep(0);
-            const wallet = getWallet();
-            // Pre-fill form if data exists in wallet
-            const defaultValues: WizardFormData = {
-                aboutYou: wallet.aboutYou || { home: 'rent', income: 3000, household: 1, hasOther: false, otherIncome: 0 },
-                essentials: {
-                    rentOrMortgage: wallet.essentials?.rent || 1200,
-                    utilities: wallet.essentials?.utilities || 150,
-                    groceries: wallet.essentials?.groceries || 400,
-                    transport: wallet.essentials?.transport || 100,
-                    debts: wallet.essentials?.debts || 0,
-                    savingsPct: wallet.essentials?.savingsPct || 10
-                },
-                finalStep: {
-                    finalAmount: wallet.budget_cents > 0 ? wallet.budget_cents / 100 : 0,
-                    lockWallet: wallet.budget_lock?.enabled || true,
-                }
-            };
-            methods.reset(defaultValues);
+            if (!demoMode) {
+                const wallet = getWallet();
+                // Pre-fill form if data exists in wallet
+                const defaultValues: WizardFormData = {
+                    aboutYou: wallet.aboutYou || { home: 'rent', income: 3000, household: 1, hasOther: false, otherIncome: 0 },
+                    essentials: {
+                        rentOrMortgage: wallet.essentials?.rent || 1200,
+                        utilities: wallet.essentials?.utilities || 150,
+                        groceries: wallet.essentials?.groceries || 400,
+                        transport: wallet.essentials?.transport || 100,
+                        debts: wallet.essentials?.debts || 0,
+                        savingsPct: wallet.essentials?.savingsPct || 10
+                    },
+                    finalStep: {
+                        finalAmount: wallet.budget_cents > 0 ? wallet.budget_cents / 100 : 0,
+                        lockWallet: wallet.budget_lock?.enabled || true,
+                    }
+                };
+                methods.reset(defaultValues);
+            }
         }
-    }, [isOpen, methods]);
+    }, [isOpen, methods, demoMode]);
 
     const handleNext = async () => {
+        if (demoMode) {
+            setCurrentStep(s => s + 1);
+            return;
+        }
         const result = await methods.trigger(steps[currentStep].fields);
         if (result) {
             setCurrentStep(s => s + 1);
@@ -253,6 +260,12 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     const handlePrev = () => setCurrentStep(s => s - 1);
 
     const handleSave = (data: WizardFormData) => {
+        if (demoMode) {
+            toast({ title: "Demo Saved!", description: "In a real scenario, your budget would be updated." });
+            onOpenChange(false);
+            return;
+        }
+
         const wallet = getWallet();
         const updatedWallet: Wallet = {
             ...wallet,
@@ -293,19 +306,19 @@ export function BudgetWizardModal({ isOpen, onOpenChange }: BudgetWizardModalPro
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
-                        <WalletIcon className="h-6 w-6 text-primary" />
-                    </div>
-                    <DialogTitle className="font-headline text-2xl text-center">{"Let's personalize your budget"}</DialogTitle>
-                        <div className="space-y-2 mb-4 pt-4">
-                        <Progress value={((currentStep + 1) / steps.length) * 100} className="h-1" />
-                        <p className="text-sm text-muted-foreground text-center">Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}</p>
-                    </div>
-                    <DialogDescription className="text-center">{steps[currentStep].description}</DialogDescription>
-                </DialogHeader>
-
                 <FormProvider {...methods}>
+                    <DialogHeader>
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+                            <WalletIcon className="h-6 w-6 text-primary" />
+                        </div>
+                        <DialogTitle className="font-headline text-2xl text-center">{"Let's personalize your budget"}</DialogTitle>
+                            <div className="space-y-2 mb-4 pt-4">
+                            <Progress value={((currentStep + 1) / steps.length) * 100} className="h-1" />
+                            <p className="text-sm text-muted-foreground text-center">Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}</p>
+                        </div>
+                        <DialogDescription className="text-center">{steps[currentStep].description}</DialogDescription>
+                    </DialogHeader>
+
                     <form onSubmit={methods.handleSubmit(handleSave)}>
                         <div className="py-6 min-h-[300px]">
                             <AnimatePresence mode="wait">
