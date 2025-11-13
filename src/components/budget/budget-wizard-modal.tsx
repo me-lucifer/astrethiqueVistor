@@ -21,6 +21,7 @@ import { ArrowLeft, ArrowRight, Wallet as WalletIcon } from "lucide-react";
 import { Slider } from "../ui/slider";
 import { useBudgetCalculator } from "./use-budget-calculator";
 import { endOfMonth, format } from "date-fns";
+import { Separator } from "../ui/separator";
 
 // --- Zod Schema ---
 const aboutYouSchema = z.object({
@@ -89,9 +90,20 @@ const Step1 = () => {
     );
 }
 
-const Step2 = () => {
-    const { control, watch } = useFormContext<WizardFormData>();
+const Step2 = ({ demoMode = false }: { demoMode?: boolean }) => {
+    const { control, watch, setValue } = useFormContext<WizardFormData>();
     const savingsValue = watch('essentials.savingsPct');
+
+    // Logic from Step 3 for budget calculation
+    const aboutYouData = watch('aboutYou');
+    const essentialsData = watch('essentials');
+    const { suggestedBudget } = useBudgetCalculator(aboutYouData, essentialsData);
+
+    useEffect(() => {
+        if(demoMode){
+            setValue('finalStep.finalAmount', suggestedBudget, { shouldValidate: true });
+        }
+    }, [suggestedBudget, setValue, demoMode]);
 
     return (
         <div className="space-y-4">
@@ -129,6 +141,31 @@ const Step2 = () => {
                     <FormMessage />
                 </FormItem>
             )} />
+
+             {demoMode && (
+                <div className="space-y-6 pt-6">
+                    <Separator />
+                    <div className="text-center pt-4">
+                        <p className="text-sm text-muted-foreground">Suggested monthly budget</p>
+                        <p className="text-4xl font-bold text-primary">€{suggestedBudget}</p>
+                    </div>
+
+                    <FormField control={control} name="finalStep.finalAmount" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Use a different amount (€)</FormLabel>
+                            <FormControl><Input type="number" min="0" step="5" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    
+                    <FormField control={control} name="finalStep.lockWallet" render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5"><FormLabel>Enable Budget Lock after saving</FormLabel></div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                        </FormItem>
+                    )} />
+                </div>
+            )}
         </div>
     );
 };
@@ -191,12 +228,16 @@ const Step3 = () => {
 };
 
 
-const steps: { title: string; description: string; component: React.FC; fields: FieldPath<WizardFormData>[] }[] = [
+const regularSteps: { title: string; description: string; component: React.FC; fields: FieldPath<WizardFormData>[] }[] = [
     { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou.home", "aboutYou.income", "aboutYou.household", "aboutYou.hasOther", "aboutYou.otherIncome"] },
     { title: "Essentials", description: "Account for your necessary monthly spending.", component: Step2, fields: ["essentials.rentOrMortgage", "essentials.utilities", "essentials.groceries", "essentials.transport", "essentials.debts", "essentials.savingsPct"] },
     { title: "Suggested budget for you", description: "Based on your info, here's a suggested budget. You can adjust it.", component: Step3, fields: ["finalStep.finalAmount", "finalStep.lockWallet"] },
 ];
 
+const demoSteps: { title: string; description: string; component: React.FC<{demoMode?: boolean}>; fields: FieldPath<WizardFormData>[] }[] = [
+    { title: "About You", description: "Let's understand your financial landscape.", component: Step1, fields: ["aboutYou.home", "aboutYou.income", "aboutYou.household", "aboutYou.hasOther", "aboutYou.otherIncome"] },
+    { title: "Essentials & Final Budget", description: "Account for spending and set your final budget.", component: Step2, fields: ["essentials.rentOrMortgage", "essentials.utilities", "essentials.groceries", "essentials.transport", "essentials.debts", "essentials.savingsPct", "finalStep.finalAmount", "finalStep.lockWallet"] },
+];
 
 // --- Main Modal Component ---
 interface BudgetWizardModalProps {
@@ -218,6 +259,8 @@ export function BudgetWizardModal({ isOpen, onOpenChange, demoMode = false }: Bu
         },
         mode: "onChange",
     });
+
+    const steps = demoMode ? demoSteps : regularSteps;
 
     useEffect(() => {
         if (isOpen) {
@@ -329,7 +372,7 @@ export function BudgetWizardModal({ isOpen, onOpenChange, demoMode = false }: Bu
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <CurrentStepComponent />
+                                    <CurrentStepComponent demoMode={demoMode} />
                                 </motion.div>
                             </AnimatePresence>
                         </div>
