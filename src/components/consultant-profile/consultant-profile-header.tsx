@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { ConsultantProfile } from '@/lib/consultant-profile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -144,6 +145,10 @@ export function ConsultantProfileHeader({ consultant: initialConsultant, onDemoA
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Demo Controls</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/video-consult-demo">Video Consult UI Demo</Link>
+                                        </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onSelect={() => onDemoAction('seed-wallet', 25)}>Seed wallet +€25</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => onDemoAction('seed-wallet', 10)}>Seed wallet +€10</DropdownMenuItem>
