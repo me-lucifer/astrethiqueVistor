@@ -140,6 +140,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+  const [isBudgetDemoModalOpen, setIsBudgetDemoModalOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const router = useRouter();
 
@@ -216,7 +217,7 @@ export default function DashboardPage() {
         </AnimatePresence>
         <div className="grid grid-cols-12 gap-8 items-start">
           <div className="col-span-12 lg:col-span-8 space-y-8">
-            <WalletCard onBudgetClick={() => setIsBudgetModalOpen(true)} />
+            <WalletCard onBudgetClick={() => setIsBudgetModalOpen(true)} onBudgetDemoClick={() => setIsBudgetDemoModalOpen(true)} />
             <MoodCard onFirstCheckin={handleFirstCheckin} />
             <QuickTrends />
           </div>
@@ -227,12 +228,13 @@ export default function DashboardPage() {
         </div>
       </div>
       <BudgetWizardModal isOpen={isBudgetModalOpen} onOpenChange={setIsBudgetModalOpen} />
+      <BudgetWizardModal isOpen={isBudgetDemoModalOpen} onOpenChange={setIsBudgetDemoModalOpen} />
     </div>
   );
 }
 
 // Sub-components for the Dashboard
-function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
+function WalletCard({ onBudgetClick, onBudgetDemoClick }: { onBudgetClick: () => void, onBudgetDemoClick: () => void }) {
   const [wallet, setWalletState] = useState<WalletType | null>(null);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
   const [isEmergencyTopUpOpen, setIsEmergencyTopUpOpen] = useState(false);
@@ -419,6 +421,8 @@ function WalletCard({ onBudgetClick }: { onBudgetClick: () => void }) {
                       <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4"/></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onBudgetDemoClick()}>Demo Budget Wizard</DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleDemoAction('first_time')}>Simulate first-time view</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleDemoAction('seed')}>Seed €15 / Budget €30</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleDemoAction('lock')}>Lock Wallet</DropdownMenuItem>
@@ -1252,6 +1256,7 @@ const horoscopeData: { [key: string]: string } = {
 
 
     
+
 
 
 
